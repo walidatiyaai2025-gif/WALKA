@@ -25,7 +25,7 @@ class SharedPreferencesWalkaCatalogCache implements WalkaCatalogCache {
       final Object? decoded = jsonDecode(raw);
       if (decoded is! Map) return null;
       final WalkaCatalogSnapshot snapshot = WalkaCatalogSnapshot.fromJson(
-        Map<String, dynamic>.from(decoded as Map),
+        Map<String, dynamic>.from(decoded),
         source: WalkaCatalogSource.cache,
       );
       WalkaCatalogContract.validate(snapshot);
