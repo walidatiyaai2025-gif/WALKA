@@ -97,12 +97,13 @@ Current variant IDs:
 
 `docs/PRODUCT_MASTER.md` is the repository source of truth for product facts and approved usage/care language. API tests intentionally bind the catalog to that document. A product fact must be verified there before it is changed in the API.
 
-Important locked examples include:
+Current locked examples include:
 
-- Drawer Organizer product weight `1.72 lb` and packaging `13.46 × 15.16 × 2.36 in`.
-- Lunch Box SUS304 food tray, BPA-free PP outer body, `1200 ml`, 4 compartments and included accessories.
-- Lunch care rules: SUS304 tray top-rack dishwasher safe/not microwave safe; lid + gasket hand wash; PP outer body microwave safe without the steel tray.
-- Approved Lunch language: `Secure Lock | Helps Prevent Spills`, `Best for dry & semi-wet foods`, `Not intended for liquids`, `Carry upright`.
+- Drawer Organizer: plastic, 8 compartments, `13 × 15 × 2 in`, expands to `22.4 in`, non-slip base, White/Gray. The current Product Master explicitly forbids publishing Drawer weight or packaging dimensions until a verified owner value is added.
+- Lunch Box: SUS304 food tray, food-grade PP outer body, `1200 ml`, 4 compartments, insulated bag, stainless sauce cup with lid, spoon and fork.
+- Lunch care rules: SUS304 tray dishwasher safe/not microwave safe; lid + silicone gasket top-rack dishwasher safe/not microwave safe; PP outer body microwave safe only after removing the stainless tray, lid and silicone gasket.
+- Approved Lunch language: `Secure Lock | Helps Prevent Spills`, `SPILL-RESISTANT DESIGN`, `Best suited for dry meals & snacks.`, `Not intended for liquids. Best for dry & semi-wet foods.`, and carry upright.
+- Approved Lunch Pantones: Blue `PANTONE 4155 U`, Pink `PANTONE 9242 U`, Green `PANTONE 6198 U`.
 
 ## Compatibility policy
 
