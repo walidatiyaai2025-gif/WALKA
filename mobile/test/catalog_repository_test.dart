@@ -169,7 +169,7 @@ void main() {
 }
 
 class _FakeRemote implements WalkaCatalogRemoteDataSource {
-  _FakeRemote({required this.config, required this.payload, this.shouldFail = false});
+  _FakeRemote({required this.config, required this.payload}) : shouldFail = false;
 
   factory _FakeRemote.fromSnapshot(WalkaCatalogSnapshot snapshot) {
     return _FakeRemote(
