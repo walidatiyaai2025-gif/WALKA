@@ -48,7 +48,7 @@ class WalkaCatalogRepository {
         source: WalkaCatalogSource.remote,
         fetchedAt: _clock().toUtc(),
       );
-      WalkaCatalogContract.validate(snapshot);
+      _validateSnapshot(snapshot);
 
       try {
         await _cache.write(snapshot);
@@ -65,10 +65,25 @@ class WalkaCatalogRepository {
     try {
       final WalkaCatalogSnapshot? snapshot = await _cache.read();
       if (snapshot == null) return null;
-      WalkaCatalogContract.validate(snapshot);
+      _validateSnapshot(snapshot);
       return snapshot.asSource(WalkaCatalogSource.cache);
     } on Object {
       return null;
+    }
+  }
+
+  void _validateSnapshot(WalkaCatalogSnapshot snapshot) {
+    WalkaCatalogContract.validate(snapshot);
+    for (final WalkaCatalogVariant variant in snapshot.variants) {
+      final Uri uri = variant.purchaseUri;
+      final String host = uri.host.toLowerCase();
+      final bool isOfficialAmazon = uri.scheme == 'https' &&
+          (host == 'amazon.com' || host == 'www.amazon.com');
+      if (!isOfficialAmazon) {
+        throw FormatException(
+          'Variant ${variant.id} has an unsupported purchase destination.',
+        );
+      }
     }
   }
 }
