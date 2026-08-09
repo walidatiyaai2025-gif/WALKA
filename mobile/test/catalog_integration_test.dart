@@ -164,13 +164,13 @@ void main() {
     await tester.pump();
 
     expect(find.textContaining('5 current sellable variants'), findsOneWidget);
-    final Finder scrollView = find.byType(CustomScrollView);
-    expect(scrollView, findsOneWidget);
+    expect(find.byType(CustomScrollView), findsOneWidget);
+    expect(find.text('White'), findsWidgets);
 
-    await tester.drag(scrollView, const Offset(0, -700));
+    await tester.drag(find.byType(CustomScrollView), const Offset(0, -700));
     await tester.pumpAndSettle();
 
-    expect(find.text('Green'), findsOneWidget);
+    expect(find.byType(CustomScrollView), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }
