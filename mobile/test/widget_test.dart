@@ -1,13 +1,15 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:walka/design_system/walka_theme.dart';
+import 'package:walka/features/storefront/storefront_v2.dart';
 import 'package:walka/main.dart';
-import 'package:walka/screens/walka_screens.dart';
 
 void main() {
-  test('WALKA foundation exposes the application entry point', () {
+  test('WALKA 0.2 storefront exposes the application entry points', () {
     expect(const WalkaApp(), isA<WalkaApp>());
-    expect(const SplashScreen(), isA<SplashScreen>());
-    expect(const WalkaShell(), isA<WalkaShell>());
+    expect(const WalkaStorefrontSplash(), isA<WalkaStorefrontSplash>());
+    expect(const WalkaStorefrontShell(), isA<WalkaStorefrontShell>());
+    expect(const WalkaHomeV2(), isA<WalkaHomeV2>());
+    expect(const WalkaProductDetailV2(), isA<WalkaProductDetailV2>());
   });
 
   test('WALKA design system keeps the approved brand colors', () {

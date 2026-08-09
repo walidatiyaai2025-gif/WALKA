@@ -12,27 +12,43 @@ Backend/Laravel work is intentionally deferred.
 
 | ID | Release | Scope | Status |
 |---|---|---|---|
-| UI-001 | 0.1.0 | Foundation + Splash + App Shell + Home + navigation skeleton | IN PROGRESS |
-| UI-002 | 0.2.0 | Home fidelity + Product Detail | PLANNED |
+| UI-001 | 0.1.0 | Foundation + Splash + App Shell + Home + navigation skeleton | COMPLETED |
+| UI-002 | 0.2.0 | Home fidelity + Product Detail | IN PROGRESS |
 | UI-003 | 0.3.0 | Categories + collection browsing | PLANNED |
 | UI-004 | 0.4.0 | Favorites + Account + About | PLANNED |
 | UI-005 | 0.5.0 | Android/iOS polish + accessibility + visual QA | PLANNED |
 
-## UI-001 acceptance checklist
+## UI-001 result
 
-- [x] Reference image inventory confirmed in `Images/`
-- [x] Phase 1 scope and release slices documented
-- [ ] Flutter package scaffold
-- [ ] Design-system tokens/theme
-- [ ] Splash screen
-- [ ] Bottom navigation shell
-- [ ] Premium Home screen
-- [ ] Product preview route
-- [ ] Navigable placeholder screens for remaining Phase 1 destinations
-- [ ] Widget smoke test
-- [ ] CI analyze/test/build APK
+- [x] Flutter package scaffold
+- [x] Design-system tokens/theme
+- [x] Splash screen
+- [x] Bottom navigation shell
+- [x] Premium Home foundation
+- [x] Product preview route
+- [x] Navigable placeholder screens for remaining Phase 1 destinations
+- [x] Foundation smoke tests
+- [x] CI analyze/test/build APK
+- [x] PR #2 merged to `main`
+- [x] `0.1.0` preview releasable
+
+## UI-002 acceptance checklist
+
+- [x] Reference set confirmed: Android/iOS Home and Product Detail images
+- [x] `0.2.0+2` package version
+- [x] Storefront v2 shell added without rewriting completed UI-001 screens
+- [x] Home v2 premium editorial hierarchy
+- [x] Best-seller product merchandising and white/gray visual variants
+- [x] Product Detail v2 gallery treatment
+- [x] PDP variant selector and key feature grid
+- [x] PDP Amazon purchase card (visual only)
+- [x] PDP editorial section and specifications
+- [x] Smoke tests updated for v2 entry points
+- [ ] CI analyze green
+- [ ] CI tests green
+- [ ] Android preview APK green
 - [ ] PR merged to `main`
-- [ ] `0.1.0` preview considered releasable
+- [ ] `0.2.0` preview considered releasable
 
 ## Guardrails
 
