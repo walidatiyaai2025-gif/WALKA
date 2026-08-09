@@ -97,7 +97,10 @@ void main() {
     expect(categoriesDestination, findsOneWidget);
     await tester.tap(categoriesDestination);
     await tester.pumpAndSettle();
-    expect(find.text('Collections'), findsOneWidget);
+    expect(
+      tester.widget<NavigationBar>(find.byType(NavigationBar)).selectedIndex,
+      2,
+    );
 
     final Finder searchButton = find.descendant(
       of: find.byType(WalkaCategoriesV6),
@@ -107,6 +110,10 @@ void main() {
     await tester.tap(searchButton);
     await tester.pumpAndSettle();
 
+    expect(
+      tester.widget<NavigationBar>(find.byType(NavigationBar)).selectedIndex,
+      1,
+    );
     expect(find.text('SEARCH WALKA'), findsOneWidget);
     expect(find.text('What are you organizing?'), findsOneWidget);
     expect(tester.takeException(), isNull);
