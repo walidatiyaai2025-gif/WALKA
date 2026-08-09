@@ -5,7 +5,7 @@ import '../../design_system/walka_theme.dart';
 import '../catalog/catalog_v6.dart';
 import '../lifestyle/favorites_v5.dart';
 import '../lifestyle/lifestyle_v4.dart' show WalkaAccountV4;
-import '../search/search_v9.dart';
+import '../search/search_discovery_v9.dart';
 import 'storefront_v2.dart' show WalkaHomeV2;
 
 class WalkaStorefrontSplashV9 extends StatelessWidget {
@@ -132,7 +132,7 @@ class _WalkaStorefrontShellV9State extends State<WalkaStorefrontShellV9> {
 
   void _openSearch() {
     Navigator.of(context).push(
-      MaterialPageRoute<void>(builder: (_) => const WalkaSearchV9()),
+      MaterialPageRoute<void>(builder: (_) => const WalkaSearchDiscoveryV9()),
     );
   }
 
