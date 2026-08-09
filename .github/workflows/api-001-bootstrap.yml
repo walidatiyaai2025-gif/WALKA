@@ -1,0 +1,451 @@
+name: API-001 Bootstrap
+
+on:
+  push:
+    branches:
+      - agent/api-001-laravel-foundation
+    paths:
+      - '.github/workflows/api-001-bootstrap.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  bootstrap:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v5
+        with:
+          ref: agent/api-001-laravel-foundation
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, dom, curl, libxml, sqlite3
+          coverage: none
+          tools: composer:v2
+
+      - name: Create Laravel 13 backend
+        shell: bash
+        run: |
+          set -euo pipefail
+          test ! -d backend
+          composer create-project laravel/laravel:^13.0 backend --no-interaction --prefer-dist
+
+      - name: Add WALKA API v1 contract
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          python3 - <<'PY'
+          from pathlib import Path
+
+          bootstrap = Path('backend/bootstrap/app.php')
+          text = bootstrap.read_text()
+          marker = "        web: __DIR__.'/../routes/web.php',\n"
+          assert marker in text
+          text = text.replace(
+              marker,
+              marker + "        api: __DIR__.'/../routes/api.php',\n",
+              1,
+          )
+          bootstrap.write_text(text)
+
+          env = Path('backend/.env.example')
+          env_text = env.read_text()
+          env_text = env_text.replace('APP_NAME=Laravel', 'APP_NAME="WALKA API"', 1)
+          if 'WALKA_RELEASE=' not in env_text:
+              env_text += '\nWALKA_RELEASE=0.8.0\n'
+          env.write_text(env_text)
+          PY
+
+          mkdir -p backend/app/Data backend/app/Http/Controllers/Api/V1 backend/tests/Feature/Api/V1
+
+          cat > backend/app/Data/ProductVariantData.php <<'PHP'
+          <?php
+
+          namespace App\Data;
+
+          final readonly class ProductVariantData
+          {
+              public function __construct(
+                  public string $id,
+                  public string $color,
+                  public string $asin,
+              ) {}
+
+              /**
+               * @return array{id: string, color: string, asin: string, purchase_url: string}
+               */
+              public function toArray(): array
+              {
+                  return [
+                      'id' => $this->id,
+                      'color' => $this->color,
+                      'asin' => $this->asin,
+                      'purchase_url' => "https://www.amazon.com/dp/{$this->asin}",
+                  ];
+              }
+          }
+          PHP
+
+          cat > backend/app/Data/ProductData.php <<'PHP'
+          <?php
+
+          namespace App\Data;
+
+          final readonly class ProductData
+          {
+              /**
+               * @param list<string> $features
+               * @param list<ProductVariantData> $variants
+               */
+              public function __construct(
+                  public string $id,
+                  public string $name,
+                  public string $category,
+                  public array $features,
+                  public array $variants,
+              ) {}
+
+              /**
+               * @param array{
+               *   id: string,
+               *   name: string,
+               *   category: string,
+               *   features: list<string>,
+               *   variants: list<array{id: string, color: string, asin: string}>
+               * } $data
+               */
+              public static function fromArray(array $data): self
+              {
+                  return new self(
+                      id: $data['id'],
+                      name: $data['name'],
+                      category: $data['category'],
+                      features: $data['features'],
+                      variants: array_map(
+                          static fn (array $variant): ProductVariantData => new ProductVariantData(
+                              id: $variant['id'],
+                              color: $variant['color'],
+                              asin: $variant['asin'],
+                          ),
+                          $data['variants'],
+                      ),
+                  );
+              }
+
+              /**
+               * @return array{
+               *   id: string,
+               *   name: string,
+               *   category: string,
+               *   features: list<string>,
+               *   variants: list<array{id: string, color: string, asin: string, purchase_url: string}>
+               * }
+               */
+              public function toArray(): array
+              {
+                  return [
+                      'id' => $this->id,
+                      'name' => $this->name,
+                      'category' => $this->category,
+                      'features' => $this->features,
+                      'variants' => array_map(
+                          static fn (ProductVariantData $variant): array => $variant->toArray(),
+                          $this->variants,
+                      ),
+                  ];
+              }
+          }
+          PHP
+
+          cat > backend/config/walka.php <<'PHP'
+          <?php
+
+          return [
+              'release' => env('WALKA_RELEASE', '0.8.0'),
+              'brand' => 'WALKA',
+              'api_version' => 'v1',
+              'purchase_mode' => 'amazon_redirect',
+              'products' => [
+                  [
+                      'id' => 'drawer-organizer',
+                      'name' => 'WALKA Drawer Organizer',
+                      'category' => 'drawer-organization',
+                      'features' => [
+                          '8 compartments',
+                          'Expandable 13–22.4 in',
+                          'Non-slip base',
+                      ],
+                      'variants' => [
+                          [
+                              'id' => 'drawer-organizer:white',
+                              'color' => 'White',
+                              'asin' => 'B0FQN4DCTG',
+                          ],
+                          [
+                              'id' => 'drawer-organizer:gray',
+                              'color' => 'Gray',
+                              'asin' => 'B0FQN4L2ZD',
+                          ],
+                      ],
+                  ],
+                  [
+                      'id' => 'stainless-steel-bento-lunch-box',
+                      'name' => 'WALKA Large Stainless Steel Bento Lunch Box for Adults',
+                      'category' => 'lunch',
+                      'features' => [
+                          '1200 ml',
+                          '4 compartments',
+                          '304 stainless steel tray',
+                          'Best for dry & semi-wet foods',
+                      ],
+                      'variants' => [
+                          [
+                              'id' => 'lunch-box:blue',
+                              'color' => 'Blue',
+                              'asin' => 'B0FQN4L8MW',
+                          ],
+                          [
+                              'id' => 'lunch-box:pink',
+                              'color' => 'Pink',
+                              'asin' => 'B0FQN3W4SF',
+                          ],
+                          [
+                              'id' => 'lunch-box:green',
+                              'color' => 'Green',
+                              'asin' => 'B0GPZNKF9F',
+                          ],
+                      ],
+                  ],
+              ],
+          ];
+          PHP
+
+          cat > backend/app/Http/Controllers/Api/V1/HealthController.php <<'PHP'
+          <?php
+
+          namespace App\Http\Controllers\Api\V1;
+
+          use App\Http\Controllers\Controller;
+          use Illuminate\Http\JsonResponse;
+
+          final class HealthController extends Controller
+          {
+              public function __invoke(): JsonResponse
+              {
+                  return response()->json([
+                      'data' => [
+                          'status' => 'ok',
+                          'service' => 'walka-api',
+                          'release' => config('walka.release'),
+                          'api_version' => config('walka.api_version'),
+                      ],
+                  ]);
+              }
+          }
+          PHP
+
+          cat > backend/app/Http/Controllers/Api/V1/ConfigController.php <<'PHP'
+          <?php
+
+          namespace App\Http\Controllers\Api\V1;
+
+          use App\Http\Controllers\Controller;
+          use Illuminate\Http\JsonResponse;
+
+          final class ConfigController extends Controller
+          {
+              public function __invoke(): JsonResponse
+              {
+                  return response()->json([
+                      'data' => [
+                          'brand' => config('walka.brand'),
+                          'release' => config('walka.release'),
+                          'api_version' => config('walka.api_version'),
+                          'purchase_mode' => config('walka.purchase_mode'),
+                      ],
+                  ]);
+              }
+          }
+          PHP
+
+          cat > backend/app/Http/Controllers/Api/V1/CatalogController.php <<'PHP'
+          <?php
+
+          namespace App\Http\Controllers\Api\V1;
+
+          use App\Data\ProductData;
+          use App\Http\Controllers\Controller;
+          use Illuminate\Http\JsonResponse;
+
+          final class CatalogController extends Controller
+          {
+              public function __invoke(): JsonResponse
+              {
+                  $products = array_map(
+                      static fn (array $product): array => ProductData::fromArray($product)->toArray(),
+                      config('walka.products', []),
+                  );
+
+                  return response()->json([
+                      'data' => $products,
+                      'meta' => [
+                          'api_version' => config('walka.api_version'),
+                          'purchase_mode' => config('walka.purchase_mode'),
+                      ],
+                  ]);
+              }
+          }
+          PHP
+
+          cat > backend/routes/api.php <<'PHP'
+          <?php
+
+          use App\Http\Controllers\Api\V1\CatalogController;
+          use App\Http\Controllers\Api\V1\ConfigController;
+          use App\Http\Controllers\Api\V1\HealthController;
+          use Illuminate\Support\Facades\Route;
+
+          Route::prefix('v1')->name('api.v1.')->group(function (): void {
+              Route::get('/health', HealthController::class)->name('health');
+              Route::get('/config', ConfigController::class)->name('config');
+              Route::get('/catalog', CatalogController::class)->name('catalog');
+          });
+          PHP
+
+          cat > backend/tests/Feature/Api/V1/HealthTest.php <<'PHP'
+          <?php
+
+          namespace Tests\Feature\Api\V1;
+
+          use Tests\TestCase;
+
+          final class HealthTest extends TestCase
+          {
+              public function test_health_contract_is_stable(): void
+              {
+                  $this->getJson('/api/v1/health')
+                      ->assertOk()
+                      ->assertJsonPath('data.status', 'ok')
+                      ->assertJsonPath('data.service', 'walka-api')
+                      ->assertJsonPath('data.release', '0.8.0')
+                      ->assertJsonPath('data.api_version', 'v1');
+              }
+          }
+          PHP
+
+          cat > backend/tests/Feature/Api/V1/ConfigTest.php <<'PHP'
+          <?php
+
+          namespace Tests\Feature\Api\V1;
+
+          use Tests\TestCase;
+
+          final class ConfigTest extends TestCase
+          {
+              public function test_mobile_safe_config_contract(): void
+              {
+                  $this->getJson('/api/v1/config')
+                      ->assertOk()
+                      ->assertJson([
+                          'data' => [
+                              'brand' => 'WALKA',
+                              'release' => '0.8.0',
+                              'api_version' => 'v1',
+                              'purchase_mode' => 'amazon_redirect',
+                          ],
+                      ]);
+              }
+          }
+          PHP
+
+          cat > backend/tests/Feature/Api/V1/CatalogTest.php <<'PHP'
+          <?php
+
+          namespace Tests\Feature\Api\V1;
+
+          use Tests\TestCase;
+
+          final class CatalogTest extends TestCase
+          {
+              public function test_catalog_exposes_stable_products_and_amazon_destinations(): void
+              {
+                  $response = $this->getJson('/api/v1/catalog')
+                      ->assertOk()
+                      ->assertJsonPath('meta.api_version', 'v1')
+                      ->assertJsonPath('meta.purchase_mode', 'amazon_redirect')
+                      ->assertJsonCount(2, 'data');
+
+                  $response
+                      ->assertJsonPath('data.0.id', 'drawer-organizer')
+                      ->assertJsonPath('data.0.variants.0.id', 'drawer-organizer:white')
+                      ->assertJsonPath('data.0.variants.0.asin', 'B0FQN4DCTG')
+                      ->assertJsonPath('data.0.variants.0.purchase_url', 'https://www.amazon.com/dp/B0FQN4DCTG')
+                      ->assertJsonPath('data.0.variants.1.id', 'drawer-organizer:gray')
+                      ->assertJsonPath('data.0.variants.1.asin', 'B0FQN4L2ZD')
+                      ->assertJsonPath('data.1.id', 'stainless-steel-bento-lunch-box')
+                      ->assertJsonCount(3, 'data.1.variants');
+              }
+          }
+          PHP
+
+          cat > backend/README.md <<'MD'
+          # WALKA API
+
+          Laravel 13 API backend for the WALKA mobile storefront.
+
+          ## Runtime
+
+          - PHP 8.3+
+          - Composer 2
+          - Laravel 13.x
+
+          ## Local setup
+
+          ```bash
+          cd backend
+          composer install
+          cp .env.example .env
+          php artisan key:generate
+          php artisan serve
+          ```
+
+          ## API v1
+
+          - `GET /api/v1/health` — service and release health contract.
+          - `GET /api/v1/config` — mobile-safe storefront configuration.
+          - `GET /api/v1/catalog` — WALKA products, variants, ASINs and Amazon purchase destinations.
+
+          API-001 intentionally uses config-backed catalog data. Authentication, database-backed catalog management and Flutter HTTP integration are later release slices.
+
+          ## Validation
+
+          ```bash
+          composer validate --strict
+          php artisan test
+          php artisan route:list --path=api/v1
+          ```
+          MD
+
+      - name: Validate generated backend
+        working-directory: backend
+        shell: bash
+        run: |
+          set -euo pipefail
+          composer validate --strict
+          php artisan test
+          php artisan route:list --path=api/v1
+
+      - name: Commit backend foundation
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "WALKA Team Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add backend
+          git commit -m "API-001: bootstrap Laravel 13 API foundation"
+          git push origin HEAD:agent/api-001-laravel-foundation
