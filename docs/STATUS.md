@@ -6,7 +6,7 @@ Last updated: 2026-08-09
 
 **Phase 1.5 — Full Clickable Flutter Experience: IN PROGRESS**
 
-Phase 1 premium mobile UI/UX, COM-001 Amazon handoff, and STATE-001 persistent Drawer Favorites are released. Current product direction is to complete and visually freeze the real Flutter screen set before Laravel/API work begins.
+Phase 1 premium mobile UI/UX, COM-001 Amazon handoff, STATE-001 persistent Drawer Favorites, and UI-006 Lunch Box experience are released. Current product direction remains to complete and visually freeze the real Flutter screen set before Laravel/API work begins.
 
 ## Release board
 
@@ -19,35 +19,64 @@ Phase 1 premium mobile UI/UX, COM-001 Amazon handoff, and STATE-001 persistent D
 | UI-005 | 0.5.0 | Android/iOS polish + accessibility QA | COMPLETED |
 | COM-001 | 0.6.0 | Variant-aware Drawer Amazon handoff | COMPLETED |
 | STATE-001 | 0.7.0 | Persistent Drawer Favorites/customer state | COMPLETED |
-| UI-006 | 0.8.0 | Lunch Box collection + Blue/Pink/Green PDP | IN PROGRESS |
-| UI-007 | 0.9.0 | Search + discovery + results/filter/sort states | PLANNED |
+| UI-006 | 0.8.0 | Lunch Box collection + Blue/Pink/Green PDP | COMPLETED |
+| UI-007 | 0.9.0 | Search + discovery + results/filter/sort states | IN PROGRESS |
 | UI-008 | 0.10.0 | Product UX completion + gallery/share/related products | PLANNED |
 | UI-009 | 1.0.0 | Information screens + cross-platform visual freeze | PLANNED |
 | API-001 | post-1.0 | Laravel API foundation | DEFERRED |
 
-## Active slice — UI-006 / 0.8.0
+## Active slice — UI-007 / 0.9.0
 
-- [x] `0.8.0+8` reconciled package version
-- [x] Premium Lunch Collection screen
-- [x] Blue / Pink / Green product variants
-- [x] Pantone labels for all three variants
-- [x] Full Lunch Box PDP
-- [x] Complete set / open tray / carry kit gallery states
-- [x] 1200 ml / four-compartment specification presentation
-- [x] SUS304 tray / PP body / insulated bag / utensils / sauce cup content
-- [x] Approved usage guidance: dry & semi-wet foods, not intended for liquids, carry upright
-- [x] Categories routes to both Drawer and Lunch collections
-- [x] Official Blue/Pink/Green Amazon ASIN mapping added without changing Drawer handoff
-- [x] Lunch PDP purchase button opens the selected color on Amazon
-- [x] Amazon launch failure shows an in-app fallback message
-- [x] STATE-001 persistent Favorites preserved
-- [x] State + Lunch regression coverage reconciled
-- [x] Reconciliation analyze green on validated code baseline
-- [x] Reconciliation tests green on validated code baseline
-- [x] Android preview APK green on validated code baseline
-- [ ] Final post-reconciliation CI green
-- [ ] PR #19 merged to `main`
-- [ ] `0.8.0` final preview artifact recorded
+- [x] `0.9.0+9` package version
+- [x] Dedicated Search destination in the mobile storefront navigation
+- [x] Premium search/discovery entry state
+- [x] Local mixed Drawer + Lunch result catalog
+- [x] Query matching across names, colors and product keywords
+- [x] Suggested search chips
+- [x] Session-local recent search presentation
+- [x] Collection + color filter sheet
+- [x] Featured / A–Z / collection sort sheet
+- [x] List / grid result presentation toggle
+- [x] Clear/reset state
+- [x] No-results state
+- [x] Result routing into the approved Drawer and Lunch PDPs
+- [x] Search/filter regression coverage
+- [x] Existing Amazon purchase routing preserved by reusing approved PDPs
+- [x] Existing persistent Drawer Favorites baseline preserved
+- [x] Flutter analyze green
+- [x] Flutter tests green
+- [x] Android preview APK green
+- [ ] UI-007 PR merged to `main`
+- [x] `0.9.0` preview artifact recorded
+
+## UI-007 validated preview receipt — 0.9.0
+
+- Release candidate: `0.9.0`
+- Package: `0.9.0+9`
+- Issue: `#18`
+- PR: `#22`
+- Validated head: `3c7c6ff05fb25c64bd8a3cf3e0a7eb46252431e8`
+- Validated workflow run: `31334832391`
+- Analyze: green
+- Tests: green
+- Android debug APK: green
+- Artifact ID: `9044048602`
+- Artifact name: `walka-ui-preview-3c7c6ff05fb25c64bd8a3cf3e0a7eb46252431e8`
+- Artifact size: `71,047,486 bytes`
+- Artifact SHA-256: `4f8b36f3de2189a393abf67c331acac045becc1b5d7c9dc91e70874bb219cb11`
+
+## UI-006 release receipt — 0.8.0
+
+- Release: `0.8.0`
+- Package: `0.8.0+8`
+- Issue: `#15`
+- PR: `#19`
+- Merge commit: `797f9bbb4455b7d3e7973f4b61492a18e86f2e09`
+- Validated PR workflow run: `31333558586`
+- Artifact ID: `9043684235`
+- Artifact name: `walka-ui-preview-4cdea1e34f72521d91d55faa6153ea72bd4547a3`
+- Artifact size: `71,015,473 bytes`
+- Artifact SHA-256: `083608602f1095798cf84db13eac1ef86d8bef60f9c12ba686dcf8aa8394d1c6`
 
 ## STATE-001 release receipt — 0.7.0
 
@@ -81,7 +110,7 @@ Phase 1 premium mobile UI/UX, COM-001 Amazon handoff, and STATE-001 persistent D
 ## Guardrails
 
 1. `Images/` remains the master visual-reference folder and must not be modified by implementation tasks.
-2. Preserve successful team work; new UI slices extend COM-001 and STATE-001 rather than replacing them.
+2. Preserve successful team work; new UI slices extend COM-001, STATE-001 and UI-006 rather than replacing them.
 3. New work stays in small, independently reviewable and releasable slices.
 4. Every slice must pass analyze, tests and Android build before merge.
 5. Product copy must preserve approved lunch-box safety/usage language.

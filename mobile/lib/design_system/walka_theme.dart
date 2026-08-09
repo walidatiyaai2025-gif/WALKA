@@ -77,14 +77,16 @@ ThemeData buildWalkaTheme() {
   final ButtonStyle secondaryButtonStyle = OutlinedButton.styleFrom(
     foregroundColor: WalkaColors.navy,
     minimumSize: const Size(48, 52),
+    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+    tapTargetSize: MaterialTapTargetSize.padded,
     side: const BorderSide(color: WalkaColors.navy),
     shape: RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(WalkaRadius.pill),
     ),
     textStyle: const TextStyle(
-      fontSize: 12,
+      fontSize: 10,
       fontWeight: FontWeight.w800,
-      letterSpacing: 1.1,
+      letterSpacing: 0.7,
     ),
   );
 
@@ -121,7 +123,7 @@ ThemeData buildWalkaTheme() {
       labelTextStyle: WidgetStateProperty.resolveWith<TextStyle>((states) {
         final bool selected = states.contains(WidgetState.selected);
         return TextStyle(
-          fontSize: 11,
+          fontSize: 10,
           fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
           color: selected ? WalkaColors.navy : WalkaColors.muted,
         );
@@ -130,7 +132,7 @@ ThemeData buildWalkaTheme() {
         final bool selected = states.contains(WidgetState.selected);
         return IconThemeData(
           color: selected ? WalkaColors.navy : WalkaColors.muted,
-          size: 23,
+          size: 22,
         );
       }),
     ),

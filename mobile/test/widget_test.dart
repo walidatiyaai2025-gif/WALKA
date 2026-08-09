@@ -8,20 +8,22 @@ import 'package:walka/features/favorites/favorites_state.dart';
 import 'package:walka/features/lifestyle/favorites_v5.dart';
 import 'package:walka/features/lifestyle/lifestyle_v4.dart';
 import 'package:walka/features/lunch/lunch_box_v6.dart';
-import 'package:walka/features/storefront/storefront_shell_v6.dart';
+import 'package:walka/features/search/search_discovery_v9.dart';
+import 'package:walka/features/storefront/storefront_shell_v9.dart';
 import 'package:walka/features/storefront/storefront_v2.dart';
 import 'package:walka/main.dart';
 
 void main() {
-  test('WALKA 0.8 exposes stateful storefront plus Lunch destinations', () {
+  test('WALKA 0.9 exposes the searchable stateful storefront', () {
     final WalkaFavoritesController controller = _newController();
     expect(WalkaApp(favoritesController: controller), isA<WalkaApp>());
-    expect(const WalkaStorefrontSplashV6(), isA<WalkaStorefrontSplashV6>());
-    expect(const WalkaStorefrontShellV6(), isA<WalkaStorefrontShellV6>());
+    expect(const WalkaStorefrontSplashV9(), isA<WalkaStorefrontSplashV9>());
+    expect(const WalkaStorefrontShellV9(), isA<WalkaStorefrontShellV9>());
     expect(const WalkaHomeV2(), isA<WalkaHomeV2>());
     expect(const WalkaCategoriesV6(), isA<WalkaCategoriesV6>());
     expect(const WalkaCollectionScreenV3(), isA<WalkaCollectionScreenV3>());
     expect(const WalkaLunchCollectionV6(), isA<WalkaLunchCollectionV6>());
+    expect(const WalkaSearchDiscoveryV9(), isA<WalkaSearchDiscoveryV9>());
     expect(
       const WalkaLunchProductDetailV6(),
       isA<WalkaLunchProductDetailV6>(),
@@ -33,6 +35,20 @@ void main() {
     expect(const WalkaAccountV4(), isA<WalkaAccountV4>());
     expect(const WalkaAboutV4(), isA<WalkaAboutV4>());
     expect(const WalkaProductDetailV2(), isA<WalkaProductDetailV2>());
+  });
+
+  test('search catalog contains every approved sellable variant', () {
+    expect(walkaSearchCatalog.length, 5);
+    expect(
+      walkaSearchCatalog.map((WalkaSearchProduct item) => item.id).toSet(),
+      <String>{
+        'drawer-white',
+        'drawer-gray',
+        'lunch-blue',
+        'lunch-pink',
+        'lunch-green',
+      },
+    );
   });
 
   test('Lunch collection exposes all three approved colors', () {
@@ -53,9 +69,9 @@ void main() {
     expect(theme.materialTapTargetSize, MaterialTapTargetSize.padded);
   });
 
-  testWidgets('storefront v6 renders with empty persisted favorites',
+  testWidgets('storefront v9 exposes Search as first-class navigation',
       (WidgetTester tester) async {
-    tester.view.physicalSize = const Size(320, 568);
+    tester.view.physicalSize = const Size(390, 844);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
@@ -68,17 +84,114 @@ void main() {
         controller: controller,
         child: MaterialApp(
           theme: buildWalkaTheme(),
-          home: const WalkaStorefrontShellV6(),
+          home: const WalkaStorefrontShellV9(),
         ),
       ),
     );
     await tester.pump();
 
-    expect(find.text('Home'), findsOneWidget);
-    expect(find.text('Categories'), findsOneWidget);
-    expect(find.text('Favorites'), findsOneWidget);
-    expect(find.text('Account'), findsOneWidget);
-    expect(controller.savedDrawerVariants, isEmpty);
+    final Finder searchDestination = find.descendant(
+      of: find.byType(NavigationBar),
+      matching: find.byIcon(Icons.search_outlined),
+    );
+    expect(searchDestination, findsOneWidget);
+    await tester.tap(searchDestination);
+    await tester.pumpAndSettle();
+
+    expect(
+      tester.widget<NavigationBar>(find.byType(NavigationBar)).selectedIndex,
+      1,
+    );
+    expect(find.text('SEARCH WALKA'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Categories search affordance invokes its routing callback',
+      (WidgetTester tester) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    bool searchRequested = false;
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildWalkaTheme(),
+        home: Scaffold(
+          body: WalkaCategoriesV6(
+            onSearch: () => searchRequested = true,
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    final Finder searchButton = find.byTooltip('Search');
+    expect(searchButton, findsOneWidget);
+    await tester.tap(searchButton);
+    await tester.pump();
+
+    expect(searchRequested, isTrue);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('search filters locally and opens the matching Lunch PDP',
+      (WidgetTester tester) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildWalkaTheme(),
+        home: const WalkaSearchDiscoveryV9(),
+      ),
+    );
+    await tester.pump();
+
+    await tester.enterText(find.byType(TextField), 'green');
+    await tester.pump();
+
+    expect(find.text('1 result'), findsOneWidget);
+    expect(find.text('Green'), findsOneWidget);
+    expect(find.text('Large Stainless Steel Bento Lunch Box'), findsOneWidget);
+
+    await tester.tap(find.text('Large Stainless Steel Bento Lunch Box'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Large Stainless Steel Bento Lunch Box'), findsOneWidget);
+    expect(find.textContaining('Green · PANTONE 6198 U'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('search supports list mode and designed no-results state',
+      (WidgetTester tester) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildWalkaTheme(),
+        home: const WalkaSearchDiscoveryV9(),
+      ),
+    );
+    await tester.pump();
+
+    await tester.enterText(find.byType(TextField), 'lunch box');
+    await tester.pump();
+    expect(find.byTooltip('List view'), findsOneWidget);
+    await tester.tap(find.byTooltip('List view'));
+    await tester.pump();
+    expect(find.text('3 results'), findsOneWidget);
+
+    await tester.enterText(find.byType(TextField), 'walka-does-not-exist');
+    await tester.pump();
+    expect(find.text('0 results'), findsOneWidget);
+    expect(find.text('Nothing matched that search'), findsOneWidget);
+    expect(find.text('CLEAR SEARCH'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 

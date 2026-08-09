@@ -47,11 +47,28 @@ jobs:
 
       - name: Analyze
         working-directory: mobile
-        run: flutter analyze
+        shell: bash
+        run: |
+          set -o pipefail
+          flutter analyze 2>&1 | tee flutter-analyze.log
 
       - name: Test
         working-directory: mobile
-        run: flutter test
+        shell: bash
+        run: |
+          set -o pipefail
+          flutter test --reporter expanded 2>&1 | tee flutter-test.log
+
+      - name: Upload validation diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: flutter-validation-diagnostics-${{ github.sha }}
+          path: |
+            mobile/flutter-analyze.log
+            mobile/flutter-test.log
+          if-no-files-found: warn
+          retention-days: 7
 
       - name: Generate Android runner
         working-directory: mobile
