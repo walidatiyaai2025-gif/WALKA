@@ -152,8 +152,23 @@ void main() {
     expect(find.text('Collections'), findsOneWidget);
     expect(find.text('White'), findsOneWidget);
     expect(find.text('Gray'), findsOneWidget);
+
+    final Finder scrollable = find.byType(Scrollable).first;
+    await tester.scrollUntilVisible(
+      find.text('Blue'),
+      420,
+      scrollable: scrollable,
+    );
+    await tester.pumpAndSettle();
     expect(find.text('Blue'), findsOneWidget);
     expect(find.text('Pink'), findsOneWidget);
+
+    await tester.scrollUntilVisible(
+      find.text('Green'),
+      260,
+      scrollable: scrollable,
+    );
+    await tester.pumpAndSettle();
     expect(find.text('Green'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
