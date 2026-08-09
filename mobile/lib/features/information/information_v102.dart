@@ -454,12 +454,13 @@ class _MenuCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
+    return Material(
+      color: Colors.white,
+      shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: WalkaColors.line),
+        side: const BorderSide(color: WalkaColors.line),
       ),
+      clipBehavior: Clip.antiAlias,
       child: Column(children: children),
     );
   }
