@@ -78,7 +78,6 @@ ThemeData buildWalkaTheme() {
     useMaterial3: true,
     colorScheme: scheme,
     scaffoldBackgroundColor: WalkaColors.ivory,
-    splashFactory: InkSparkle.splashFactory,
     textTheme: ThemeData.light().textTheme.apply(
       bodyColor: WalkaColors.text,
       displayColor: WalkaColors.text,
