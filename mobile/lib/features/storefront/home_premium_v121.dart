@@ -206,7 +206,7 @@ class _PremiumHero extends StatelessWidget {
           child: InkWell(
             onTap: onTap,
             child: SizedBox(
-              height: compact ? 402 : 430,
+              height: compact ? 424 : 430,
               child: Stack(
                 children: <Widget>[
                   Positioned(
