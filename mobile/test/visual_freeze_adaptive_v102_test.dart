@@ -52,6 +52,15 @@ void main() {
 
     expect(find.text('Account & information'), findsOneWidget);
     expect(find.text('FAQ'), findsOneWidget);
+
+    final Finder scrollable = find.byType(Scrollable).first;
+    await tester.scrollUntilVisible(
+      find.text('Amazon Store'),
+      280,
+      scrollable: scrollable,
+    );
+    await tester.pumpAndSettle();
+
     expect(find.text('Amazon Store'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
