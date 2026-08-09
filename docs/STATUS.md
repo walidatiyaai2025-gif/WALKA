@@ -6,7 +6,7 @@ Last updated: 2026-08-09
 
 **Phase 1.5 — Full Clickable Flutter Experience: IN PROGRESS**
 
-Phase 1 premium mobile UI/UX, COM-001 Amazon handoff, STATE-001 persistent Drawer Favorites, and UI-006 Lunch Box experience are released. Current product direction remains to complete and visually freeze the real Flutter screen set before Laravel/API work begins.
+Phase 1 premium mobile UI/UX, COM-001 Amazon handoff, STATE-001 persistent Drawer Favorites, UI-006 Lunch Box experience, and UI-007 Search & Discovery are released. Current product direction remains to complete and visually freeze the real Flutter screen set before Laravel/API work begins.
 
 ## Release board
 
@@ -20,12 +20,12 @@ Phase 1 premium mobile UI/UX, COM-001 Amazon handoff, STATE-001 persistent Drawe
 | COM-001 | 0.6.0 | Variant-aware Drawer Amazon handoff | COMPLETED |
 | STATE-001 | 0.7.0 | Persistent Drawer Favorites/customer state | COMPLETED |
 | UI-006 | 0.8.0 | Lunch Box collection + Blue/Pink/Green PDP | COMPLETED |
-| UI-007 | 0.9.0 | Search + discovery + results/filter/sort states | IN PROGRESS |
+| UI-007 | 0.9.0 | Search + discovery + results/filter/sort states | COMPLETED |
 | UI-008 | 0.10.0 | Product UX completion + gallery/share/related products | PLANNED |
 | UI-009 | 1.0.0 | Information screens + cross-platform visual freeze | PLANNED |
 | API-001 | post-1.0 | Laravel API foundation | DEFERRED |
 
-## Active slice — UI-007 / 0.9.0
+## Completed slice — UI-007 / 0.9.0
 
 - [x] `0.9.0+9` package version
 - [x] Dedicated Search destination in the mobile storefront navigation
@@ -46,24 +46,30 @@ Phase 1 premium mobile UI/UX, COM-001 Amazon handoff, STATE-001 persistent Drawe
 - [x] Flutter analyze green
 - [x] Flutter tests green
 - [x] Android preview APK green
-- [ ] UI-007 PR merged to `main`
+- [x] UI-007 PR merged to `main`
 - [x] `0.9.0` preview artifact recorded
 
-## UI-007 validated preview receipt — 0.9.0
+## UI-007 release receipt — 0.9.0
 
-- Release candidate: `0.9.0`
+- Release: `0.9.0`
 - Package: `0.9.0+9`
 - Issue: `#18`
 - PR: `#22`
-- Validated head: `3c7c6ff05fb25c64bd8a3cf3e0a7eb46252431e8`
-- Validated workflow run: `31334832391`
+- Validated code head: `3c7c6ff05fb25c64bd8a3cf3e0a7eb46252431e8`
+- Validated PR workflow run: `31334834860`
 - Analyze: green
 - Tests: green
 - Android debug APK: green
-- Artifact ID: `9044048602`
-- Artifact name: `walka-ui-preview-3c7c6ff05fb25c64bd8a3cf3e0a7eb46252431e8`
-- Artifact size: `71,047,486 bytes`
-- Artifact SHA-256: `4f8b36f3de2189a393abf67c331acac045becc1b5d7c9dc91e70874bb219cb11`
+- Artifact ID: `9044053306`
+- Artifact name: `walka-ui-preview-ae81bc1268252f8a47003819d1ce3b1e5f1bc31c`
+- Artifact size: `71,047,487 bytes`
+- Artifact SHA-256: `1b0c37f4dc3ddd4f356d515a57facf44583f9e9881ec522ff673d628ed46bc88`
+- Final docs head: `d9719bfac47df7301698fd68cda2fb5654748482`
+- Final-head workflow run: `31335041661`
+- Final-head artifact ID: `9044110713`
+- Final-head artifact size: `71,047,488 bytes`
+- Final-head artifact SHA-256: `e2ae5bcd723296ab7c543be3692ab34cce475754e806532205e28e4962d7b879`
+- Merge commit: `830cc7b98fed6e59270db29c4a321199e0462bb0`
 
 ## UI-006 release receipt — 0.8.0
 
@@ -110,7 +116,7 @@ Phase 1 premium mobile UI/UX, COM-001 Amazon handoff, STATE-001 persistent Drawe
 ## Guardrails
 
 1. `Images/` remains the master visual-reference folder and must not be modified by implementation tasks.
-2. Preserve successful team work; new UI slices extend COM-001, STATE-001 and UI-006 rather than replacing them.
+2. Preserve successful team work; new UI slices extend COM-001, STATE-001, UI-006, and UI-007 rather than replacing them.
 3. New work stays in small, independently reviewable and releasable slices.
 4. Every slice must pass analyze, tests and Android build before merge.
 5. Product copy must preserve approved lunch-box safety/usage language.
