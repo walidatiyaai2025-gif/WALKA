@@ -2,11 +2,13 @@
 
 Laravel 13 API backend for the WALKA mobile storefront.
 
+API-001 release: `1.1.0`.
+
 ## Runtime
 
 - PHP 8.3+
 - Composer 2
-- Laravel 13.x (`laravel/framework` 13.8+)
+- Laravel 13.x (`laravel/framework` 13.8+ in the locked manifest)
 - CI runtime: PHP 8.4
 
 ## Local setup
@@ -23,11 +25,13 @@ No database is required for the API-001 catalog contract. Product data is config
 
 ## API v1
 
-- `GET /api/v1/health` — service, API version and release health contract.
-- `GET /api/v1/config` — mobile-safe storefront configuration.
-- `GET /api/v1/catalog` — WALKA products, variants, ASINs and Amazon purchase destinations.
+- `GET /api/v1/health` — service, API version and backend release contract.
+- `GET /api/v1/config` — mobile-safe WALKA storefront configuration.
+- `GET /api/v1/catalog` — typed Product + Variant catalog, verified Product Master facts, Pantone metadata, ASINs and official Amazon purchase destinations.
 
-All purchase destinations remain external Amazon listings. API-001 adds no cart, checkout, payment, authentication or order storage.
+The API catalog is contract-tested against `../docs/PRODUCT_MASTER.md`. Product facts must be changed in the repository Product Master first, then reconciled into the API contract.
+
+All purchase destinations remain external Amazon listings. API-001 adds no cart, checkout, payment, authentication, account sync, database-backed catalog or order storage.
 
 ## Validation
 
