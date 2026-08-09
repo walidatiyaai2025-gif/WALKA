@@ -15,11 +15,15 @@ Uri amazonDrawerOrganizerUri({required bool gray}) {
   return Uri.https('www.amazon.com', '/dp/$asin');
 }
 
-Future<bool> openDrawerOrganizerOnAmazon({required bool gray}) {
-  return launchUrl(
-    amazonDrawerOrganizerUri(gray: gray),
-    mode: LaunchMode.externalApplication,
-  );
+Future<bool> openDrawerOrganizerOnAmazon({required bool gray}) async {
+  try {
+    return await launchUrl(
+      amazonDrawerOrganizerUri(gray: gray),
+      mode: LaunchMode.externalApplication,
+    );
+  } catch (_) {
+    return false;
+  }
 }
 
 String amazonLunchBoxAsin(WalkaAmazonLunchVariant variant) {
@@ -34,9 +38,13 @@ Uri amazonLunchBoxUri(WalkaAmazonLunchVariant variant) {
   return Uri.https('www.amazon.com', '/dp/${amazonLunchBoxAsin(variant)}');
 }
 
-Future<bool> openLunchBoxOnAmazon(WalkaAmazonLunchVariant variant) {
-  return launchUrl(
-    amazonLunchBoxUri(variant),
-    mode: LaunchMode.externalApplication,
-  );
+Future<bool> openLunchBoxOnAmazon(WalkaAmazonLunchVariant variant) async {
+  try {
+    return await launchUrl(
+      amazonLunchBoxUri(variant),
+      mode: LaunchMode.externalApplication,
+    );
+  } catch (_) {
+    return false;
+  }
 }
