@@ -8,14 +8,15 @@ Last updated: 2026-08-10
 **Laravel API foundation 1.1.0: COMPLETED**  
 **Flutter ↔ Laravel catalog integration 1.2.0: COMPLETED**  
 **Database-backed catalog persistence 1.3.0: COMPLETED**  
+**DESIGN-001 premium product-led Home: COMPLETED**  
 **OPS-001 stable-main + verified APK delivery: IN PROGRESS**  
-**Premium UI/UX program: DESIGN-001 IN PROGRESS (P0)**
+**Premium UI/UX program: DESIGN-002 NEXT (P0)**
 
-WALKA has a released Flutter storefront connected to a versioned Laravel 13 API with resilient mobile caching/fallback and a database-backed Product/Variant catalog. Public commerce still redirects to official Amazon product listings.
+WALKA has a released Flutter storefront connected to a versioned Laravel 13 API with resilient mobile caching/fallback and a database-backed Product/Variant catalog. DESIGN-001 is now on stable `main`, replacing the prototype-like icon-led Home with a product-led premium presentation. Public commerce still redirects to official Amazon product listings.
 
 The owner-facing stable source is `main`. Implementation remains on dedicated task branches until the required CI gates are green. OPS-001 is establishing `Last verified APK/WALKA-latest.apk` as the persistent Android test target produced only from successful stable-main validation.
 
-The current product priority is the P0 premium UI/UX program in `docs/UI_UX_PRIORITY_PLAN.md`: DESIGN-001 Home fidelity first, then shell/navigation, discovery, Product Detail, secondary screens, motion/state polish and cross-device QA. **API-004 remains planned but queued behind the P0 design program unless a critical backend/security/data blocker requires it sooner.**
+The current product priority is the P0 premium UI/UX program in `docs/UI_UX_PRIORITY_PLAN.md`: **DESIGN-002 app shell + bottom navigation premium polish is next**, followed by discovery, Product Detail, secondary screens, motion/state polish and cross-device QA. **API-004 remains planned but queued behind the P0 design program unless a critical backend/security/data blocker requires it sooner.**
 
 ## Release board
 
@@ -35,18 +36,20 @@ The current product priority is the P0 premium UI/UX program in `docs/UI_UX_PRIO
 | API-001 | 1.1.0 | Laravel 13 API foundation + Product/Variant catalog contract | COMPLETED |
 | API-002 | 1.2.0 | Flutter remote catalog/config integration + resilient local fallback | COMPLETED |
 | API-003 | 1.3.0 | Database-backed Product/Variant catalog persistence | COMPLETED |
+| DESIGN-001 | P0 | Premium product-led Home fidelity | COMPLETED |
 | OPS-001 | Delivery | Stable `main` + persistent `Last verified APK` pipeline | IN PROGRESS |
-| DESIGN-001 | P0 | Premium product-led Home fidelity | IN PROGRESS |
-| DESIGN-002..007 | P0 | Premium shell, discovery, PDP, secondary UI, motion/state and QA | QUEUED |
+| DESIGN-002 | P0 | App shell + bottom navigation premium polish | NEXT |
+| DESIGN-003..007 | P0 | Discovery, PDP, secondary UI, motion/state and visual QA | QUEUED |
 | API-004 | 1.4.0 | Authenticated catalog administration + safe authoring API | QUEUED |
 
 ## Active delivery and design coordination
 
 ### OPS-001 — stable owner delivery
 
-- Issue: `#43`
+- Issue: `#43`.
 - Original draft PR: `#44` — validated on an older main baseline but became stale after API-003 advanced `main`; it must not be force-merged.
-- Final reconciliation branch: `agent/ops-001-stable-apk-delivery-final` — rebuilt from current `main`.
+- Final reconciliation PR: `#56`.
+- Final reconciliation branch: `agent/ops-001-stable-apk-delivery-final`.
 - Root engineering rules: `AGENTS.md`.
 - Delivery lifecycle: `docs/DELIVERY_POLICY.md`.
 - Stable Android target: `Last verified APK/WALKA-latest.apk`.
@@ -55,15 +58,28 @@ The current product priority is the P0 premium UI/UX program in `docs/UI_UX_PRIO
 - Stale main runs skip publication, APK-only publication commits do not recursively retrigger the Flutter workflow, and final publication remains fast-forward-only.
 - User-facing Android delivery does not use ZIP files in project chat.
 
-### DESIGN-001 — P0 Home premium fidelity
+### DESIGN-001 authoritative release receipt — P0 Home fidelity
 
-- Issue: `#47` under design program `#46`.
+- Parent design program: `#46`.
+- Issue: `#47`.
 - PR: `#54`.
-- Branch: `agent/design-001-home-premium`.
-- Replaces generic icon-led Home presentation with reusable Drawer/Lunch product visuals, premium hero hierarchy, curated product cards and editorial Lunch presentation.
-- Preserves API-002 catalog state, stable IDs, offline fallback, Search/Categories destinations and Amazon Product Detail routing.
-- Compact 320×568 coverage is a required merge gate.
-- DESIGN-002 is next only after DESIGN-001 is green and stable.
+- Final validated head: `41ec592077db9e7e0fd0edc184c857a9be964123`.
+- Flutter Preview PR run: `31342182820` — green.
+- Analyze: green.
+- Full Flutter tests including compact 320×568 DESIGN-001 coverage: green.
+- Android APK build/upload: green.
+- Stable merge commit: `fef9bea93704decad5be4ad0a3e20f8018826d88`.
+
+#### DESIGN-001 delivered
+
+- [x] Reusable `WalkaProductVisual` for Drawer Organizer and Lunch Box families.
+- [x] Product-led premium Home hero.
+- [x] Curated horizontal variant cards with White/Gray and Blue/Pink/Green distinction.
+- [x] Premium Lunch editorial module.
+- [x] Stronger WALKA navy/gold hierarchy, typography, spacing and CTA treatment.
+- [x] API-002 catalog controller, stable IDs, offline fallback and Amazon routing preserved.
+- [x] Original compact 320×568 overflow identified and fixed before merge.
+- [x] Analyze, full tests and Android APK build green before stable merge.
 
 ## API-003 authoritative release receipt — 1.3.0
 
