@@ -13,10 +13,11 @@ final class ConfigTest extends TestCase
             ->assertJson([
                 'data' => [
                     'brand' => 'WALKA',
-                    'release' => '1.3.0',
+                    'release' => '1.4.0',
                     'api_version' => 'v1',
                     'purchase_mode' => 'amazon_redirect',
                 ],
-            ]);
+            ])
+            ->assertJsonMissingPath('data.admin_token');
     }
 }

@@ -18,12 +18,14 @@ final class ProductVariant extends Model
         'pantone',
         'asin',
         'sort_order',
+        'revision',
     ];
 
     protected function casts(): array
     {
         return [
             'sort_order' => 'integer',
+            'revision' => 'integer',
         ];
     }
 

@@ -18,6 +18,7 @@ final class Product extends Model
         'features',
         'facts',
         'sort_order',
+        'revision',
     ];
 
     protected function casts(): array
@@ -26,6 +27,7 @@ final class Product extends Model
             'features' => 'array',
             'facts' => 'array',
             'sort_order' => 'integer',
+            'revision' => 'integer',
         ];
     }
 

@@ -17,13 +17,14 @@ final class WalkaCatalogSeeder extends Seeder
 
             foreach (WalkaCatalogSeed::products() as $productOrder => $productData) {
                 $productIds[] = $productData['id'];
+                $existingProduct = Product::query()->find($productData['id']);
 
                 Product::query()->updateOrCreate(
                     ['id' => $productData['id']],
                     [
-                        'name' => $productData['name'],
+                        'name' => $existingProduct?->name ?? $productData['name'],
                         'category' => $productData['category'],
-                        'features' => $productData['features'],
+                        'features' => $existingProduct?->features ?? $productData['features'],
                         'facts' => $productData['facts'],
                         'sort_order' => $productOrder,
                     ],
@@ -32,12 +33,13 @@ final class WalkaCatalogSeeder extends Seeder
                 $variantIds = [];
                 foreach ($productData['variants'] as $variantOrder => $variantData) {
                     $variantIds[] = $variantData['id'];
+                    $existingVariant = ProductVariant::query()->find($variantData['id']);
 
                     ProductVariant::query()->updateOrCreate(
                         ['id' => $variantData['id']],
                         [
                             'product_id' => $productData['id'],
-                            'color' => $variantData['color'],
+                            'color' => $existingVariant?->color ?? $variantData['color'],
                             'pantone' => $variantData['pantone'] ?? null,
                             'asin' => $variantData['asin'],
                             'sort_order' => $variantOrder,

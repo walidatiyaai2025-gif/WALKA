@@ -61,7 +61,7 @@ jobs:
         working-directory: backend
         run: |
           php artisan migrate:fresh --seed --force
-          php artisan tinker --execute="throw_unless(\\App\\Models\\Product::count() === 2); throw_unless(\\App\\Models\\ProductVariant::count() === 5);"
+          php artisan tinker --execute="throw_unless(\\App\\Models\\Product::count() === 2); throw_unless(\\App\\Models\\ProductVariant::count() === 5); throw_unless(\\App\\Models\\Product::where('revision', 1)->count() === 2); throw_unless(\\App\\Models\\ProductVariant::where('revision', 1)->count() === 5); throw_unless(\\App\\Models\\CatalogAudit::count() === 0);"
 
       - name: Check PHP formatting
         working-directory: backend
