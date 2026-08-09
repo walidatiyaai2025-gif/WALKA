@@ -8,10 +8,11 @@ final readonly class ProductVariantData
         public string $id,
         public string $color,
         public string $asin,
+        public ?string $pantone = null,
     ) {}
 
     /**
-     * @return array{id: string, color: string, asin: string, purchase_url: string}
+     * @return array{id: string, color: string, asin: string, pantone: string|null, purchase_url: string}
      */
     public function toArray(): array
     {
@@ -19,6 +20,7 @@ final readonly class ProductVariantData
             'id' => $this->id,
             'color' => $this->color,
             'asin' => $this->asin,
+            'pantone' => $this->pantone,
             'purchase_url' => "https://www.amazon.com/dp/{$this->asin}",
         ];
     }
