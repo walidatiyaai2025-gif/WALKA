@@ -7,12 +7,14 @@ on:
       - 'agent/api-*'
     paths:
       - 'backend/**'
+      - 'docs/PRODUCT_MASTER.md'
       - '.github/workflows/backend-api.yml'
   pull_request:
     branches:
       - main
     paths:
       - 'backend/**'
+      - 'docs/PRODUCT_MASTER.md'
       - '.github/workflows/backend-api.yml'
   workflow_dispatch:
 
