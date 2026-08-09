@@ -43,9 +43,10 @@ Phase 1 premium mobile UI/UX, COM-001 Amazon handoff, STATE-001 persistent Drawe
 - [x] Categories V10 exposes all five sellable variants
 - [x] Favorites V10 preserves persistent Drawer favorite behavior
 - [x] Approved Lunch usage guidance preserved
-- [x] Product-copy QA removes unverified Drawer weight
-- [x] Product-copy QA aligns V10 and legacy Lunch dishwasher/microwave guidance
-- [x] Regression coverage added for approved product-copy contracts
+- [x] `docs/PRODUCT_MASTER.md` records verified product facts as the engineering source of truth
+- [x] Product-copy QA preserves verified Drawer weight `1.72 lb`
+- [x] Product-copy QA preserves top-rack steel-tray care and hand-wash lid/gasket guidance
+- [x] 320×568 compact-phone and 900×900 large-mobile regression coverage
 - [ ] Final-head Flutter analyze green
 - [ ] Final-head Flutter tests green
 - [ ] Final-head Android preview APK green
