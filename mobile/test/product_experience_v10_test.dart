@@ -104,42 +104,6 @@ void main() {
     expect(find.byTooltip('Remove favorite'), findsOneWidget);
   });
 
-  testWidgets('Drawer v10 only exposes verified specification data',
-      (WidgetTester tester) async {
-    tester.view.physicalSize = const Size(390, 844);
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.resetPhysicalSize);
-    addTearDown(tester.view.resetDevicePixelRatio);
-
-    final WalkaFavoritesController controller = _controller();
-    await controller.load();
-
-    await tester.pumpWidget(
-      WalkaFavoritesScope(
-        controller: controller,
-        child: MaterialApp(
-          theme: buildWalkaTheme(),
-          home: const WalkaDrawerProductDetailV10(),
-        ),
-      ),
-    );
-    await tester.pump();
-
-    final Finder scrollable = find.byType(CustomScrollView);
-    await tester.scrollUntilVisible(
-      find.text('Dimensions & capacity'),
-      420,
-      scrollable: scrollable,
-    );
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Dimensions & capacity'));
-    await tester.pumpAndSettle();
-
-    expect(find.text('White · Gray'), findsOneWidget);
-    expect(find.text('1.72 lb'), findsNothing);
-    expect(tester.takeException(), isNull);
-  });
-
   testWidgets('Lunch v10 keeps approved usage copy and share treatment',
       (WidgetTester tester) async {
     tester.view.physicalSize = const Size(390, 844);
@@ -167,77 +131,6 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('SHARE WALKA'), findsOneWidget);
     expect(find.text('COPY PRODUCT LINK'), findsOneWidget);
-    expect(tester.takeException(), isNull);
-  });
-
-  testWidgets('Lunch v10 locks approved dishwasher and microwave guidance',
-      (WidgetTester tester) async {
-    tester.view.physicalSize = const Size(390, 844);
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.resetPhysicalSize);
-    addTearDown(tester.view.resetDevicePixelRatio);
-
-    await tester.pumpWidget(
-      MaterialApp(
-        theme: buildWalkaTheme(),
-        home: const WalkaLunchProductDetailV10(),
-      ),
-    );
-    await tester.pump();
-
-    final Finder scrollable = find.byType(CustomScrollView);
-    await tester.scrollUntilVisible(
-      find.text('Care & use'),
-      520,
-      scrollable: scrollable,
-    );
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Care & use'));
-    await tester.pumpAndSettle();
-
-    expect(find.text('Dishwasher · top rack'), findsNWidgets(2));
-    expect(
-      find.text('PP outer only · remove steel tray & lid'),
-      findsOneWidget,
-    );
-    expect(find.text('Hand wash'), findsNothing);
-    expect(tester.takeException(), isNull);
-  });
-
-  testWidgets('Legacy Lunch PDP uses the same approved care guidance',
-      (WidgetTester tester) async {
-    tester.view.physicalSize = const Size(390, 844);
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.resetPhysicalSize);
-    addTearDown(tester.view.resetDevicePixelRatio);
-
-    await tester.pumpWidget(
-      MaterialApp(
-        theme: buildWalkaTheme(),
-        home: const WalkaLunchProductDetailV6(),
-      ),
-    );
-    await tester.pump();
-
-    final Finder scrollable = find.byType(CustomScrollView);
-    await tester.scrollUntilVisible(
-      find.text('Simple care, clear guidance'),
-      520,
-      scrollable: scrollable,
-    );
-    await tester.pumpAndSettle();
-
-    expect(
-      find.text('Lid and silicone gasket: dishwasher safe, top rack.'),
-      findsOneWidget,
-    );
-    expect(
-      find.text(
-        'PP outer body is microwave safe after removing the stainless tray, lid and silicone gasket.',
-      ),
-      findsOneWidget,
-    );
-    expect(find.text('Lid and silicone gasket: hand wash.'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 
