@@ -116,22 +116,17 @@ List<WalkaSearchProduct> filterWalkaSearchProducts({
       break;
     case WalkaSearchSort.nameAsc:
       results.sort((a, b) {
-        final int titleCompare = a.title.compareTo(b.title);
-        return titleCompare != 0
-            ? titleCompare
-            : a.colorLabel.compareTo(b.colorLabel);
+        final int title = a.title.compareTo(b.title);
+        return title == 0 ? a.colorLabel.compareTo(b.colorLabel) : title;
       });
+      break;
     case WalkaSearchSort.collection:
       results.sort((a, b) {
-        final int collectionCompare = a.collection.index.compareTo(
-          b.collection.index,
-        );
-        return collectionCompare != 0
-            ? collectionCompare
-            : a.colorLabel.compareTo(b.colorLabel);
+        final int group = a.collection.index.compareTo(b.collection.index);
+        return group == 0 ? a.colorLabel.compareTo(b.colorLabel) : group;
       });
+      break;
   }
-
   return results;
 }
 
@@ -144,8 +139,7 @@ class WalkaSearchV7 extends StatefulWidget {
 
 class _WalkaSearchV7State extends State<WalkaSearchV7> {
   final TextEditingController _controller = TextEditingController();
-  final FocusNode _focusNode = FocusNode();
-  final List<String> _recentSearches = <String>[];
+  final List<String> _recent = <String>[];
 
   String _query = '';
   WalkaSearchCollection _collection = WalkaSearchCollection.all;
@@ -163,7 +157,6 @@ class _WalkaSearchV7State extends State<WalkaSearchV7> {
   @override
   void dispose() {
     _controller.dispose();
-    _focusNode.dispose();
     super.dispose();
   }
 
@@ -174,34 +167,32 @@ class _WalkaSearchV7State extends State<WalkaSearchV7> {
         colors: _colors,
       );
 
-  bool get _hasActiveSearch =>
+  bool get _active =>
       _query.trim().isNotEmpty ||
       _collection != WalkaSearchCollection.all ||
       _colors.isNotEmpty;
 
-  void _applyQuery(String value, {bool submit = false}) {
-    final String next = value.trimLeft();
-    if (_controller.text != next) {
-      _controller.value = TextEditingValue(
-        text: next,
-        selection: TextSelection.collapsed(offset: next.length),
-      );
-    }
+  void _useQuery(String value, {bool remember = false}) {
+    final String clean = value.trim();
+    _controller.value = TextEditingValue(
+      text: clean,
+      selection: TextSelection.collapsed(offset: clean.length),
+    );
     setState(() {
-      _query = next;
-      if (submit && next.trim().isNotEmpty) {
-        _recentSearches.remove(next.trim());
-        _recentSearches.insert(0, next.trim());
-        if (_recentSearches.length > 4) {
-          _recentSearches.removeLast();
+      _query = clean;
+      if (remember && clean.isNotEmpty) {
+        _recent.remove(clean);
+        _recent.insert(0, clean);
+        if (_recent.length > 4) {
+          _recent.removeLast();
         }
       }
     });
   }
 
-  void _clearSearch() {
+  void _reset() {
     _controller.clear();
-    _focusNode.unfocus();
+    FocusScope.of(context).unfocus();
     setState(() {
       _query = '';
       _collection = WalkaSearchCollection.all;
@@ -210,15 +201,14 @@ class _WalkaSearchV7State extends State<WalkaSearchV7> {
     });
   }
 
-  Future<void> _showFilters() async {
-    final _SearchFilterSelection? selection =
-        await showModalBottomSheet<_SearchFilterSelection>(
+  Future<void> _filter() async {
+    final _FilterValue? value = await showModalBottomSheet<_FilterValue>(
       context: context,
       showDragHandle: true,
       isScrollControlled: true,
-      builder: (BuildContext context) {
-        WalkaSearchCollection draftCollection = _collection;
-        Set<String> draftColors = Set<String>.from(_colors);
+      builder: (BuildContext sheetContext) {
+        WalkaSearchCollection collection = _collection;
+        Set<String> colors = Set<String>.from(_colors);
         return StatefulBuilder(
           builder: (BuildContext context, StateSetter setSheetState) {
             return SafeArea(
@@ -231,59 +221,69 @@ class _WalkaSearchV7State extends State<WalkaSearchV7> {
                     const Text('FILTER RESULTS', style: WalkaType.eyebrow),
                     const SizedBox(height: 8),
                     const Text('Narrow the collection', style: WalkaType.sectionTitle),
-                    const SizedBox(height: 22),
-                    const _SheetLabel('COLLECTION'),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 20),
+                    const Text(
+                      'COLLECTION',
+                      style: TextStyle(
+                        color: WalkaColors.navy,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 1.1,
+                      ),
+                    ),
+                    const SizedBox(height: 9),
                     Wrap(
                       spacing: 8,
-                      runSpacing: 8,
-                      children: WalkaSearchCollection.values.map((value) {
+                      children: WalkaSearchCollection.values.map((item) {
                         return ChoiceChip(
-                          label: Text(_collectionLabel(value)),
-                          selected: draftCollection == value,
-                          onSelected: (_) => setSheetState(
-                            () => draftCollection = value,
-                          ),
+                          label: Text(_collectionLabel(item)),
+                          selected: item == collection,
+                          onSelected: (_) {
+                            setSheetState(() => collection = item);
+                          },
                         );
                       }).toList(),
                     ),
-                    const SizedBox(height: 22),
-                    const _SheetLabel('COLOR'),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 20),
+                    const Text(
+                      'COLOR',
+                      style: TextStyle(
+                        color: WalkaColors.navy,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 1.1,
+                      ),
+                    ),
+                    const SizedBox(height: 9),
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
-                      children: <String>[
-                        'White',
-                        'Gray',
-                        'Blue',
-                        'Pink',
-                        'Green',
-                      ].map((String color) {
+                      children: <String>['White', 'Gray', 'Blue', 'Pink', 'Green']
+                          .map((String color) {
                         return FilterChip(
                           label: Text(color),
-                          selected: draftColors.contains(color),
+                          selected: colors.contains(color),
                           onSelected: (bool selected) {
                             setSheetState(() {
                               if (selected) {
-                                draftColors.add(color);
+                                colors.add(color);
                               } else {
-                                draftColors.remove(color);
+                                colors.remove(color);
                               }
                             });
                           },
                         );
                       }).toList(),
                     ),
-                    const SizedBox(height: 26),
+                    const SizedBox(height: 24),
                     Row(
                       children: <Widget>[
                         Expanded(
                           child: OutlinedButton(
                             onPressed: () {
                               setSheetState(() {
-                                draftCollection = WalkaSearchCollection.all;
-                                draftColors = <String>{};
+                                collection = WalkaSearchCollection.all;
+                                colors = <String>{};
                               });
                             },
                             child: const Text('RESET'),
@@ -292,11 +292,8 @@ class _WalkaSearchV7State extends State<WalkaSearchV7> {
                         const SizedBox(width: 10),
                         Expanded(
                           child: ElevatedButton(
-                            onPressed: () => Navigator.of(context).pop(
-                              _SearchFilterSelection(
-                                draftCollection,
-                                draftColors,
-                              ),
+                            onPressed: () => Navigator.of(sheetContext).pop(
+                              _FilterValue(collection, colors),
                             ),
                             child: const Text('APPLY'),
                           ),
@@ -311,21 +308,20 @@ class _WalkaSearchV7State extends State<WalkaSearchV7> {
         );
       },
     );
-
-    if (!mounted || selection == null) {
+    if (!mounted || value == null) {
       return;
     }
     setState(() {
-      _collection = selection.collection;
-      _colors = selection.colors;
+      _collection = value.collection;
+      _colors = value.colors;
     });
   }
 
-  Future<void> _showSort() async {
-    final WalkaSearchSort? selected = await showModalBottomSheet<WalkaSearchSort>(
+  Future<void> _chooseSort() async {
+    final WalkaSearchSort? value = await showModalBottomSheet<WalkaSearchSort>(
       context: context,
       showDragHandle: true,
-      builder: (BuildContext context) {
+      builder: (BuildContext sheetContext) {
         return SafeArea(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(20, 4, 20, 22),
@@ -336,23 +332,21 @@ class _WalkaSearchV7State extends State<WalkaSearchV7> {
                 const Text('SORT RESULTS', style: WalkaType.eyebrow),
                 const SizedBox(height: 8),
                 const Text('Choose an order', style: WalkaType.sectionTitle),
-                const SizedBox(height: 14),
-                ...WalkaSearchSort.values.map((value) {
-                  final bool active = value == _sort;
+                const SizedBox(height: 12),
+                ...WalkaSearchSort.values.map((item) {
+                  final bool selected = item == _sort;
                   return ListTile(
                     contentPadding: EdgeInsets.zero,
-                    onTap: () => Navigator.of(context).pop(value),
+                    onTap: () => Navigator.of(sheetContext).pop(item),
                     leading: Icon(
-                      active
-                          ? Icons.check_circle_rounded
-                          : Icons.circle_outlined,
-                      color: active ? WalkaColors.gold : WalkaColors.muted,
+                      selected ? Icons.check_circle_rounded : Icons.circle_outlined,
+                      color: selected ? WalkaColors.gold : WalkaColors.muted,
                     ),
                     title: Text(
-                      _sortLabel(value),
+                      _sortLabel(item),
                       style: TextStyle(
                         color: WalkaColors.navy,
-                        fontWeight: active ? FontWeight.w800 : FontWeight.w600,
+                        fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
                       ),
                     ),
                   );
@@ -363,15 +357,14 @@ class _WalkaSearchV7State extends State<WalkaSearchV7> {
         );
       },
     );
-
-    if (!mounted || selected == null) {
+    if (!mounted || value == null) {
       return;
     }
-    setState(() => _sort = selected);
+    setState(() => _sort = value);
   }
 
-  void _openProduct(WalkaSearchProduct product) {
-    final Widget destination = switch (product.id) {
+  void _open(WalkaSearchProduct product) {
+    final Widget page = switch (product.id) {
       WalkaSearchProductId.drawerWhite => const WalkaProductDetailV2(),
       WalkaSearchProductId.drawerGray =>
         const WalkaProductDetailV2(initialGray: true),
@@ -383,9 +376,7 @@ class _WalkaSearchV7State extends State<WalkaSearchV7> {
           initialVariant: WalkaLunchVariant.green,
         ),
     };
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(builder: (_) => destination),
-    );
+    Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => page));
   }
 
   @override
@@ -396,31 +387,27 @@ class _WalkaSearchV7State extends State<WalkaSearchV7> {
       child: ListView(
         padding: const EdgeInsets.fromLTRB(16, 14, 16, 38),
         children: <Widget>[
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 4),
-            child: Row(
-              children: <Widget>[
-                Text(
-                  'WALKA',
-                  style: TextStyle(
-                    color: WalkaColors.navy,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 3.8,
-                  ),
+          const Row(
+            children: <Widget>[
+              Text(
+                'WALKA',
+                style: TextStyle(
+                  color: WalkaColors.navy,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 3.8,
                 ),
-                Spacer(),
-                Text('DISCOVER', style: WalkaType.eyebrow),
-              ],
-            ),
+              ),
+              Spacer(),
+              Text('DISCOVER', style: WalkaType.eyebrow),
+            ],
           ),
           const SizedBox(height: 18),
           TextField(
             controller: _controller,
-            focusNode: _focusNode,
             textInputAction: TextInputAction.search,
             onChanged: (String value) => setState(() => _query = value),
-            onSubmitted: (String value) => _applyQuery(value, submit: true),
+            onSubmitted: (String value) => _useQuery(value, remember: true),
             decoration: InputDecoration(
               hintText: 'Search WALKA products',
               prefixIcon: const Icon(Icons.search_rounded),
@@ -428,7 +415,7 @@ class _WalkaSearchV7State extends State<WalkaSearchV7> {
                   ? null
                   : IconButton(
                       tooltip: 'Clear search',
-                      onPressed: _clearSearch,
+                      onPressed: _reset,
                       icon: const Icon(Icons.close_rounded),
                     ),
               filled: true,
@@ -447,43 +434,56 @@ class _WalkaSearchV7State extends State<WalkaSearchV7> {
               ),
             ),
           ),
-          const SizedBox(height: 14),
-          _SearchActionRow(
-            collection: _collection,
-            colorCount: _colors.length,
-            sort: _sort,
-            grid: _grid,
-            onFilter: _showFilters,
-            onSort: _showSort,
-            onToggleView: () => setState(() => _grid = !_grid),
-          ),
-          const SizedBox(height: 24),
-          if (!_hasActiveSearch) ...<Widget>[
-            _DiscoveryIntro(onSearch: _applyQuery),
-            const SizedBox(height: 26),
-            if (_recentSearches.isNotEmpty) ...<Widget>[
-              _ChipSection(
-                title: 'RECENT SEARCHES',
-                values: _recentSearches,
-                onSelected: _applyQuery,
+          const SizedBox(height: 12),
+          Row(
+            children: <Widget>[
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: _filter,
+                  icon: const Icon(Icons.tune_rounded, size: 18),
+                  label: Text(_filterLabel(_collection, _colors.length)),
+                ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(width: 8),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: _chooseSort,
+                  icon: const Icon(Icons.swap_vert_rounded, size: 18),
+                  label: Text(_sortShortLabel(_sort)),
+                ),
+              ),
+              const SizedBox(width: 8),
+              IconButton.outlined(
+                tooltip: _grid ? 'Show list' : 'Show grid',
+                onPressed: () => setState(() => _grid = !_grid),
+                icon: Icon(
+                  _grid ? Icons.view_agenda_outlined : Icons.grid_view_rounded,
+                ),
+              ),
             ],
-            _ChipSection(
+          ),
+          const SizedBox(height: 22),
+          if (!_active) ...<Widget>[
+            _DiscoveryHero(onQuery: _useQuery),
+            const SizedBox(height: 24),
+            if (_recent.isNotEmpty) ...<Widget>[
+              _SearchChips(
+                title: 'RECENT SEARCHES',
+                values: _recent,
+                onQuery: _useQuery,
+              ),
+              const SizedBox(height: 22),
+            ],
+            _SearchChips(
               title: 'SUGGESTED SEARCHES',
               values: _suggestions,
-              onSelected: _applyQuery,
+              onQuery: _useQuery,
             ),
-            const SizedBox(height: 30),
+            const SizedBox(height: 28),
             const Text('SHOP THE FULL EDIT', style: WalkaType.eyebrow),
             const SizedBox(height: 8),
             const Text('All WALKA essentials', style: WalkaType.sectionTitle),
-            const SizedBox(height: 16),
-            _ResultsView(
-              products: results,
-              grid: _grid,
-              onOpen: _openProduct,
-            ),
+            const SizedBox(height: 14),
           ] else ...<Widget>[
             Row(
               children: <Widget>[
@@ -500,141 +500,69 @@ class _WalkaSearchV7State extends State<WalkaSearchV7> {
                     ],
                   ),
                 ),
-                TextButton(
-                  onPressed: _clearSearch,
-                  child: const Text('RESET'),
-                ),
+                TextButton(onPressed: _reset, child: const Text('RESET')),
               ],
             ),
-            const SizedBox(height: 16),
-            if (results.isEmpty)
-              _NoResults(onReset: _clearSearch)
-            else
-              _ResultsView(
-                products: results,
-                grid: _grid,
-                onOpen: _openProduct,
-              ),
+            const SizedBox(height: 14),
           ],
+          if (results.isEmpty)
+            _NoResults(onReset: _reset)
+          else
+            _ProductResults(
+              products: results,
+              grid: _grid,
+              onOpen: _open,
+            ),
         ],
       ),
     );
   }
 }
 
-class _SearchActionRow extends StatelessWidget {
-  const _SearchActionRow({
-    required this.collection,
-    required this.colorCount,
-    required this.sort,
-    required this.grid,
-    required this.onFilter,
-    required this.onSort,
-    required this.onToggleView,
-  });
+class _DiscoveryHero extends StatelessWidget {
+  const _DiscoveryHero({required this.onQuery});
 
-  final WalkaSearchCollection collection;
-  final int colorCount;
-  final WalkaSearchSort sort;
-  final bool grid;
-  final VoidCallback onFilter;
-  final VoidCallback onSort;
-  final VoidCallback onToggleView;
-
-  @override
-  Widget build(BuildContext context) {
-    final int activeFilters =
-        (collection == WalkaSearchCollection.all ? 0 : 1) + colorCount;
-    return Row(
-      children: <Widget>[
-        Expanded(
-          child: OutlinedButton.icon(
-            onPressed: onFilter,
-            icon: const Icon(Icons.tune_rounded, size: 18),
-            label: Text(activeFilters == 0 ? 'FILTER' : 'FILTER · $activeFilters'),
-          ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: OutlinedButton.icon(
-            onPressed: onSort,
-            icon: const Icon(Icons.swap_vert_rounded, size: 18),
-            label: Text(_sortShortLabel(sort)),
-          ),
-        ),
-        const SizedBox(width: 8),
-        IconButton.outlined(
-          tooltip: grid ? 'Show list' : 'Show grid',
-          onPressed: onToggleView,
-          icon: Icon(grid ? Icons.view_agenda_outlined : Icons.grid_view_rounded),
-        ),
-      ],
-    );
-  }
-}
-
-class _DiscoveryIntro extends StatelessWidget {
-  const _DiscoveryIntro({required this.onSearch});
-
-  final ValueChanged<String> onSearch;
+  final ValueChanged<String> onQuery;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 240,
+      height: 225,
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
         color: WalkaColors.navy,
         borderRadius: BorderRadius.circular(26),
       ),
-      child: Stack(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Positioned(
-            right: -28,
-            bottom: -42,
-            child: Container(
-              width: 170,
-              height: 170,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: WalkaColors.gold.withValues(alpha: 0.24),
-                  width: 30,
-                ),
-              ),
+          const Text('FIND YOUR WALKA', style: WalkaType.eyebrow),
+          const SizedBox(height: 12),
+          const Text(
+            'A faster way to\nfind everyday order.',
+            style: TextStyle(
+              fontFamily: 'serif',
+              color: Colors.white,
+              fontSize: 29,
+              height: 1.05,
+              fontWeight: FontWeight.w600,
             ),
           ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          const Spacer(),
+          Wrap(
+            spacing: 8,
             children: <Widget>[
-              const Text('FIND YOUR WALKA', style: WalkaType.eyebrow),
-              const SizedBox(height: 11),
-              const SizedBox(
-                width: 250,
-                child: Text(
-                  'A faster way to\nfind everyday order.',
-                  style: TextStyle(
-                    fontFamily: 'serif',
-                    color: Colors.white,
-                    fontSize: 30,
-                    height: 1.05,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
+              ActionChip(
+                onPressed: () => onQuery('drawer organizer'),
+                backgroundColor: Colors.white,
+                side: BorderSide.none,
+                label: const Text('DRAWERS'),
               ),
-              const Spacer(),
-              Wrap(
-                spacing: 8,
-                children: <Widget>[
-                  _HeroQuickAction(
-                    label: 'DRAWERS',
-                    onTap: () => onSearch('drawer organizer'),
-                  ),
-                  _HeroQuickAction(
-                    label: 'LUNCH',
-                    onTap: () => onSearch('lunch box'),
-                  ),
-                ],
+              ActionChip(
+                onPressed: () => onQuery('lunch box'),
+                backgroundColor: Colors.white,
+                side: BorderSide.none,
+                label: const Text('LUNCH'),
               ),
             ],
           ),
@@ -644,41 +572,16 @@ class _DiscoveryIntro extends StatelessWidget {
   }
 }
 
-class _HeroQuickAction extends StatelessWidget {
-  const _HeroQuickAction({required this.label, required this.onTap});
-
-  final String label;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return ActionChip(
-      onPressed: onTap,
-      backgroundColor: Colors.white,
-      side: BorderSide.none,
-      label: Text(
-        label,
-        style: const TextStyle(
-          color: WalkaColors.navy,
-          fontSize: 10,
-          fontWeight: FontWeight.w800,
-          letterSpacing: 1,
-        ),
-      ),
-    );
-  }
-}
-
-class _ChipSection extends StatelessWidget {
-  const _ChipSection({
+class _SearchChips extends StatelessWidget {
+  const _SearchChips({
     required this.title,
     required this.values,
-    required this.onSelected,
+    required this.onQuery,
   });
 
   final String title;
   final List<String> values;
-  final ValueChanged<String> onSelected;
+  final ValueChanged<String> onQuery;
 
   @override
   Widget build(BuildContext context) {
@@ -686,13 +589,13 @@ class _ChipSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         Text(title, style: WalkaType.eyebrow),
-        const SizedBox(height: 10),
+        const SizedBox(height: 9),
         Wrap(
           spacing: 8,
           runSpacing: 8,
           children: values.map((String value) {
             return ActionChip(
-              onPressed: () => onSelected(value),
+              onPressed: () => onQuery(value),
               avatar: const Icon(Icons.search_rounded, size: 16),
               label: Text(value),
             );
@@ -703,8 +606,8 @@ class _ChipSection extends StatelessWidget {
   }
 }
 
-class _ResultsView extends StatelessWidget {
-  const _ResultsView({
+class _ProductResults extends StatelessWidget {
+  const _ProductResults({
     required this.products,
     required this.grid,
     required this.onOpen,
@@ -716,45 +619,43 @@ class _ResultsView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (!grid) {
-      return Column(
-        children: products.map((WalkaSearchProduct product) {
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 11),
-            child: _SearchProductCard(
-              product: product,
-              compact: false,
-              onTap: () => onOpen(product),
-            ),
+    if (grid) {
+      return GridView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        itemCount: products.length,
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          mainAxisSpacing: 10,
+          crossAxisSpacing: 10,
+          childAspectRatio: 0.73,
+        ),
+        itemBuilder: (BuildContext context, int index) {
+          return _ProductCard(
+            product: products[index],
+            compact: true,
+            onTap: () => onOpen(products[index]),
           );
-        }).toList(),
+        },
       );
     }
-
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: products.length,
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        mainAxisSpacing: 10,
-        crossAxisSpacing: 10,
-        childAspectRatio: 0.72,
-      ),
-      itemBuilder: (BuildContext context, int index) {
-        final WalkaSearchProduct product = products[index];
-        return _SearchProductCard(
-          product: product,
-          compact: true,
-          onTap: () => onOpen(product),
+    return Column(
+      children: products.map((product) {
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 10),
+          child: _ProductCard(
+            product: product,
+            compact: false,
+            onTap: () => onOpen(product),
+          ),
         );
-      },
+      }).toList(),
     );
   }
 }
 
-class _SearchProductCard extends StatelessWidget {
-  const _SearchProductCard({
+class _ProductCard extends StatelessWidget {
+  const _ProductCard({
     required this.product,
     required this.compact,
     required this.onTap,
@@ -764,38 +665,42 @@ class _SearchProductCard extends StatelessWidget {
   final bool compact;
   final VoidCallback onTap;
 
-  bool get _isLunch => product.collection == WalkaSearchCollection.lunch;
-
   @override
   Widget build(BuildContext context) {
+    final Widget art = Container(
+      decoration: BoxDecoration(
+        color: product.tone,
+        borderRadius: BorderRadius.circular(15),
+      ),
+      child: Center(
+        child: Icon(
+          product.collection == WalkaSearchCollection.lunch
+              ? Icons.lunch_dining_outlined
+              : Icons.grid_view_rounded,
+          color: WalkaColors.navy,
+          size: 34,
+        ),
+      ),
+    );
+
     if (compact) {
       return Material(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(19),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
           onTap: onTap,
           child: Container(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(11),
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
               border: Border.all(color: WalkaColors.line),
+              borderRadius: BorderRadius.circular(19),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                Expanded(child: _ProductArtwork(product: product)),
-                const SizedBox(height: 12),
-                Text(
-                  _isLunch ? 'LUNCH COLLECTION' : 'DRAWER ORGANIZATION',
-                  style: const TextStyle(
-                    color: WalkaColors.gold,
-                    fontSize: 8,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 0.8,
-                  ),
-                ),
-                const SizedBox(height: 5),
+                Expanded(child: art),
+                const SizedBox(height: 10),
                 Text(
                   product.title,
                   maxLines: 2,
@@ -828,24 +733,26 @@ class _SearchProductCard extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.all(13),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
             border: Border.all(color: WalkaColors.line),
+            borderRadius: BorderRadius.circular(20),
           ),
           child: Row(
             children: <Widget>[
-              SizedBox(width: 108, height: 100, child: _ProductArtwork(product: product)),
+              SizedBox(width: 105, height: 96, child: art),
               const SizedBox(width: 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     Text(
-                      _isLunch ? 'LUNCH COLLECTION' : 'DRAWER ORGANIZATION',
+                      product.collection == WalkaSearchCollection.lunch
+                          ? 'LUNCH COLLECTION'
+                          : 'DRAWER ORGANIZATION',
                       style: const TextStyle(
                         color: WalkaColors.gold,
                         fontSize: 8,
                         fontWeight: FontWeight.w800,
-                        letterSpacing: 0.9,
+                        letterSpacing: 0.8,
                       ),
                     ),
                     const SizedBox(height: 6),
@@ -853,8 +760,7 @@ class _SearchProductCard extends StatelessWidget {
                       product.title,
                       style: const TextStyle(
                         color: WalkaColors.navy,
-                        fontSize: 15,
-                        height: 1.15,
+                        fontSize: 14,
                         fontWeight: FontWeight.w800,
                       ),
                     ),
@@ -866,62 +772,20 @@ class _SearchProductCard extends StatelessWidget {
                         fontSize: 11,
                       ),
                     ),
-                    const SizedBox(height: 10),
-                    const Row(
-                      children: <Widget>[
-                        Text(
-                          'VIEW PRODUCT',
-                          style: TextStyle(
-                            color: WalkaColors.navy,
-                            fontSize: 9,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 0.8,
-                          ),
-                        ),
-                        SizedBox(width: 5),
-                        Icon(Icons.arrow_forward_rounded, color: WalkaColors.gold, size: 16),
-                      ],
+                    const SizedBox(height: 8),
+                    const Text(
+                      'VIEW PRODUCT  →',
+                      style: TextStyle(
+                        color: WalkaColors.navy,
+                        fontSize: 9,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.7,
+                      ),
                     ),
                   ],
                 ),
               ),
             ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _ProductArtwork extends StatelessWidget {
-  const _ProductArtwork({required this.product});
-
-  final WalkaSearchProduct product;
-
-  @override
-  Widget build(BuildContext context) {
-    final bool lunch = product.collection == WalkaSearchCollection.lunch;
-    return Container(
-      decoration: BoxDecoration(
-        color: product.tone,
-        borderRadius: BorderRadius.circular(15),
-      ),
-      child: Center(
-        child: Container(
-          width: lunch ? 70 : 78,
-          height: lunch ? 45 : 58,
-          decoration: BoxDecoration(
-            color: _artworkColor(product.colorLabel),
-            borderRadius: BorderRadius.circular(lunch ? 13 : 10),
-            border: Border.all(color: Colors.white, width: 2),
-            boxShadow: const <BoxShadow>[
-              BoxShadow(color: Color(0x1E000000), blurRadius: 9, offset: Offset(0, 5)),
-            ],
-          ),
-          child: Icon(
-            lunch ? Icons.lunch_dining_outlined : Icons.grid_view_rounded,
-            color: WalkaColors.navy.withValues(alpha: 0.58),
-            size: lunch ? 24 : 28,
           ),
         ),
       ),
@@ -937,91 +801,65 @@ class _NoResults extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(24, 34, 24, 30),
+      padding: const EdgeInsets.all(26),
       decoration: BoxDecoration(
         color: WalkaColors.surface,
         borderRadius: BorderRadius.circular(24),
       ),
       child: Column(
         children: <Widget>[
-          const Icon(Icons.search_off_rounded, color: WalkaColors.navy, size: 42),
-          const SizedBox(height: 14),
+          const Icon(Icons.search_off_rounded, color: WalkaColors.navy, size: 40),
+          const SizedBox(height: 12),
           const Text(
             'No WALKA pieces found',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontFamily: 'serif',
               color: WalkaColors.navy,
-              fontSize: 24,
+              fontSize: 23,
               fontWeight: FontWeight.w600,
             ),
           ),
           const SizedBox(height: 8),
           const Text(
-            'Try a broader term or reset the filters to see the full collection.',
+            'Try a broader term or reset filters to see the full collection.',
             textAlign: TextAlign.center,
             style: WalkaType.body,
           ),
-          const SizedBox(height: 18),
-          OutlinedButton(
-            onPressed: onReset,
-            child: const Text('RESET SEARCH'),
-          ),
+          const SizedBox(height: 16),
+          OutlinedButton(onPressed: onReset, child: const Text('RESET SEARCH')),
         ],
       ),
     );
   }
 }
 
-class _SheetLabel extends StatelessWidget {
-  const _SheetLabel(this.text);
-
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      text,
-      style: const TextStyle(
-        color: WalkaColors.navy,
-        fontSize: 10,
-        fontWeight: FontWeight.w800,
-        letterSpacing: 1.2,
-      ),
-    );
-  }
-}
-
-class _SearchFilterSelection {
-  const _SearchFilterSelection(this.collection, this.colors);
+class _FilterValue {
+  const _FilterValue(this.collection, this.colors);
 
   final WalkaSearchCollection collection;
   final Set<String> colors;
 }
 
-String _collectionLabel(WalkaSearchCollection collection) => switch (collection) {
+String _collectionLabel(WalkaSearchCollection value) => switch (value) {
       WalkaSearchCollection.all => 'All',
       WalkaSearchCollection.drawer => 'Drawer',
       WalkaSearchCollection.lunch => 'Lunch',
     };
 
-String _sortLabel(WalkaSearchSort sort) => switch (sort) {
+String _sortLabel(WalkaSearchSort value) => switch (value) {
       WalkaSearchSort.featured => 'Featured',
       WalkaSearchSort.nameAsc => 'Name A–Z',
       WalkaSearchSort.collection => 'Collection',
     };
 
-String _sortShortLabel(WalkaSearchSort sort) => switch (sort) {
+String _sortShortLabel(WalkaSearchSort value) => switch (value) {
       WalkaSearchSort.featured => 'SORT',
       WalkaSearchSort.nameAsc => 'A–Z',
       WalkaSearchSort.collection => 'COLLECTION',
     };
 
-Color _artworkColor(String label) => switch (label) {
-      'White' => const Color(0xFFF9F8F4),
-      'Gray' => const Color(0xFF969CA3),
-      'Blue' => const Color(0xFF7894A5),
-      'Pink' => const Color(0xFFE9B8C2),
-      'Green' => const Color(0xFFB6C7A8),
-      _ => WalkaColors.surface,
-    };
+String _filterLabel(WalkaSearchCollection collection, int colorCount) {
+  final int count = (collection == WalkaSearchCollection.all ? 0 : 1) + colorCount;
+  return count == 0 ? 'FILTER' : 'FILTER · $count';
+}
