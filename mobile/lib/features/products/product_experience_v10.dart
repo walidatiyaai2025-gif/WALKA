@@ -187,7 +187,7 @@ class _WalkaDrawerProductDetailV10State
                       _SpecRowV10(label: 'Closed size', value: '13 × 15 × 2 in'),
                       _SpecRowV10(label: 'Expandable width', value: 'Up to 22.4 in'),
                       _SpecRowV10(label: 'Compartments', value: '8'),
-                      _SpecRowV10(label: 'Weight', value: '1.72 lb'),
+                      _SpecRowV10(label: 'Colors', value: 'White · Gray'),
                     ],
                   ),
                   const _ProductDisclosureV10(
@@ -411,8 +411,8 @@ class _WalkaLunchProductDetailV10State
                     icon: Icons.cleaning_services_outlined,
                     children: <Widget>[
                       _SpecRowV10(label: 'Steel tray', value: 'Dishwasher · top rack'),
-                      _SpecRowV10(label: 'Lid & gasket', value: 'Hand wash'),
-                      _SpecRowV10(label: 'Microwave', value: 'Remove stainless tray'),
+                      _SpecRowV10(label: 'Lid & gasket', value: 'Dishwasher · top rack'),
+                      _SpecRowV10(label: 'Microwave', value: 'PP outer only · remove steel tray & lid'),
                       _SpecRowV10(label: 'Carry', value: 'Keep upright'),
                     ],
                   ),
