@@ -14,25 +14,11 @@ Backend/Laravel work is intentionally deferred.
 |---|---|---|---|
 | UI-001 | 0.1.0 | Foundation + Splash + App Shell + Home + navigation skeleton | COMPLETED |
 | UI-002 | 0.2.0 | Home fidelity + Product Detail | COMPLETED |
-| UI-003 | 0.3.0 | Categories + collection browsing | IN PROGRESS |
-| UI-004 | 0.4.0 | Favorites + Account + About | PLANNED |
+| UI-003 | 0.3.0 | Categories + collection browsing | COMPLETED |
+| UI-004 | 0.4.0 | Favorites + Account + About | IN PROGRESS |
 | UI-005 | 0.5.0 | Android/iOS polish + accessibility + visual QA | PLANNED |
 
-## UI-002 result
-
-- [x] `0.2.0+2` package version
-- [x] Premium editorial Home v2
-- [x] Product Detail v2 with gallery states
-- [x] White/Gray product variants
-- [x] Feature grid and detailed specifications
-- [x] Amazon purchase treatment (visual only)
-- [x] Analyze green
-- [x] Tests green
-- [x] Android preview APK green
-- [x] PR #4 merged to `main`
-- [x] Artifact `9042784196` recorded on Issue #3
-
-## UI-003 acceptance checklist
+## UI-003 result
 
 - [x] `0.3.0+3` package version
 - [x] Categories v3 premium landing screen
@@ -41,13 +27,28 @@ Backend/Laravel work is intentionally deferred.
 - [x] Dedicated Drawer collection browse screen
 - [x] White/Gray visual filtering
 - [x] Product cards route into Product Detail v2
-- [x] Storefront shell upgraded without rewriting Home/PDP
-- [x] Smoke coverage updated for catalog entry points
+- [x] Analyze green
+- [x] Tests green
+- [x] Android preview APK green
+- [x] PR #6 merged to `main`
+- [x] Artifact `9042871076` recorded on Issue #5
+
+## UI-004 acceptance checklist
+
+- [x] `0.4.0+4` package version
+- [x] Favorites v4 populated presentation
+- [x] Favorites local empty-state presentation
+- [x] Favorite product cards route to Product Detail v2
+- [x] Account v4 premium brand hub
+- [x] Account routes into About v4
+- [x] About v4 editorial story experience
+- [x] Existing Home/PDP/Categories/Collection work preserved
+- [x] Smoke coverage updated for all Phase 1 destinations
 - [ ] CI analyze green
 - [ ] CI tests green
 - [ ] Android preview APK green
 - [ ] PR merged to `main`
-- [ ] `0.3.0` preview considered releasable
+- [ ] `0.4.0` preview considered releasable
 
 ## Guardrails
 
