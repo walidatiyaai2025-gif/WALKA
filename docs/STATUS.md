@@ -39,10 +39,11 @@ Technical baseline: Laravel 13.x, PHP 8.3+; CI validates on PHP 8.4.
 - [x] Feature tests added for health/config/catalog contracts
 - [x] Permanent backend CI workflow added
 - [x] Composer lock reconciled with the WALKA package manifest
-- [ ] Composer validation green in permanent CI
-- [ ] Pint formatting gate green
-- [ ] Laravel tests green in permanent CI
-- [ ] API v1 route smoke check green
+- [x] Composer validation green in permanent CI
+- [x] Pint formatting gate green
+- [x] Laravel tests green in permanent CI
+- [x] API v1 route smoke check green
+- [x] Branch validation run `31333603126` green
 - [ ] PR merged to `main`
 - [ ] Main backend CI receipt recorded
 
