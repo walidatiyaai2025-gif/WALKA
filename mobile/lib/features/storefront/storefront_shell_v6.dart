@@ -5,7 +5,6 @@ import '../../design_system/walka_theme.dart';
 import '../catalog/catalog_v6.dart';
 import '../lifestyle/favorites_v5.dart';
 import '../lifestyle/lifestyle_v4.dart' show WalkaAccountV4;
-import '../search/search_v7.dart';
 import 'storefront_v2.dart' show WalkaHomeV2;
 
 class WalkaStorefrontSplashV6 extends StatelessWidget {
@@ -95,7 +94,7 @@ class WalkaStorefrontSplashV6 extends StatelessWidget {
                 const SizedBox(height: 12),
                 const Center(
                   child: Text(
-                    'UI PREVIEW · 0.9.0',
+                    'UI PREVIEW · 0.8.0',
                     style: TextStyle(
                       color: Color(0xFF91A5B9),
                       fontSize: 10,
@@ -134,9 +133,8 @@ class _WalkaStorefrontShellV6State extends State<WalkaStorefrontShellV6> {
   Widget build(BuildContext context) {
     final List<Widget> pages = <Widget>[
       const WalkaHomeV2(),
-      const WalkaSearchV7(),
       const WalkaCategoriesV6(),
-      WalkaFavoritesV5(onExploreCollections: () => _selectTab(2)),
+      WalkaFavoritesV5(onExploreCollections: () => _selectTab(1)),
       const WalkaAccountV4(),
     ];
 
@@ -154,12 +152,6 @@ class _WalkaStorefrontShellV6State extends State<WalkaStorefrontShellV6> {
               selectedIcon: Icon(Icons.home_rounded),
               label: 'Home',
               tooltip: 'Home',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.search_outlined),
-              selectedIcon: Icon(Icons.search_rounded),
-              label: 'Search',
-              tooltip: 'Search',
             ),
             NavigationDestination(
               icon: Icon(Icons.grid_view_outlined),
