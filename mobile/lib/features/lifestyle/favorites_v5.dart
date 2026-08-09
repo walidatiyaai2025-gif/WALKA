@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../design_system/walka_theme.dart';
+import '../favorites/favorites_state.dart';
 import '../storefront/storefront_v2.dart';
 
 class WalkaFavoritesV5 extends StatefulWidget {
@@ -13,10 +14,27 @@ class WalkaFavoritesV5 extends StatefulWidget {
 }
 
 class _WalkaFavoritesV5State extends State<WalkaFavoritesV5> {
-  final Set<bool> _savedVariants = <bool>{false, true};
+  Future<void> _removeFavorite(
+    BuildContext context,
+    WalkaFavoritesController controller,
+    bool gray,
+  ) async {
+    final bool saved = await controller.removeDrawer(gray: gray);
+    if (!mounted || saved) {
+      return;
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Favorite could not be updated. Please try again.'),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
+    final WalkaFavoritesController controller = WalkaFavoritesScope.of(context);
+    final List<bool> savedVariants = controller.savedDrawerVariants;
+
     return SafeArea(
       bottom: false,
       child: CustomScrollView(
@@ -59,7 +77,7 @@ class _WalkaFavoritesV5State extends State<WalkaFavoritesV5> {
               ),
             ),
           ),
-          if (_savedVariants.isEmpty)
+          if (savedVariants.isEmpty)
             SliverFillRemaining(
               hasScrollBody: false,
               child: Padding(
@@ -117,7 +135,7 @@ class _WalkaFavoritesV5State extends State<WalkaFavoritesV5> {
                 child: Row(
                   children: <Widget>[
                     Text(
-                      '${_savedVariants.length} SAVED',
+                      '${savedVariants.length} SAVED',
                       style: const TextStyle(
                         color: WalkaColors.muted,
                         fontSize: 10,
@@ -138,7 +156,7 @@ class _WalkaFavoritesV5State extends State<WalkaFavoritesV5> {
             SliverPadding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               sliver: SliverGrid.builder(
-                itemCount: _savedVariants.length,
+                itemCount: savedVariants.length,
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 2,
                   mainAxisSpacing: 14,
@@ -146,7 +164,7 @@ class _WalkaFavoritesV5State extends State<WalkaFavoritesV5> {
                   childAspectRatio: 0.62,
                 ),
                 itemBuilder: (BuildContext context, int index) {
-                  final bool gray = _savedVariants.elementAt(index);
+                  final bool gray = savedVariants[index];
                   return Semantics(
                     button: true,
                     label:
@@ -162,8 +180,10 @@ class _WalkaFavoritesV5State extends State<WalkaFavoritesV5> {
                           ),
                         );
                       },
-                      onRemove: () => setState(
-                        () => _savedVariants.remove(gray),
+                      onRemove: () => _removeFavorite(
+                        context,
+                        controller,
+                        gray,
                       ),
                     ),
                   );
@@ -326,7 +346,7 @@ class _LocalStateNote extends StatelessWidget {
           SizedBox(width: 12),
           Expanded(
             child: Text(
-              'Favorites remain local preview state in Phase 1. Persistence will be connected in a later functional phase.',
+              'Favorites are saved on this device. Account and cloud sync can be added in a later release.',
               style: TextStyle(
                 color: Color(0xFF435167),
                 fontSize: 11,
