@@ -37,6 +37,39 @@ class WalkaApiSettings {
   }
 }
 
+class WalkaApiHealth {
+  const WalkaApiHealth({
+    required this.status,
+    required this.service,
+    required this.release,
+    required this.apiVersion,
+  });
+
+  final String status;
+  final String service;
+  final String release;
+  final String apiVersion;
+
+  bool get isHealthy => status == 'ok' && service == 'walka-api';
+
+  factory WalkaApiHealth.fromJson(Map<String, dynamic> json) {
+    String requiredString(String key) {
+      final Object? value = json[key];
+      if (value is! String || value.trim().isEmpty) {
+        throw FormatException('Health $key must be a non-empty string.');
+      }
+      return value;
+    }
+
+    return WalkaApiHealth(
+      status: requiredString('status'),
+      service: requiredString('service'),
+      release: requiredString('release'),
+      apiVersion: requiredString('api_version'),
+    );
+  }
+}
+
 abstract interface class WalkaCatalogRemoteDataSource {
   Future<WalkaStorefrontConfig> fetchConfig();
 
@@ -102,6 +135,21 @@ class WalkaApiClient implements WalkaCatalogRemoteDataSource {
     } on Object catch (error) {
       throw FormatException('Invalid WALKA API JSON: $error');
     }
+  }
+
+  Future<WalkaApiHealth> fetchHealth() async {
+    final Map<String, dynamic> json = await _getJson('/api/v1/health');
+    final Object? data = json['data'];
+    if (data is! Map) {
+      throw const FormatException('Health data must be an object.');
+    }
+    final WalkaApiHealth health = WalkaApiHealth.fromJson(
+      Map<String, dynamic>.from(data),
+    );
+    if (health.apiVersion != 'v1') {
+      throw const FormatException('Unsupported WALKA health API version.');
+    }
+    return health;
   }
 
   @override
