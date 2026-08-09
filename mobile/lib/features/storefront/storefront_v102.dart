@@ -4,6 +4,7 @@ import '../../design_system/walka_adaptive.dart';
 import '../../design_system/walka_theme.dart';
 import '../catalog/catalog_state.dart';
 import '../information/information_v102.dart';
+import 'home_premium_v121.dart';
 import 'storefront_catalog_v120.dart';
 import 'storefront_v101.dart' show WalkaFavoritesV101;
 
@@ -154,7 +155,10 @@ class _WalkaStorefrontShellV102State extends State<WalkaStorefrontShellV102> {
 
   Widget _buildShell(BuildContext context) {
     final List<Widget> pages = <Widget>[
-      WalkaHomeV120(onShopAll: () => _select(2), onSearch: () => _select(1)),
+      WalkaHomePremiumV121(
+        onShopAll: () => _select(2),
+        onSearch: () => _select(1),
+      ),
       const WalkaSearchV120(),
       const WalkaCategoriesV120(),
       WalkaFavoritesV101(onExplore: () => _select(2)),
