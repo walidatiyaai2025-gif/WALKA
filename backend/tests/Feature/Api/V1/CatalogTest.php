@@ -20,10 +20,8 @@ final class CatalogTest extends TestCase
             ->assertJsonPath('data.0.facts.material', 'Plastic')
             ->assertJsonPath('data.0.facts.compartments', 8)
             ->assertJsonPath('data.0.facts.expandable_width_in', 22.4)
-            ->assertJsonPath('data.0.facts.product_weight_lb', 1.72)
-            ->assertJsonPath('data.0.facts.packaging_in.0', 13.46)
-            ->assertJsonPath('data.0.facts.packaging_in.1', 15.16)
-            ->assertJsonPath('data.0.facts.packaging_in.2', 2.36)
+            ->assertJsonMissingPath('data.0.facts.product_weight_lb')
+            ->assertJsonMissingPath('data.0.facts.packaging_in')
             ->assertJsonPath('data.0.variants.0.id', 'drawer-organizer:white')
             ->assertJsonPath('data.0.variants.0.asin', 'B0FQN4DCTG')
             ->assertJsonPath('data.0.variants.0.purchase_url', 'https://www.amazon.com/dp/B0FQN4DCTG')
@@ -34,19 +32,27 @@ final class CatalogTest extends TestCase
             ->assertJsonPath('data.1.facts.capacity_ml', 1200)
             ->assertJsonPath('data.1.facts.food_tray', 'SUS304 stainless steel')
             ->assertJsonPath('data.1.facts.compartments', 4)
-            ->assertJsonPath('data.1.facts.outer_body', 'BPA-free PP')
+            ->assertJsonPath('data.1.facts.outer_body', 'Food-grade PP')
             ->assertJsonPath('data.1.facts.lid', '4 clips with silicone gasket')
             ->assertJsonPath('data.1.facts.weight_with_bag_lb', 1.84)
-            ->assertJsonPath('data.1.facts.care.lid_and_gasket', 'Hand wash.')
+            ->assertJsonPath(
+                'data.1.facts.care.lid_and_gasket',
+                'Dishwasher safe on the top rack; not microwave safe.',
+            )
             ->assertJsonPath(
                 'data.1.facts.care.pp_outer_body',
-                'Microwave safe without the stainless steel tray.',
+                'Microwave safe only after removing the stainless tray, lid, and silicone gasket.',
             )
             ->assertJsonPath(
                 'data.1.facts.usage_language.0',
                 'Secure Lock | Helps Prevent Spills',
             )
-            ->assertJsonPath('data.1.facts.usage_language.2', 'Not intended for liquids')
+            ->assertJsonPath('data.1.facts.usage_language.1', 'SPILL-RESISTANT DESIGN')
+            ->assertJsonPath(
+                'data.1.facts.usage_language.3',
+                'Not intended for liquids. Best for dry & semi-wet foods.',
+            )
+            ->assertJsonPath('data.1.facts.usage_language.4', 'Carry upright.')
             ->assertJsonCount(3, 'data.1.variants')
             ->assertJsonPath('data.1.variants.0.pantone', 'PANTONE 4155 U')
             ->assertJsonPath('data.1.variants.0.purchase_url', 'https://www.amazon.com/dp/B0FQN4L8MW')
