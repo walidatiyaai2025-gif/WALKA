@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'design_system/walka_theme.dart';
-import 'features/storefront/storefront_shell_v3.dart';
+import 'features/storefront/storefront_shell_v4.dart';
 
 void main() {
   runApp(const WalkaApp());
@@ -16,7 +16,7 @@ class WalkaApp extends StatelessWidget {
       title: 'WALKA',
       debugShowCheckedModeBanner: false,
       theme: buildWalkaTheme(),
-      home: const WalkaStorefrontSplashV3(),
+      home: const WalkaStorefrontSplashV4(),
     );
   }
 }
