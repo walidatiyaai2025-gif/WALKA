@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'design_system/walka_theme.dart';
 import 'features/favorites/favorites_state.dart';
-import 'features/storefront/storefront_v101.dart';
+import 'features/storefront/storefront_v102.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -26,7 +26,7 @@ class WalkaApp extends StatelessWidget {
         title: 'WALKA',
         debugShowCheckedModeBanner: false,
         theme: buildWalkaTheme(),
-        home: const WalkaStorefrontSplashV101(),
+        home: const WalkaStorefrontSplashV102(),
       ),
     );
   }
