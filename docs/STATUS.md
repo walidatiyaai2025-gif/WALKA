@@ -4,9 +4,9 @@ Last updated: 2026-08-09
 
 ## Current state
 
-**Phase 1 — Premium Mobile UI/UX Prototype: COMPLETED**
+**Phase 2 — Functional Storefront: IN PROGRESS**
 
-The Phase 1 application is a static/mock Flutter storefront with completed mobile navigation and visual QA. Laravel/backend implementation remains intentionally deferred and has not started.
+Phase 1 premium mobile UI/UX is complete. Phase 2 is adding real customer-facing behavior in small releases while purchases continue to complete on Amazon.
 
 ## Release board
 
@@ -17,50 +17,47 @@ The Phase 1 application is a static/mock Flutter storefront with completed mobil
 | UI-003 | 0.3.0 | Categories + collection browsing | COMPLETED |
 | UI-004 | 0.4.0 | Favorites + Account + About | COMPLETED |
 | UI-005 | 0.5.0 | Android/iOS polish + accessibility + visual QA | COMPLETED |
+| COM-001 | 0.6.0 | Variant-aware Amazon purchase handoff | IN PROGRESS |
+| STATE-001 | 0.7.0 | Persistent Favorites/customer state | PLANNED |
+| API-001 | 0.8.0 | Laravel API foundation | PLANNED |
+| API-002 | 0.9.0 | Flutter remote catalog integration | PLANNED |
+| REL-001 | 1.0.0 | Storefront release candidate | PLANNED |
 
-## Phase 1 final result — 0.5.0
+## Active slice — COM-001 / 0.6.0
 
-- [x] `0.5.0+5` final Phase 1 package version
-- [x] Splash and four-destination app shell
-- [x] Premium editorial Home
-- [x] Premium Categories and Drawer collection browsing
-- [x] Product Detail with white/gray variants, gallery states and specifications
-- [x] Favorites populated and empty states with PDP routing
-- [x] Account premium brand hub
-- [x] About / Our Story editorial experience
-- [x] Amazon purchase treatment retained as visual/non-functional Phase 1 UI
-- [x] Padded Material touch targets and 48px icon/text-button minimums
-- [x] Bottom navigation sizing/labels hardened
-- [x] Adaptive 560px mobile content frame for large devices
-- [x] Compact-width spacing primitive added
-- [x] Favorites empty-state navigation returns to Categories
-- [x] Favorite product/remove semantics added
-- [x] Compact 320x568 render smoke coverage
-- [x] Oversized viewport/adaptive-frame coverage
-- [x] CI analyze green
-- [x] CI tests green
-- [x] Android preview APK green
-- [x] PR #10 squash-merged to `main`
-- [x] Final preview artifact `9043093831` generated
+- [x] `0.6.0+6` package version
+- [x] Dedicated Amazon commerce boundary
+- [x] White drawer organizer routes to its official Amazon ASIN
+- [x] Gray drawer organizer routes to its official Amazon ASIN
+- [x] PDP purchase button uses the currently selected color
+- [x] External app/browser launch requested through `url_launcher`
+- [x] Failed launch surfaces an in-app fallback message
+- [x] Variant-to-ASIN tests added
+- [x] Existing Phase 1 visual hierarchy preserved
+- [x] Phase 2 release plan documented
+- [ ] CI analyze green
+- [ ] CI tests green
+- [ ] Android preview APK green
+- [ ] PR merged to `main`
+- [ ] `0.6.0` preview artifact recorded
 
-## Final release receipt
+## Previous release receipt — Phase 1 / 0.5.0
 
-- Release: `0.5.0`
-- Package: `0.5.0+5`
 - PR: `#10`
 - Merge commit: `2507547f8ca909b9d10db5181f88498ef14ac113`
 - Validated workflow run: `31331498047`
 - Artifact ID: `9043093831`
-- Artifact name: `walka-ui-preview-fedc82b9457dbda68f8b17d2d7f62954f43f6eba`
-- Artifact size: `68,425,711 bytes`
 - Artifact SHA-256: `75d629add1f32b9342b16ae798d7fd1091c74c5f572cf7513e6a6c76a0da3bb5`
 
-## Phase boundary
+## Phase 2 boundaries
 
-Phase 1 contains no Laravel/API/authentication/cart/checkout/payment/order persistence. Live Amazon redirects are also intentionally deferred until the approved functional phase.
+- WALKA does not implement an in-app cart, checkout or payment flow; Amazon remains the purchase destination.
+- Laravel is introduced in a later Phase 2 slice behind versioned APIs and service/repository boundaries.
+- No authentication or order persistence is part of COM-001.
 
 ## Guardrails
 
 1. `Images/` remains the master visual-reference folder and must not be modified by implementation tasks.
 2. Completed Phase 1 visual architecture should be extended, not rewritten, unless visual QA proves a specific defect.
-3. Future work must continue as small, independently reviewable and releasable slices.
+3. New behavior must remain in small, independently reviewable and releasable slices.
+4. Every slice must pass analyze, tests and the applicable Android build gate before release.

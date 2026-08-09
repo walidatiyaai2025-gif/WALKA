@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../design_system/walka_theme.dart';
 import '../../screens/walka_screens.dart'
     show AboutScreen, AccountScreen, CategoriesScreen, FavoritesScreen;
+import '../commerce/amazon_purchase.dart';
 
 class WalkaStorefrontSplash extends StatelessWidget {
   const WalkaStorefrontSplash({super.key});
@@ -344,7 +345,7 @@ class _WalkaProductDetailV2State extends State<WalkaProductDetailV2> {
                 const SizedBox(height: 24),
                 const _FeatureGrid(),
                 const SizedBox(height: 26),
-                const _AmazonPurchaseCard(),
+                _AmazonPurchaseCard(gray: _gray),
                 const SizedBox(height: 34),
                 const Divider(),
                 const SizedBox(height: 30),
@@ -727,7 +728,7 @@ class _AmazonBand extends StatelessWidget {
                 ),
                 SizedBox(height: 3),
                 Text(
-                  'Purchase flow will open the official Amazon listing.',
+                  'Choose a product and continue to its official Amazon listing.',
                   style: TextStyle(color: WalkaColors.muted, fontSize: 11),
                 ),
               ],
@@ -1025,7 +1026,28 @@ class _FeatureTile extends StatelessWidget {
 }
 
 class _AmazonPurchaseCard extends StatelessWidget {
-  const _AmazonPurchaseCard();
+  const _AmazonPurchaseCard({required this.gray});
+
+  final bool gray;
+
+  Future<void> _openAmazon(BuildContext context) async {
+    bool opened = false;
+    try {
+      opened = await openDrawerOrganizerOnAmazon(gray: gray);
+    } catch (_) {
+      opened = false;
+    }
+
+    if (!context.mounted || opened) {
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Amazon could not be opened. Please try again.'),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -1057,14 +1079,14 @@ class _AmazonPurchaseCard extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           ElevatedButton.icon(
-            onPressed: () {},
+            onPressed: () => _openAmazon(context),
             icon: const Icon(Icons.north_east_rounded, size: 18),
             label: const Text('BUY ON AMAZON'),
           ),
           const SizedBox(height: 9),
           const Center(
             child: Text(
-              'External purchase linking is activated after Phase 1 approval.',
+              'Opens the selected WALKA color in the Amazon app or browser.',
               textAlign: TextAlign.center,
               style: TextStyle(color: WalkaColors.muted, fontSize: 10),
             ),
