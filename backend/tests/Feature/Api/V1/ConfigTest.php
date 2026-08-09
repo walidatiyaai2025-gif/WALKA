@@ -13,7 +13,7 @@ final class ConfigTest extends TestCase
             ->assertJson([
                 'data' => [
                     'brand' => 'WALKA',
-                    'release' => '0.8.0',
+                    'release' => '1.1.0',
                     'api_version' => 'v1',
                     'purchase_mode' => 'amazon_redirect',
                 ],
