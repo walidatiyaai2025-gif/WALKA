@@ -6,7 +6,7 @@ Last updated: 2026-08-09
 
 **Phase 1.5 — Full Clickable Flutter Experience: IN PROGRESS**
 
-Phase 1 premium mobile UI/UX, COM-001 Amazon handoff, STATE-001 persistent Drawer Favorites, UI-006 Lunch Box experience, and UI-007 Search & Discovery are released. UI-008 is now completing the production-grade product experience before the final UI-009 cross-platform visual freeze and before any Laravel/API integration.
+Phase 1 premium mobile UI/UX, COM-001 Amazon handoff, STATE-001 persistent Drawer Favorites, UI-006 Lunch Box, UI-007 Search & Discovery, and UI-008 Product UX are released on `main`. The next and final design-first slice is UI-009 / 1.0.0: reconcile remaining legacy entry points, complete information screens, and perform the cross-platform visual freeze before Laravel/API integration.
 
 ## Release board
 
@@ -21,17 +21,34 @@ Phase 1 premium mobile UI/UX, COM-001 Amazon handoff, STATE-001 persistent Drawe
 | STATE-001 | 0.7.0 | Persistent Drawer Favorites/customer state | COMPLETED |
 | UI-006 | 0.8.0 | Lunch Box collection + Blue/Pink/Green PDP | COMPLETED |
 | UI-007 | 0.9.0 | Search + discovery + results/filter/sort states | COMPLETED |
-| UI-008 | 0.10.0 | Product UX completion + gallery/share/related products | IN PROGRESS |
-| UI-009 | 1.0.0 | Information screens + cross-platform visual freeze | PLANNED |
+| UI-008 | 0.10.0 | Product UX completion + gallery/share/related products | COMPLETED |
+| UI-009 | 1.0.0 | Information screens + cross-platform visual freeze | NEXT |
 | API-001 | post-1.0 | Laravel API foundation | DEFERRED |
 
-## Active slice — UI-008 / 0.10.0
+## UI-008 release receipt — 0.10.0
 
-- [x] `0.10.0+10` package version
+- Release: `0.10.0`
+- Package: `0.10.0+10`
+- Issue: `#23`
+- Final reconciliation PR: `#27`
+- Superseded shared-branch draft: `#25`
+- Validated release-candidate head: `290566d36af85a7c503e3114e0a15a05c17fe90e`
+- Validated PR workflow run: `31336273112`
+- Flutter analyze: green
+- Flutter tests: green
+- Android debug APK: green
+- Artifact ID: `9044468109`
+- Artifact name: `walka-ui-preview-18857099e013bb41c259db970b08491c9c24ed2f`
+- Artifact size: `71,071,065 bytes`
+- Artifact SHA-256: `75627a403c16baeca49e78c8e33050417a948e797b958829f9893de349e677cb`
+- Merge commit: `25540030642aad8ee79d53ddcc83c1a92e0c5ef3`
+
+### UI-008 delivered
+
 - [x] Dedicated Drawer Organizer V10 product experience
 - [x] Dedicated Lunch Box V10 product experience
-- [x] Fullscreen three-state galleries
-- [x] Pinch/zoom product gallery surface
+- [x] Fullscreen three-state product galleries
+- [x] Pinch/zoom gallery surface
 - [x] White / Gray Drawer variant transitions
 - [x] Blue / Pink / Green Lunch variant transitions
 - [x] Variant-aware Amazon purchase CTA preserved
@@ -43,45 +60,20 @@ Phase 1 premium mobile UI/UX, COM-001 Amazon handoff, STATE-001 persistent Drawe
 - [x] Categories V10 exposes all five sellable variants
 - [x] Favorites V10 preserves persistent Drawer favorite behavior
 - [x] Approved Lunch usage guidance preserved
-- [x] `docs/PRODUCT_MASTER.md` records verified product facts as the engineering source of truth
-- [x] Product-copy QA preserves verified Drawer weight `1.72 lb`
-- [x] Product-copy QA preserves top-rack steel-tray care and hand-wash lid/gasket guidance
+- [x] `docs/PRODUCT_MASTER.md` established as the product-fact source of truth
+- [x] Unverified Drawer weight / packaging claims removed from release UI copy
+- [x] Lunch care guidance aligned with the approved product master
+- [x] Source-level product-copy regression contract added
 - [x] 320×568 compact-phone and 900×900 large-mobile regression coverage
-- [ ] Final-head Flutter analyze green
-- [ ] Final-head Flutter tests green
-- [ ] Final-head Android preview APK green
-- [ ] UI-008 PR merged to `main`
-- [ ] `0.10.0` final preview artifact recorded
+- [x] Analyze, tests and Android preview APK green
+- [x] UI-008 merged to `main`
+- [x] `0.10.0` preview artifact recorded
 
-### UI-008 known incremental boundary
+### Remaining boundary for UI-009
 
-- Home V2 and Search V9 still retain their existing PDP route implementations in this slice.
-- Categories V10, Favorites V10, and V10 related-product links use the new Product Experience directly.
-- UI-009 / 1.0.0 will reconcile remaining legacy entry points during the final cross-platform visual freeze.
-
-## Completed slice — UI-007 / 0.9.0
-
-- [x] `0.9.0+9` package version
-- [x] Dedicated Search destination in the mobile storefront navigation
-- [x] Premium search/discovery entry state
-- [x] Local mixed Drawer + Lunch result catalog
-- [x] Query matching across names, colors and product keywords
-- [x] Suggested search chips
-- [x] Session-local recent search presentation
-- [x] Collection + color filter sheet
-- [x] Featured / A–Z / collection sort sheet
-- [x] List / grid result presentation toggle
-- [x] Clear/reset state
-- [x] No-results state
-- [x] Result routing into the approved Drawer and Lunch PDPs
-- [x] Search/filter regression coverage
-- [x] Existing Amazon purchase routing preserved by reusing approved PDPs
-- [x] Existing persistent Drawer Favorites baseline preserved
-- [x] Flutter analyze green
-- [x] Flutter tests green
-- [x] Android preview APK green
-- [x] UI-007 PR merged to `main`
-- [x] `0.9.0` preview artifact recorded
+- Home V2 and Search V9 still retain their existing PDP route implementations.
+- UI-009 / 1.0.0 will route all remaining product entry points through the final Product Experience.
+- UI-009 will finish information/legal/help surfaces, cross-platform visual QA, accessibility regression, and the final Android/iOS visual freeze.
 
 ## UI-007 release receipt — 0.9.0
 
@@ -150,7 +142,8 @@ Phase 1 premium mobile UI/UX, COM-001 Amazon handoff, STATE-001 persistent Drawe
 ## Guardrails
 
 1. `Images/` remains the master visual-reference folder and must not be modified by implementation tasks.
-2. Preserve successful team work; new UI slices extend COM-001, STATE-001, UI-006, and UI-007 rather than replacing them.
-3. New work stays in small, independently reviewable and releasable slices.
-4. Every slice must pass analyze, tests and Android build before merge.
-5. Product copy must preserve approved lunch-box safety/usage language.
+2. `docs/PRODUCT_MASTER.md` is the source of truth for product facts and approved usage/care language.
+3. Preserve successful team work; new UI slices extend the released COM-001, STATE-001, UI-006, UI-007 and UI-008 baselines rather than replacing them.
+4. New work stays in small, independently reviewable and releasable slices.
+5. Every slice must pass analyze, tests and Android build before merge.
+6. Product copy must preserve approved lunch-box safety/usage language.
