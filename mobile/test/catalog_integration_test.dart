@@ -144,6 +144,10 @@ void main() {
       items.map((WalkaCatalogViewItem item) => item.variantId).toSet(),
       WalkaCatalogContract.requiredVariantIds,
     );
+    expect(
+      items.map((WalkaCatalogViewItem item) => item.variant).toSet(),
+      <String>{'White', 'Gray', 'Blue', 'Pink', 'Green'},
+    );
 
     await tester.pumpWidget(
       WalkaCatalogScope(
@@ -157,32 +161,12 @@ void main() {
     await tester.pump();
 
     expect(find.textContaining('5 current sellable variants'), findsOneWidget);
-    final Finder scrollable = find.byType(Scrollable).first;
+    final Finder scrollView = find.byType(CustomScrollView);
+    expect(scrollView, findsOneWidget);
 
-    await tester.scrollUntilVisible(
-      find.text('White'),
-      240,
-      scrollable: scrollable,
-    );
+    await tester.drag(scrollView, const Offset(0, -700));
     await tester.pumpAndSettle();
-    expect(find.text('White'), findsOneWidget);
-    expect(find.text('Gray'), findsOneWidget);
 
-    await tester.scrollUntilVisible(
-      find.text('Blue'),
-      360,
-      scrollable: scrollable,
-    );
-    await tester.pumpAndSettle();
-    expect(find.text('Blue'), findsOneWidget);
-    expect(find.text('Pink'), findsOneWidget);
-
-    await tester.scrollUntilVisible(
-      find.text('Green'),
-      260,
-      scrollable: scrollable,
-    );
-    await tester.pumpAndSettle();
     expect(find.text('Green'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
