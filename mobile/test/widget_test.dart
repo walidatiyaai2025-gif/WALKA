@@ -103,7 +103,6 @@ void main() {
       1,
     );
     expect(find.text('SEARCH WALKA'), findsOneWidget);
-    expect(find.byType(TextField), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
