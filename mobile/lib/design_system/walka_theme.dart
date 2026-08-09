@@ -115,16 +115,18 @@ ThemeData buildWalkaTheme() {
       ),
     ),
     navigationBarTheme: NavigationBarThemeData(
-      height: 76,
+      height: 72,
       backgroundColor: WalkaColors.white,
       surfaceTintColor: Colors.transparent,
-      indicatorColor: WalkaColors.gold.withValues(alpha: 0.16),
+      indicatorColor: WalkaColors.gold.withValues(alpha: 0.12),
       labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
       labelTextStyle: WidgetStateProperty.resolveWith<TextStyle>((states) {
         final bool selected = states.contains(WidgetState.selected);
         return TextStyle(
-          fontSize: 10,
-          fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
+          fontSize: 9.5,
+          height: 1.05,
+          fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+          letterSpacing: selected ? 0.12 : 0,
           color: selected ? WalkaColors.navy : WalkaColors.muted,
         );
       }),
@@ -132,7 +134,7 @@ ThemeData buildWalkaTheme() {
         final bool selected = states.contains(WidgetState.selected);
         return IconThemeData(
           color: selected ? WalkaColors.navy : WalkaColors.muted,
-          size: 22,
+          size: selected ? 22 : 21,
         );
       }),
     ),
