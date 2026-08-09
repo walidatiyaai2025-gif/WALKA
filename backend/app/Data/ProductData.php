@@ -5,8 +5,8 @@ namespace App\Data;
 final readonly class ProductData
 {
     /**
-     * @param list<string> $features
-     * @param list<ProductVariantData> $variants
+     * @param  list<string>  $features
+     * @param  list<ProductVariantData>  $variants
      */
     public function __construct(
         public string $id,
