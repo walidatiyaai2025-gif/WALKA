@@ -7,13 +7,13 @@ This document is the repository source of truth for product facts used in Flutte
 ## Drawer Organizer
 
 - Product: WALKA Drawer Organizer
-- Material: plastic
 - Compartments: 8
 - Closed size: 13 × 15 × 2 in
 - Expandable width: up to 22.4 in
 - Base: non-slip
 - Approved colorways: White and Gray
-- Do not publish a product weight unless a verified product-owner value is added to this document.
+- Product weight: 1.72 lb
+- Packaging: 13.46 × 15.16 × 2.36 in
 
 ## Large Stainless Steel Bento Lunch Box
 
@@ -22,8 +22,9 @@ This document is the repository source of truth for product facts used in Flutte
 - Capacity: 1200 ml
 - Food tray: SUS304 stainless steel
 - Compartments: 4
-- Outer body: food-grade PP
-- Included set: insulated carry bag, stainless sauce cup with lid, spoon and fork
+- Outer body: BPA-free PP
+- Lid: 4 clips with silicone gasket
+- Included set: insulated carry bag, round sauce cup with lid, spoon and fork
 - Approved colorways:
   - Blue — PANTONE 4155 U
   - Pink — PANTONE 9242 U
@@ -38,17 +39,16 @@ This document is the repository source of truth for product facts used in Flutte
 
 ### Care and microwave rules
 
-- SUS304 stainless tray: dishwasher safe; not microwave safe.
-- Lid and silicone gasket: dishwasher safe on the top rack; not microwave safe.
-- PP outer body: microwave safe only after removing the stainless tray, lid, and silicone gasket.
+- SUS304 stainless tray: dishwasher safe on the top rack; not microwave safe.
+- Lid and silicone gasket: hand wash.
+- PP outer body: microwave safe without the stainless steel tray.
 
 ### Approved usage language
 
 - `Secure Lock | Helps Prevent Spills`
-- `SPILL-RESISTANT DESIGN`
-- `Best suited for dry meals & snacks.`
-- `Not intended for liquids. Best for dry & semi-wet foods.`
-- Carry upright.
+- `Best for dry & semi-wet foods`
+- `Not intended for liquids`
+- `Carry upright`
 
 Do not claim per-compartment leakproof performance and do not describe the product as fully leakproof.
 
