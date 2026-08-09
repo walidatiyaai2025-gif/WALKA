@@ -21,7 +21,11 @@ final class CatalogTest extends TestCase
             ->assertJsonPath('data.0.variants.0.purchase_url', 'https://www.amazon.com/dp/B0FQN4DCTG')
             ->assertJsonPath('data.0.variants.1.id', 'drawer-organizer:gray')
             ->assertJsonPath('data.0.variants.1.asin', 'B0FQN4L2ZD')
+            ->assertJsonPath('data.0.variants.1.purchase_url', 'https://www.amazon.com/dp/B0FQN4L2ZD')
             ->assertJsonPath('data.1.id', 'stainless-steel-bento-lunch-box')
-            ->assertJsonCount(3, 'data.1.variants');
+            ->assertJsonCount(3, 'data.1.variants')
+            ->assertJsonPath('data.1.variants.0.purchase_url', 'https://www.amazon.com/dp/B0FQN4L8MW')
+            ->assertJsonPath('data.1.variants.1.purchase_url', 'https://www.amazon.com/dp/B0FQN3W4SF')
+            ->assertJsonPath('data.1.variants.2.purchase_url', 'https://www.amazon.com/dp/B0GPZNKF9F');
     }
 }
