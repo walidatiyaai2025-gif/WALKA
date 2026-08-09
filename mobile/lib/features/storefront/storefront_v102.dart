@@ -2,14 +2,16 @@ import 'package:flutter/material.dart';
 
 import '../../design_system/walka_adaptive.dart';
 import '../../design_system/walka_theme.dart';
+import '../catalog/catalog_state.dart';
 import '../information/information_v102.dart';
-import 'storefront_v101.dart';
+import 'storefront_catalog_v120.dart';
+import 'storefront_v101.dart' show WalkaFavoritesV101;
 
-/// Final design-freeze entry surface.
+/// API-002 connected storefront entry surface.
 ///
-/// Home, Search, Categories and Favorites reuse the already validated V101
-/// navigation work. Account/Information is replaced by the Product-Master-safe
-/// V102 surface so the release has one exposed care and support model.
+/// Home, Search and Categories consume the typed catalog repository while
+/// preserving the frozen WALKA navigation and design language. Favorites and
+/// Account retain their validated local-state/information implementations.
 class WalkaStorefrontSplashV102 extends StatelessWidget {
   const WalkaStorefrontSplashV102({super.key});
 
@@ -97,7 +99,7 @@ class WalkaStorefrontSplashV102 extends StatelessWidget {
                 const SizedBox(height: 12),
                 const Center(
                   child: Text(
-                    'VISUAL FREEZE · 1.0.0',
+                    'CONNECTED CATALOG · 1.2.0',
                     style: TextStyle(
                       color: Color(0xFF91A5B9),
                       fontSize: 10,
@@ -125,6 +127,7 @@ class WalkaStorefrontShellV102 extends StatefulWidget {
 
 class _WalkaStorefrontShellV102State extends State<WalkaStorefrontShellV102> {
   int _index = 0;
+  late final WalkaCatalogController _fallbackCatalog = WalkaCatalogController();
 
   void _select(int value) {
     FocusManager.instance.primaryFocus?.unfocus();
@@ -133,11 +136,27 @@ class _WalkaStorefrontShellV102State extends State<WalkaStorefrontShellV102> {
   }
 
   @override
+  void dispose() {
+    _fallbackCatalog.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    if (WalkaCatalogScope.maybeOf(context) == null) {
+      return WalkaCatalogScope(
+        controller: _fallbackCatalog,
+        child: Builder(builder: _buildShell),
+      );
+    }
+    return _buildShell(context);
+  }
+
+  Widget _buildShell(BuildContext context) {
     final List<Widget> pages = <Widget>[
-      WalkaHomeV101(onShopAll: () => _select(2), onSearch: () => _select(1)),
-      const WalkaSearchV101(),
-      const WalkaCategoriesV101(),
+      WalkaHomeV120(onShopAll: () => _select(2), onSearch: () => _select(1)),
+      const WalkaSearchV120(),
+      const WalkaCategoriesV120(),
       WalkaFavoritesV101(onExplore: () => _select(2)),
       const WalkaAccountV102(),
     ];

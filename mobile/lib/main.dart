@@ -1,32 +1,70 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
+import 'core/api/walka_api_client.dart';
 import 'design_system/walka_theme.dart';
+import 'features/catalog/catalog_state.dart';
+import 'features/catalog/data/walka_catalog_cache.dart';
+import 'features/catalog/data/walka_catalog_repository.dart';
 import 'features/favorites/favorites_state.dart';
 import 'features/storefront/storefront_v102.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
   final WalkaFavoritesController favoritesController = WalkaFavoritesController(
     SharedPreferencesWalkaFavoritesStore(),
   );
   await favoritesController.load();
-  runApp(WalkaApp(favoritesController: favoritesController));
+
+  const WalkaApiSettings apiSettings = WalkaApiSettings(
+    baseUrl: WalkaApiSettings.environmentBaseUrl,
+  );
+  final WalkaApiClient? apiClient = apiSettings.isConfigured
+      ? WalkaApiClient(settings: apiSettings)
+      : null;
+  final WalkaCatalogController catalogController = WalkaCatalogController(
+    repository: WalkaCatalogRepository(
+      cache: SharedPreferencesWalkaCatalogCache(),
+      remote: apiClient,
+    ),
+  );
+
+  runApp(
+    WalkaApp(
+      favoritesController: favoritesController,
+      catalogController: catalogController,
+    ),
+  );
+  unawaited(catalogController.load());
 }
 
 class WalkaApp extends StatelessWidget {
-  const WalkaApp({required this.favoritesController, super.key});
+  const WalkaApp({
+    required this.favoritesController,
+    this.catalogController,
+    super.key,
+  });
 
   final WalkaFavoritesController favoritesController;
+  final WalkaCatalogController? catalogController;
 
   @override
   Widget build(BuildContext context) {
-    return WalkaFavoritesScope(
-      controller: favoritesController,
-      child: MaterialApp(
-        title: 'WALKA',
-        debugShowCheckedModeBanner: false,
-        theme: buildWalkaTheme(),
-        home: const WalkaStorefrontSplashV102(),
+    final WalkaCatalogController resolvedCatalog =
+        catalogController ?? WalkaCatalogController();
+
+    return WalkaCatalogScope(
+      controller: resolvedCatalog,
+      child: WalkaFavoritesScope(
+        controller: favoritesController,
+        child: MaterialApp(
+          title: 'WALKA',
+          debugShowCheckedModeBanner: false,
+          theme: buildWalkaTheme(),
+          home: const WalkaStorefrontSplashV102(),
+        ),
       ),
     );
   }
