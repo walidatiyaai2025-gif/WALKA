@@ -2,21 +2,17 @@
 
 namespace App\Providers;
 
+use App\Contracts\CatalogRepository;
+use App\Repositories\EloquentCatalogRepository;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
-    /**
-     * Register any application services.
-     */
     public function register(): void
     {
-        //
+        $this->app->bind(CatalogRepository::class, EloquentCatalogRepository::class);
     }
 
-    /**
-     * Bootstrap any application services.
-     */
     public function boot(): void
     {
         //

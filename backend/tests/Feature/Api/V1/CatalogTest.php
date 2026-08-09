@@ -2,15 +2,26 @@
 
 namespace Tests\Feature\Api\V1;
 
+use Database\Seeders\WalkaCatalogSeeder;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 final class CatalogTest extends TestCase
 {
+    use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->seed(WalkaCatalogSeeder::class);
+    }
+
     public function test_catalog_exposes_stable_products_product_master_facts_and_amazon_destinations(): void
     {
         $response = $this->getJson('/api/v1/catalog')
             ->assertOk()
-            ->assertJsonPath('meta.release', '1.1.0')
+            ->assertJsonPath('meta.release', '1.3.0')
             ->assertJsonPath('meta.api_version', 'v1')
             ->assertJsonPath('meta.purchase_mode', 'amazon_redirect')
             ->assertJsonCount(2, 'data');

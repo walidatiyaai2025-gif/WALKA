@@ -55,6 +55,13 @@ jobs:
         run: |
           cp .env.example .env
           php artisan key:generate --force
+          touch database/database.sqlite
+
+      - name: Verify migrations and production seed
+        working-directory: backend
+        run: |
+          php artisan migrate:fresh --seed --force
+          php artisan tinker --execute="throw_unless(\\App\\Models\\Product::count() === 2); throw_unless(\\App\\Models\\ProductVariant::count() === 5);"
 
       - name: Check PHP formatting
         working-directory: backend
