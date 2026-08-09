@@ -6,7 +6,7 @@ Last updated: 2026-08-09
 
 **Phase 1.5 — Full Clickable Flutter Experience: IN PROGRESS**
 
-Phase 1 premium mobile UI/UX, COM-001 Amazon handoff, STATE-001 persistent Drawer Favorites, UI-006 Lunch Box experience, and UI-007 Search & Discovery are released. Current product direction remains to complete and visually freeze the real Flutter screen set before Laravel/API work begins.
+Phase 1 premium mobile UI/UX, COM-001 Amazon handoff, STATE-001 persistent Drawer Favorites, UI-006 Lunch Box experience, and UI-007 Search & Discovery are released. UI-008 is now completing the production-grade product experience before the final UI-009 cross-platform visual freeze and before any Laravel/API integration.
 
 ## Release board
 
@@ -21,9 +21,42 @@ Phase 1 premium mobile UI/UX, COM-001 Amazon handoff, STATE-001 persistent Drawe
 | STATE-001 | 0.7.0 | Persistent Drawer Favorites/customer state | COMPLETED |
 | UI-006 | 0.8.0 | Lunch Box collection + Blue/Pink/Green PDP | COMPLETED |
 | UI-007 | 0.9.0 | Search + discovery + results/filter/sort states | COMPLETED |
-| UI-008 | 0.10.0 | Product UX completion + gallery/share/related products | PLANNED |
+| UI-008 | 0.10.0 | Product UX completion + gallery/share/related products | IN PROGRESS |
 | UI-009 | 1.0.0 | Information screens + cross-platform visual freeze | PLANNED |
 | API-001 | post-1.0 | Laravel API foundation | DEFERRED |
+
+## Active slice — UI-008 / 0.10.0
+
+- [x] `0.10.0+10` package version
+- [x] Dedicated Drawer Organizer V10 product experience
+- [x] Dedicated Lunch Box V10 product experience
+- [x] Fullscreen three-state galleries
+- [x] Pinch/zoom product gallery surface
+- [x] White / Gray Drawer variant transitions
+- [x] Blue / Pink / Green Lunch variant transitions
+- [x] Variant-aware Amazon purchase CTA preserved
+- [x] Amazon launch exceptions converted into safe in-app fallback behavior
+- [x] Product share treatment copies the selected official Amazon link
+- [x] Sticky selected-variant purchase bar
+- [x] Expandable product details and care sections
+- [x] Related-product cross-links between Drawer and Lunch experiences
+- [x] Categories V10 exposes all five sellable variants
+- [x] Favorites V10 preserves persistent Drawer favorite behavior
+- [x] Approved Lunch usage guidance preserved
+- [x] Product-copy QA removes unverified Drawer weight
+- [x] Product-copy QA aligns V10 and legacy Lunch dishwasher/microwave guidance
+- [x] Regression coverage added for approved product-copy contracts
+- [ ] Final-head Flutter analyze green
+- [ ] Final-head Flutter tests green
+- [ ] Final-head Android preview APK green
+- [ ] UI-008 PR merged to `main`
+- [ ] `0.10.0` final preview artifact recorded
+
+### UI-008 known incremental boundary
+
+- Home V2 and Search V9 still retain their existing PDP route implementations in this slice.
+- Categories V10, Favorites V10, and V10 related-product links use the new Product Experience directly.
+- UI-009 / 1.0.0 will reconcile remaining legacy entry points during the final cross-platform visual freeze.
 
 ## Completed slice — UI-007 / 0.9.0
 
