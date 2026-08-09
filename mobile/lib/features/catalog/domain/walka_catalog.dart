@@ -116,9 +116,7 @@ class WalkaCatalogProduct {
         if (value is! Map) {
           throw const FormatException('Product variants must be objects.');
         }
-        return WalkaCatalogVariant.fromJson(
-          Map<String, dynamic>.from(value as Map),
-        );
+        return WalkaCatalogVariant.fromJson(Map<String, dynamic>.from(value));
       }).toList(growable: false),
     );
   }
@@ -157,9 +155,7 @@ class WalkaCatalogPayload {
         if (value is! Map) {
           throw const FormatException('Catalog products must be objects.');
         }
-        return WalkaCatalogProduct.fromJson(
-          Map<String, dynamic>.from(value as Map),
-        );
+        return WalkaCatalogProduct.fromJson(Map<String, dynamic>.from(value));
       }).toList(growable: false),
       release: _requiredString(meta, 'release'),
       apiVersion: _requiredString(meta, 'api_version'),
@@ -238,9 +234,7 @@ class WalkaCatalogSnapshot {
         if (value is! Map) {
           throw const FormatException('Cached products must be objects.');
         }
-        return WalkaCatalogProduct.fromJson(
-          Map<String, dynamic>.from(value as Map),
-        );
+        return WalkaCatalogProduct.fromJson(Map<String, dynamic>.from(value));
       }).toList(growable: false),
       source: source,
       fetchedAt: parsedFetchedAt.toUtc(),
@@ -318,5 +312,5 @@ Map<String, dynamic> _requiredMap(Map<String, dynamic> json, String key) {
   if (value is! Map) {
     throw FormatException('$key must be an object.');
   }
-  return Map<String, dynamic>.from(value as Map);
+  return Map<String, dynamic>.from(value);
 }
