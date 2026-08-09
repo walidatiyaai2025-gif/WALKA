@@ -2,11 +2,16 @@
 
 namespace Tests\Feature\Api\V1;
 
+use App\Models\Product;
+use Database\Seeders\WalkaCatalogSeeder;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 final class ProductMasterContractTest extends TestCase
 {
-    public function test_api_catalog_is_bound_to_the_verified_repository_product_master(): void
+    use RefreshDatabase;
+
+    public function test_database_catalog_is_bound_to_the_verified_repository_product_master(): void
     {
         $masterPath = base_path('../docs/PRODUCT_MASTER.md');
 
@@ -34,22 +39,25 @@ final class ProductMasterContractTest extends TestCase
             $this->assertStringContainsString($requiredFact, $master);
         }
 
-        $products = config('walka.products');
+        $this->seed(WalkaCatalogSeeder::class);
 
-        $this->assertArrayNotHasKey('product_weight_lb', $products[0]['facts']);
-        $this->assertArrayNotHasKey('packaging_in', $products[0]['facts']);
-        $this->assertSame('Food-grade PP', $products[1]['facts']['outer_body']);
+        $drawer = Product::query()->with('variants')->findOrFail('drawer-organizer');
+        $lunch = Product::query()->with('variants')->findOrFail('stainless-steel-bento-lunch-box');
+
+        $this->assertArrayNotHasKey('product_weight_lb', $drawer->facts);
+        $this->assertArrayNotHasKey('packaging_in', $drawer->facts);
+        $this->assertSame('Food-grade PP', $lunch->facts['outer_body']);
         $this->assertSame(
             'Dishwasher safe; not microwave safe.',
-            $products[1]['facts']['care']['sus304_tray'],
+            $lunch->facts['care']['sus304_tray'],
         );
         $this->assertSame(
             'Dishwasher safe on the top rack; not microwave safe.',
-            $products[1]['facts']['care']['lid_and_gasket'],
+            $lunch->facts['care']['lid_and_gasket'],
         );
         $this->assertSame(
             'Microwave safe only after removing the stainless tray, lid, and silicone gasket.',
-            $products[1]['facts']['care']['pp_outer_body'],
+            $lunch->facts['care']['pp_outer_body'],
         );
         $this->assertSame([
             'Secure Lock | Helps Prevent Spills',
@@ -57,9 +65,10 @@ final class ProductMasterContractTest extends TestCase
             'Best suited for dry meals & snacks.',
             'Not intended for liquids. Best for dry & semi-wet foods.',
             'Carry upright.',
-        ], $products[1]['facts']['usage_language']);
-        $this->assertSame('PANTONE 4155 U', $products[1]['variants'][0]['pantone']);
-        $this->assertSame('PANTONE 9242 U', $products[1]['variants'][1]['pantone']);
-        $this->assertSame('PANTONE 6198 U', $products[1]['variants'][2]['pantone']);
+        ], $lunch->facts['usage_language']);
+        $this->assertSame(
+            ['PANTONE 4155 U', 'PANTONE 9242 U', 'PANTONE 6198 U'],
+            $lunch->variants->pluck('pantone')->all(),
+        );
     }
 }

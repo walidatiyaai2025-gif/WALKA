@@ -12,7 +12,7 @@ final class HealthTest extends TestCase
             ->assertOk()
             ->assertJsonPath('data.status', 'ok')
             ->assertJsonPath('data.service', 'walka-api')
-            ->assertJsonPath('data.release', '1.1.0')
+            ->assertJsonPath('data.release', '1.3.0')
             ->assertJsonPath('data.api_version', 'v1');
     }
 }
