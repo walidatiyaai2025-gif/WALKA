@@ -6,7 +6,7 @@ Last updated: 2026-08-09
 
 **Phase 2 — Functional Storefront: IN PROGRESS**
 
-Phase 1 premium mobile UI/UX is complete. COM-001 is released on `main`; STATE-001 is implementing shared persistent Favorites state across Product Detail and the Favorites destination.
+Phase 1 premium mobile UI/UX is complete. COM-001 and STATE-001 are released on `main`; the next slice is API-001 for the Laravel API foundation.
 
 ## Release board
 
@@ -18,12 +18,12 @@ Phase 1 premium mobile UI/UX is complete. COM-001 is released on `main`; STATE-0
 | UI-004 | 0.4.0 | Favorites + Account + About | COMPLETED |
 | UI-005 | 0.5.0 | Android/iOS polish + accessibility + visual QA | COMPLETED |
 | COM-001 | 0.6.0 | Variant-aware Amazon purchase handoff | COMPLETED |
-| STATE-001 | 0.7.0 | Persistent Favorites/customer state | IN PROGRESS |
-| API-001 | 0.8.0 | Laravel API foundation | PLANNED |
+| STATE-001 | 0.7.0 | Persistent Favorites/customer state | COMPLETED |
+| API-001 | 0.8.0 | Laravel API foundation | NEXT |
 | API-002 | 0.9.0 | Flutter remote catalog integration | PLANNED |
 | REL-001 | 1.0.0 | Storefront release candidate | PLANNED |
 
-## Active slice — STATE-001 / 0.7.0
+## STATE-001 result — 0.7.0
 
 - [x] `0.7.0+7` package version
 - [x] Favorites repository boundary added
@@ -38,11 +38,24 @@ Phase 1 premium mobile UI/UX is complete. COM-001 is released on `main`; STATE-0
 - [x] Optimistic changes roll back when persistence fails
 - [x] Controller and PDP widget coverage added
 - [x] COM-001 Amazon purchase behavior preserved
-- [ ] CI analyze green
-- [ ] CI tests green
-- [ ] Android preview APK green
-- [ ] PR merged to `main`
-- [ ] `0.7.0` main preview artifact recorded
+- [x] CI analyze green
+- [x] CI tests green
+- [x] Android preview APK green
+- [x] PR #16 squash-merged to `main`
+- [x] `0.7.0` main preview artifact recorded
+
+## STATE-001 release receipt
+
+- Release: `0.7.0`
+- Package: `0.7.0+7`
+- Issue: `#14`
+- PR: `#16`
+- Merge commit: `a1b736cd71a3fbeece96675b35fa40e7e550ca80`
+- Validated main workflow run: `31332976996`
+- Artifact ID: `9043512197`
+- Artifact name: `walka-ui-preview-a1b736cd71a3fbeece96675b35fa40e7e550ca80`
+- Artifact size: `70,974,808 bytes`
+- Artifact SHA-256: `28ee8564c69ef977bde0252d41a223924849158d115d50c068748050143b25c7`
 
 ## Previous release receipt — COM-001 / 0.6.0
 
@@ -56,8 +69,8 @@ Phase 1 premium mobile UI/UX is complete. COM-001 is released on `main`; STATE-0
 ## Phase 2 boundaries
 
 - WALKA does not implement an in-app cart, checkout or payment flow; Amazon remains the purchase destination.
-- Favorites are device-local in STATE-001; account/cloud synchronization is deferred.
-- Laravel is introduced in a later Phase 2 slice behind versioned APIs and service/repository boundaries.
+- Favorites are currently device-local; account/cloud synchronization remains deferred.
+- API-001 introduces Laravel behind versioned APIs without coupling Flutter directly to backend implementation details.
 - Authentication and order persistence remain outside the current slice.
 
 ## Guardrails
