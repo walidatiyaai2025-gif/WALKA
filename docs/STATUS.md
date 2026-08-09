@@ -5,11 +5,13 @@ Last updated: 2026-08-10
 ## Current state
 
 **Flutter visual freeze 1.0.0: COMPLETED**  
-**Laravel API foundation 1.1.0: COMPLETED**
+**Laravel API foundation 1.1.0: COMPLETED**  
+**Flutter ↔ Laravel catalog integration 1.2.0: COMPLETED**  
+**Database-backed catalog persistence 1.3.0: COMPLETED**
 
-WALKA now has a released Flutter 1.0 mobile experience and a versioned Laravel 13 API foundation on `main`. The mobile visual system remains frozen; backend work extends it without redesigning completed UI architecture.
+WALKA now has a released Flutter storefront connected to a versioned Laravel 13 API with resilient mobile caching/fallback and a database-backed Product/Variant catalog. The released mobile visual/navigation architecture remains frozen. Public commerce still redirects to official Amazon product listings.
 
-The next logical implementation slice is **API-002 / 1.2.0 — Flutter ↔ Laravel catalog integration**: replace local catalog/config mock sources with resilient `/api/v1` reads while preserving the exact released Home, Search, Categories, Favorites and Product Detail experiences.
+The next logical slice is **API-004 / 1.4.0 — authenticated catalog administration and safe authoring API**: add protected backend-only catalog management with validation, auditability and Product Master guardrails while preserving the public `/api/v1/catalog` contract and Flutter 1.2 behavior.
 
 ## Release board
 
@@ -27,11 +29,84 @@ The next logical implementation slice is **API-002 / 1.2.0 — Flutter ↔ Larav
 | UI-008 | 0.10.0 | Product UX completion + gallery/share/related products | COMPLETED |
 | UI-009 | 1.0.0 | Information screens + cross-platform visual freeze | COMPLETED |
 | API-001 | 1.1.0 | Laravel 13 API foundation + Product/Variant catalog contract | COMPLETED |
-| API-002 | 1.2.0 | Flutter remote catalog/config integration + resilient local fallback | NEXT |
+| API-002 | 1.2.0 | Flutter remote catalog/config integration + resilient local fallback | COMPLETED |
+| API-003 | 1.3.0 | Database-backed Product/Variant catalog persistence | COMPLETED |
+| API-004 | 1.4.0 | Authenticated catalog administration + safe authoring API | NEXT |
+
+## API-003 authoritative release receipt — 1.3.0
+
+- Issue: `#41`
+- PR: `#42`
+- Final validated head: `212e0613c3f46449f1c78b733637375cff243e9e`
+- Backend API PR run: `31341500292` — green
+- Flutter Preview PR run: `31341500448` — green
+- Flutter preview artifact ID: `9046007309`
+- Artifact ZIP SHA-256: `ce6cfc442a584f84c677e5025c3c6ed200d1a9de433ec38b70c9ff1d56c15de6`
+- Squash merge commit: `041196e73da6af866bce19f3e647cc1e53c718f2`
+
+### API-003 delivered
+
+- [x] `products` and `product_variants` migrations with stable string primary keys
+- [x] Eloquent `Product` and `ProductVariant` models
+- [x] Ordered features/facts/variants and nullable Pantone persistence
+- [x] Deterministic idempotent `WalkaCatalogSeeder`
+- [x] Product-Master-aligned database seed blueprint
+- [x] `CatalogRepository` abstraction + `EloquentCatalogRepository`
+- [x] `GET /api/v1/catalog` reads database state
+- [x] Existing API v1 Product/Variant success response shape preserved for Flutter 1.2
+- [x] All five stable variant IDs, ASINs, Pantones and Amazon destinations preserved
+- [x] Explicit HTTP `503` / `catalog_unavailable` behavior for migrated-but-unseeded databases
+- [x] Product Master persisted contract tests
+- [x] Seeder idempotency, runtime DB-read and empty-database tests
+- [x] Backend CI verifies migration + production seed before Pint/tests/routes
+- [x] Flutter Analyze/full tests/Android debug APK/artifact regression green
+- [x] Local migration and seed workflow documented
+
+### API-003 phase boundary
+
+- The public catalog remains read-only.
+- API v1 keys and stable Product/Variant IDs were not changed.
+- Product facts remain governed by `docs/PRODUCT_MASTER.md`.
+- Drawer weight/packaging remain unpublished while unverified.
+- Amazon remains the purchase destination.
+- No Admin UI/CMS, customer authentication, remote Favorites sync, cart, checkout, payment or order processing was introduced.
+
+## API-002 authoritative release receipt — 1.2.0
+
+- Issue: `#37`
+- Final PR: `#40`
+- Superseded draft PR: `#39`
+- Final validated head: `41aa25b6573372dc0ff87992313be7ca8c195468`
+- Flutter Preview PR run: `31340458663` — green
+- Full Flutter tests: `62` passed
+- Flutter preview artifact ID: `9045704348`
+- Artifact ZIP SHA-256: `e8acfcfb75dd8be3d85e1877ddc599787717027f3211567e31a558f6ec687cda`
+- Squash merge commit: `c756c4f7c7ce316616315193f64db95efdb9bbc0`
+
+### API-002 delivered
+
+- [x] Typed mobile `/api/v1/health`, `/config` and `/catalog` contracts
+- [x] Configurable `WALKA_API_BASE_URL`
+- [x] Remote → last-known-good cache → bundled Product Master fallback
+- [x] SharedPreferences cache with corruption-safe reads
+- [x] Stable Product/Variant ID and metadata validation
+- [x] Frozen presentation adapter preserving the released titles/order/navigation
+- [x] Home, Search and Categories consume catalog state
+- [x] Final V100 Product Detail visual experience preserved
+- [x] API-driven selected-variant Amazon destinations with deterministic ASIN fallback
+- [x] Fresh-install offline browsing preserved
+- [x] Non-blocking loading/cache/offline status
+- [x] Flutter package `1.2.0+120`
+- [x] Analyze, 62 tests, Android runner, APK and artifact upload green
+
+### API-002 phase boundary
+
+- No server database authoring was introduced in API-002; API-003 added that persistence separately.
+- Local Favorites behavior remains unchanged.
+- No customer authentication, remote Favorites sync, cart, checkout, payment or orders were introduced.
 
 ## API-001 authoritative release receipt — 1.1.0
 
-- Release: `1.1.0`
 - Issue: `#20`
 - Final PR: `#33`
 - Superseded pre-1.0 draft: `#21`
@@ -54,29 +129,7 @@ The next logical implementation slice is **API-002 / 1.2.0 — Flutter ↔ Larav
 - [x] Variant-aware ASIN and official Amazon `purchase_url`
 - [x] Lunch Pantone metadata exposed
 - [x] Typed Product Master facts exposed through `facts`
-- [x] Drawer weight/packaging deliberately omitted because current Product Master does not verify them
-- [x] Current Lunch food-grade PP, care/microwave rules and approved spill-resistance language preserved
-- [x] `docs/API_V1_CONTRACT.md` added
-- [x] Product Master contract test added
-- [x] Backend CI runs for `backend/**` and `docs/PRODUCT_MASTER.md`
-- [x] Composer manifest validation green
-- [x] Composer dependency install green
-- [x] Pint formatting gate green
-- [x] Laravel feature tests green
-- [x] `/api/v1` route smoke verification green
-- [x] Flutter Analyze regression green
-- [x] Flutter full test regression green
-- [x] Android runner generation regression green
-- [x] Android debug APK regression green
-- [x] Flutter preview artifact upload green
-- [x] PR #33 squash-merged to `main`
-
-### API-001 phase boundary
-
-- The API is read-only and config-backed in this foundation slice.
-- No Flutter HTTP integration was introduced in API-001.
-- No database-backed catalog, customer authentication, account sync, remote Favorites, cart, checkout, payment, order processing or admin CMS was introduced.
-- Amazon remains the purchase destination.
+- [x] Product Master contract tests and dedicated Backend API CI
 
 ## UI-009 authoritative release receipt — 1.0.0
 
@@ -94,16 +147,15 @@ PR #32 is the authoritative UI-009 Product Master / final-copy reconciliation an
 
 ### UI-009 delivered
 
-- [x] `1.0.0+100` is the real application package version
+- [x] `1.0.0+100` real application package version
 - [x] Final Home / Search / Categories / Favorites / Account experience
 - [x] Final Product Detail entry points for all five variants
 - [x] Fullscreen gallery / zoom / share / related-product treatment
 - [x] Selected-variant Amazon handoff
-- [x] Account / Our Story / FAQ / Contact / Amazon Store / Social / Privacy / Terms / App Information
+- [x] Information/legal/account screens
 - [x] Persistent Drawer Favorites
 - [x] Product Master copy contracts
 - [x] Compact-phone, text-scale, large-mobile and accessibility regression gates
-- [x] Analyze, full tests, Android APK and artifact upload green on final `main`
 
 ## Previous release receipts
 
@@ -115,20 +167,20 @@ PR #32 is the authoritative UI-009 Product Master / final-copy reconciliation an
 | `0.7.0` | STATE-001 | PR #16 / `a1b736cd71a3fbeece96675b35fa40e7e550ca80` | `31332976996` | `9043512197` |
 | `0.6.0` | COM-001 | PR #13 / `4236573fd10e059e19df5b95e5285484db63e3a5` | `31332256549` | `9043300480` |
 
-## API-002 execution boundary
+## API-004 execution boundary
 
-API-002 should connect Flutter to the already-versioned API without redesigning the 1.0 experience.
+API-004 should add protected catalog authoring without weakening the released public contract.
 
-Expected integration principles:
+Expected principles:
 
-1. Fetch `/api/v1/config` and `/api/v1/catalog` through a small typed mobile data layer.
-2. Preserve stable Product and Variant IDs from the API contract.
-3. Convert API DTOs into the existing released UI/domain shape instead of binding widgets directly to raw JSON.
-4. Keep a deterministic local fallback/cache so the app still opens and browses when the API is unavailable.
-5. Preserve local Drawer Favorites unless a separate approved sync slice changes that behavior.
-6. Keep Amazon purchase handoff variant-aware and driven by validated catalog data.
-7. Add loading, stale-cache and error states without changing the frozen navigation hierarchy.
-8. Maintain Product Master contract tests across backend and mobile.
+1. Authentication/authorization applies only to administrative write surfaces.
+2. Public `GET /api/v1/catalog` remains backward compatible and read-only.
+3. Product/Variant stable IDs cannot be silently replaced.
+4. Product facts and approved usage/care copy remain governed by `docs/PRODUCT_MASTER.md`.
+5. Writes require validation for ASIN, Amazon destination, Pantone, ordering and required facts.
+6. Changes are auditable and safe to roll back/reconcile.
+7. Flutter 1.2 does not require a visual or navigation redesign.
+8. No cart, checkout, payment or order processing is introduced by catalog administration.
 
 ## Guardrails
 
