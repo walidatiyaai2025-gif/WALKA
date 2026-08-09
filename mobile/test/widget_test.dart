@@ -92,10 +92,16 @@ void main() {
 
     await tester.tap(find.text('Categories'));
     await tester.pumpAndSettle();
-    expect(find.byTooltip('Search'), findsOneWidget);
+    expect(find.text('Collections'), findsOneWidget);
 
-    await tester.tap(find.byTooltip('Search'));
+    final Finder searchButton = find.widgetWithIcon(
+      IconButton,
+      Icons.search_rounded,
+    );
+    expect(searchButton, findsOneWidget);
+    await tester.tap(searchButton);
     await tester.pumpAndSettle();
+
     expect(find.text('SEARCH WALKA'), findsOneWidget);
     expect(find.text('What are you organizing?'), findsOneWidget);
     expect(tester.takeException(), isNull);
