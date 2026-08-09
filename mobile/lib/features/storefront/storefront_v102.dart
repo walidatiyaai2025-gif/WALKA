@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../design_system/walka_adaptive.dart';
 import '../../design_system/walka_theme.dart';
+import '../catalog/catalog_state.dart';
 import '../information/information_v102.dart';
 import 'storefront_catalog_v120.dart';
 import 'storefront_v101.dart' show WalkaFavoritesV101;
@@ -126,6 +127,7 @@ class WalkaStorefrontShellV102 extends StatefulWidget {
 
 class _WalkaStorefrontShellV102State extends State<WalkaStorefrontShellV102> {
   int _index = 0;
+  late final WalkaCatalogController _fallbackCatalog = WalkaCatalogController();
 
   void _select(int value) {
     FocusManager.instance.primaryFocus?.unfocus();
@@ -134,7 +136,23 @@ class _WalkaStorefrontShellV102State extends State<WalkaStorefrontShellV102> {
   }
 
   @override
+  void dispose() {
+    _fallbackCatalog.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    if (WalkaCatalogScope.maybeOf(context) == null) {
+      return WalkaCatalogScope(
+        controller: _fallbackCatalog,
+        child: Builder(builder: _buildShell),
+      );
+    }
+    return _buildShell(context);
+  }
+
+  Widget _buildShell(BuildContext context) {
     final List<Widget> pages = <Widget>[
       WalkaHomeV120(onShopAll: () => _select(2), onSearch: () => _select(1)),
       const WalkaSearchV120(),
