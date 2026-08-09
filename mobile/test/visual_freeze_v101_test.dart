@@ -61,7 +61,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: buildWalkaTheme(),
-        home: const WalkaSearchV101(),
+        home: const Scaffold(body: WalkaSearchV101()),
       ),
     );
     await tester.pump();
@@ -182,8 +182,10 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.byType(NavigationBar), findsOneWidget);
-    expect(find.text('WALKA'), findsWidgets);
+    final Finder navigation = find.byType(NavigationBar);
+    expect(navigation, findsOneWidget);
+    expect(tester.widget<NavigationBar>(navigation).selectedIndex, 0);
+    expect(find.byType(NavigationDestination), findsNWidgets(5));
     expect(tester.takeException(), isNull);
   });
 }
