@@ -6,7 +6,7 @@ Last updated: 2026-08-09
 
 **Phase 1.5 — Full Clickable Flutter Experience: IN PROGRESS**
 
-The project keeps the functional work already merged by the team — Amazon Drawer handoff and persistent Drawer Favorites — while prioritizing completion of the real Flutter screen set before Laravel/API work.
+Phase 1 premium mobile UI/UX, COM-001 Amazon handoff, and STATE-001 persistent Drawer Favorites are released. Current product direction is to complete and visually freeze the real Flutter screen set before Laravel/API work begins.
 
 ## Release board
 
@@ -38,24 +38,45 @@ The project keeps the functional work already merged by the team — Amazon Draw
 - [x] Approved usage guidance: dry & semi-wet foods, not intended for liquids, carry upright
 - [x] Categories routes to both Drawer and Lunch collections
 - [x] Official Blue/Pink/Green Amazon ASIN mapping added without changing Drawer handoff
+- [x] Lunch PDP purchase button opens the selected color on Amazon
+- [x] Amazon launch failure shows an in-app fallback message
 - [x] STATE-001 persistent Favorites preserved
 - [x] State + Lunch regression coverage reconciled
-- [ ] Reconciliation CI analyze green
-- [ ] Reconciliation CI tests green
-- [ ] Android preview APK green
-- [ ] Reconciliation PR merged to `main`
-- [ ] `0.8.0` preview artifact recorded
+- [x] Reconciliation analyze green on validated code baseline
+- [x] Reconciliation tests green on validated code baseline
+- [x] Android preview APK green on validated code baseline
+- [ ] Final post-reconciliation CI green
+- [ ] PR #19 merged to `main`
+- [ ] `0.8.0` final preview artifact recorded
 
-## Preserved functional baseline
+## STATE-001 release receipt — 0.7.0
 
-- Drawer White ASIN: `B0FQN4DCTG`
-- Drawer Gray ASIN: `B0FQN4L2ZD`
-- Persistent Favorites merge: `a1b736cd71a3fbeece96675b35fa40e7e550ca80`
-- Drawer Favorites remain device-local through SharedPreferences.
+- Release: `0.7.0`
+- Package: `0.7.0+7`
+- Issue: `#14`
+- PR: `#16`
+- Merge commit: `a1b736cd71a3fbeece96675b35fa40e7e550ca80`
+- Validated main workflow run: `31332976996`
+- Artifact ID: `9043512197`
+- Artifact name: `walka-ui-preview-a1b736cd71a3fbeece96675b35fa40e7e550ca80`
+- Artifact size: `70,974,808 bytes`
+- Artifact SHA-256: `28ee8564c69ef977bde0252d41a223924849158d115d50c068748050143b25c7`
+
+## Previous release receipt — COM-001 / 0.6.0
+
+- Issue: `#12`
+- PR: `#13`
+- Merge commit: `4236573fd10e059e19df5b95e5285484db63e3a5`
+- Validated main workflow run: `31332256549`
+- Artifact ID: `9043300480`
+- Artifact SHA-256: `838e34f5efecbbfa9da2248c4d9b6c137863fe19bb96989bb4ff672cdaddaf7e`
 
 ## Phase boundary
 
-No Laravel/API work before UI-009 visual freeze. WALKA does not implement an in-app cart, checkout or payment flow; Amazon remains the purchase destination.
+- No Laravel/API work before UI-009 visual freeze.
+- WALKA does not implement an in-app cart, checkout or payment flow; Amazon remains the purchase destination.
+- Favorites remain device-local until a later account/cloud synchronization slice.
+- Authentication and order persistence remain outside the current design-first sequence.
 
 ## Guardrails
 
