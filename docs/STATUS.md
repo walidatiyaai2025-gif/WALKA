@@ -4,9 +4,9 @@ Last updated: 2026-08-09
 
 ## Current state
 
-**Phase 2 — Functional Storefront: IN PROGRESS**
+**Phase 1.5 — Full Clickable Flutter Experience: IN PROGRESS**
 
-Phase 1 premium mobile UI/UX is complete. COM-001 is released on `main`; the next implementation slice is STATE-001 for persistent Favorites/customer state.
+Phase 1 premium mobile UI/UX is complete and COM-001 Amazon handoff is released on `main`. Product direction is now to finish the real Flutter screen set and visual freeze before persistent state or Laravel/API work continues.
 
 ## Release board
 
@@ -17,60 +17,49 @@ Phase 1 premium mobile UI/UX is complete. COM-001 is released on `main`; the nex
 | UI-003 | 0.3.0 | Categories + collection browsing | COMPLETED |
 | UI-004 | 0.4.0 | Favorites + Account + About | COMPLETED |
 | UI-005 | 0.5.0 | Android/iOS polish + accessibility + visual QA | COMPLETED |
-| COM-001 | 0.6.0 | Variant-aware Amazon purchase handoff | COMPLETED |
-| STATE-001 | 0.7.0 | Persistent Favorites/customer state | NEXT |
-| API-001 | 0.8.0 | Laravel API foundation | PLANNED |
-| API-002 | 0.9.0 | Flutter remote catalog integration | PLANNED |
-| REL-001 | 1.0.0 | Storefront release candidate | PLANNED |
+| COM-001 | 0.6.0 | Variant-aware Amazon purchase handoff for Drawer Organizer | COMPLETED |
+| UI-006 | 0.7.0 | Lunch Box collection + Blue/Pink/Green PDP | IN PROGRESS |
+| UI-007 | 0.8.0 | Search + discovery + results/filter/sort states | PLANNED |
+| UI-008 | 0.9.0 | Product UX completion + gallery/share/related products | PLANNED |
+| UI-009 | 1.0.0 | Information screens + cross-platform visual freeze | PLANNED |
+| STATE-001 | post-1.0 | Persistent Favorites/customer state | DEFERRED |
+| API-001 | post-1.0 | Laravel API foundation | DEFERRED |
 
-## COM-001 result — 0.6.0
+## UI-006 acceptance checklist
 
-- [x] `0.6.0+6` package version
-- [x] Dedicated Amazon commerce boundary
-- [x] White drawer organizer routes to its official Amazon ASIN
-- [x] Gray drawer organizer routes to its official Amazon ASIN
-- [x] PDP purchase button uses the currently selected color
-- [x] External app/browser launch requested through `url_launcher`
-- [x] Failed launch surfaces an in-app fallback message
-- [x] Variant-to-ASIN tests added
-- [x] Existing Phase 1 visual hierarchy preserved
-- [x] Phase 2 release plan documented
-- [x] CI analyze green
-- [x] CI tests green
-- [x] Android preview APK green
-- [x] PR #13 squash-merged to `main`
-- [x] `0.6.0` main preview artifact recorded
+- [x] `0.7.0+7` package version
+- [x] Premium Lunch Collection screen
+- [x] Blue / Pink / Green product variants
+- [x] Variant visual tokens + Pantone labels
+- [x] Full Lunch Box PDP
+- [x] Three gallery presentation states
+- [x] 1200 ml / four-compartment product detail presentation
+- [x] SUS304 tray / PP body / insulated bag / utensils / sauce cup content
+- [x] Locked usage guidance: dry & semi-wet foods, not intended for liquids, carry upright
+- [x] Categories routes to Drawer and Lunch collections
+- [x] Official Blue/Pink/Green Amazon ASIN mapping added to the existing commerce boundary
+- [x] Lunch ASIN unit coverage added
+- [x] Compact storefront + lunch PDP smoke coverage added
+- [ ] CI analyze green
+- [ ] CI tests green
+- [ ] Android preview APK green
+- [ ] PR merged to `main`
+- [ ] `0.7.0` preview considered releasable
 
-## COM-001 release receipt
+## COM-001 preserved baseline
 
-- Release: `0.6.0`
-- Package: `0.6.0+6`
-- Issue: `#12`
-- PR: `#13`
-- Merge commit: `4236573fd10e059e19df5b95e5285484db63e3a5`
-- Validated main workflow run: `31332256549`
-- Artifact ID: `9043300480`
-- Artifact name: `walka-ui-preview-4236573fd10e059e19df5b95e5285484db63e3a5`
-- Artifact size: `68,937,917 bytes`
-- Artifact SHA-256: `838e34f5efecbbfa9da2248c4d9b6c137863fe19bb96989bb4ff672cdaddaf7e`
+- Drawer White ASIN: `B0FQN4DCTG`
+- Drawer Gray ASIN: `B0FQN4L2ZD`
+- Existing external Amazon launch behavior remains intact.
 
-## Previous release receipt — Phase 1 / 0.5.0
+## Phase boundary
 
-- PR: `#10`
-- Merge commit: `2507547f8ca909b9d10db5181f88498ef14ac113`
-- Validated workflow run: `31331498047`
-- Artifact ID: `9043093831`
-- Artifact SHA-256: `75d629add1f32b9342b16ae798d7fd1091c74c5f572cf7513e6a6c76a0da3bb5`
-
-## Phase 2 boundaries
-
-- WALKA does not implement an in-app cart, checkout or payment flow; Amazon remains the purchase destination.
-- Laravel is introduced in a later Phase 2 slice behind versioned APIs and service/repository boundaries.
-- Authentication and order persistence remain outside the current slice.
+No Laravel/API work is allowed before UI-009 visual freeze. No in-app cart, checkout or payment flow is planned; Amazon remains the purchase destination.
 
 ## Guardrails
 
 1. `Images/` remains the master visual-reference folder and must not be modified by implementation tasks.
-2. Completed Phase 1 visual architecture should be extended, not rewritten, unless visual QA proves a specific defect.
-3. New behavior must remain in small, independently reviewable and releasable slices.
-4. Every slice must pass analyze, tests and the applicable Android build gate before release.
+2. Completed visual architecture is extended, not rewritten, unless visual QA proves a specific defect.
+3. New work remains split into independently reviewable and releasable slices.
+4. Every slice must pass analyze, tests and Android build gate before release.
+5. User-visible product copy must preserve the approved lunch-box safety/usage language.
