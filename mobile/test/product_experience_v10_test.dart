@@ -172,6 +172,54 @@ void main() {
     expect(find.text('Green'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('Drawer v10 stays overflow-free on compact 320px phones',
+      (WidgetTester tester) async {
+    tester.view.physicalSize = const Size(320, 568);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final WalkaFavoritesController controller = _controller();
+    await controller.load();
+
+    await tester.pumpWidget(
+      WalkaFavoritesScope(
+        controller: controller,
+        child: MaterialApp(
+          theme: buildWalkaTheme(),
+          home: const WalkaDrawerProductDetailV10(),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.text('BUY ON AMAZON'), findsOneWidget);
+    expect(find.byTooltip('View fullscreen'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Lunch v10 remains stable on a large mobile viewport',
+      (WidgetTester tester) async {
+    tester.view.physicalSize = const Size(900, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildWalkaTheme(),
+        home: const WalkaLunchProductDetailV10(
+          initialVariant: WalkaLunchVariant.blue,
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.text('BUY ON AMAZON'), findsOneWidget);
+    expect(find.byTooltip('View fullscreen'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
 }
 
 WalkaFavoritesController _controller() {
