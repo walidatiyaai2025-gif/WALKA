@@ -112,14 +112,9 @@ void main() {
 
     expect(find.text('1 result'), findsOneWidget);
     expect(find.text('Green'), findsOneWidget);
-    expect(
-      find.text('WALKA Large Stainless Steel Bento Lunch Box for Adults'),
-      findsOneWidget,
-    );
+    expect(find.text('Large Stainless Steel Bento Lunch Box'), findsOneWidget);
 
-    await tester.tap(
-      find.text('WALKA Large Stainless Steel Bento Lunch Box for Adults'),
-    );
+    await tester.tap(find.text('Large Stainless Steel Bento Lunch Box'));
     await tester.pumpAndSettle();
 
     expect(find.byType(WalkaLunchProductDetailV100), findsOneWidget);
@@ -141,13 +136,21 @@ void main() {
     );
 
     expect(
-      items.map((WalkaCatalogViewItem item) => item.variantId).toSet(),
-      WalkaCatalogContract.requiredVariantIds,
+      items.map((WalkaCatalogViewItem item) => item.variantId).toList(),
+      <String>[
+        'drawer-organizer:white',
+        'drawer-organizer:gray',
+        'lunch-box:blue',
+        'lunch-box:pink',
+        'lunch-box:green',
+      ],
     );
     expect(
       items.map((WalkaCatalogViewItem item) => item.variant).toSet(),
       <String>{'White', 'Gray', 'Blue', 'Pink', 'Green'},
     );
+    expect(items.first.title, 'Expandable Drawer Organizer');
+    expect(items.last.title, 'Large Stainless Steel Bento Lunch Box');
 
     await tester.pumpWidget(
       WalkaCatalogScope(
