@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:walka/design_system/walka_adaptive.dart';
 import 'package:walka/design_system/walka_theme.dart';
 import 'package:walka/features/catalog/catalog_v3.dart';
+import 'package:walka/features/favorites/favorites_state.dart';
 import 'package:walka/features/lifestyle/favorites_v5.dart';
 import 'package:walka/features/lifestyle/lifestyle_v4.dart';
 import 'package:walka/features/storefront/storefront_shell_v5.dart';
@@ -10,8 +11,9 @@ import 'package:walka/features/storefront/storefront_v2.dart';
 import 'package:walka/main.dart';
 
 void main() {
-  test('WALKA 0.5 exposes the complete Phase 1 destination set', () {
-    expect(const WalkaApp(), isA<WalkaApp>());
+  test('WALKA 0.7 exposes the functional storefront destination set', () {
+    final WalkaFavoritesController controller = _newController();
+    expect(WalkaApp(favoritesController: controller), isA<WalkaApp>());
     expect(const WalkaStorefrontSplashV5(), isA<WalkaStorefrontSplashV5>());
     expect(const WalkaStorefrontShellV5(), isA<WalkaStorefrontShellV5>());
     expect(const WalkaHomeV2(), isA<WalkaHomeV2>());
@@ -34,17 +36,23 @@ void main() {
     expect(theme.materialTapTargetSize, MaterialTapTargetSize.padded);
   });
 
-  testWidgets('final shell renders on a compact mobile viewport',
+  testWidgets('final shell renders with empty persisted favorites',
       (WidgetTester tester) async {
     tester.view.physicalSize = const Size(320, 568);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
+    final WalkaFavoritesController controller = _newController();
+    await controller.load();
+
     await tester.pumpWidget(
-      MaterialApp(
-        theme: buildWalkaTheme(),
-        home: const WalkaStorefrontShellV5(),
+      WalkaFavoritesScope(
+        controller: controller,
+        child: MaterialApp(
+          theme: buildWalkaTheme(),
+          home: const WalkaStorefrontShellV5(),
+        ),
       ),
     );
     await tester.pump();
@@ -53,6 +61,34 @@ void main() {
     expect(find.text('Categories'), findsOneWidget);
     expect(find.text('Favorites'), findsOneWidget);
     expect(find.text('Account'), findsOneWidget);
+    expect(controller.savedDrawerVariants, isEmpty);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('PDP favorite control writes to shared state and rebuilds',
+      (WidgetTester tester) async {
+    final WalkaFavoritesController controller = _newController();
+    await controller.load();
+
+    await tester.pumpWidget(
+      WalkaFavoritesScope(
+        controller: controller,
+        child: MaterialApp(
+          theme: buildWalkaTheme(),
+          home: const WalkaProductDetailV2(),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.byTooltip('Add favorite'), findsOneWidget);
+    expect(controller.isDrawerFavorite(gray: false), isFalse);
+
+    await tester.tap(find.byTooltip('Add favorite'));
+    await tester.pumpAndSettle();
+
+    expect(controller.isDrawerFavorite(gray: false), isTrue);
+    expect(find.byTooltip('Remove favorite'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -78,4 +114,20 @@ void main() {
     expect(WalkaAdaptiveMetrics.mobileContentMaxWidth, 560);
     expect(tester.takeException(), isNull);
   });
+}
+
+WalkaFavoritesController _newController() {
+  return WalkaFavoritesController(_MemoryFavoritesStore());
+}
+
+class _MemoryFavoritesStore implements WalkaFavoritesStore {
+  Set<String> ids = <String>{};
+
+  @override
+  Future<Set<String>> readFavoriteIds() async => Set<String>.from(ids);
+
+  @override
+  Future<void> writeFavoriteIds(Set<String> favoriteIds) async {
+    ids = Set<String>.from(favoriteIds);
+  }
 }
