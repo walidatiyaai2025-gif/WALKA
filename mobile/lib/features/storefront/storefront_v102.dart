@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../design_system/walka_adaptive.dart';
+import '../../design_system/walka_shell.dart';
 import '../../design_system/walka_theme.dart';
 import '../catalog/catalog_state.dart';
 import '../information/information_v102.dart';
@@ -8,11 +9,12 @@ import 'home_premium_v121.dart';
 import 'storefront_catalog_v120.dart';
 import 'storefront_v101.dart' show WalkaFavoritesV101;
 
-/// API-002 connected storefront entry surface.
+/// API-002 connected storefront entry surface with DESIGN-002 premium chrome.
 ///
 /// Home, Search and Categories consume the typed catalog repository while
-/// preserving the frozen WALKA navigation and design language. Favorites and
-/// Account retain their validated local-state/information implementations.
+/// preserving the WALKA five-destination information architecture. DESIGN-002
+/// centralizes the owner-visible wordmark and bottom navigation treatment so
+/// all destinations inherit consistent, safe-area-aware premium chrome.
 class WalkaStorefrontSplashV102 extends StatelessWidget {
   const WalkaStorefrontSplashV102({super.key});
 
@@ -25,41 +27,19 @@ class WalkaStorefrontSplashV102 extends StatelessWidget {
         child: SafeArea(
           child: Padding(
             padding: EdgeInsets.fromLTRB(
-              WalkaAdaptiveMetrics.horizontalPadding(context),
+              WalkaShellMetrics.horizontalGutter(context),
               24,
-              WalkaAdaptiveMetrics.horizontalPadding(context),
+              WalkaShellMetrics.horizontalGutter(context),
               28,
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 const Spacer(),
-                Semantics(
-                  header: true,
-                  label: 'WALKA',
-                  child: const Text(
-                    'WALKA',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 42,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 8.2,
-                    ),
-                  ),
-                ),
+                const WalkaWordmark(onDark: true),
                 const SizedBox(height: 18),
                 Container(width: 54, height: 2, color: WalkaColors.gold),
                 const SizedBox(height: 20),
-                const Text(
-                  'PREMIUM HOME ORGANIZATION',
-                  style: TextStyle(
-                    color: Color(0xFFC9D4DF),
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 2.1,
-                  ),
-                ),
-                const SizedBox(height: 16),
                 const SizedBox(
                   width: 325,
                   child: Text(
@@ -170,36 +150,9 @@ class _WalkaStorefrontShellV102State extends State<WalkaStorefrontShellV102> {
         child: IndexedStack(index: _index, children: pages),
       ),
       bottomNavigationBar: WalkaAdaptiveNavigationFrame(
-        child: NavigationBar(
+        child: WalkaPremiumNavigationBar(
           selectedIndex: _index,
           onDestinationSelected: _select,
-          destinations: const <NavigationDestination>[
-            NavigationDestination(
-              icon: Icon(Icons.home_outlined),
-              selectedIcon: Icon(Icons.home_rounded),
-              label: 'Home',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.search_outlined),
-              selectedIcon: Icon(Icons.search_rounded),
-              label: 'Search',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.grid_view_outlined),
-              selectedIcon: Icon(Icons.grid_view_rounded),
-              label: 'Categories',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.favorite_border_rounded),
-              selectedIcon: Icon(Icons.favorite_rounded),
-              label: 'Favorites',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.person_outline_rounded),
-              selectedIcon: Icon(Icons.person_rounded),
-              label: 'Account',
-            ),
-          ],
         ),
       ),
     );

@@ -25,9 +25,9 @@ WALKA should feel like a premium US-market home-organization brand, not a generi
 
 | Order | Task | Scope | GitHub | Status |
 |---|---|---|---|---|
-| 1 | DESIGN-001 | Home premium visual fidelity + product presentation | #47 | IN PROGRESS |
-| 2 | DESIGN-002 | App shell + bottom navigation premium polish | #48 | P0 NEXT |
-| 3 | DESIGN-003 | Categories + Search discovery refinement | #49 | P0 QUEUED |
+| 1 | DESIGN-001 | Home premium visual fidelity + product presentation | #47 | COMPLETED |
+| 2 | DESIGN-002 | App shell + bottom navigation premium polish | #48 | IN PROGRESS |
+| 3 | DESIGN-003 | Categories + Search discovery refinement | #49 | P0 NEXT |
 | 4 | DESIGN-004 | Product Detail premium commerce hierarchy + gallery polish | #50 | P0 QUEUED |
 | 5 | DESIGN-005 | Favorites + Account + information consistency | #51 | P0 QUEUED |
 | 6 | DESIGN-006 | Motion + feedback + loading/offline state polish | #52 | P0 QUEUED |
@@ -35,28 +35,32 @@ WALKA should feel like a premium US-market home-organization brand, not a generi
 
 Parent design program: #46.
 
-## DESIGN-001 active implementation
+## DESIGN-002 active implementation
 
-### Problem found
+Branch: `agent/design-002-premium-shell`
 
-The API-002 Home is structurally complete, but visible product surfaces rely heavily on generic `grid_view` / `lunch_dining` Material icons. This weakens perceived quality in the APK because the product is not the visual hero.
+### Problem
 
-### Active solution
+The released five-destination information architecture is sound, but persistent app chrome still relies on mostly default Material navigation treatment and locally repeated wordmark/header styling. That makes screen-to-screen polish less coherent than the new DESIGN-001 Home presentation.
 
-- Introduce an asset-free reusable `WalkaProductVisual` presentation component.
-- Render distinguishable Drawer Organizer and Lunch Box silhouettes using deterministic Flutter painting.
-- Use real variant colors for White/Gray and Blue/Pink/Green presentation.
-- Replace icon-led Home hero/product presentation with product-led visuals.
-- Strengthen editorial hierarchy, CTA treatment and product-card metadata.
-- Preserve the API-002 catalog controller, stable product/variant IDs, offline fallback and Amazon routing.
+### Implementation direction
+
+- Centralize shell metrics, WALKA wordmark, top-level circular icon action and bottom navigation in reusable design-system primitives.
+- Keep Home, Search, Categories, Favorites and Account in the released order with no route rewrite.
+- Reduce navigation visual weight while preserving visible labels and minimum 48dp touch targets.
+- Handle bottom system insets inside the shared navigation component.
+- Standardize adaptive gutters and vertical section rhythm for subsequent DESIGN-003..005 work.
+- Document the shared shell contract in `docs/DESIGN_SYSTEM_SHELL.md`.
+- Preserve catalog state, offline fallback, Favorites persistence, Product Master facts and Amazon routing.
 
 ### Merge gate
 
 - Flutter Analyze green.
 - Full Flutter test suite green.
-- DESIGN-001 focused compact-width tests green.
-- Android APK build green.
-- No regression to Search, Categories, Favorites, Account or PDP routes.
+- DESIGN-002 focused 320×568 navigation regression green.
+- 48dp shared icon-action target regression green.
+- Android release-mode APK candidate build/upload green.
+- Stable `main` remains untouched until the above gates pass.
 
 ## Design program Definition of Done
 
