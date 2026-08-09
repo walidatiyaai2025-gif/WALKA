@@ -69,7 +69,7 @@ void main() {
     expect(theme.materialTapTargetSize, MaterialTapTargetSize.padded);
   });
 
-  testWidgets('storefront v9 opens Search from Categories',
+  testWidgets('storefront v9 exposes Search as first-class navigation',
       (WidgetTester tester) async {
     tester.view.physicalSize = const Size(390, 844);
     tester.view.devicePixelRatio = 1;
@@ -90,21 +90,12 @@ void main() {
     );
     await tester.pump();
 
-    final Finder categoriesDestination = find.descendant(
+    final Finder searchDestination = find.descendant(
       of: find.byType(NavigationBar),
-      matching: find.byIcon(Icons.grid_view_outlined),
+      matching: find.byIcon(Icons.search_outlined),
     );
-    expect(categoriesDestination, findsOneWidget);
-    await tester.tap(categoriesDestination);
-    await tester.pumpAndSettle();
-    expect(
-      tester.widget<NavigationBar>(find.byType(NavigationBar)).selectedIndex,
-      2,
-    );
-
-    final Finder searchButton = find.byIcon(Icons.search_rounded);
-    expect(searchButton, findsOneWidget);
-    await tester.tap(searchButton);
+    expect(searchDestination, findsOneWidget);
+    await tester.tap(searchDestination);
     await tester.pumpAndSettle();
 
     expect(
@@ -113,6 +104,35 @@ void main() {
     );
     expect(find.text('SEARCH WALKA'), findsOneWidget);
     expect(find.text('What are you organizing?'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Categories search affordance invokes its routing callback',
+      (WidgetTester tester) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    bool searchRequested = false;
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildWalkaTheme(),
+        home: Scaffold(
+          body: WalkaCategoriesV6(
+            onSearch: () => searchRequested = true,
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    final Finder searchButton = find.byTooltip('Search');
+    expect(searchButton, findsOneWidget);
+    await tester.tap(searchButton);
+    await tester.pump();
+
+    expect(searchRequested, isTrue);
     expect(tester.takeException(), isNull);
   });
 
