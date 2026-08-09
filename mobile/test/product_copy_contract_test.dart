@@ -10,58 +10,63 @@ void main() {
     final String legacyLunch = await File(
       'lib/features/lunch/lunch_box_v6.dart',
     ).readAsString();
-
-    expect(
-      v10,
-      contains("_SpecRowV10(label: 'Colors', value: 'White · Gray')"),
-    );
-    expect(v10, isNot(contains("value: '1.72 lb'")));
-
-    expect(
-      v10,
-      contains(
-        "_SpecRowV10(label: 'Lid & gasket', value: 'Dishwasher · top rack')",
-      ),
-    );
-    expect(
-      v10,
-      isNot(
-        contains("_SpecRowV10(label: 'Lid & gasket', value: 'Hand wash')"),
-      ),
-    );
-    expect(
-      v10,
-      contains(
-        "_SpecRowV10(label: 'Microwave', value: 'PP outer only · remove steel tray & lid')",
-      ),
-    );
-
-    expect(
-      legacyLunch,
-      contains("'Lid and silicone gasket: dishwasher safe, top rack.'"),
-    );
-    expect(
-      legacyLunch,
-      contains(
-        "'PP outer body is microwave safe after removing the stainless tray, lid and silicone gasket.'",
-      ),
-    );
-    expect(
-      legacyLunch,
-      isNot(contains("'Lid and silicone gasket: hand wash.'")),
-    );
-
     final String master = await File('../docs/PRODUCT_MASTER.md').readAsString();
-    expect(master, contains('Do not publish a product weight'));
+
+    expect(master, contains('Product weight: 1.72 lb'));
+    expect(
+      v10,
+      contains("_SpecRowV10(label: 'Weight', value: '1.72 lb')"),
+    );
+
     expect(
       master,
-      contains('Lid and silicone gasket: dishwasher safe on the top rack'),
+      contains('SUS304 stainless tray: dishwasher safe on the top rack; not microwave safe.'),
     );
     expect(
+      v10,
+      contains("_SpecRowV10(label: 'Steel tray', value: 'Dishwasher · top rack')"),
+    );
+    expect(
+      legacyLunch,
+      contains("'Stainless steel tray: dishwasher, top rack.'"),
+    );
+
+    expect(master, contains('Lid and silicone gasket: hand wash.'));
+    expect(
+      v10,
+      contains("_SpecRowV10(label: 'Lid & gasket', value: 'Hand wash')"),
+    );
+    expect(
+      legacyLunch,
+      contains("'Lid and silicone gasket: hand wash.'"),
+    );
+
+    expect(
       master,
-      contains(
-        'PP outer body: microwave safe only after removing the stainless tray, lid, and silicone gasket',
-      ),
+      contains('PP outer body: microwave safe without the stainless steel tray.'),
+    );
+    expect(
+      v10,
+      contains("_SpecRowV10(label: 'Microwave', value: 'Remove stainless tray')"),
+    );
+    expect(
+      legacyLunch,
+      contains("'PP body may be used in the microwave without the steel tray.'"),
+    );
+
+    expect(master, contains('Best for dry & semi-wet foods'));
+    expect(master, contains('Not intended for liquids'));
+    expect(master, contains('Carry upright'));
+    expect(v10, contains('Best for dry & semi-wet foods. Not intended for liquids. Carry upright.'));
+    expect(legacyLunch, contains('Best for dry & semi-wet foods. Not intended for liquids. Carry upright.'));
+
+    expect(
+      v10.toLowerCase(),
+      isNot(contains('fully leakproof')),
+    );
+    expect(
+      legacyLunch.toLowerCase(),
+      isNot(contains('fully leakproof')),
     );
   });
 }

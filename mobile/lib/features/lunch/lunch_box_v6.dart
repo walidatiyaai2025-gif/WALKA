@@ -912,10 +912,10 @@ class _CarePanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const List<String> bullets = <String>[
-      'Stainless steel tray: dishwasher safe.',
-      'Lid and silicone gasket: dishwasher safe, top rack.',
+      'Stainless steel tray: dishwasher, top rack.',
+      'Lid and silicone gasket: hand wash.',
       'Stainless steel tray is not microwave safe.',
-      'PP outer body is microwave safe after removing the stainless tray, lid and silicone gasket.',
+      'PP body may be used in the microwave without the steel tray.',
       'Carry the lunch box upright and avoid liquids.',
     ];
 
