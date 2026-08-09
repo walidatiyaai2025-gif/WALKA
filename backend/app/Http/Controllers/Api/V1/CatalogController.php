@@ -18,6 +18,7 @@ final class CatalogController extends Controller
         return response()->json([
             'data' => $products,
             'meta' => [
+                'release' => config('walka.release'),
                 'api_version' => config('walka.api_version'),
                 'purchase_mode' => config('walka.purchase_mode'),
             ],
