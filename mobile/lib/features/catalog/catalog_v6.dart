@@ -5,7 +5,9 @@ import '../lunch/lunch_box_v6.dart';
 import 'catalog_v3.dart' show WalkaCollectionScreenV3;
 
 class WalkaCategoriesV6 extends StatelessWidget {
-  const WalkaCategoriesV6({super.key});
+  const WalkaCategoriesV6({super.key, this.onSearch});
+
+  final VoidCallback? onSearch;
 
   void _openDrawer(BuildContext context) {
     Navigator.of(context).push(
@@ -25,7 +27,7 @@ class WalkaCategoriesV6 extends StatelessWidget {
       bottom: false,
       child: CustomScrollView(
         slivers: <Widget>[
-          const SliverToBoxAdapter(child: _CategoryHeader()),
+          SliverToBoxAdapter(child: _CategoryHeader(onSearch: onSearch)),
           const SliverToBoxAdapter(
             child: Padding(
               padding: EdgeInsets.fromLTRB(20, 18, 20, 24),
@@ -89,7 +91,9 @@ class WalkaCategoriesV6 extends StatelessWidget {
 }
 
 class _CategoryHeader extends StatelessWidget {
-  const _CategoryHeader();
+  const _CategoryHeader({this.onSearch});
+
+  final VoidCallback? onSearch;
 
   @override
   Widget build(BuildContext context) {
@@ -108,7 +112,7 @@ class _CategoryHeader extends StatelessWidget {
           ),
           const Spacer(),
           IconButton(
-            onPressed: () {},
+            onPressed: onSearch,
             tooltip: 'Search',
             icon: const Icon(Icons.search_rounded),
             style: IconButton.styleFrom(
