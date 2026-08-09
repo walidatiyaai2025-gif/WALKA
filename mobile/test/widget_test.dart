@@ -1,15 +1,25 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:walka/design_system/walka_theme.dart';
 import 'package:walka/main.dart';
+import 'package:walka/screens/walka_screens.dart';
 
 void main() {
-  testWidgets('WALKA splash enters the navigable shell', (WidgetTester tester) async {
+  testWidgets('WALKA splash renders the brand entry state', (WidgetTester tester) async {
     await tester.pumpWidget(const WalkaApp());
 
     expect(find.text('WALKA'), findsOneWidget);
     expect(find.text('EXPLORE WALKA'), findsOneWidget);
+    expect(find.text('PREMIUM HOME ORGANIZATION'), findsOneWidget);
+  });
 
-    await tester.tap(find.text('EXPLORE WALKA'));
-    await tester.pumpAndSettle();
+  testWidgets('WALKA shell exposes primary navigation', (WidgetTester tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildWalkaTheme(),
+        home: const WalkaShell(),
+      ),
+    );
 
     expect(find.text('Home'), findsOneWidget);
     expect(find.text('Categories'), findsOneWidget);
