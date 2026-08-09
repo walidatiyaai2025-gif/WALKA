@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 
 import '../commerce/amazon_purchase.dart';
+import 'catalog_presentation.dart';
 import 'data/walka_bundled_catalog.dart';
 import 'data/walka_catalog_repository.dart';
 import 'domain/walka_catalog.dart';
@@ -8,7 +9,7 @@ import 'domain/walka_catalog.dart';
 class WalkaCatalogController extends ChangeNotifier {
   WalkaCatalogController({WalkaCatalogRepository? repository})
       : _repository = repository,
-        _snapshot = WalkaBundledCatalog.snapshot(),
+        _snapshot = walkaPresentationSnapshot(WalkaBundledCatalog.snapshot()),
         _isLoading = repository != null {
     WalkaAmazonPurchaseRegistry.replaceFromSnapshot(_snapshot);
   }
@@ -36,7 +37,9 @@ class WalkaCatalogController extends ChangeNotifier {
 
     _isLoading = true;
     notifyListeners();
-    final WalkaCatalogSnapshot next = await repository.load();
+    final WalkaCatalogSnapshot next = walkaPresentationSnapshot(
+      await repository.load(),
+    );
     _snapshot = next;
     WalkaAmazonPurchaseRegistry.replaceFromSnapshot(next);
     _isLoading = false;
