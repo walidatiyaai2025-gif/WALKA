@@ -8,7 +8,7 @@ import 'package:walka/features/favorites/favorites_state.dart';
 import 'package:walka/features/lifestyle/favorites_v5.dart';
 import 'package:walka/features/lifestyle/lifestyle_v4.dart';
 import 'package:walka/features/lunch/lunch_box_v6.dart';
-import 'package:walka/features/search/search_v9.dart';
+import 'package:walka/features/search/search_discovery_v9.dart';
 import 'package:walka/features/storefront/storefront_shell_v9.dart';
 import 'package:walka/features/storefront/storefront_v2.dart';
 import 'package:walka/main.dart';
@@ -23,7 +23,7 @@ void main() {
     expect(const WalkaCategoriesV6(), isA<WalkaCategoriesV6>());
     expect(const WalkaCollectionScreenV3(), isA<WalkaCollectionScreenV3>());
     expect(const WalkaLunchCollectionV6(), isA<WalkaLunchCollectionV6>());
-    expect(const WalkaSearchV9(), isA<WalkaSearchV9>());
+    expect(const WalkaSearchDiscoveryV9(), isA<WalkaSearchDiscoveryV9>());
     expect(
       const WalkaLunchProductDetailV6(),
       isA<WalkaLunchProductDetailV6>(),
@@ -111,7 +111,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: buildWalkaTheme(),
-        home: const WalkaSearchV9(),
+        home: const WalkaSearchDiscoveryV9(),
       ),
     );
     await tester.pump();
@@ -131,7 +131,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('search presents a designed no-results state',
+  testWidgets('search supports list mode and designed no-results state',
       (WidgetTester tester) async {
     tester.view.physicalSize = const Size(390, 844);
     tester.view.devicePixelRatio = 1;
@@ -141,14 +141,20 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: buildWalkaTheme(),
-        home: const WalkaSearchV9(),
+        home: const WalkaSearchDiscoveryV9(),
       ),
     );
     await tester.pump();
 
+    await tester.enterText(find.byType(TextField), 'lunch box');
+    await tester.pump();
+    expect(find.byTooltip('List view'), findsOneWidget);
+    await tester.tap(find.byTooltip('List view'));
+    await tester.pump();
+    expect(find.text('3 results'), findsOneWidget);
+
     await tester.enterText(find.byType(TextField), 'walka-does-not-exist');
     await tester.pump();
-
     expect(find.text('0 results'), findsOneWidget);
     expect(find.text('Nothing matched that search'), findsOneWidget);
     expect(find.text('CLEAR SEARCH'), findsOneWidget);
