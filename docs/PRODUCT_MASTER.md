@@ -7,6 +7,7 @@ This document is the repository source of truth for product facts used in Flutte
 ## Drawer Organizer
 
 - Product: WALKA Drawer Organizer
+- Material: plastic
 - Compartments: 8
 - Closed size: 13 × 15 × 2 in
 - Expandable width: up to 22.4 in
@@ -24,7 +25,7 @@ This document is the repository source of truth for product facts used in Flutte
 - Compartments: 4
 - Outer body: BPA-free PP
 - Lid: 4 clips with silicone gasket
-- Included set: insulated carry bag, round sauce cup with lid, spoon and fork
+- Included set: insulated carry bag, stainless sauce cup with lid, spoon and fork
 - Approved colorways:
   - Blue — PANTONE 4155 U
   - Pink — PANTONE 9242 U
