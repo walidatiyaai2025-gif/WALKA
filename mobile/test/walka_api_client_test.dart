@@ -18,8 +18,22 @@ void main() {
     );
   });
 
-  test('typed API client parses config and catalog contracts', () async {
+  test('typed API client parses health config and catalog contracts', () async {
     final MockClient httpClient = MockClient((http.Request request) async {
+      if (request.url.path.endsWith('/api/v1/health')) {
+        return http.Response(
+          jsonEncode(<String, dynamic>{
+            'data': <String, dynamic>{
+              'status': 'ok',
+              'service': 'walka-api',
+              'release': '1.1.0',
+              'api_version': 'v1',
+            },
+          }),
+          200,
+          headers: const <String, String>{'content-type': 'application/json'},
+        );
+      }
       if (request.url.path.endsWith('/api/v1/config')) {
         return http.Response(
           jsonEncode(<String, dynamic>{
@@ -48,9 +62,13 @@ void main() {
       client: httpClient,
     );
 
+    final WalkaApiHealth health = await client.fetchHealth();
     final WalkaStorefrontConfig config = await client.fetchConfig();
     final WalkaCatalogPayload catalog = await client.fetchCatalog();
 
+    expect(health.isHealthy, isTrue);
+    expect(health.release, '1.1.0');
+    expect(health.apiVersion, 'v1');
     expect(config.brand, 'WALKA');
     expect(config.release, '1.1.0');
     expect(catalog.products.length, 2);
@@ -64,6 +82,27 @@ void main() {
       catalog.products[1].variants[2].purchaseUri.toString(),
       'https://www.amazon.com/dp/B0GPZNKF9F',
     );
+  });
+
+  test('health rejects unsupported API versions', () async {
+    final WalkaApiClient client = WalkaApiClient(
+      settings: const WalkaApiSettings(baseUrl: 'https://api.walkastore.test'),
+      client: MockClient(
+        (http.Request _) async => http.Response(
+          jsonEncode(<String, dynamic>{
+            'data': <String, dynamic>{
+              'status': 'ok',
+              'service': 'walka-api',
+              'release': '1.1.0',
+              'api_version': 'v2',
+            },
+          }),
+          200,
+        ),
+      ),
+    );
+
+    expect(client.fetchHealth, throwsFormatException);
   });
 
   test('non-success API responses become WalkaApiException', () async {
@@ -89,7 +128,10 @@ void main() {
       settings: const WalkaApiSettings(baseUrl: 'https://api.walkastore.test'),
       client: MockClient(
         (http.Request _) async => http.Response(
-          jsonEncode(<String, dynamic>{'data': 'not-a-list', 'meta': <String, dynamic>{}}),
+          jsonEncode(<String, dynamic>{
+            'data': 'not-a-list',
+            'meta': <String, dynamic>{},
+          }),
           200,
         ),
       ),
