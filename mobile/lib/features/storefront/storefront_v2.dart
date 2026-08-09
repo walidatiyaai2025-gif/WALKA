@@ -4,6 +4,7 @@ import '../../design_system/walka_theme.dart';
 import '../../screens/walka_screens.dart'
     show AboutScreen, AccountScreen, CategoriesScreen, FavoritesScreen;
 import '../commerce/amazon_purchase.dart';
+import '../favorites/favorites_state.dart';
 
 class WalkaStorefrontSplash extends StatelessWidget {
   const WalkaStorefrontSplash({super.key});
@@ -279,20 +280,41 @@ class _WalkaProductDetailV2State extends State<WalkaProductDetailV2> {
   late bool _gray = widget.initialGray;
   int _galleryIndex = 0;
 
+  Future<void> _toggleFavorite(
+    BuildContext context,
+    WalkaFavoritesController controller,
+  ) async {
+    final bool saved = await controller.toggleDrawer(gray: _gray);
+    if (!mounted || saved) {
+      return;
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Favorite could not be updated. Please try again.'),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final Color productTone = _gray
         ? const Color(0xFFD9DCE0)
         : const Color(0xFFF7F4ED);
+    final WalkaFavoritesController favorites = WalkaFavoritesScope.of(context);
+    final bool isFavorite = favorites.isDrawerFavorite(gray: _gray);
 
     return Scaffold(
       appBar: AppBar(
         title: const _Wordmark(),
         actions: <Widget>[
           IconButton(
-            onPressed: () {},
-            tooltip: 'Favorite',
-            icon: const Icon(Icons.favorite_border_rounded),
+            onPressed: () => _toggleFavorite(context, favorites),
+            tooltip: isFavorite ? 'Remove favorite' : 'Add favorite',
+            icon: Icon(
+              isFavorite
+                  ? Icons.favorite_rounded
+                  : Icons.favorite_border_rounded,
+            ),
           ),
           const SizedBox(width: 8),
         ],
