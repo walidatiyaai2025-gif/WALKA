@@ -1,0 +1,7 @@
+analyzer:
+  exclude:
+    - build/**
+  errors:
+    # UI-001 contains one intentionally decorative prototype field that will be
+    # removed when the real product imagery is mapped in UI-002.
+    unused_field: ignore
