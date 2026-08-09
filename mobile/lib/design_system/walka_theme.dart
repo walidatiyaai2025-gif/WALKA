@@ -74,10 +74,26 @@ ThemeData buildWalkaTheme() {
     onSecondary: WalkaColors.navyDark,
   );
 
+  final ButtonStyle secondaryButtonStyle = OutlinedButton.styleFrom(
+    foregroundColor: WalkaColors.navy,
+    minimumSize: const Size(48, 52),
+    side: const BorderSide(color: WalkaColors.navy),
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(WalkaRadius.pill),
+    ),
+    textStyle: const TextStyle(
+      fontSize: 12,
+      fontWeight: FontWeight.w800,
+      letterSpacing: 1.1,
+    ),
+  );
+
   return ThemeData(
     useMaterial3: true,
     colorScheme: scheme,
     scaffoldBackgroundColor: WalkaColors.ivory,
+    materialTapTargetSize: MaterialTapTargetSize.padded,
+    visualDensity: VisualDensity.standard,
     textTheme: ThemeData.light().textTheme.apply(
       bodyColor: WalkaColors.text,
       displayColor: WalkaColors.text,
@@ -90,11 +106,18 @@ ThemeData buildWalkaTheme() {
       elevation: 0,
       centerTitle: false,
     ),
+    iconButtonTheme: IconButtonThemeData(
+      style: IconButton.styleFrom(
+        minimumSize: const Size(48, 48),
+        tapTargetSize: MaterialTapTargetSize.padded,
+      ),
+    ),
     navigationBarTheme: NavigationBarThemeData(
-      height: 72,
+      height: 76,
       backgroundColor: WalkaColors.white,
       surfaceTintColor: Colors.transparent,
       indicatorColor: WalkaColors.gold.withValues(alpha: 0.16),
+      labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
       labelTextStyle: WidgetStateProperty.resolveWith<TextStyle>((states) {
         final bool selected = states.contains(WidgetState.selected);
         return TextStyle(
@@ -117,6 +140,7 @@ ThemeData buildWalkaTheme() {
         backgroundColor: WalkaColors.gold,
         foregroundColor: WalkaColors.navyDark,
         minimumSize: const Size.fromHeight(54),
+        tapTargetSize: MaterialTapTargetSize.padded,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(WalkaRadius.pill),
         ),
@@ -127,5 +151,14 @@ ThemeData buildWalkaTheme() {
         ),
       ),
     ),
+    outlinedButtonTheme: OutlinedButtonThemeData(style: secondaryButtonStyle),
+    textButtonTheme: TextButtonThemeData(
+      style: TextButton.styleFrom(
+        foregroundColor: WalkaColors.navy,
+        minimumSize: const Size(48, 48),
+        tapTargetSize: MaterialTapTargetSize.padded,
+      ),
+    ),
+    focusColor: WalkaColors.gold.withValues(alpha: 0.18),
   );
 }
