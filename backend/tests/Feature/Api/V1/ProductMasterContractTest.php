@@ -16,17 +16,17 @@ final class ProductMasterContractTest extends TestCase
         $this->assertIsString($master);
 
         foreach ([
-            'Product weight: 1.72 lb',
-            'Packaging: 13.46 × 15.16 × 2.36 in',
-            'Outer body: BPA-free PP',
+            'Do not publish a product weight or packaging dimensions unless a verified product-owner value is added to this document.',
+            'Outer body: food-grade PP',
             'stainless sauce cup with lid',
-            'Lid and silicone gasket: hand wash',
-            'dishwasher safe on the top rack',
-            'PP outer body: microwave safe without the stainless steel tray',
+            'SUS304 stainless tray: dishwasher safe; not microwave safe.',
+            'Lid and silicone gasket: dishwasher safe on the top rack; not microwave safe.',
+            'PP outer body: microwave safe only after removing the stainless tray, lid, and silicone gasket.',
             'Secure Lock | Helps Prevent Spills',
-            'Best for dry & semi-wet foods',
-            'Not intended for liquids',
-            'Carry upright',
+            'SPILL-RESISTANT DESIGN',
+            'Best suited for dry meals & snacks.',
+            'Not intended for liquids. Best for dry & semi-wet foods.',
+            'Carry upright.',
             'PANTONE 4155 U',
             'PANTONE 9242 U',
             'PANTONE 6198 U',
@@ -36,22 +36,28 @@ final class ProductMasterContractTest extends TestCase
 
         $products = config('walka.products');
 
-        $this->assertSame(1.72, $products[0]['facts']['product_weight_lb']);
-        $this->assertSame([13.46, 15.16, 2.36], $products[0]['facts']['packaging_in']);
-        $this->assertSame('BPA-free PP', $products[1]['facts']['outer_body']);
-        $this->assertSame('Hand wash.', $products[1]['facts']['care']['lid_and_gasket']);
+        $this->assertArrayNotHasKey('product_weight_lb', $products[0]['facts']);
+        $this->assertArrayNotHasKey('packaging_in', $products[0]['facts']);
+        $this->assertSame('Food-grade PP', $products[1]['facts']['outer_body']);
         $this->assertSame(
-            'Microwave safe without the stainless steel tray.',
+            'Dishwasher safe; not microwave safe.',
+            $products[1]['facts']['care']['sus304_tray'],
+        );
+        $this->assertSame(
+            'Dishwasher safe on the top rack; not microwave safe.',
+            $products[1]['facts']['care']['lid_and_gasket'],
+        );
+        $this->assertSame(
+            'Microwave safe only after removing the stainless tray, lid, and silicone gasket.',
             $products[1]['facts']['care']['pp_outer_body'],
         );
-        $this->assertContains(
+        $this->assertSame([
             'Secure Lock | Helps Prevent Spills',
-            $products[1]['facts']['usage_language'],
-        );
-        $this->assertContains(
-            'Not intended for liquids',
-            $products[1]['facts']['usage_language'],
-        );
+            'SPILL-RESISTANT DESIGN',
+            'Best suited for dry meals & snacks.',
+            'Not intended for liquids. Best for dry & semi-wet foods.',
+            'Carry upright.',
+        ], $products[1]['facts']['usage_language']);
         $this->assertSame('PANTONE 4155 U', $products[1]['variants'][0]['pantone']);
         $this->assertSame('PANTONE 9242 U', $products[1]['variants'][1]['pantone']);
         $this->assertSame('PANTONE 6198 U', $products[1]['variants'][2]['pantone']);
