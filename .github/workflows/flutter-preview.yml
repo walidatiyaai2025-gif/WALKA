@@ -6,13 +6,16 @@ on:
       - main
       - 'agent/ui-*'
       - 'agent/api-*'
+      - 'agent/ops-*'
+    paths-ignore:
+      - 'Last verified APK/**'
   pull_request:
     branches:
       - main
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: flutter-preview-${{ github.ref }}
@@ -21,7 +24,7 @@ concurrency:
 jobs:
   validate-and-build:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 30
 
     steps:
       - name: Checkout
@@ -75,14 +78,117 @@ jobs:
         working-directory: mobile
         run: flutter create --platforms=android --project-name walka .
 
-      - name: Build debug APK
+      - name: Build installable release APK
         working-directory: mobile
-        run: flutter build apk --debug
+        run: flutter build apk --release
 
-      - name: Upload preview APK
+      - name: Stage verified APK candidate
+        id: stable_apk
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          universal='mobile/build/app/outputs/flutter-apk/app-release.apk'
+          source_apk="$universal"
+          apk_type='universal-release'
+          max_repo_bytes=$((95 * 1024 * 1024))
+
+          if [[ ! -f "$source_apk" ]]; then
+            echo "Expected release APK not found: $source_apk" >&2
+            exit 1
+          fi
+
+          apk_bytes="$(stat -c%s "$source_apk")"
+          if (( apk_bytes > max_repo_bytes )); then
+            echo "Universal release APK is ${apk_bytes} bytes; building ARM64 fallback for repository delivery."
+            (
+              cd mobile
+              flutter build apk --release --split-per-abi
+            )
+            source_apk='mobile/build/app/outputs/flutter-apk/app-arm64-v8a-release.apk'
+            apk_type='arm64-v8a-release'
+            if [[ ! -f "$source_apk" ]]; then
+              echo "Expected ARM64 release APK not found: $source_apk" >&2
+              exit 1
+            fi
+            apk_bytes="$(stat -c%s "$source_apk")"
+          fi
+
+          if (( apk_bytes > max_repo_bytes )); then
+            echo "Stable APK candidate is still too large for normal GitHub repository storage: ${apk_bytes} bytes." >&2
+            exit 1
+          fi
+
+          mkdir -p stable-apk-stage
+          cp "$source_apk" stable-apk-stage/WALKA-latest.apk
+
+          apk_sha="$(sha256sum stable-apk-stage/WALKA-latest.apk | awk '{print $1}')"
+          app_version="$(awk '/^version:/ {print $2; exit}' mobile/pubspec.yaml)"
+          built_utc="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+
+          cat > stable-apk-stage/VERIFIED_BUILD.md <<EOF
+          # WALKA Last Verified APK Receipt
+
+          - App version: \`${app_version}\`
+          - Source commit: \`${GITHUB_SHA}\`
+          - Workflow run: \`${GITHUB_RUN_ID}\`
+          - Workflow run number: \`${GITHUB_RUN_NUMBER}\`
+          - APK type: \`${apk_type}\`
+          - APK bytes: \`${apk_bytes}\`
+          - APK SHA-256: \`${apk_sha}\`
+          - Built UTC: \`${built_utc}\`
+          - Validation: Flutter Analyze + full Flutter Test suite + Android release APK build succeeded before this receipt was generated.
+          - Intended use: installable WALKA test build from stable \`main\`; this is not a Play Store signing receipt.
+          EOF
+
+          echo "apk_sha=${apk_sha}" >> "$GITHUB_OUTPUT"
+          echo "apk_bytes=${apk_bytes}" >> "$GITHUB_OUTPUT"
+          echo "apk_type=${apk_type}" >> "$GITHUB_OUTPUT"
+          echo "app_version=${app_version}" >> "$GITHUB_OUTPUT"
+
+      - name: Upload installable APK candidate
         uses: actions/upload-artifact@v4
         with:
-          name: walka-ui-preview-${{ github.sha }}
-          path: mobile/build/app/outputs/flutter-apk/app-debug.apk
+          name: walka-installable-${{ github.sha }}
+          path: |
+            stable-apk-stage/WALKA-latest.apk
+            stable-apk-stage/VERIFIED_BUILD.md
           if-no-files-found: error
-          retention-days: 7
+          retention-days: 14
+
+      - name: Guard stable main publication
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        id: main_guard
+        shell: bash
+        run: |
+          set -euo pipefail
+          remote_main="$(git ls-remote origin refs/heads/main | awk '{print $1}')"
+          if [[ "$remote_main" == "$GITHUB_SHA" ]]; then
+            echo 'publish=true' >> "$GITHUB_OUTPUT"
+            echo "Main is still at validated source $GITHUB_SHA; publication is allowed."
+          else
+            echo 'publish=false' >> "$GITHUB_OUTPUT"
+            echo "Main advanced to $remote_main while this run was executing; stale APK publication is skipped."
+          fi
+
+      - name: Publish latest verified APK to main
+        if: steps.main_guard.outputs.publish == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          mkdir -p 'Last verified APK'
+          cp stable-apk-stage/WALKA-latest.apk 'Last verified APK/WALKA-latest.apk'
+          cp stable-apk-stage/VERIFIED_BUILD.md 'Last verified APK/VERIFIED_BUILD.md'
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add 'Last verified APK/WALKA-latest.apk' 'Last verified APK/VERIFIED_BUILD.md'
+
+          if git diff --cached --quiet; then
+            echo 'Verified APK files are already current; no repository commit required.'
+            exit 0
+          fi
+
+          git commit -m "chore(apk): publish verified ${{ steps.stable_apk.outputs.app_version }} from ${GITHUB_SHA::12} [skip ci]"
+          git push origin HEAD:main
