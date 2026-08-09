@@ -7,11 +7,16 @@ Last updated: 2026-08-10
 **Flutter visual freeze 1.0.0: COMPLETED**  
 **Laravel API foundation 1.1.0: COMPLETED**  
 **Flutter ↔ Laravel catalog integration 1.2.0: COMPLETED**  
-**Database-backed catalog persistence 1.3.0: COMPLETED**
+**Database-backed catalog persistence 1.3.0: COMPLETED**  
+**DESIGN-001 premium product-led Home: COMPLETED**  
+**OPS-001 stable-main + verified APK delivery: IN PROGRESS**  
+**Premium UI/UX program: DESIGN-002 NEXT (P0)**
 
-WALKA now has a released Flutter storefront connected to a versioned Laravel 13 API with resilient mobile caching/fallback and a database-backed Product/Variant catalog. The released mobile visual/navigation architecture remains frozen. Public commerce still redirects to official Amazon product listings.
+WALKA has a released Flutter storefront connected to a versioned Laravel 13 API with resilient mobile caching/fallback and a database-backed Product/Variant catalog. DESIGN-001 is now on stable `main`, replacing the prototype-like icon-led Home with a product-led premium presentation. Public commerce still redirects to official Amazon product listings.
 
-The next logical slice is **API-004 / 1.4.0 — authenticated catalog administration and safe authoring API**: add protected backend-only catalog management with validation, auditability and Product Master guardrails while preserving the public `/api/v1/catalog` contract and Flutter 1.2 behavior.
+The owner-facing stable source is `main`. Implementation remains on dedicated task branches until the required CI gates are green. OPS-001 is establishing `Last verified APK/WALKA-latest.apk` as the persistent Android test target produced only from successful stable-main validation.
+
+The current product priority is the P0 premium UI/UX program in `docs/UI_UX_PRIORITY_PLAN.md`: **DESIGN-002 app shell + bottom navigation premium polish is next**, followed by discovery, Product Detail, secondary screens, motion/state polish and cross-device QA. **API-004 remains planned but queued behind the P0 design program unless a critical backend/security/data blocker requires it sooner.**
 
 ## Release board
 
@@ -31,7 +36,50 @@ The next logical slice is **API-004 / 1.4.0 — authenticated catalog administra
 | API-001 | 1.1.0 | Laravel 13 API foundation + Product/Variant catalog contract | COMPLETED |
 | API-002 | 1.2.0 | Flutter remote catalog/config integration + resilient local fallback | COMPLETED |
 | API-003 | 1.3.0 | Database-backed Product/Variant catalog persistence | COMPLETED |
-| API-004 | 1.4.0 | Authenticated catalog administration + safe authoring API | NEXT |
+| DESIGN-001 | P0 | Premium product-led Home fidelity | COMPLETED |
+| OPS-001 | Delivery | Stable `main` + persistent `Last verified APK` pipeline | IN PROGRESS |
+| DESIGN-002 | P0 | App shell + bottom navigation premium polish | NEXT |
+| DESIGN-003..007 | P0 | Discovery, PDP, secondary UI, motion/state and visual QA | QUEUED |
+| API-004 | 1.4.0 | Authenticated catalog administration + safe authoring API | QUEUED |
+
+## Active delivery and design coordination
+
+### OPS-001 — stable owner delivery
+
+- Issue: `#43`.
+- Original draft PR: `#44` — validated on an older main baseline but became stale after API-003 advanced `main`; it must not be force-merged.
+- Final reconciliation PR: `#56`.
+- Final reconciliation branch: `agent/ops-001-stable-apk-delivery-final`.
+- Root engineering rules: `AGENTS.md`.
+- Delivery lifecycle: `docs/DELIVERY_POLICY.md`.
+- Stable Android target: `Last verified APK/WALKA-latest.apk`.
+- Stable build receipt: `Last verified APK/VERIFIED_BUILD.md`.
+- PR/branch builds are candidates only; only a successful current-`main` run may publish the root APK.
+- Stale main runs skip publication, APK-only publication commits do not recursively retrigger the Flutter workflow, and final publication remains fast-forward-only.
+- User-facing Android delivery does not use ZIP files in project chat.
+
+### DESIGN-001 authoritative release receipt — P0 Home fidelity
+
+- Parent design program: `#46`.
+- Issue: `#47`.
+- PR: `#54`.
+- Final validated head: `41ec592077db9e7e0fd0edc184c857a9be964123`.
+- Flutter Preview PR run: `31342182820` — green.
+- Analyze: green.
+- Full Flutter tests including compact 320×568 DESIGN-001 coverage: green.
+- Android APK build/upload: green.
+- Stable merge commit: `fef9bea93704decad5be4ad0a3e20f8018826d88`.
+
+#### DESIGN-001 delivered
+
+- [x] Reusable `WalkaProductVisual` for Drawer Organizer and Lunch Box families.
+- [x] Product-led premium Home hero.
+- [x] Curated horizontal variant cards with White/Gray and Blue/Pink/Green distinction.
+- [x] Premium Lunch editorial module.
+- [x] Stronger WALKA navy/gold hierarchy, typography, spacing and CTA treatment.
+- [x] API-002 catalog controller, stable IDs, offline fallback and Amazon routing preserved.
+- [x] Original compact 320×568 overflow identified and fixed before merge.
+- [x] Analyze, full tests and Android APK build green before stable merge.
 
 ## API-003 authoritative release receipt — 1.3.0
 
@@ -169,7 +217,7 @@ PR #32 is the authoritative UI-009 Product Master / final-copy reconciliation an
 
 ## API-004 execution boundary
 
-API-004 should add protected catalog authoring without weakening the released public contract.
+API-004 remains the next backend capability after the current P0 delivery/design work. It should add protected catalog authoring without weakening the released public contract.
 
 Expected principles:
 
@@ -179,16 +227,20 @@ Expected principles:
 4. Product facts and approved usage/care copy remain governed by `docs/PRODUCT_MASTER.md`.
 5. Writes require validation for ASIN, Amazon destination, Pantone, ordering and required facts.
 6. Changes are auditable and safe to roll back/reconcile.
-7. Flutter 1.2 does not require a visual or navigation redesign.
+7. Flutter 1.2 does not require an API-driven navigation rewrite.
 8. No cart, checkout, payment or order processing is introduced by catalog administration.
 
 ## Guardrails
 
-1. `Images/` remains the master visual-reference folder and must not be modified by implementation tasks.
-2. `docs/PRODUCT_MASTER.md` is the source of truth for product facts and approved usage/care language.
-3. Product facts must not be inferred from mockups, stale branches or third-party catalog copies.
-4. Backend and mobile work extend successful releases rather than replacing completed architecture.
-5. New work stays in small, independently reviewable and releasable slices.
-6. Every slice must pass the relevant backend and/or Flutter gates before merge.
-7. Product copy must preserve approved lunch-box safety/usage language.
-8. Laravel/API integration must not silently introduce in-app checkout or duplicate Amazon marketplace responsibilities.
+1. `main` is stable-only and is the owner-facing source of truth.
+2. Implementation work uses dedicated task branches and only reaches `main` after the relevant CI gates are green.
+3. `Last verified APK/WALKA-latest.apk` is the owner-facing Android install target once OPS-001 is released; failed/stale builds must not replace it.
+4. Do not send or offer ZIP files through project chat for Android delivery.
+5. `Images/` remains the master visual-reference folder and must not be modified by implementation tasks.
+6. `docs/PRODUCT_MASTER.md` is the source of truth for product facts and approved usage/care language.
+7. Product facts must not be inferred from mockups, stale branches or third-party catalog copies.
+8. Backend and mobile work extend successful releases rather than discarding completed architecture.
+9. New work stays in small, independently reviewable and releasable slices.
+10. Every slice must pass the relevant backend and/or Flutter gates before merge.
+11. Product copy must preserve approved lunch-box safety/usage language.
+12. Laravel/API integration must not silently introduce in-app checkout or duplicate Amazon marketplace responsibilities.

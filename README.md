@@ -2,6 +2,22 @@
 
 Premium mobile storefront for the WALKA home-organization brand.
 
+## Stable Android test APK
+
+The owner-facing stable branch is **`main` only**. Development work stays on task branches until its required CI gates are green and it is intentionally merged.
+
+After every successful stable-main Flutter validation/build, the latest installable APK is published to:
+
+`Last verified APK/WALKA-latest.apk`
+
+Its source commit, workflow run, APK type, size, SHA-256 and build timestamp are recorded in:
+
+`Last verified APK/VERIFIED_BUILD.md`
+
+Branch/PR APKs are engineering candidates only and never replace the stable root APK. WALKA project chat does not use ZIP files for Android delivery.
+
+See `docs/DELIVERY_POLICY.md` for the full branch → PR → stable-main → verified-APK lifecycle.
+
 ## Current scope — Phase 2
 
 Phase 1 completed the premium Flutter UI/UX prototype. Phase 2 turns that approved experience into a functional storefront while keeping Amazon as the purchase destination.
@@ -17,27 +33,15 @@ Current direction:
 
 ## Repository layout
 
-- `Images/` — master visual references supplied by the brand owner.
+- `Images/` — protected master visual references supplied by the brand owner.
 - `mobile/` — Flutter mobile application.
-- `docs/` — phase plans, release slices and current development status.
-- `.github/workflows/` — Flutter validation and preview build pipeline.
+- `backend/` — Laravel API application.
+- `docs/` — phase plans, delivery policy, release receipts and current development status.
+- `Last verified APK/` — owner-facing stable Android APK and verification receipt.
+- `.github/workflows/` — Flutter/backend validation and build pipelines.
 
 ## Release track
 
-Completed Phase 1 releases:
+Released foundations now include the Flutter visual freeze, Laravel API foundation, resilient Flutter ↔ Laravel catalog integration and database-backed catalog persistence. Current product work continues in small independently validated slices while Amazon remains the purchase destination.
 
-1. `0.1.0` — foundation, design system, splash, shell and navigation.
-2. `0.2.0` — premium home + product detail.
-3. `0.3.0` — categories + collection browsing.
-4. `0.4.0` — favorites + profile + about presentation.
-5. `0.5.0` — cross-platform polish, accessibility and visual QA.
-
-Phase 2 starts with:
-
-6. `0.6.0` — functional Amazon purchase handoff.
-7. `0.7.0` — persistent customer Favorites state.
-8. `0.8.0` — Laravel API foundation.
-9. `0.9.0` — Flutter remote catalog integration.
-10. `1.0.0` — storefront release candidate.
-
-See `docs/PHASE_2_FUNCTIONAL_PLAN.md` and `docs/STATUS.md` for the active slice.
+See `docs/STATUS.md` for authoritative release receipts and `docs/UI_UX_PRIORITY_PLAN.md` for the current premium design queue.
