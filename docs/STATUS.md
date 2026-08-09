@@ -1,12 +1,12 @@
 # WALKA Development Status
 
-Last updated: 2026-08-09
+Last updated: 2026-08-10
 
 ## Current state
 
-**Phase 1.5 — Full Clickable Flutter Experience: IN PROGRESS**
+**Phase 1.5 — Full Clickable Flutter Experience: COMPLETED**
 
-Phase 1 premium mobile UI/UX, COM-001 Amazon handoff, STATE-001 persistent Drawer Favorites, UI-006 Lunch Box, UI-007 Search & Discovery, and UI-008 Product UX are released on `main`. The next and final design-first slice is UI-009 / 1.0.0: reconcile remaining legacy entry points, complete information screens, and perform the cross-platform visual freeze before Laravel/API integration.
+The complete design-first WALKA Flutter experience is released on `main` through UI-009 / `1.0.0`. Home, Search, Categories, Favorites, final product experiences, information/help/legal screens, Amazon handoff, persistent Drawer Favorites, product-copy contracts, adaptive layout and accessibility gates are now visually frozen. The next logical development slice is API-001: Laravel API foundation, extending the released mobile experience without redesigning it.
 
 ## Release board
 
@@ -22,8 +22,65 @@ Phase 1 premium mobile UI/UX, COM-001 Amazon handoff, STATE-001 persistent Drawe
 | UI-006 | 0.8.0 | Lunch Box collection + Blue/Pink/Green PDP | COMPLETED |
 | UI-007 | 0.9.0 | Search + discovery + results/filter/sort states | COMPLETED |
 | UI-008 | 0.10.0 | Product UX completion + gallery/share/related products | COMPLETED |
-| UI-009 | 1.0.0 | Information screens + cross-platform visual freeze | NEXT |
-| API-001 | post-1.0 | Laravel API foundation | DEFERRED |
+| UI-009 | 1.0.0 | Information screens + cross-platform visual freeze | COMPLETED |
+| API-001 | post-1.0 | Laravel API foundation | NEXT |
+
+## UI-009 release receipt — 1.0.0
+
+- Release: `1.0.0`
+- Package: `1.0.0+100`
+- Issue: `#26`
+- Final PR: `#29`
+- Validated head: `c45bfee8e51eedeb2f26bf2762c2b0374aa4220f`
+- Validated PR workflow run: `31336882803`
+- Flutter analyze: green
+- Full Flutter tests: green
+- Android runner generation: green
+- Android debug APK: green
+- Preview artifact upload: green
+- Artifact ID: `9044651080`
+- Artifact name: `walka-ui-preview-fe5242bbb08cf0432971f8f526a0ca58c3fab056`
+- Artifact size: `71,059,781 bytes`
+- Artifact SHA-256: `e25df55d8881116fa18f7e5220c96371e47d2b3ffa6df06bbab735eac421479d`
+- Extracted APK SHA-256: `81fe0f2953f3bd1b7654125630fe5820f0e379088647b15ad393d18df3c29f5f`
+- Merge commit: `68ffe303d3004a08971f00342bcdd9d9f49acebe`
+
+### UI-009 delivered
+
+- [x] `1.0.0+100` activated as the real application entry point
+- [x] Final Home surface
+- [x] Final local Search surface across all five sellable variants
+- [x] Final Categories surface for Drawer White/Gray and Lunch Blue/Pink/Green
+- [x] Persistent Drawer Favorites routed into the final Product Experience
+- [x] Final Drawer Organizer V100 PDP
+- [x] Final Lunch Box V100 PDP
+- [x] Fullscreen three-state product galleries and pinch/zoom treatment
+- [x] Final variant selectors and related-product cross-links
+- [x] Selected-variant Amazon handoff retained
+- [x] About / Our Story retained and integrated
+- [x] Contact Us implemented
+- [x] FAQ implemented and aligned to the verified Product Master
+- [x] Amazon Store destination implemented
+- [x] Website / Instagram social destinations implemented
+- [x] Privacy presentation implemented
+- [x] Terms presentation implemented
+- [x] App Information presentation implemented
+- [x] Latest owner-verified `docs/PRODUCT_MASTER.md` merged as the product-fact source of truth
+- [x] Product-copy regression contract reconciled to the verified Product Master
+- [x] 320×568 compact-phone QA green
+- [x] 130% text-scale QA green
+- [x] 900×900 large-mobile QA green
+- [x] Analyze, full tests and Android preview APK green
+- [x] PR #29 squash-merged to `main`
+- [x] `1.0.0` preview artifact recorded
+
+### Visual-freeze boundary
+
+- All exposed product entry points now route to the final V100 product experiences.
+- The current five sellable variants are represented in the final catalog/search experience.
+- Amazon remains the purchase destination; WALKA still has no in-app cart, checkout or payment flow.
+- Drawer Favorites remain persisted on-device through SharedPreferences.
+- Laravel/API integration must extend the released 1.0 experience rather than redesigning completed UI architecture.
 
 ## UI-008 release receipt — 0.10.0
 
@@ -61,19 +118,16 @@ Phase 1 premium mobile UI/UX, COM-001 Amazon handoff, STATE-001 persistent Drawe
 - [x] Favorites V10 preserves persistent Drawer favorite behavior
 - [x] Approved Lunch usage guidance preserved
 - [x] `docs/PRODUCT_MASTER.md` established as the product-fact source of truth
-- [x] Unverified Drawer weight / packaging claims removed from release UI copy
-- [x] Lunch care guidance aligned with the approved product master
-- [x] Source-level product-copy regression contract added
+- [x] Product-copy regression contract added
 - [x] 320×568 compact-phone and 900×900 large-mobile regression coverage
 - [x] Analyze, tests and Android preview APK green
 - [x] UI-008 merged to `main`
 - [x] `0.10.0` preview artifact recorded
 
-### Remaining boundary for UI-009
+### UI-008 superseded boundaries
 
-- Home V2 and Search V9 still retain their existing PDP route implementations.
-- UI-009 / 1.0.0 will route all remaining product entry points through the final Product Experience.
-- UI-009 will finish information/legal/help surfaces, cross-platform visual QA, accessibility regression, and the final Android/iOS visual freeze.
+- The UI-008 legacy Home/Search product routes were reconciled by UI-009.
+- Product facts/care copy from UI-008 that conflicted with later owner-verified Product Master instructions were superseded by the 1.0 Product Master.
 
 ## UI-007 release receipt — 0.9.0
 
@@ -134,16 +188,18 @@ Phase 1 premium mobile UI/UX, COM-001 Amazon handoff, STATE-001 persistent Drawe
 
 ## Phase boundary
 
-- No Laravel/API work before UI-009 visual freeze.
-- WALKA does not implement an in-app cart, checkout or payment flow; Amazon remains the purchase destination.
-- Favorites remain device-local until a later account/cloud synchronization slice.
-- Authentication and order persistence remain outside the current design-first sequence.
+- The design-first Flutter visual-freeze sequence is complete at UI-009 / `1.0.0`.
+- API-001 may now begin as the next implementation slice.
+- Laravel/API work must preserve the released mobile navigation, visual system and Product Master contract.
+- WALKA does not implement an in-app cart, checkout or payment flow; Amazon remains the purchase destination unless a later explicitly approved product decision changes that boundary.
+- Drawer Favorites remain device-local until a later approved account/cloud synchronization slice.
 
 ## Guardrails
 
 1. `Images/` remains the master visual-reference folder and must not be modified by implementation tasks.
 2. `docs/PRODUCT_MASTER.md` is the source of truth for product facts and approved usage/care language.
-3. Preserve successful team work; new UI slices extend the released COM-001, STATE-001, UI-006, UI-007 and UI-008 baselines rather than replacing them.
+3. Preserve successful team work; backend and functional slices extend the released COM-001, STATE-001 and UI-006 through UI-009 baselines rather than replacing them.
 4. New work stays in small, independently reviewable and releasable slices.
-5. Every slice must pass analyze, tests and Android build before merge.
+5. Every slice must pass analyze/tests/build gates appropriate to the affected stack before merge.
 6. Product copy must preserve approved lunch-box safety/usage language.
+7. Laravel/API integration must not silently introduce in-app checkout or duplicate Amazon marketplace responsibilities.
