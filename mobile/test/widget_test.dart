@@ -102,10 +102,7 @@ void main() {
       2,
     );
 
-    final Finder searchButton = find.descendant(
-      of: find.byType(WalkaCategoriesV6),
-      matching: find.widgetWithIcon(IconButton, Icons.search_rounded),
-    );
+    final Finder searchButton = find.byIcon(Icons.search_rounded);
     expect(searchButton, findsOneWidget);
     await tester.tap(searchButton);
     await tester.pumpAndSettle();
