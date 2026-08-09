@@ -3,65 +3,53 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  test('product UI copy follows docs/PRODUCT_MASTER.md', () async {
-    final String v10 = await File(
-      'lib/features/products/product_experience_v10.dart',
-    ).readAsString();
-    final String legacyLunch = await File(
-      'lib/features/lunch/lunch_box_v6.dart',
-    ).readAsString();
-
-    expect(
-      v10,
-      contains("_SpecRowV10(label: 'Colors', value: 'White · Gray')"),
-    );
-    expect(v10, isNot(contains("value: '1.72 lb'")));
-
-    expect(
-      v10,
-      contains(
-        "_SpecRowV10(label: 'Lid & gasket', value: 'Dishwasher · top rack')",
-      ),
-    );
-    expect(
-      v10,
-      isNot(
-        contains("_SpecRowV10(label: 'Lid & gasket', value: 'Hand wash')"),
-      ),
-    );
-    expect(
-      v10,
-      contains(
-        "_SpecRowV10(label: 'Microwave', value: 'PP outer only · remove steel tray & lid')",
-      ),
-    );
-
-    expect(
-      legacyLunch,
-      contains("'Lid and silicone gasket: dishwasher safe, top rack.'"),
-    );
-    expect(
-      legacyLunch,
-      contains(
-        "'PP outer body is microwave safe after removing the stainless tray, lid and silicone gasket.'",
-      ),
-    );
-    expect(
-      legacyLunch,
-      isNot(contains("'Lid and silicone gasket: hand wash.'")),
-    );
-
+  test('final product UI copy follows docs/PRODUCT_MASTER.md', () async {
     final String master = await File('../docs/PRODUCT_MASTER.md').readAsString();
-    expect(master, contains('Do not publish a product weight'));
+    final String finalProductUi = await File(
+      'lib/features/products/product_experience_v100.dart',
+    ).readAsString();
+    final String finalStorefront = await File(
+      'lib/features/storefront/storefront_v101.dart',
+    ).readAsString();
+
+    expect(master, contains('Product weight: 1.72 lb'));
+    expect(master, contains('Packaging: 13.46 × 15.16 × 2.36 in'));
+    expect(master, contains('Outer body: BPA-free PP'));
+    expect(master, contains('stainless sauce cup with lid'));
+    expect(master, contains('Lid and silicone gasket: hand wash'));
+    expect(master, contains('dishwasher safe on the top rack'));
     expect(
       master,
-      contains('Lid and silicone gasket: dishwasher safe on the top rack'),
+      contains('PP outer body: microwave safe without the stainless steel tray'),
+    );
+    expect(master, contains('Secure Lock | Helps Prevent Spills'));
+    expect(master, contains('Best for dry & semi-wet foods'));
+    expect(master, contains('Not intended for liquids'));
+    expect(master, contains('Carry upright'));
+
+    expect(finalProductUi, contains("('Product weight', '1.72 lb')"));
+    expect(
+      finalProductUi,
+      contains("('Packaging', '13.46 × 15.16 × 2.36 in')"),
+    );
+    expect(finalProductUi, contains("('Outer body', 'BPA-free PP')"));
+    expect(finalProductUi, contains("('Lid & gasket', 'Hand wash')"));
+    expect(
+      finalProductUi,
+      contains("('SUS304 tray', 'Dishwasher safe · top rack')"),
     );
     expect(
-      master,
-      contains(
-        'PP outer body: microwave safe only after removing the stainless tray, lid, and silicone gasket',
-      ),
+      finalProductUi,
+      contains("('PP outer body', 'Microwave safe without steel tray')"),
     );
+    expect(finalProductUi, contains('Secure Lock | Helps Prevent Spills'));
+    expect(finalProductUi, contains('Best for dry & semi-wet foods'));
+    expect(finalProductUi, contains('Not intended for liquids'));
+    expect(finalProductUi, contains('Carry upright'));
+
+    expect(finalStorefront, contains('Hand wash the lid and silicone gasket'));
+    expect(finalStorefront, contains('stainless sauce cup with lid'));
+    expect(finalStorefront, isNot(contains('WalkaProductDetailV2')));
+    expect(finalStorefront, isNot(contains('WalkaLunchProductDetailV6')));
   });
 }
