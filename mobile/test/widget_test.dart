@@ -90,13 +90,18 @@ void main() {
     );
     await tester.pump();
 
-    await tester.tap(find.text('Categories'));
+    final Finder categoriesDestination = find.descendant(
+      of: find.byType(NavigationBar),
+      matching: find.byIcon(Icons.grid_view_outlined),
+    );
+    expect(categoriesDestination, findsOneWidget);
+    await tester.tap(categoriesDestination);
     await tester.pumpAndSettle();
     expect(find.text('Collections'), findsOneWidget);
 
-    final Finder searchButton = find.widgetWithIcon(
-      IconButton,
-      Icons.search_rounded,
+    final Finder searchButton = find.descendant(
+      of: find.byType(WalkaCategoriesV6),
+      matching: find.widgetWithIcon(IconButton, Icons.search_rounded),
     );
     expect(searchButton, findsOneWidget);
     await tester.tap(searchButton);
