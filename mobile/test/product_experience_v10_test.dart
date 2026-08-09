@@ -51,6 +51,40 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('Drawer v10 keeps verified 1.72 lb product weight',
+      (WidgetTester tester) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final WalkaFavoritesController controller = _controller();
+    await controller.load();
+
+    await tester.pumpWidget(
+      WalkaFavoritesScope(
+        controller: controller,
+        child: MaterialApp(
+          theme: buildWalkaTheme(),
+          home: const WalkaDrawerProductDetailV10(),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    final Finder scrollable = find.byType(Scrollable).first;
+    await tester.scrollUntilVisible(
+      find.text('Dimensions & capacity'),
+      420,
+      scrollable: scrollable,
+    );
+    await tester.tap(find.text('Dimensions & capacity'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('1.72 lb'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('Drawer v10 fullscreen gallery opens and supports zoom surface',
       (WidgetTester tester) async {
     tester.view.physicalSize = const Size(390, 844);
@@ -131,6 +165,64 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('SHARE WALKA'), findsOneWidget);
     expect(find.text('COPY PRODUCT LINK'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Lunch v10 keeps verified tray and lid care guidance',
+      (WidgetTester tester) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildWalkaTheme(),
+        home: const WalkaLunchProductDetailV10(),
+      ),
+    );
+    await tester.pump();
+
+    final Finder scrollable = find.byType(Scrollable).first;
+    await tester.scrollUntilVisible(
+      find.text('Care & use'),
+      500,
+      scrollable: scrollable,
+    );
+    await tester.tap(find.text('Care & use'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Dishwasher · top rack'), findsOneWidget);
+    expect(find.text('Hand wash'), findsOneWidget);
+    expect(find.text('Remove stainless tray'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Legacy Lunch v6 keeps hand-wash lid and gasket guidance',
+      (WidgetTester tester) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildWalkaTheme(),
+        home: const WalkaLunchProductDetailV6(),
+      ),
+    );
+    await tester.pump();
+
+    final Finder scrollable = find.byType(Scrollable).first;
+    await tester.scrollUntilVisible(
+      find.text('Lid and silicone gasket: hand wash.'),
+      550,
+      scrollable: scrollable,
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Lid and silicone gasket: hand wash.'), findsOneWidget);
+    expect(find.text('Stainless steel tray: dishwasher, top rack.'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
