@@ -94,7 +94,7 @@ class WalkaStorefrontSplashV6 extends StatelessWidget {
                 const SizedBox(height: 12),
                 const Center(
                   child: Text(
-                    'UI PREVIEW · 0.6.0',
+                    'UI PREVIEW · 0.8.0',
                     style: TextStyle(
                       color: Color(0xFF91A5B9),
                       fontSize: 10,
