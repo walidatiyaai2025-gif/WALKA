@@ -28,4 +28,33 @@ void main() {
       );
     });
   });
+
+  group('Amazon lunch box routing', () {
+    test('blue variant maps to the official listing', () {
+      final Uri uri = amazonLunchBoxUri(WalkaAmazonLunchVariant.blue);
+      expect(uri.scheme, 'https');
+      expect(uri.host, 'www.amazon.com');
+      expect(uri.path, '/dp/$walkaLunchBoxBlueAsin');
+      expect(walkaLunchBoxBlueAsin, 'B0FQN4L8MW');
+    });
+
+    test('pink variant maps to the official listing', () {
+      final Uri uri = amazonLunchBoxUri(WalkaAmazonLunchVariant.pink);
+      expect(uri.path, '/dp/$walkaLunchBoxPinkAsin');
+      expect(walkaLunchBoxPinkAsin, 'B0FQN3W4SF');
+    });
+
+    test('green variant maps to the official listing', () {
+      final Uri uri = amazonLunchBoxUri(WalkaAmazonLunchVariant.green);
+      expect(uri.path, '/dp/$walkaLunchBoxGreenAsin');
+      expect(walkaLunchBoxGreenAsin, 'B0GPZNKF9F');
+    });
+
+    test('all lunch listings stay distinct', () {
+      final Set<Uri> uris = WalkaAmazonLunchVariant.values
+          .map(amazonLunchBoxUri)
+          .toSet();
+      expect(uris.length, 3);
+    });
+  });
 }
