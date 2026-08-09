@@ -19,7 +19,7 @@ class WalkaApiSettings {
 
   Uri endpoint(String path) {
     if (!isConfigured) {
-      throw const StateError('WALKA_API_BASE_URL is not configured.');
+      throw StateError('WALKA_API_BASE_URL is not configured.');
     }
 
     final Uri? parsed = Uri.tryParse(baseUrl.trim());
@@ -96,7 +96,7 @@ class WalkaApiClient implements WalkaCatalogRemoteDataSource {
       if (decoded is! Map) {
         throw const FormatException('API response root must be an object.');
       }
-      return Map<String, dynamic>.from(decoded as Map);
+      return Map<String, dynamic>.from(decoded);
     } on FormatException {
       rethrow;
     } on Object catch (error) {
@@ -111,9 +111,7 @@ class WalkaApiClient implements WalkaCatalogRemoteDataSource {
     if (data is! Map) {
       throw const FormatException('Config data must be an object.');
     }
-    return WalkaStorefrontConfig.fromJson(
-      Map<String, dynamic>.from(data as Map),
-    );
+    return WalkaStorefrontConfig.fromJson(Map<String, dynamic>.from(data));
   }
 
   @override
