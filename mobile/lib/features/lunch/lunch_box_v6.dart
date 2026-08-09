@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../design_system/walka_theme.dart';
+import '../commerce/amazon_purchase.dart';
 
 enum WalkaLunchVariant { blue, pink, green }
 
@@ -133,39 +134,28 @@ class _WalkaLunchProductDetailV6State extends State<WalkaLunchProductDetailV6> {
     _variant = widget.initialVariant;
   }
 
-  void _showAmazonPreview() {
-    showModalBottomSheet<void>(
-      context: context,
-      showDragHandle: true,
-      builder: (BuildContext context) {
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(24, 8, 24, 28),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                const Text('BUY ON AMAZON', style: WalkaType.eyebrow),
-                const SizedBox(height: 10),
-                const Text(
-                  'Your WALKA purchase will continue on Amazon.',
-                  style: WalkaType.sectionTitle,
-                ),
-                const SizedBox(height: 10),
-                const Text(
-                  'This is the Phase 1.5 visual flow. The live external Amazon redirect will be connected in the functional phase.',
-                  style: WalkaType.body,
-                ),
-                const SizedBox(height: 22),
-                ElevatedButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('GOT IT'),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
+  WalkaAmazonLunchVariant get _amazonVariant => switch (_variant) {
+        WalkaLunchVariant.blue => WalkaAmazonLunchVariant.blue,
+        WalkaLunchVariant.pink => WalkaAmazonLunchVariant.pink,
+        WalkaLunchVariant.green => WalkaAmazonLunchVariant.green,
+      };
+
+  Future<void> _openAmazon() async {
+    bool opened = false;
+    try {
+      opened = await openLunchBoxOnAmazon(_amazonVariant);
+    } catch (_) {
+      opened = false;
+    }
+
+    if (!mounted || opened) {
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Amazon could not be opened. Please try again.'),
+      ),
     );
   }
 
@@ -195,7 +185,7 @@ class _WalkaLunchProductDetailV6State extends State<WalkaLunchProductDetailV6> {
         top: false,
         minimum: const EdgeInsets.fromLTRB(20, 8, 20, 12),
         child: ElevatedButton.icon(
-          onPressed: _showAmazonPreview,
+          onPressed: _openAmazon,
           icon: const Icon(Icons.open_in_new_rounded, size: 18),
           label: const Text('BUY ON AMAZON'),
         ),
