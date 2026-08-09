@@ -8,15 +8,16 @@ Last updated: 2026-08-10
 **Laravel API foundation 1.1.0: COMPLETED**  
 **Flutter ↔ Laravel catalog integration 1.2.0: COMPLETED**  
 **Database-backed catalog persistence 1.3.0: COMPLETED**  
+**Authenticated catalog administration 1.4.0: COMPLETED**  
 **DESIGN-001 premium product-led Home: COMPLETED**  
 **OPS-001 stable-main + verified APK delivery: IN PROGRESS**  
 **Premium UI/UX program: DESIGN-002 NEXT (P0)**
 
-WALKA has a released Flutter storefront connected to a versioned Laravel 13 API with resilient mobile caching/fallback and a database-backed Product/Variant catalog. DESIGN-001 is now on stable `main`, replacing the prototype-like icon-led Home with a product-led premium presentation. Public commerce still redirects to official Amazon product listings.
+WALKA has a released Flutter storefront connected to a versioned Laravel 13 API with resilient mobile caching/fallback, a database-backed Product/Variant catalog, and a protected backend-only catalog authoring surface with optimistic revisions and immutable audit records. DESIGN-001 is on stable `main`, replacing the prototype-like icon-led Home with a product-led premium presentation. Public commerce still redirects to official Amazon product listings.
 
 The owner-facing stable source is `main`. Implementation remains on dedicated task branches until the required CI gates are green. OPS-001 is establishing `Last verified APK/WALKA-latest.apk` as the persistent Android test target produced only from successful stable-main validation.
 
-The current product priority is the P0 premium UI/UX program in `docs/UI_UX_PRIORITY_PLAN.md`: **DESIGN-002 app shell + bottom navigation premium polish is next**, followed by discovery, Product Detail, secondary screens, motion/state polish and cross-device QA. **API-004 remains planned but queued behind the P0 design program unless a critical backend/security/data blocker requires it sooner.**
+The current product priority is the P0 premium UI/UX program in `docs/UI_UX_PRIORITY_PLAN.md`: **DESIGN-002 app shell + bottom navigation premium polish is next**, followed by discovery, Product Detail, secondary screens, motion/state polish and cross-device QA. The next backend capability is **API-005 / 1.5.0 — administrator identities, scoped credentials and key rotation**, queued behind the P0 design program unless a critical backend/security/data blocker requires it sooner.
 
 ## Release board
 
@@ -36,11 +37,12 @@ The current product priority is the P0 premium UI/UX program in `docs/UI_UX_PRIO
 | API-001 | 1.1.0 | Laravel 13 API foundation + Product/Variant catalog contract | COMPLETED |
 | API-002 | 1.2.0 | Flutter remote catalog/config integration + resilient local fallback | COMPLETED |
 | API-003 | 1.3.0 | Database-backed Product/Variant catalog persistence | COMPLETED |
+| API-004 | 1.4.0 | Authenticated catalog administration + safe authoring API | COMPLETED |
+| API-005 | 1.5.0 | Administrator identities + scoped credentials + key rotation | NEXT BACKEND |
 | DESIGN-001 | P0 | Premium product-led Home fidelity | COMPLETED |
 | OPS-001 | Delivery | Stable `main` + persistent `Last verified APK` pipeline | IN PROGRESS |
 | DESIGN-002 | P0 | App shell + bottom navigation premium polish | NEXT |
 | DESIGN-003..007 | P0 | Discovery, PDP, secondary UI, motion/state and visual QA | QUEUED |
-| API-004 | 1.4.0 | Authenticated catalog administration + safe authoring API | QUEUED |
 
 ## Active delivery and design coordination
 
@@ -80,6 +82,45 @@ The current product priority is the P0 premium UI/UX program in `docs/UI_UX_PRIO
 - [x] API-002 catalog controller, stable IDs, offline fallback and Amazon routing preserved.
 - [x] Original compact 320×568 overflow identified and fixed before merge.
 - [x] Analyze, full tests and Android APK build green before stable merge.
+
+## API-004 authoritative release receipt — 1.4.0
+
+- Issue: `#55`
+- PR: `#57`
+- Final validated head: `180356d4f9f5d0204e23e031646d9cb4f2b76307`
+- Preserved DESIGN-001 main baseline: `fef9bea93704decad5be4ad0a3e20f8018826d88`
+- Backend API PR run: `31342524412` — green
+- Flutter Preview PR run: `31342524401` — green
+- Flutter preview artifact ID: `9046301736`
+- Artifact size: `71,371,660` bytes
+- Artifact ZIP SHA-256: `0360079a28f0e1b7476bccce3d6d311dbf90622ce925d729ffe3e7cd42be31e9`
+- Squash merge commit: `a2e4a4e0b52b9966d83bf8e71136ebeda60e6861`
+
+### API-004 delivered
+
+- [x] Fail-closed backend-only Bearer-token protection for `/api/v1/admin/catalog/**`
+- [x] Strong-token minimum length gate and constant-time `hash_equals` comparison
+- [x] Admin catalog read with Product/Variant revision metadata
+- [x] Safe Product authoring restricted to customer-facing `name` and ordered `features`
+- [x] Safe Variant authoring restricted to customer-facing `color`
+- [x] Stable IDs, category, Product Master facts, ASIN, Pantone, ordering, relationships and purchase identity explicitly locked
+- [x] Optimistic revision checks with HTTP `409` / `catalog_revision_conflict`
+- [x] Immutable `catalog_audits` ledger with SHA-256 actor fingerprint; raw admin token never persisted
+- [x] Protected newest-first audit read endpoint
+- [x] Product Master seed reconciliation preserves approved authored display copy while restoring locked fields
+- [x] Public `/api/v1/catalog` Product/Variant response contract remains backward compatible and omits admin revision/audit metadata
+- [x] Backend migration/seed/Pint/tests/routes all green
+- [x] Flutter Analyze/full tests/Android debug APK/artifact regression green
+- [x] Concurrent DESIGN-001 premium Home work explicitly reconciled and preserved
+
+### API-004 phase boundary
+
+- API-004 intentionally does not provide product/variant create or delete endpoints; stable catalog identity remains fixed.
+- Product `category` was deliberately kept locked despite the early planning note because it participates in the released discovery taxonomy.
+- One strong shared backend Bearer token is sufficient for this slice, but it does not yet model named administrators, scopes, credential rotation, revocation or per-identity attribution.
+- Product facts remain governed by `docs/PRODUCT_MASTER.md`.
+- Amazon remains the purchase destination.
+- No web Admin UI/CMS, customer authentication, remote Favorites sync, cart, checkout, payment or order processing was introduced.
 
 ## API-003 authoritative release receipt — 1.3.0
 
@@ -215,20 +256,20 @@ PR #32 is the authoritative UI-009 Product Master / final-copy reconciliation an
 | `0.7.0` | STATE-001 | PR #16 / `a1b736cd71a3fbeece96675b35fa40e7e550ca80` | `31332976996` | `9043512197` |
 | `0.6.0` | COM-001 | PR #13 / `4236573fd10e059e19df5b95e5285484db63e3a5` | `31332256549` | `9043300480` |
 
-## API-004 execution boundary
+## API-005 execution boundary
 
-API-004 remains the next backend capability after the current P0 delivery/design work. It should add protected catalog authoring without weakening the released public contract.
+API-005 is the next backend capability after API-004. It should replace the single shared administration credential with identity-aware, scoped and rotatable credentials without changing the released public catalog contract or the current Product Master authoring guardrails.
 
 Expected principles:
 
-1. Authentication/authorization applies only to administrative write surfaces.
-2. Public `GET /api/v1/catalog` remains backward compatible and read-only.
-3. Product/Variant stable IDs cannot be silently replaced.
-4. Product facts and approved usage/care copy remain governed by `docs/PRODUCT_MASTER.md`.
-5. Writes require validation for ASIN, Amazon destination, Pantone, ordering and required facts.
-6. Changes are auditable and safe to roll back/reconcile.
-7. Flutter 1.2 does not require an API-driven navigation rewrite.
-8. No cart, checkout, payment or order processing is introduced by catalog administration.
+1. Named administrator/service identities replace anonymous shared-token attribution.
+2. Credentials are hashed at rest, rotatable, revocable and never returned after creation.
+3. Authorization scopes separate read, authoring and audit capabilities.
+4. Existing API-004 revision checks and immutable audit history are preserved and upgraded to identity attribution.
+5. Public `GET /api/v1/catalog` remains backward compatible and unauthenticated.
+6. Stable IDs, Product Master facts, category, ASIN, Pantone, ordering and relationships remain locked unless a separately approved migration changes policy.
+7. Flutter does not need a navigation or public-contract rewrite.
+8. No cart, checkout, payment or order processing is introduced.
 
 ## Guardrails
 
