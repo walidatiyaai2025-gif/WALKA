@@ -136,6 +136,14 @@ void main() {
 
     final WalkaCatalogController controller = WalkaCatalogController();
     await controller.load();
+    final List<WalkaCatalogViewItem> items = walkaCatalogViewItems(
+      controller.snapshot,
+    );
+
+    expect(
+      items.map((WalkaCatalogViewItem item) => item.variantId).toSet(),
+      WalkaCatalogContract.requiredVariantIds,
+    );
 
     await tester.pumpWidget(
       WalkaCatalogScope(
@@ -149,19 +157,32 @@ void main() {
     await tester.pump();
 
     expect(find.textContaining('5 current sellable variants'), findsOneWidget);
-    expect(find.text('White'), findsOneWidget);
-    expect(find.text('Gray'), findsOneWidget);
-
     final Finder scrollable = find.byType(Scrollable).first;
+
     await tester.scrollUntilVisible(
-      find.text('Green'),
-      500,
+      find.text('White'),
+      240,
       scrollable: scrollable,
     );
     await tester.pumpAndSettle();
+    expect(find.text('White'), findsOneWidget);
+    expect(find.text('Gray'), findsOneWidget);
 
+    await tester.scrollUntilVisible(
+      find.text('Blue'),
+      360,
+      scrollable: scrollable,
+    );
+    await tester.pumpAndSettle();
     expect(find.text('Blue'), findsOneWidget);
     expect(find.text('Pink'), findsOneWidget);
+
+    await tester.scrollUntilVisible(
+      find.text('Green'),
+      260,
+      scrollable: scrollable,
+    );
+    await tester.pumpAndSettle();
     expect(find.text('Green'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
