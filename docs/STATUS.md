@@ -13,42 +13,41 @@ Backend/Laravel work is intentionally deferred.
 | ID | Release | Scope | Status |
 |---|---|---|---|
 | UI-001 | 0.1.0 | Foundation + Splash + App Shell + Home + navigation skeleton | COMPLETED |
-| UI-002 | 0.2.0 | Home fidelity + Product Detail | IN PROGRESS |
-| UI-003 | 0.3.0 | Categories + collection browsing | PLANNED |
+| UI-002 | 0.2.0 | Home fidelity + Product Detail | COMPLETED |
+| UI-003 | 0.3.0 | Categories + collection browsing | IN PROGRESS |
 | UI-004 | 0.4.0 | Favorites + Account + About | PLANNED |
 | UI-005 | 0.5.0 | Android/iOS polish + accessibility + visual QA | PLANNED |
 
-## UI-001 result
+## UI-002 result
 
-- [x] Flutter package scaffold
-- [x] Design-system tokens/theme
-- [x] Splash screen
-- [x] Bottom navigation shell
-- [x] Premium Home foundation
-- [x] Product preview route
-- [x] Navigable placeholder screens for remaining Phase 1 destinations
-- [x] Foundation smoke tests
-- [x] CI analyze/test/build APK
-- [x] PR #2 merged to `main`
-- [x] `0.1.0` preview releasable
-
-## UI-002 acceptance checklist
-
-- [x] Reference set confirmed: Android/iOS Home and Product Detail images
 - [x] `0.2.0+2` package version
-- [x] Storefront v2 shell added without rewriting completed UI-001 screens
-- [x] Home v2 premium editorial hierarchy
-- [x] Best-seller product merchandising and white/gray visual variants
-- [x] Product Detail v2 gallery treatment
-- [x] PDP variant selector and key feature grid
-- [x] PDP Amazon purchase card (visual only)
-- [x] PDP editorial section and specifications
-- [x] Smoke tests updated for v2 entry points
+- [x] Premium editorial Home v2
+- [x] Product Detail v2 with gallery states
+- [x] White/Gray product variants
+- [x] Feature grid and detailed specifications
+- [x] Amazon purchase treatment (visual only)
+- [x] Analyze green
+- [x] Tests green
+- [x] Android preview APK green
+- [x] PR #4 merged to `main`
+- [x] Artifact `9042784196` recorded on Issue #3
+
+## UI-003 acceptance checklist
+
+- [x] `0.3.0+3` package version
+- [x] Categories v3 premium landing screen
+- [x] Featured Drawer Organization collection
+- [x] Lunch Collection and Home Edit presentation
+- [x] Dedicated Drawer collection browse screen
+- [x] White/Gray visual filtering
+- [x] Product cards route into Product Detail v2
+- [x] Storefront shell upgraded without rewriting Home/PDP
+- [x] Smoke coverage updated for catalog entry points
 - [ ] CI analyze green
 - [ ] CI tests green
 - [ ] Android preview APK green
 - [ ] PR merged to `main`
-- [ ] `0.2.0` preview considered releasable
+- [ ] `0.3.0` preview considered releasable
 
 ## Guardrails
 
