@@ -7,6 +7,7 @@ use App\Data\ProductData;
 use App\Data\ProductVariantData;
 use App\Exceptions\CatalogUnavailableException;
 use App\Models\Product;
+use App\Models\ProductVariant;
 
 final class EloquentCatalogRepository implements CatalogRepository
 {
@@ -29,7 +30,7 @@ final class EloquentCatalogRepository implements CatalogRepository
                 features: $product->features ?? [],
                 facts: $product->facts ?? [],
                 variants: $product->variants->map(
-                    static fn ($variant): ProductVariantData => new ProductVariantData(
+                    static fn (ProductVariant $variant): ProductVariantData => new ProductVariantData(
                         id: $variant->id,
                         color: $variant->color,
                         asin: $variant->asin,
