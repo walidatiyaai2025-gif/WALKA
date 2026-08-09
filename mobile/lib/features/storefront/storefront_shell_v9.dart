@@ -130,18 +130,13 @@ class _WalkaStorefrontShellV9State extends State<WalkaStorefrontShellV9> {
     setState(() => _index = value);
   }
 
-  void _openSearch() {
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(builder: (_) => const WalkaSearchDiscoveryV9()),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final List<Widget> pages = <Widget>[
       const WalkaHomeV2(),
-      WalkaCategoriesV6(onSearch: _openSearch),
-      WalkaFavoritesV5(onExploreCollections: () => _selectTab(1)),
+      const WalkaSearchDiscoveryV9(),
+      WalkaCategoriesV6(onSearch: () => _selectTab(1)),
+      WalkaFavoritesV5(onExploreCollections: () => _selectTab(2)),
       const WalkaAccountV4(),
     ];
 
@@ -159,6 +154,12 @@ class _WalkaStorefrontShellV9State extends State<WalkaStorefrontShellV9> {
               selectedIcon: Icon(Icons.home_rounded),
               label: 'Home',
               tooltip: 'Home',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.search_outlined),
+              selectedIcon: Icon(Icons.search_rounded),
+              label: 'Search',
+              tooltip: 'Search',
             ),
             NavigationDestination(
               icon: Icon(Icons.grid_view_outlined),
