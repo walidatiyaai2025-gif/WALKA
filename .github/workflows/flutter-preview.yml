@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - 'agent/ui-*'
+      - 'agent/api-*'
   pull_request:
     branches:
       - main
@@ -72,10 +73,7 @@ jobs:
 
       - name: Generate Android runner
         working-directory: mobile
-        run: |
-          if [ ! -d android ]; then
-            flutter create --platforms=android --org com.walka --project-name walka --no-pub .
-          fi
+        run: flutter create --platforms=android --project-name walka .
 
       - name: Build debug APK
         working-directory: mobile
@@ -87,4 +85,4 @@ jobs:
           name: walka-ui-preview-${{ github.sha }}
           path: mobile/build/app/outputs/flutter-apk/app-debug.apk
           if-no-files-found: error
-          retention-days: 14
+          retention-days: 7
