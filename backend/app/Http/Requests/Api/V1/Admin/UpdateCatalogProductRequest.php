@@ -15,8 +15,8 @@ final class UpdateCatalogProductRequest extends FormRequest
     {
         return [
             'revision' => ['required', 'integer', 'min:1'],
-            'name' => ['sometimes', 'required_without:features', 'filled', 'string', 'max:160'],
-            'features' => ['sometimes', 'required_without:name', 'array', 'max:20'],
+            'name' => ['required_without:features', 'filled', 'string', 'max:160'],
+            'features' => ['required_without:name', 'array', 'max:20'],
             'features.*' => ['filled', 'string', 'max:180'],
 
             'id' => ['prohibited'],

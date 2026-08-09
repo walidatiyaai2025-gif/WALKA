@@ -21,7 +21,7 @@ final class CatalogTest extends TestCase
     {
         $response = $this->getJson('/api/v1/catalog')
             ->assertOk()
-            ->assertJsonPath('meta.release', '1.3.0')
+            ->assertJsonPath('meta.release', '1.4.0')
             ->assertJsonPath('meta.api_version', 'v1')
             ->assertJsonPath('meta.purchase_mode', 'amazon_redirect')
             ->assertJsonCount(2, 'data');
@@ -33,6 +33,7 @@ final class CatalogTest extends TestCase
             ->assertJsonPath('data.0.facts.expandable_width_in', 22.4)
             ->assertJsonMissingPath('data.0.facts.product_weight_lb')
             ->assertJsonMissingPath('data.0.facts.packaging_in')
+            ->assertJsonMissingPath('data.0.revision')
             ->assertJsonPath('data.0.variants.0.id', 'drawer-organizer:white')
             ->assertJsonPath('data.0.variants.0.asin', 'B0FQN4DCTG')
             ->assertJsonPath('data.0.variants.0.purchase_url', 'https://www.amazon.com/dp/B0FQN4DCTG')

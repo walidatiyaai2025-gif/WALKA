@@ -72,6 +72,18 @@ final class CatalogAdminAuthoringTest extends TestCase
         $this->assertSame('PANTONE 4155 U', ProductVariant::query()->findOrFail('lunch-box:blue')->pantone);
     }
 
+    public function test_product_patch_requires_at_least_one_authorable_field(): void
+    {
+        $this->withToken(self::TOKEN)
+            ->patchJson('/api/v1/admin/catalog/products/drawer-organizer', [
+                'revision' => 1,
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['name', 'features']);
+
+        $this->assertSame(0, CatalogAudit::query()->count());
+    }
+
     public function test_product_master_and_stable_identity_fields_are_explicitly_prohibited(): void
     {
         $this->withToken(self::TOKEN)
@@ -166,7 +178,7 @@ final class CatalogAdminAuthoringTest extends TestCase
 
         $this->assertSame('Authored name', $product->name);
         $this->assertSame(['Authored feature'], $product->features);
-        $this->assertSame('Drawer Organization', $product->category);
+        $this->assertSame('drawer-organization', $product->category);
         $this->assertArrayNotHasKey('unsafe', $product->facts);
         $this->assertSame(7, $product->revision);
 

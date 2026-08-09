@@ -12,14 +12,20 @@ final class CatalogAdminAuthTest extends TestCase
 
     private const TOKEN = 'walka-test-admin-token-0123456789abcdef';
 
-    public function test_admin_api_fails_closed_when_token_is_not_configured(): void
+    public function test_admin_api_fails_closed_when_token_is_not_configured_or_is_weak(): void
     {
         config()->set('walka.admin_token', null);
 
         $this->getJson('/api/v1/admin/catalog')
             ->assertStatus(503)
             ->assertJsonPath('error.code', 'admin_auth_unconfigured')
-            ->assertHeader('Cache-Control', 'no-store');
+            ->assertHeader('Cache-Control', 'no-store, private');
+
+        config()->set('walka.admin_token', 'too-short');
+
+        $this->getJson('/api/v1/admin/catalog')
+            ->assertStatus(503)
+            ->assertJsonPath('error.code', 'admin_auth_unconfigured');
     }
 
     public function test_admin_api_rejects_missing_and_invalid_bearer_tokens(): void
@@ -45,7 +51,7 @@ final class CatalogAdminAuthTest extends TestCase
         $this->withToken(self::TOKEN)
             ->getJson('/api/v1/admin/catalog')
             ->assertOk()
-            ->assertHeader('Cache-Control', 'no-store')
+            ->assertHeader('Cache-Control', 'no-store, private')
             ->assertJsonPath('data.0.id', 'drawer-organizer')
             ->assertJsonPath('data.0.revision', 1)
             ->assertJsonPath('data.0.variants.0.revision', 1)
