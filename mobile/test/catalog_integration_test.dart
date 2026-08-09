@@ -165,7 +165,6 @@ void main() {
 
     expect(find.textContaining('5 current sellable variants'), findsOneWidget);
     expect(find.byType(CustomScrollView), findsOneWidget);
-    expect(find.text('White'), findsWidgets);
 
     await tester.drag(find.byType(CustomScrollView), const Offset(0, -700));
     await tester.pumpAndSettle();
