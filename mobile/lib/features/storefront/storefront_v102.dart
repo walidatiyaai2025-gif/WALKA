@@ -31,10 +31,10 @@ class WalkaStorefrontSplashV102 extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 const Spacer(),
-                const Semantics(
+                Semantics(
                   header: true,
                   label: 'WALKA',
-                  child: Text(
+                  child: const Text(
                     'WALKA',
                     style: TextStyle(
                       color: Colors.white,
