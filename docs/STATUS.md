@@ -43,11 +43,27 @@ Phase 1 premium mobile UI/UX, COM-001 Amazon handoff, STATE-001 persistent Drawe
 - [x] Search/filter regression coverage
 - [x] Existing Amazon purchase routing preserved by reusing approved PDPs
 - [x] Existing persistent Drawer Favorites baseline preserved
-- [ ] Flutter analyze green
-- [ ] Flutter tests green
-- [ ] Android preview APK green
+- [x] Flutter analyze green
+- [x] Flutter tests green
+- [x] Android preview APK green
 - [ ] UI-007 PR merged to `main`
-- [ ] `0.9.0` preview artifact recorded
+- [x] `0.9.0` preview artifact recorded
+
+## UI-007 validated preview receipt — 0.9.0
+
+- Release candidate: `0.9.0`
+- Package: `0.9.0+9`
+- Issue: `#18`
+- PR: `#22`
+- Validated head: `3c7c6ff05fb25c64bd8a3cf3e0a7eb46252431e8`
+- Validated workflow run: `31334832391`
+- Analyze: green
+- Tests: green
+- Android debug APK: green
+- Artifact ID: `9044048602`
+- Artifact name: `walka-ui-preview-3c7c6ff05fb25c64bd8a3cf3e0a7eb46252431e8`
+- Artifact size: `71,047,486 bytes`
+- Artifact SHA-256: `4f8b36f3de2189a393abf67c331acac045becc1b5d7c9dc91e70874bb219cb11`
 
 ## UI-006 release receipt — 0.8.0
 
