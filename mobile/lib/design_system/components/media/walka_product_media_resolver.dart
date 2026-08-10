@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../walka_product_visual.dart';
 import 'walka_product_media.dart';
 
 class WalkaProductMediaAsset {
@@ -54,14 +55,42 @@ class WalkaAssetProductMedia implements WalkaProductMedia {
 
 /// Stable variant-id -> approved-asset resolver.
 ///
-/// The production registry is deliberately empty until MEDIA-002/003 receive
-/// approved bundle images. Callers still get a deterministic painted fallback.
+/// The production registry intentionally owns the only asset naming contract
+/// used by feature widgets. Product files can therefore be admitted under the
+/// declared Flutter asset directories without teaching each screen a path.
 class WalkaProductMediaResolver {
   const WalkaProductMediaResolver({
     this.assetsByVariant = const <String, WalkaProductMediaAsset>{},
   });
 
+  const WalkaProductMediaResolver.production()
+      : assetsByVariant = productionAssets;
+
   static const int defaultCacheWidth = 1200;
+
+  static const Map<String, WalkaProductMediaAsset> productionAssets =
+      <String, WalkaProductMediaAsset>{
+    'drawer-organizer:white': WalkaProductMediaAsset(
+      variantId: 'drawer-organizer:white',
+      assetPath: 'assets/products/drawer/white.png',
+    ),
+    'drawer-organizer:gray': WalkaProductMediaAsset(
+      variantId: 'drawer-organizer:gray',
+      assetPath: 'assets/products/drawer/gray.png',
+    ),
+    'lunch-box:blue': WalkaProductMediaAsset(
+      variantId: 'lunch-box:blue',
+      assetPath: 'assets/products/lunch/blue.png',
+    ),
+    'lunch-box:pink': WalkaProductMediaAsset(
+      variantId: 'lunch-box:pink',
+      assetPath: 'assets/products/lunch/pink.png',
+    ),
+    'lunch-box:green': WalkaProductMediaAsset(
+      variantId: 'lunch-box:green',
+      assetPath: 'assets/products/lunch/green.png',
+    ),
+  };
 
   final Map<String, WalkaProductMediaAsset> assetsByVariant;
 
@@ -80,5 +109,49 @@ class WalkaProductMediaResolver {
     );
   }
 
-  bool hasApprovedAsset(String variantId) => assetsByVariant.containsKey(variantId);
+  bool hasApprovedAsset(String variantId) =>
+      assetsByVariant.containsKey(variantId);
+}
+
+/// Owner-visible product media boundary used by Home, discovery and PDP.
+///
+/// It prefers the stable production asset path for the catalog variant and
+/// preserves the existing CustomPaint renderer as a deterministic fallback.
+class WalkaResolvedProductMedia extends StatelessWidget {
+  const WalkaResolvedProductMedia({
+    required this.variantId,
+    required this.kind,
+    required this.primaryColor,
+    required this.semanticLabel,
+    super.key,
+    this.backgroundColor = Colors.transparent,
+    this.compact = false,
+    this.resolver = const WalkaProductMediaResolver.production(),
+  });
+
+  final String variantId;
+  final WalkaProductVisualKind kind;
+  final Color primaryColor;
+  final Color backgroundColor;
+  final bool compact;
+  final String semanticLabel;
+  final WalkaProductMediaResolver resolver;
+
+  @override
+  Widget build(BuildContext context) {
+    final WalkaProductMedia fallback = WalkaPaintedProductMedia(
+      kind: kind,
+      primaryColor: primaryColor,
+      backgroundColor: backgroundColor,
+      compact: compact,
+      semanticLabel: semanticLabel,
+    );
+    return WalkaProductMediaView(
+      media: resolver.resolve(
+        variantId: variantId,
+        fallback: fallback,
+        semanticLabel: semanticLabel,
+      ),
+    );
+  }
 }
