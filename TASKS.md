@@ -148,11 +148,11 @@ Legend: ✅ Done | 🟡 In progress | ⬜ Todo | ⛔ Blocked | ♻️ Existing c
 | DS-005 | ✅ | Design System | Extract `WalkaCircularIconButton` | Completed via #95 / PR #101; shared 48x48 circular action + focused tests |
 | DS-006 | ✅ | Design System | Create `WalkaPillChip` | Completed via #96 / PR #102; accessible selectable/filter pill + focused tests |
 | DS-007 | ✅ | Design System | Create `WalkaSurfaceCard` | Completed via #103 / PR #104; reusable premium surface + focused tests |
-| DS-008 | ⬜ | Design System | Create `WalkaEditorialCard` | Image/visual + heading + body + optional CTA slot |
-| DS-009 | ⬜ | Design System | Create `WalkaMetricTile` | Compact metric/value/label block |
-| DS-010 | ⬜ | Design System | Create `WalkaTrustStrip` | Reusable horizontal trust/benefit strip |
-| DS-011 | ⬜ | Design System | Create `WalkaBenefitItem` | Icon + heading + supporting text unit |
-| DS-012 | ♻️ | Design System | Extract `WalkaFavoriteButton` | Favorite heart action with persisted-state semantics |
+| DS-008 | ✅ | Design System | Create `WalkaEditorialCard` | Completed via #107 / PR #113; reusable editorial hierarchy + optional visual/action slots + focused tests |
+| DS-009 | ✅ | Design System | Create `WalkaMetricTile` | Completed via #108 / PR #114; accessible value/label/supporting-text atom + focused tests |
+| DS-010 | ✅ | Design System | Create `WalkaTrustStrip` | Completed via #109 / PR #115; responsive 1/2/4-column trust container + focused tests |
+| DS-011 | ✅ | Design System | Create `WalkaBenefitItem` | Completed via #110 / PR #116; stacked/compact benefit atom + focused tests |
+| DS-012 | ✅ | Design System | Extract `WalkaFavoriteButton` | Completed via #111 / PR #117; toggled semantics + reduced-motion-safe favorite action + focused tests |
 | DS-013 | ⬜ | Design System | Create `WalkaEmptyState` | Visual/title/body/CTA slots |
 | DS-014 | ♻️ | Design System | Extract catalog loading/offline feedback surface | Shared loading/cache/fallback/retry widget |
 | DS-015 | ⬜ | Design System | Create `WalkaDividerLabel` | Section divider/title treatment used in account/info screens |
@@ -365,7 +365,7 @@ Developers should avoid editing the same page file simultaneously. Extract compo
 # 7. Immediate execution queue
 
 1. **Do not duplicate #82/#83.** Account + About Android reference fidelity is completed and stable on `main`.
-2. Continue `DS-008` through `DS-010` as independent extraction/reuse tasks; `DS-001` through `DS-007` are completed.
+2. Continue `DS-013` through `DS-016` as independent extraction/reuse tasks; `DS-001` through `DS-012` are completed.
 3. Run `HOME-002..010`, `CAT-003..012`, `PDP-002..014`, and `FAV-002..008` as visual-preserving modularization tasks.
 4. Classify `f96465c7-...png` (`REF-003`) before claiming missing PC Product/Categories reference coverage.
 5. Implement iOS parity: Home → Categories → PDP → Favorites → Account → About.
