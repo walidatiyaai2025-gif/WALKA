@@ -16,6 +16,9 @@ class WalkaEmptyState extends StatelessWidget {
     this.icon = Icons.inventory_2_outlined,
     this.actionLabel,
     this.onAction,
+    this.actionKey,
+    this.titleStyle,
+    this.bodyStyle,
     this.padding = const EdgeInsets.fromLTRB(
       WalkaSpacing.lg,
       WalkaSpacing.xl,
@@ -34,6 +37,9 @@ class WalkaEmptyState extends StatelessWidget {
   final IconData icon;
   final String? actionLabel;
   final VoidCallback? onAction;
+  final Key? actionKey;
+  final TextStyle? titleStyle;
+  final TextStyle? bodyStyle;
   final EdgeInsetsGeometry padding;
 
   @override
@@ -51,23 +57,25 @@ class WalkaEmptyState extends StatelessWidget {
             child: Text(
               title,
               textAlign: TextAlign.center,
-              style: WalkaType.sectionTitle.copyWith(
-                fontSize: 24,
-                height: 1.15,
-              ),
+              style: titleStyle ??
+                  WalkaType.sectionTitle.copyWith(
+                    fontSize: 24,
+                    height: 1.15,
+                  ),
             ),
           ),
           const SizedBox(height: WalkaSpacing.sm),
           Text(
             body,
             textAlign: TextAlign.center,
-            style: WalkaType.body.copyWith(fontSize: 13),
+            style: bodyStyle ?? WalkaType.body.copyWith(fontSize: 13),
           ),
           if (onAction != null) ...<Widget>[
             const SizedBox(height: WalkaSpacing.lg),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
+                key: actionKey,
                 onPressed: onAction,
                 child: Text(actionLabel!),
               ),
