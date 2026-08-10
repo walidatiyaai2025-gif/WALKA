@@ -5,7 +5,6 @@ import '../../design_system/walka_reference_ui.dart';
 import '../../design_system/walka_shell.dart';
 import '../../design_system/walka_theme.dart';
 import '../catalog/catalog_state.dart';
-import '../catalog/domain/walka_catalog.dart';
 import '../lunch/lunch_box_v6.dart';
 import 'storefront_catalog_v120.dart';
 
@@ -787,12 +786,14 @@ class _ResponsiveLifestyleBanner extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: <Widget>[copy, visual],
                   )
-                : Row(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: <Widget>[
-                      Expanded(flex: 5, child: copy),
-                      Expanded(flex: 4, child: visual),
-                    ],
+                : IntrinsicHeight(
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: <Widget>[
+                        Expanded(flex: 5, child: copy),
+                        Expanded(flex: 4, child: visual),
+                      ],
+                    ),
                   ),
           ),
         );
