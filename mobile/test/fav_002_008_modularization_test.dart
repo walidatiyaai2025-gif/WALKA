@@ -62,13 +62,25 @@ void main() {
         width: 280,
       ),
     );
-    await tester.tap(find.text('Drawer Organizers'));
+
+    final Finder drawerFilter = find.text('Drawer Organizers');
+    await tester.ensureVisible(drawerFilter);
+    await tester.pumpAndSettle();
+    await tester.tap(drawerFilter);
     expect(drawer, 1);
-    await tester.tap(find.text('All Favorites'));
+
+    final Finder allFilter = find.text('All Favorites');
+    await tester.ensureVisible(allFilter);
+    await tester.pumpAndSettle();
+    await tester.tap(allFilter);
     expect(all, 1);
+
+    final Finder lunchLabel = find.text('Lunch Boxes');
+    await tester.ensureVisible(lunchLabel);
+    await tester.pumpAndSettle();
     final InkWell lunch = tester.widget<InkWell>(
       find.ancestor(
-        of: find.text('Lunch Boxes'),
+        of: lunchLabel,
         matching: find.byType(InkWell),
       ).first,
     );
