@@ -20,6 +20,9 @@ class WalkaPdpAppBar extends StatelessWidget implements PreferredSizeWidget {
   final VoidCallback onFavorite;
   final bool isFavorite;
 
+  /// Preserved public contract from PDP-002. The extracted action row uses the
+  /// same 180 ms WALKA motion duration when animations are enabled.
+  static const Duration favoriteSwitchDuration = Duration(milliseconds: 180);
   static const double trailingInset = 4;
   static const double dividerWidth = 0.7;
 
