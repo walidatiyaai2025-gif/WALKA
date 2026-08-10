@@ -65,9 +65,11 @@ void main() {
           child: const WalkaCategoriesPremiumV123(),
         ),
       );
-      await tester.pump();
+      await tester.pumpAndSettle();
       expect(
-        find.byKey(const ValueKey<String>('reference-categories-title')),
+        find.byKey(
+          const PageStorageKey<String>('walka-reference-categories-scroll'),
+        ),
         findsOneWidget,
       );
       await _scroll(tester, 4);
@@ -81,8 +83,11 @@ void main() {
           child: const WalkaSearchPremiumV123(),
         ),
       );
-      await tester.pump();
-      expect(find.text('Search WALKA'), findsWidgets);
+      await tester.pumpAndSettle();
+      expect(
+        find.byKey(const PageStorageKey<String>('walka-reference-search-scroll')),
+        findsOneWidget,
+      );
       expect(find.byType(TextField), findsOneWidget);
       expect(tester.takeException(), isNull, reason: 'Search ${device.name}');
     }
