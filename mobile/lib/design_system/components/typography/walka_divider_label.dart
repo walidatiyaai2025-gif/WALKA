@@ -25,7 +25,7 @@ class WalkaDividerLabel extends StatelessWidget {
         child: Text(
           label.toUpperCase(),
           textAlign: textAlign,
-          style: WalkaType.label.copyWith(
+          style: WalkaType.eyebrow.copyWith(
             color: WalkaColors.navy,
             letterSpacing: 1.25,
           ),

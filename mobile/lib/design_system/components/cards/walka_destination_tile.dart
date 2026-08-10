@@ -59,10 +59,19 @@ class WalkaDestinationTile extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
-                      Text(title, style: WalkaType.cardTitle.copyWith(fontSize: 17)),
+                      Text(
+                        title,
+                        style: WalkaType.sectionTitle.copyWith(
+                          fontSize: 17,
+                          height: 1.2,
+                        ),
+                      ),
                       if (subtitle != null && subtitle!.isNotEmpty) ...<Widget>[
                         const SizedBox(height: WalkaSpacing.xxs),
-                        Text(subtitle!, style: WalkaType.caption),
+                        Text(
+                          subtitle!,
+                          style: WalkaType.body.copyWith(fontSize: 12, height: 1.4),
+                        ),
                       ],
                     ],
                   ),

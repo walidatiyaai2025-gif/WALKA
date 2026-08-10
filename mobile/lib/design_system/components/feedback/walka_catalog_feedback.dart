@@ -89,7 +89,10 @@ class WalkaCatalogFeedback extends StatelessWidget {
                   children: <Widget>[
                     Text(
                       _title,
-                      style: WalkaType.cardTitle.copyWith(fontSize: compact ? 17 : null),
+                      style: WalkaType.sectionTitle.copyWith(
+                        fontSize: compact ? 17 : 19,
+                        height: 1.2,
+                      ),
                     ),
                     const SizedBox(height: WalkaSpacing.xxs),
                     Text(
