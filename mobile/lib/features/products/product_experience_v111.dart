@@ -7,6 +7,7 @@ import '../../design_system/walka_theme.dart';
 import '../commerce/amazon_purchase.dart';
 import '../favorites/favorites_state.dart';
 import '../lunch/lunch_box_v6.dart';
+import 'presentation/widgets/walka_pdp_app_bar.dart';
 
 /// DESIGN-007B.3 Android-reference Drawer Product Detail.
 ///
@@ -75,7 +76,7 @@ class _WalkaDrawerProductDetailV111State
 
     return Scaffold(
       backgroundColor: const Color(0xFFFFFEFC),
-      appBar: _referencePdpAppBar(
+      appBar: WalkaPdpAppBar(
         onShare: _share,
         onFavorite: () => _toggleFavorite(favorites),
         isFavorite: isFavorite,
@@ -189,7 +190,7 @@ class _WalkaLunchProductDetailV111State
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFFFFEFC),
-      appBar: _referencePdpAppBar(
+      appBar: WalkaPdpAppBar(
         onShare: _share,
         onFavorite: () => setState(() => _favorite = !_favorite),
         isFavorite: _favorite,
@@ -263,42 +264,6 @@ class _WalkaLunchProductDetailV111State
       ),
     );
   }
-}
-
-PreferredSizeWidget _referencePdpAppBar({
-  required VoidCallback onShare,
-  required VoidCallback onFavorite,
-  required bool isFavorite,
-}) {
-  return AppBar(
-    backgroundColor: Colors.white,
-    surfaceTintColor: Colors.transparent,
-    elevation: 0,
-    scrolledUnderElevation: 0,
-    centerTitle: true,
-    title: const WalkaWordmark(compact: true, showDescriptor: false),
-    actions: <Widget>[
-      IconButton(
-        onPressed: onShare,
-        tooltip: 'Share product',
-        icon: const Icon(Icons.ios_share_rounded, color: WalkaColors.navy),
-      ),
-      IconButton(
-        onPressed: onFavorite,
-        tooltip: isFavorite ? 'Remove favorite' : 'Add favorite',
-        icon: AnimatedSwitcher(
-          duration: const Duration(milliseconds: 180),
-          child: Icon(
-            isFavorite ? Icons.favorite_rounded : Icons.favorite_border_rounded,
-            key: ValueKey<bool>(isFavorite),
-            color: isFavorite ? WalkaColors.gold : WalkaColors.navy,
-          ),
-        ),
-      ),
-      const SizedBox(width: 4),
-    ],
-    shape: const Border(bottom: BorderSide(color: WalkaColors.line, width: 0.7)),
-  );
 }
 
 class _ReferencePdpBody extends StatelessWidget {
