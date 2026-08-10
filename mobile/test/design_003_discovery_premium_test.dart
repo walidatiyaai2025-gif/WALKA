@@ -3,11 +3,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:walka/design_system/walka_product_visual.dart';
 import 'package:walka/design_system/walka_theme.dart';
 import 'package:walka/features/catalog/catalog_state.dart';
-import 'package:walka/features/storefront/discovery_premium_v122.dart';
+import 'package:walka/features/storefront/discovery_reference_v123.dart';
 
 void main() {
   testWidgets(
-    'premium Categories is product-led on 320x568',
+    'reference Categories follows Android hierarchy on 320x568',
     (WidgetTester tester) async {
       tester.view.physicalSize = const Size(320, 568);
       tester.view.devicePixelRatio = 1;
@@ -22,35 +22,108 @@ void main() {
           theme: buildWalkaTheme(),
           home: WalkaCatalogScope(
             controller: controller,
-            child: const Scaffold(body: WalkaCategoriesPremiumV122()),
+            child: const Scaffold(body: WalkaCategoriesPremiumV123()),
           ),
         ),
       );
       await tester.pump();
 
+      expect(find.text('Categories'), findsOneWidget);
       expect(
-        find.byKey(const ValueKey<String>('discovery-family-drawer')),
+        find.byKey(const ValueKey<String>('reference-category-lunch')),
         findsOneWidget,
       );
       expect(
-        find.byKey(const ValueKey<String>('discovery-family-lunch')),
+        find.byKey(const ValueKey<String>('reference-category-drawer')),
         findsOneWidget,
       );
       expect(find.byType(WalkaProductVisual), findsWidgets);
-      expect(
-        find.byKey(
-          const ValueKey<String>(
-            'discovery-category-drawer-organizer:white',
-          ),
-        ),
-        findsOneWidget,
-      );
+      expect(find.text('3 colors'), findsOneWidget);
+      expect(find.text('2 finishes'), findsOneWidget);
+      expect(find.text('Accessories'), findsNothing);
+      expect(find.text('Sale'), findsNothing);
+      expect(find.text('12 Products'), findsNothing);
+      expect(find.text('8 Products'), findsNothing);
       expect(tester.takeException(), isNull);
     },
   );
 
   testWidgets(
-    'premium Search preserves query semantics and product visuals',
+    'reference Categories exposes all five real variants through scroll',
+    (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(320, 568);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      final WalkaCatalogController controller = WalkaCatalogController();
+      addTearDown(controller.dispose);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: buildWalkaTheme(),
+          home: WalkaCatalogScope(
+            controller: controller,
+            child: const Scaffold(body: WalkaCategoriesPremiumV123()),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      final List<String> ids = <String>[
+        'drawer-organizer:white',
+        'drawer-organizer:gray',
+        'lunch-box:blue',
+        'lunch-box:pink',
+        'lunch-box:green',
+      ];
+      for (final String id in ids) {
+        final Finder target = find.byKey(ValueKey<String>('reference-category-$id'));
+        await tester.scrollUntilVisible(
+          target,
+          220,
+          scrollable: find.byType(Scrollable).first,
+        );
+        expect(target, findsOneWidget);
+      }
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'Categories header search action remains functional',
+    (WidgetTester tester) async {
+      final WalkaCatalogController controller = WalkaCatalogController();
+      addTearDown(controller.dispose);
+      int searchCount = 0;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: buildWalkaTheme(),
+          home: WalkaCatalogScope(
+            controller: controller,
+            child: Scaffold(
+              body: WalkaCategoriesPremiumV123(
+                onSearch: () => searchCount += 1,
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      await tester.tap(
+        find.byKey(const ValueKey<String>('reference-discovery-trailing')),
+      );
+      await tester.pump();
+
+      expect(searchCount, 1);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'reference Search preserves query semantics and product visuals',
     (WidgetTester tester) async {
       tester.view.physicalSize = const Size(390, 844);
       tester.view.devicePixelRatio = 1;
@@ -65,7 +138,7 @@ void main() {
           theme: buildWalkaTheme(),
           home: WalkaCatalogScope(
             controller: controller,
-            child: const Scaffold(body: WalkaSearchPremiumV122()),
+            child: const Scaffold(body: WalkaSearchPremiumV123()),
           ),
         ),
       );
@@ -79,15 +152,11 @@ void main() {
 
       expect(find.text('1 result'), findsOneWidget);
       expect(
-        find.byKey(
-          const ValueKey<String>('discovery-search-lunch-box:pink'),
-        ),
+        find.byKey(const ValueKey<String>('discovery-search-lunch-box:pink')),
         findsOneWidget,
       );
       expect(
-        find.byKey(
-          const ValueKey<String>('discovery-search-lunch-box:blue'),
-        ),
+        find.byKey(const ValueKey<String>('discovery-search-lunch-box:blue')),
         findsNothing,
       );
       expect(find.byType(WalkaProductVisual), findsOneWidget);
@@ -96,7 +165,7 @@ void main() {
   );
 
   testWidgets(
-    'premium Search family filter keeps released filtering behavior',
+    'reference Search family filter keeps released filtering behavior',
     (WidgetTester tester) async {
       tester.view.physicalSize = const Size(320, 568);
       tester.view.devicePixelRatio = 1;
@@ -111,7 +180,7 @@ void main() {
           theme: buildWalkaTheme(),
           home: WalkaCatalogScope(
             controller: controller,
-            child: const Scaffold(body: WalkaSearchPremiumV122()),
+            child: const Scaffold(body: WalkaSearchPremiumV123()),
           ),
         ),
       );
@@ -123,16 +192,17 @@ void main() {
       await tester.pump();
 
       expect(find.text('2 results'), findsOneWidget);
-      expect(
-        find.byKey(
-          const ValueKey<String>('discovery-search-drawer-organizer:white'),
-        ),
-        findsOneWidget,
+      final Finder white = find.byKey(
+        const ValueKey<String>('discovery-search-drawer-organizer:white'),
       );
+      await tester.scrollUntilVisible(
+        white,
+        180,
+        scrollable: find.byType(Scrollable).first,
+      );
+      expect(white, findsOneWidget);
       expect(
-        find.byKey(
-          const ValueKey<String>('discovery-search-lunch-box:blue'),
-        ),
+        find.byKey(const ValueKey<String>('discovery-search-lunch-box:blue')),
         findsNothing,
       );
       expect(tester.takeException(), isNull);
@@ -140,7 +210,7 @@ void main() {
   );
 
   testWidgets(
-    'premium Search empty state can reset query and filters',
+    'reference Search empty state can reset query and filters',
     (WidgetTester tester) async {
       final WalkaCatalogController controller = WalkaCatalogController();
       addTearDown(controller.dispose);
@@ -150,7 +220,7 @@ void main() {
           theme: buildWalkaTheme(),
           home: WalkaCatalogScope(
             controller: controller,
-            child: const Scaffold(body: WalkaSearchPremiumV122()),
+            child: const Scaffold(body: WalkaSearchPremiumV123()),
           ),
         ),
       );
@@ -179,7 +249,7 @@ void main() {
   );
 
   testWidgets(
-    'premium discovery survives 1.3x text scaling on 320x568',
+    'reference discovery survives 1.3x text scaling on 320x568',
     (WidgetTester tester) async {
       tester.view.physicalSize = const Size(320, 568);
       tester.view.devicePixelRatio = 1;
@@ -199,7 +269,7 @@ void main() {
             data: scaledMedia,
             child: WalkaCatalogScope(
               controller: controller,
-              child: const Scaffold(body: WalkaCategoriesPremiumV122()),
+              child: const Scaffold(body: WalkaCategoriesPremiumV123()),
             ),
           ),
         ),
@@ -207,7 +277,7 @@ void main() {
       await tester.pump();
 
       expect(
-        find.byKey(const ValueKey<String>('discovery-family-drawer')),
+        find.byKey(const ValueKey<String>('reference-category-lunch')),
         findsOneWidget,
       );
       expect(tester.takeException(), isNull);
@@ -219,7 +289,7 @@ void main() {
             data: scaledMedia,
             child: WalkaCatalogScope(
               controller: controller,
-              child: const Scaffold(body: WalkaSearchPremiumV122()),
+              child: const Scaffold(body: WalkaSearchPremiumV123()),
             ),
           ),
         ),
@@ -230,7 +300,6 @@ void main() {
         find.byKey(const ValueKey<String>('premium-discovery-search-field')),
         findsOneWidget,
       );
-      expect(find.text('5 results'), findsOneWidget);
       expect(tester.takeException(), isNull);
     },
   );

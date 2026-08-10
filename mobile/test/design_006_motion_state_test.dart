@@ -171,10 +171,14 @@ void main() {
     expect(find.text('Account'), findsOneWidget);
     expect(tester.takeException(), isNull);
 
-    await tester.tap(find.text('Search'));
-    await tester.pump();
+    NavigationBar navigation = tester.widget<NavigationBar>(find.byType(NavigationBar));
+    expect(navigation.selectedIndex, 0);
 
-    expect(find.text('SEARCH WALKA'), findsOneWidget);
+    await tester.tap(find.byIcon(Icons.search_outlined));
+    await tester.pumpAndSettle();
+
+    navigation = tester.widget<NavigationBar>(find.byType(NavigationBar));
+    expect(navigation.selectedIndex, 1);
     expect(find.text('Offline · built-in catalog'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
