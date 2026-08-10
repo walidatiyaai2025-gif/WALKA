@@ -172,155 +172,153 @@ class _ReferenceHero extends StatelessWidget {
     return LayoutBuilder(
       builder: (BuildContext context, BoxConstraints constraints) {
         final bool compact = constraints.maxWidth < 360;
-        final double heroHeight = compact ? 500 : 470;
         return Material(
           color: const Color(0xFFFFFCF7),
           child: InkWell(
             onTap: onOpenLunch,
-            child: SizedBox(
+            child: Container(
               key: const ValueKey<String>('home-reference-hero'),
-              height: heroHeight,
-              child: DecoratedBox(
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: <Color>[
-                      Color(0xFFFFFEFC),
-                      Color(0xFFF8F4EC),
-                      Color(0xFFFFFFFF),
-                    ],
-                  ),
-                ),
-                child: Stack(
-                  children: <Widget>[
-                    Positioned(
-                      right: compact ? -52 : -28,
-                      top: compact ? 92 : 46,
-                      child: Container(
-                        width: compact ? 250 : 290,
-                        height: compact ? 250 : 290,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: const Color(0xFFD4AF37).withValues(alpha: 0.08),
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                      right: compact ? -28 : -10,
-                      top: compact ? 120 : 72,
-                      width: compact ? 190 : 230,
-                      height: compact ? 150 : 175,
-                      child: WalkaProductVisual(
-                        key: const ValueKey<String>('home-hero-lunch-visual'),
-                        kind: WalkaProductVisualKind.lunchBox,
-                        primaryColor: WalkaLunchVariant.green.color,
-                        backgroundColor: const Color(0xFFF6F2E8),
-                        compact: compact,
-                        semanticLabel: 'WALKA Lunch Box hero product',
-                      ),
-                    ),
-                    Positioned(
-                      right: compact ? 6 : 26,
-                      bottom: compact ? 78 : 60,
-                      width: compact ? 158 : 190,
-                      height: compact ? 118 : 136,
-                      child: WalkaProductVisual(
-                        key: const ValueKey<String>('home-hero-drawer-visual'),
-                        kind: WalkaProductVisualKind.drawerOrganizer,
-                        primaryColor: const Color(0xFFF7F4EC),
-                        backgroundColor: const Color(0xFFF2E6C9),
-                        compact: true,
-                        semanticLabel: 'WALKA White Drawer Organizer hero product',
-                      ),
-                    ),
-                    Padding(
-                      padding: EdgeInsets.fromLTRB(
-                        compact ? 18 : 22,
-                        compact ? 28 : 32,
-                        compact ? 18 : 22,
-                        compact ? 22 : 26,
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: <Widget>[
-                          const Text(
-                            'PREMIUM ORGANIZATION\nELEVATED EVERYDAY.',
-                            style: TextStyle(
-                              color: WalkaColors.gold,
-                              fontSize: 10,
-                              height: 1.45,
-                              fontWeight: FontWeight.w900,
-                              letterSpacing: 0.7,
-                            ),
-                          ),
-                          const SizedBox(height: 14),
-                          SizedBox(
-                            width: compact ? 198 : 230,
-                            child: Text(
-                              'Organize Better.\nLive Better.',
-                              style: TextStyle(
-                                color: WalkaColors.navy,
-                                fontFamily: 'serif',
-                                fontSize: compact ? 35 : 42,
-                                height: 0.98,
-                                fontWeight: FontWeight.w600,
-                                letterSpacing: -0.8,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 14),
-                          SizedBox(
-                            width: compact ? 188 : 224,
-                            child: const Text(
-                              'Premium drawer organizers and stainless steel lunch boxes designed for calm, everyday order.',
-                              style: TextStyle(
-                                color: Color(0xFF59616A),
-                                fontSize: 12.5,
-                                height: 1.55,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ),
-                          const Spacer(),
-                          SizedBox(
-                            width: compact ? 192 : 220,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: <Widget>[
-                                ElevatedButton.icon(
-                                  key: const ValueKey<String>('home-reference-shop'),
-                                  onPressed: onShopAll,
-                                  iconAlignment: IconAlignment.end,
-                                  icon: const Icon(Icons.arrow_forward_rounded, size: 18),
-                                  label: const Text('SHOP PRODUCTS'),
-                                ),
-                                const SizedBox(height: 8),
-                                OutlinedButton(
-                                  key: const ValueKey<String>('home-reference-search-cta'),
-                                  onPressed: onSearch,
-                                  child: const Text('SEARCH COLLECTION'),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          Row(
-                            children: <Widget>[
-                              _HeroDot(active: true),
-                              const SizedBox(width: 8),
-                              const _HeroDot(),
-                              const SizedBox(width: 8),
-                              const _HeroDot(),
-                              const SizedBox(width: 8),
-                              const _HeroDot(),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
+              constraints: BoxConstraints(minHeight: compact ? 500 : 470),
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: <Color>[
+                    Color(0xFFFFFEFC),
+                    Color(0xFFF8F4EC),
+                    Color(0xFFFFFFFF),
                   ],
                 ),
+              ),
+              child: Stack(
+                children: <Widget>[
+                  Positioned(
+                    right: compact ? -52 : -28,
+                    top: compact ? 92 : 46,
+                    child: Container(
+                      width: compact ? 250 : 290,
+                      height: compact ? 250 : 290,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: const Color(0xFFD4AF37).withValues(alpha: 0.08),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    right: compact ? -28 : -10,
+                    top: compact ? 120 : 72,
+                    width: compact ? 190 : 230,
+                    height: compact ? 150 : 175,
+                    child: WalkaProductVisual(
+                      key: const ValueKey<String>('home-hero-lunch-visual'),
+                      kind: WalkaProductVisualKind.lunchBox,
+                      primaryColor: WalkaLunchVariant.green.color,
+                      backgroundColor: const Color(0xFFF6F2E8),
+                      compact: compact,
+                      semanticLabel: 'WALKA Lunch Box hero product',
+                    ),
+                  ),
+                  Positioned(
+                    right: compact ? 6 : 26,
+                    bottom: compact ? 78 : 60,
+                    width: compact ? 158 : 190,
+                    height: compact ? 118 : 136,
+                    child: WalkaProductVisual(
+                      key: const ValueKey<String>('home-hero-drawer-visual'),
+                      kind: WalkaProductVisualKind.drawerOrganizer,
+                      primaryColor: const Color(0xFFF7F4EC),
+                      backgroundColor: const Color(0xFFF2E6C9),
+                      compact: true,
+                      semanticLabel: 'WALKA White Drawer Organizer hero product',
+                    ),
+                  ),
+                  Padding(
+                    padding: EdgeInsets.fromLTRB(
+                      compact ? 18 : 22,
+                      compact ? 28 : 32,
+                      compact ? 18 : 22,
+                      compact ? 22 : 26,
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        const Text(
+                          'PREMIUM ORGANIZATION\nELEVATED EVERYDAY.',
+                          style: TextStyle(
+                            color: WalkaColors.gold,
+                            fontSize: 10,
+                            height: 1.45,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 0.7,
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+                        SizedBox(
+                          width: compact ? 198 : 230,
+                          child: Text(
+                            'Organize Better.\nLive Better.',
+                            style: TextStyle(
+                              color: WalkaColors.navy,
+                              fontFamily: 'serif',
+                              fontSize: compact ? 35 : 42,
+                              height: 0.98,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: -0.8,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+                        SizedBox(
+                          width: compact ? 188 : 224,
+                          child: const Text(
+                            'Premium drawer organizers and stainless steel lunch boxes designed for calm, everyday order.',
+                            style: TextStyle(
+                              color: Color(0xFF59616A),
+                              fontSize: 12.5,
+                              height: 1.55,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                        SizedBox(height: compact ? 112 : 88),
+                        SizedBox(
+                          width: compact ? 192 : 220,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: <Widget>[
+                              ElevatedButton.icon(
+                                key: const ValueKey<String>('home-reference-shop'),
+                                onPressed: onShopAll,
+                                iconAlignment: IconAlignment.end,
+                                icon: const Icon(Icons.arrow_forward_rounded, size: 18),
+                                label: const Text('SHOP PRODUCTS'),
+                              ),
+                              const SizedBox(height: 8),
+                              OutlinedButton(
+                                key: const ValueKey<String>('home-reference-search-cta'),
+                                onPressed: onSearch,
+                                child: const Text('SEARCH COLLECTION'),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Row(
+                          children: <Widget>[
+                            _HeroDot(active: true),
+                            const SizedBox(width: 8),
+                            const _HeroDot(),
+                            const SizedBox(width: 8),
+                            const _HeroDot(),
+                            const SizedBox(width: 8),
+                            const _HeroDot(),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
