@@ -6,8 +6,6 @@ import 'data/walka_bundled_catalog.dart';
 import 'data/walka_catalog_repository.dart';
 import 'domain/walka_catalog.dart';
 
-export 'domain/walka_catalog.dart' show WalkaCatalogSource;
-
 class WalkaCatalogController extends ChangeNotifier {
   WalkaCatalogController({WalkaCatalogRepository? repository})
       : _repository = repository,
