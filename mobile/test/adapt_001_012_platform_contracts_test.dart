@@ -100,9 +100,12 @@ void main() {
 
     expect(find.byType(WalkaWordmark), findsOneWidget);
     expect(find.text('Shop'), findsOneWidget);
-    final FocusTraversalGroup group = tester.widget<FocusTraversalGroup>(
-      find.byType(FocusTraversalGroup),
+    final Finder traversalFinder = find.descendant(
+      of: find.byType(WalkaDesktopTopBar),
+      matching: find.byType(FocusTraversalGroup),
     );
+    final FocusTraversalGroup group =
+        tester.widget<FocusTraversalGroup>(traversalFinder);
     expect(group.policy, isA<OrderedTraversalPolicy>());
   });
 
@@ -126,7 +129,7 @@ void main() {
     expect(insets!.left, 20);
   });
 
-  testWidgets('ADAPT-009 uses target-platform spacing without dart:io',
+  testWidgets('ADAPT-009 uses shared horizontal spacing and reported safe area',
       (WidgetTester tester) async {
     EdgeInsets? androidInsets;
     await tester.pumpWidget(
@@ -140,18 +143,12 @@ void main() {
         ),
       ),
     );
-    expect(androidInsets!.top, 0);
-    expect(androidInsets!.bottom, 0);
+    expect(androidInsets, const EdgeInsets.fromLTRB(20, 0, 20, 0));
 
     EdgeInsets? iosInsets;
-    const WalkaTestDevice iosWithoutReportedSafeArea = WalkaTestDevice(
-      name: 'ios-no-reported-safe-area',
-      size: Size(390, 844),
-      platform: TargetPlatform.iOS,
-    );
     await tester.pumpWidget(
       WalkaTestHarness(
-        device: iosWithoutReportedSafeArea,
+        device: WalkaTestDevice.iosPhone,
         child: Builder(
           builder: (BuildContext context) {
             iosInsets = WalkaPlatformAdaptive.pageInsets(context);
@@ -160,8 +157,7 @@ void main() {
         ),
       ),
     );
-    expect(iosInsets!.top, 8);
-    expect(iosInsets!.bottom, 8);
+    expect(iosInsets, const EdgeInsets.fromLTRB(20, 47, 20, 34));
   });
 
   testWidgets('ADAPT-010 exposes pointer hover and focus state',
@@ -212,9 +208,7 @@ void main() {
     );
     await tester.pump();
 
-    final BuildContext actionContext = tester.element(
-      find.byType(FocusableActionDetector),
-    );
+    final BuildContext actionContext = tester.element(find.text('Keyboard target'));
     Actions.invoke(actionContext, const ActivateIntent());
     expect(activations, 1);
   });
