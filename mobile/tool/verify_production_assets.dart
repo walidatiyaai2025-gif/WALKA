@@ -192,14 +192,17 @@ class _Options {
       switch (arg) {
         case '--report':
           enforce = false;
+          break;
         case '--enforce':
           enforce = true;
+          break;
         case '--json':
           if (index + 1 >= args.length) {
             stderr.writeln('Missing path after --json.');
             exit(2);
           }
           jsonPath = args[++index];
+          break;
         default:
           stderr.writeln('Unknown argument: $arg');
           exit(2);
