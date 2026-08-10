@@ -83,10 +83,9 @@ void main() {
         size: Size(width, 900),
       );
 
-      final Finder productSupport = find.text('Product & Support');
-      await tester.scrollUntilVisible(productSupport, 240);
-      await tester.pumpAndSettle();
-      expect(productSupport, findsOneWidget);
+      // The desktop composition is intentionally finite-height/non-scrollable;
+      // all destination groups are laid out in the wide grid at once.
+      expect(find.text('Product & Support'), findsOneWidget);
       expect(find.text('Official Destinations'), findsOneWidget);
       expect(find.text('Legal & App'), findsOneWidget);
       expect(tester.takeException(), isNull);
