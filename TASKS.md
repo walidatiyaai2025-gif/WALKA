@@ -147,7 +147,7 @@ Legend: ✅ Done | 🟡 In progress | ⬜ Todo | ⛔ Blocked | ♻️ Existing c
 | DS-004 | ✅ | Design System | Extract `WalkaSecondaryButton` | Completed via #94 / PR #100; themed reusable secondary CTA + focused tests |
 | DS-005 | ✅ | Design System | Extract `WalkaCircularIconButton` | Completed via #95 / PR #101; shared 48x48 circular action + focused tests |
 | DS-006 | ✅ | Design System | Create `WalkaPillChip` | Completed via #96 / PR #102; accessible selectable/filter pill + focused tests |
-| DS-007 | ⬜ | Design System | Create `WalkaSurfaceCard` | Shared premium card surface/radius/border/elevation |
+| DS-007 | ✅ | Design System | Create `WalkaSurfaceCard` | Completed via #103 / PR #104; reusable premium surface + focused tests |
 | DS-008 | ⬜ | Design System | Create `WalkaEditorialCard` | Image/visual + heading + body + optional CTA slot |
 | DS-009 | ⬜ | Design System | Create `WalkaMetricTile` | Compact metric/value/label block |
 | DS-010 | ⬜ | Design System | Create `WalkaTrustStrip` | Reusable horizontal trust/benefit strip |
@@ -365,7 +365,7 @@ Developers should avoid editing the same page file simultaneously. Extract compo
 # 7. Immediate execution queue
 
 1. **Do not duplicate #82/#83.** Account + About Android reference fidelity is completed and stable on `main`.
-2. Continue `DS-007` through `DS-010` as independent extraction/reuse tasks; `DS-001` through `DS-006` are completed.
+2. Continue `DS-008` through `DS-010` as independent extraction/reuse tasks; `DS-001` through `DS-007` are completed.
 3. Run `HOME-002..010`, `CAT-003..012`, `PDP-002..014`, and `FAV-002..008` as visual-preserving modularization tasks.
 4. Classify `f96465c7-...png` (`REF-003`) before claiming missing PC Product/Categories reference coverage.
 5. Implement iOS parity: Home → Categories → PDP → Favorites → Account → About.
