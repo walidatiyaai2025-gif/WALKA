@@ -153,7 +153,7 @@ Legend: ✅ Done | 🟡 In progress | ⬜ Todo | ⛔ Blocked | ♻️ Existing c
 | DS-010 | ✅ | Design System | Create `WalkaTrustStrip` | Completed via #109 / PR #115; responsive 1/2/4-column trust container + focused tests |
 | DS-011 | ✅ | Design System | Create `WalkaBenefitItem` | Completed via #110 / PR #116; stacked/compact benefit atom + focused tests |
 | DS-012 | ✅ | Design System | Extract `WalkaFavoriteButton` | Completed via #111 / PR #117; toggled semantics + reduced-motion-safe favorite action + focused tests |
-| DS-013 | ⬜ | Design System | Create `WalkaEmptyState` | Visual/title/body/CTA slots |
+| DS-013 | ✅ | Design System | Create `WalkaEmptyState` | Completed via #118 / PR #119; reusable visual/title/body/CTA primitive + semantics/compact tests |
 | DS-014 | ♻️ | Design System | Extract catalog loading/offline feedback surface | Shared loading/cache/fallback/retry widget |
 | DS-015 | ⬜ | Design System | Create `WalkaDividerLabel` | Section divider/title treatment used in account/info screens |
 | DS-016 | ⬜ | Design System | Create `WalkaDestinationTile` | Leading icon, title, subtitle, trailing affordance |
@@ -365,7 +365,7 @@ Developers should avoid editing the same page file simultaneously. Extract compo
 # 7. Immediate execution queue
 
 1. **Do not duplicate #82/#83.** Account + About Android reference fidelity is completed and stable on `main`.
-2. Continue `DS-013` through `DS-016` as independent extraction/reuse tasks; `DS-001` through `DS-012` are completed.
+2. Continue `DS-014` through `DS-016` as independent extraction/reuse tasks; `DS-001` through `DS-013` are completed.
 3. Run `HOME-002..010`, `CAT-003..012`, `PDP-002..014`, and `FAV-002..008` as visual-preserving modularization tasks.
 4. Classify `f96465c7-...png` (`REF-003`) before claiming missing PC Product/Categories reference coverage.
 5. Implement iOS parity: Home → Categories → PDP → Favorites → Account → About.
