@@ -143,7 +143,7 @@ ThemeData buildWalkaTheme() {
         elevation: 0,
         backgroundColor: WalkaColors.gold,
         foregroundColor: WalkaColors.navyDark,
-        minimumSize: const Size.fromHeight(54),
+        minimumSize: const Size(48, 54),
         tapTargetSize: MaterialTapTargetSize.padded,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(WalkaRadius.pill),
