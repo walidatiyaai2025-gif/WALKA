@@ -35,6 +35,7 @@ class WalkaFavoritesEmptyState extends StatelessWidget {
             color: WalkaColors.navy,
           ),
         ),
+        radius: 22,
         padding: const EdgeInsets.fromLTRB(24, 30, 24, 28),
         titleStyle: const TextStyle(
           color: WalkaColors.navy,
