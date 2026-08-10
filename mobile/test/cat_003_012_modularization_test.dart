@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:walka/design_system/walka_product_visual.dart';
 import 'package:walka/features/catalog/catalog_state.dart';
-import 'package:walka/features/catalog/domain/walka_catalog.dart';
 import 'package:walka/features/storefront/presentation/widgets/discovery/walka_categories_benefits.dart';
 import 'package:walka/features/storefront/presentation/widgets/discovery/walka_category_card.dart';
 import 'package:walka/features/storefront/presentation/widgets/discovery/walka_discovery_header.dart';
