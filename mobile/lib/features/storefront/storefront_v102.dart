@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 
+import '../../design_system/components/chrome/walka_splash_brand_mark.dart';
 import '../../design_system/walka_adaptive.dart';
 import '../../design_system/walka_shell.dart';
 import '../../design_system/walka_theme.dart';
@@ -45,7 +45,7 @@ class WalkaStorefrontSplashV102 extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: <Widget>[
                           const Spacer(),
-                          _WalkaSplashBrandMark(compact: compact),
+                          WalkaSplashBrandMark(compact: compact),
                           SizedBox(height: compact ? 12 : 18),
                           Container(width: 54, height: 2, color: WalkaColors.gold),
                           SizedBox(height: compact ? 14 : 20),
@@ -106,42 +106,6 @@ class WalkaStorefrontSplashV102 extends StatelessWidget {
                 ),
               );
             },
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _WalkaSplashBrandMark extends StatelessWidget {
-  const _WalkaSplashBrandMark({required this.compact});
-
-  final bool compact;
-
-  @override
-  Widget build(BuildContext context) {
-    return Semantics(
-      image: true,
-      label: 'WALKA For You',
-      child: ExcludeSemantics(
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            gradient: RadialGradient(
-              center: Alignment.centerLeft,
-              radius: 1.15,
-              colors: <Color>[
-                WalkaColors.gold.withValues(alpha: 0.12),
-                WalkaColors.navy.withValues(alpha: 0),
-              ],
-            ),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            child: SvgPicture.asset(
-              'assets/branding/walka_logo.svg',
-              width: compact ? 214 : 252,
-              fit: BoxFit.contain,
-            ),
           ),
         ),
       ),
