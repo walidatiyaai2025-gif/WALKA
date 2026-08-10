@@ -4,8 +4,6 @@ import 'package:walka/design_system/components/accessibility/walka_interactive_r
 import 'package:walka/design_system/components/chrome/walka_desktop_top_bar.dart';
 import 'package:walka/design_system/components/layout/walka_content_width.dart';
 import 'package:walka/design_system/components/navigation/walka_adaptive_shell_scaffold.dart';
-import 'package:walka/design_system/components/navigation/walka_shell_controller.dart';
-import 'package:walka/design_system/components/navigation/walka_shell_destination.dart';
 import 'package:walka/design_system/walka_platform_adaptive.dart';
 import 'package:walka/design_system/walka_shell.dart';
 
@@ -214,11 +212,10 @@ void main() {
     );
     await tester.pump();
 
-    final FocusableActionDetector detector = tester.widget<FocusableActionDetector>(
+    final BuildContext actionContext = tester.element(
       find.byType(FocusableActionDetector),
     );
-    final Action<Intent> action = detector.actions![ActivateIntent]!;
-    action.invoke(const ActivateIntent());
+    Actions.invoke(actionContext, const ActivateIntent());
     expect(activations, 1);
   });
 
