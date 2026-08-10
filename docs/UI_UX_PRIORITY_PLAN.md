@@ -37,12 +37,28 @@ Parent design program: #46.
 
 ## DESIGN-003 stable receipt
 
-- Squash merge: `56863f06b603234e706a4be60509d8b166f84c64`.
-- Stable-main Flutter Preview: run `31344297255` (#333), green.
-- Verified APK publication commit: `5e636306d62ce7e405816d77d58a184c1dda09d1`.
-- `Last verified APK/VERIFIED_BUILD.md` points to the DESIGN-003 merge commit.
+- Issue: `#49` — completed.
+- PR: `#61`.
+- Final validated PR head: `26aa79dbae88f16dc2f2fc4d27446200a24a1040`.
+- PR-context Flutter run: `31344067109` — green.
+- Stable merge commit: `56863f06b603234e706a4be60509d8b166f84c64`.
+- Stable-main Flutter run: `31344297255` — green.
+- Stable APK publication commit: `5e636306d62ce7e405816d77d58a184c1dda09d1`.
+- Verified APK SHA-256: `68759ecca4858804d5f80267eb71bf1e369e0e9b81a974ef19ed75e5c4def9e1`.
+- Compact 320×568 and 1.3× text-scaling regressions are part of the full Flutter gate.
+
+### DESIGN-003 delivered
+
+- Product-led Categories with Drawer/Lunch editorial family presentation.
+- Product-led Search results and preserved All / Drawer / Lunch filtering semantics.
+- Reusable `WalkaProductVisual` replaces generic product icons as the dominant discovery visual.
+- Remote/cache/bundled catalog path, stable Product/Variant IDs and token matching remain unchanged.
+- Product Detail routing and variant-aware Amazon handoff remain unchanged.
+- Search empty-state recovery and compact/scaled layouts are regression-tested.
 
 ## DESIGN-004 active implementation
+
+Issue: `#50` — Product Detail premium commerce hierarchy + gallery polish.
 
 Branch: `agent/design-004-premium-pdp`
 
