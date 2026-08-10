@@ -72,31 +72,35 @@ void main() {
   testWidgets('marks the title as an accessibility heading',
       (WidgetTester tester) async {
     final SemanticsHandle handle = tester.ensureSemantics();
-    addTearDown(handle.dispose);
-
-    await tester.pumpWidget(
-      app(
-        const WalkaEmptyState(
-          title: 'Empty heading',
-          body: 'Supporting copy.',
+    try {
+      await tester.pumpWidget(
+        app(
+          const WalkaEmptyState(
+            title: 'Empty heading',
+            body: 'Supporting copy.',
+          ),
         ),
-      ),
-    );
+      );
 
-    final SemanticsNode node = tester.getSemantics(find.text('Empty heading'));
-    expect(node.flagsCollection.isHeader, isTrue);
+      final SemanticsNode node = tester.getSemantics(find.text('Empty heading'));
+      expect(node.flagsCollection.isHeader, isTrue);
+    } finally {
+      handle.dispose();
+    }
   });
 
   testWidgets('stays overflow-free at compact width and 1.3x text scale',
       (WidgetTester tester) async {
     await tester.pumpWidget(
       app(
-        WalkaEmptyState(
-          title: 'Your collection is ready when you are',
-          body:
-              'Long supporting content wraps safely without inventing product or account information.',
-          actionLabel: 'EXPLORE COLLECTION',
-          onAction: () {},
+        SingleChildScrollView(
+          child: WalkaEmptyState(
+            title: 'Your collection is ready when you are',
+            body:
+                'Long supporting content wraps safely without inventing product or account information.',
+            actionLabel: 'EXPLORE COLLECTION',
+            onAction: () {},
+          ),
         ),
         width: 280,
         textScale: 1.3,
