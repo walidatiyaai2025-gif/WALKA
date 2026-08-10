@@ -7,6 +7,7 @@ import 'package:walka/features/catalog/data/walka_bundled_catalog.dart';
 import 'package:walka/features/catalog/data/walka_catalog_cache.dart';
 import 'package:walka/features/catalog/data/walka_catalog_repository.dart';
 import 'package:walka/features/catalog/domain/walka_catalog.dart';
+import 'package:walka/features/favorites/favorites_state.dart';
 import 'package:walka/features/storefront/catalog_state_surface_v130.dart';
 import 'package:walka/features/storefront/catalog_status_v130.dart';
 import 'package:walka/features/storefront/storefront_v102.dart';
@@ -135,19 +136,28 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
+    final WalkaFavoritesController favorites = WalkaFavoritesController(
+      _MemoryFavoritesStore(),
+    );
+    await favorites.load();
+    addTearDown(favorites.dispose);
+
     await tester.pumpWidget(
-      MaterialApp(
-        theme: buildWalkaTheme(),
-        builder: (BuildContext context, Widget? child) {
-          return MediaQuery(
-            data: MediaQuery.of(context).copyWith(
-              textScaler: const TextScaler.linear(1.3),
-              disableAnimations: true,
-            ),
-            child: child!,
-          );
-        },
-        home: const WalkaStorefrontShellV102(),
+      WalkaFavoritesScope(
+        controller: favorites,
+        child: MaterialApp(
+          theme: buildWalkaTheme(),
+          builder: (BuildContext context, Widget? child) {
+            return MediaQuery(
+              data: MediaQuery.of(context).copyWith(
+                textScaler: const TextScaler.linear(1.3),
+                disableAnimations: true,
+              ),
+              child: child!,
+            );
+          },
+          home: const WalkaStorefrontShellV102(),
+        ),
       ),
     );
     await tester.pump();
@@ -253,5 +263,17 @@ class _MemoryCatalogCache implements WalkaCatalogCache {
   @override
   Future<void> write(WalkaCatalogSnapshot value) async {
     snapshot = value;
+  }
+}
+
+class _MemoryFavoritesStore implements WalkaFavoritesStore {
+  Set<String> ids = <String>{};
+
+  @override
+  Future<Set<String>> readFavoriteIds() async => Set<String>.from(ids);
+
+  @override
+  Future<void> writeFavoriteIds(Set<String> favoriteIds) async {
+    ids = Set<String>.from(favoriteIds);
   }
 }
