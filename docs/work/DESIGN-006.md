@@ -4,7 +4,8 @@ Status: IN PROGRESS
 Issue: #52
 Parent: #46
 Branch: `agent/design-006-motion-state-polish`
-Stable base: `fe5295b2663de683b8cd7c4ac771540890bfbda9`
+Original stable base: `fe5295b2663de683b8cd7c4ac771540890bfbda9`
+Reconciled stable `main`: `e03bc24fd837c620b58cce937eb86ff2b2e6ff59`
 
 ## Stable prerequisite receipt
 
@@ -18,9 +19,11 @@ DESIGN-005 is owner-visible stable before this slice begins:
 - PR-context APK artifact: `9047655597`.
 - Squash merge: `be2fa40d1c154ea94cf6b4a6d64e6666180c7a79`.
 - Stable-main Flutter run: `31347074138` / #363 — green.
-- Stable APK publication commit: `fe5295b2663de683b8cd7c4ac771540890bfbda9`.
-- Stable APK bytes: `51,079,850`.
-- Stable APK SHA-256: `0e84156206943365294bd1d429aa31634ec8790ed2924ed960cf3a4f0bf4d46e`.
+- Initial stable APK publication commit: `fe5295b2663de683b8cd7c4ac771540890bfbda9`.
+- Stable receipt/docs commit: `c5dfba8a65bab98d4c04381e22883f517562ce93`.
+- Latest stable APK publication commit before DESIGN-006 PR: `e03bc24fd837c620b58cce937eb86ff2b2e6ff59`.
+- Latest stable APK bytes: `51,079,850`.
+- Latest stable APK SHA-256: `05f848a2e185a5a3b30f7d48e3bce7b3c521410e2103e619419da219f593086b`.
 
 ## Audit
 
@@ -56,15 +59,30 @@ This behavior is correct and must not be replaced by a blank full-screen spinner
 - Reduced-motion / accessible-navigation requests collapse WALKA-owned animations to zero duration.
 - Loading continues to expose usable fallback catalog content.
 
+## Motion contract
+
+`WalkaMotion` owns the timing hierarchy instead of scattering magic numbers:
+
+- card press: `110 ms`
+- variant/selection change: `180 ms`
+- bottom-navigation selection: `180 ms`
+- route-transition budget: `240 ms`
+- standard easing: `easeOutCubic`
+- emphasized easing: `easeInOutCubic`
+- reduced-motion / accessible-navigation: `0 ms` for WALKA-owned motion
+
+The slice does not add decorative PDP animation merely to consume the timing budget; existing product behavior remains immediate unless motion communicates an actual state change.
+
 ## First implementation slice
 
 1. Add a shared `WalkaMotion` contract for durations, easing and reduced-motion handling.
-2. Add shared non-layout-shifting press feedback for premium product cards.
+2. Add shared non-layout-shifting press feedback for premium product cards/actions.
 3. Add one shared catalog status surface for loading/cache/bundled fallback states with live-region semantics.
-4. Apply the status surface consistently to Home, Search and Categories.
+4. Apply the status surface consistently to Home, Search and Categories while preserving the validated V121/V122 layouts.
 5. Use explicit WALKA motion duration for the bottom navigation indicator.
 6. Keep all state changes interactive while catalog refresh is in progress.
 7. Add focused tests for reduced motion, remote/loading/cache/bundled status semantics, compact layout and press-feedback layout stability.
+8. Reconcile with all stable-main documentation/APK publication commits before opening the PR.
 
 ## Guardrails
 
