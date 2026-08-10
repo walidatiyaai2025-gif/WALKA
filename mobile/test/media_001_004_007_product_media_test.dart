@@ -12,7 +12,7 @@ void main() {
         semanticLabel: 'WALKA Drawer Organizer White',
       );
 
-  test('MEDIA-004 resolves unknown/unapproved variants to painted fallback', () {
+  test('MEDIA-004 empty resolver keeps painted fallback', () {
     const WalkaProductMediaResolver resolver = WalkaProductMediaResolver();
     final WalkaPaintedProductMedia painted = fallback();
 
@@ -23,6 +23,32 @@ void main() {
 
     expect(identical(resolved, painted), isTrue);
     expect(resolver.hasApprovedAsset('drawer-organizer:white'), isFalse);
+  });
+
+  test('MEDIA-002/003/004 production registry owns all five stable paths', () {
+    const WalkaProductMediaResolver resolver =
+        WalkaProductMediaResolver.production();
+
+    expect(WalkaProductMediaResolver.productionAssets.keys, <String>[
+      'drawer-organizer:white',
+      'drawer-organizer:gray',
+      'lunch-box:blue',
+      'lunch-box:pink',
+      'lunch-box:green',
+    ]);
+    expect(
+      WalkaProductMediaResolver
+          .productionAssets['drawer-organizer:white']!.assetPath,
+      'assets/products/drawer/white.png',
+    );
+    expect(
+      WalkaProductMediaResolver.productionAssets['lunch-box:green']!.assetPath,
+      'assets/products/lunch/green.png',
+    );
+    for (final String variantId
+        in WalkaProductMediaResolver.productionAssets.keys) {
+      expect(resolver.hasApprovedAsset(variantId), isTrue);
+    }
   });
 
   test('MEDIA-004 resolves registered variant to asset-backed media', () {
@@ -98,5 +124,34 @@ void main() {
       ),
       findsOneWidget,
     );
+  });
+
+  testWidgets('owner-visible resolved media falls back until image is admitted',
+      (WidgetTester tester) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: SizedBox.square(
+            dimension: 180,
+            child: WalkaResolvedProductMedia(
+              variantId: 'drawer-organizer:white',
+              kind: WalkaProductVisualKind.drawerOrganizer,
+              primaryColor: Color(0xFFF7F4EC),
+              backgroundColor: Color(0xFFF4EEDF),
+              semanticLabel: 'WALKA Drawer Organizer White',
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.bySemanticsLabel(
+        'WALKA Drawer Organizer White. Product visual fallback.',
+      ),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
   });
 }
