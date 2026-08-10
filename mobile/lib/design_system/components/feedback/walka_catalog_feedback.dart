@@ -1,0 +1,119 @@
+import 'package:flutter/material.dart';
+
+import '../../walka_theme.dart';
+import '../cards/walka_surface_card.dart';
+
+enum WalkaCatalogFeedbackKind {
+  loading,
+  cached,
+  bundledFallback,
+  offline,
+}
+
+/// Presentation-only feedback for catalog loading and fallback states.
+///
+/// Networking, repository state and retry behavior remain caller-owned.
+class WalkaCatalogFeedback extends StatelessWidget {
+  const WalkaCatalogFeedback({
+    required this.kind,
+    super.key,
+    this.title,
+    this.body,
+    this.onRetry,
+    this.retryLabel = 'TRY AGAIN',
+    this.compact = false,
+  });
+
+  final WalkaCatalogFeedbackKind kind;
+  final String? title;
+  final String? body;
+  final VoidCallback? onRetry;
+  final String retryLabel;
+  final bool compact;
+
+  String get _title => title ?? switch (kind) {
+        WalkaCatalogFeedbackKind.loading => 'Refreshing catalog',
+        WalkaCatalogFeedbackKind.cached => 'Showing saved catalog',
+        WalkaCatalogFeedbackKind.bundledFallback => 'Showing built-in catalog',
+        WalkaCatalogFeedbackKind.offline => 'Catalog is offline',
+      };
+
+  String get _body => body ?? switch (kind) {
+        WalkaCatalogFeedbackKind.loading =>
+          'The latest catalog data is being checked.',
+        WalkaCatalogFeedbackKind.cached =>
+          'Saved catalog data is available while the latest version is unavailable.',
+        WalkaCatalogFeedbackKind.bundledFallback =>
+          'The app is using its verified built-in catalog until refreshed data is available.',
+        WalkaCatalogFeedbackKind.offline =>
+          'Catalog refresh is unavailable right now. Existing app content remains available.',
+      };
+
+  IconData get _icon => switch (kind) {
+        WalkaCatalogFeedbackKind.loading => Icons.sync_rounded,
+        WalkaCatalogFeedbackKind.cached => Icons.inventory_2_outlined,
+        WalkaCatalogFeedbackKind.bundledFallback => Icons.offline_bolt_outlined,
+        WalkaCatalogFeedbackKind.offline => Icons.cloud_off_outlined,
+      };
+
+  @override
+  Widget build(BuildContext context) {
+    final String semanticLabel = '$_title. $_body';
+
+    return Semantics(
+      container: true,
+      liveRegion: true,
+      label: semanticLabel,
+      child: ExcludeSemantics(
+        child: WalkaSurfaceCard(
+          padding: EdgeInsets.all(compact ? WalkaSpacing.sm : WalkaSpacing.md),
+          surfaceColor: WalkaColors.ivory,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              SizedBox(
+                width: 32,
+                height: 32,
+                child: kind == WalkaCatalogFeedbackKind.loading
+                    ? const Padding(
+                        padding: EdgeInsets.all(6),
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : Icon(_icon, color: WalkaColors.navy, size: 24),
+              ),
+              const SizedBox(width: WalkaSpacing.sm),
+              Expanded(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(
+                      _title,
+                      style: WalkaType.cardTitle.copyWith(fontSize: compact ? 17 : null),
+                    ),
+                    const SizedBox(height: WalkaSpacing.xxs),
+                    Text(
+                      _body,
+                      style: WalkaType.body.copyWith(fontSize: compact ? 12 : 13),
+                    ),
+                    if (onRetry != null) ...<Widget>[
+                      const SizedBox(height: WalkaSpacing.sm),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: TextButton.icon(
+                          onPressed: onRetry,
+                          icon: const Icon(Icons.refresh_rounded, size: 18),
+                          label: Text(retryLabel),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
