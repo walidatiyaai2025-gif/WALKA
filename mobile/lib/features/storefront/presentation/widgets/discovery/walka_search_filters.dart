@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:walka/design_system/walka_theme.dart';
-import 'package:walka/features/catalog/domain/walka_catalog.dart';
+import 'package:walka/features/storefront/storefront_catalog_v120.dart';
 
 class WalkaSearchFilters extends StatelessWidget {
   const WalkaSearchFilters({
