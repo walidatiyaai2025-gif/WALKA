@@ -29,7 +29,7 @@ WALKA should feel like a premium US-market home-organization brand, not a generi
 | 2 | DESIGN-002 | App shell + bottom navigation premium polish | #48 | COMPLETED |
 | 3 | DESIGN-003 | Categories + Search discovery refinement | #49 | COMPLETED |
 | 4 | DESIGN-004 | Product Detail premium commerce hierarchy + gallery polish | #50 | COMPLETED |
-| 5 | DESIGN-005 | Favorites + Account + information consistency | #51 | IN PROGRESS |
+| 5 | DESIGN-005 | Favorites + Account + information consistency | #51 | COMPLETED |
 | 6 | DESIGN-006 | Motion + feedback + loading/offline state polish | #52 | P0 NEXT |
 | 7 | DESIGN-007 | Cross-device visual QA + golden regression matrix | #53 | P0 QUEUED |
 
@@ -70,40 +70,48 @@ Parent design program: #46.
 - Drawer/Lunch Product Master facts, approved Lunch spill-resistant guidance and care rules preserved.
 - Focused compact 320×568 + 1.3× text-scale, gallery, share and variant-identity regressions green before merge.
 
-## DESIGN-005 active execution boundary
+## DESIGN-005 stable receipt
 
-Issue: `#51` — Favorites + Account + information consistency.
+- Issue: `#51` — completed.
+- PR: `#65`.
+- Final branch head: `5583192ac200ef8e199a8faeaf812cdb9b812eff`.
+- Branch workflow: `31346663707` / run `#361` — green.
+- Branch APK candidate artifact: `9047608673`.
+- Branch artifact SHA-256: `53a1325013ddeb4169f1913c41f86c388b432b7195e8e70bde07f08bdb6c27d6`.
+- PR-context workflow: `31346813269` / run `#362` — green.
+- PR synthetic-merge APK artifact: `9047655597`.
+- PR artifact SHA-256: `dda255d88d00400484bdeec9e22d026791db4b1d2b3eb51b08f516fcd219ecbd`.
+- Squash merge commit: `be2fa40d1c154ea94cf6b4a6d64e6666180c7a79`.
+- Stable-main Flutter run: `31347074138` / run `#363` — green.
+- Stable APK publication commit: `fe5295b2663de683b8cd7c4ac771540890bfbda9`.
+- Stable APK bytes: `51,079,850`.
+- Stable APK SHA-256: `0e84156206943365294bd1d429aa31634ec8790ed2924ed960cf3a4f0bf4d46e`.
 
-Branch: `agent/design-005-secondary-premium`.
-Work receipt: `docs/work/DESIGN-005.md`.
-Stable base: `de69377c8d419c4a61bc5cb1aa818203f270617a`.
+### DESIGN-005 delivered
 
-### DESIGN-005 priorities
-
-- Bring Favorites saved/empty states to the same product-led visual quality as Home, discovery and PDP.
-- Preserve device-local Drawer Favorites persistence/removal/open behavior.
-- Bring Account hierarchy up to the DESIGN-002 shell standard without inventing login/profile functionality.
-- Harmonize About/Story, FAQ, Contact, Amazon Store, Social, Privacy, Terms and App Information navigation/presentation.
-- Normalize shared headers, cards, dividers, spacing, icon treatment and touch targets.
-- Reuse V102 corrected information/legal copy and Product Master facts rather than duplicating or inferring claims.
-- Add compact 320×568 and 1.3× text-scaling regressions before merge.
-
-### DESIGN-005 merge gate
-
-- Flutter Analyze green on exact final PR head.
-- Full Flutter test suite green.
-- Favorites persistence/removal/open behavior green.
-- Account/info routing contracts green.
-- Empty/saved Favorites and Account compact/text-scale regressions green.
-- Android release-mode APK candidate build/upload green.
-- `main` untouched until all gates pass.
-- After merge, stable-main CI must pass independently and republish `Last verified APK/WALKA-latest.apk` sourced from the DESIGN-005 merge commit.
+- Product-led Favorites empty state using the shared WALKA product visual language.
+- Saved Drawer Organizer White/Gray cards with verified Drawer facts and direct premium Product Detail navigation.
+- Existing device-local Favorites persistence/removal contract preserved unchanged.
+- Premium Account hero and normalized Product & Support / Official Destinations / Legal & App grouping.
+- Complete Our Story, FAQ, Contact, Amazon Store, Social, Privacy and Terms routes preserved.
+- App Information now reflects connected `1.2.0+120`, versioned WALKA API + local fallback, official Amazon handoff, device-local Favorites and stable verified-APK delivery.
+- No customer account/sign-in model invented.
+- Compact 320×568 and 1.3× text-scaling regressions added for empty/saved Favorites, Account and App Information.
+- Analyze, full Flutter tests, release APK candidate, stable-main rebuild and verified APK publication all green.
 
 ## DESIGN-006 next execution boundary
 
 Issue: `#52` — motion, feedback, loading/offline state polish.
 
-Do not begin owner-visible DESIGN-006 runtime changes until DESIGN-005 reaches stable `main` with a matching verified APK receipt.
+DESIGN-005 is now stable on `main` with a matching verified APK receipt, so DESIGN-006 is the next owner-visible runtime design slice.
+
+### DESIGN-006 priorities
+
+- Refine route/tab transitions and interaction feedback without gratuitous animation.
+- Harmonize loading, cached/offline and recoverable error states across catalog-driven surfaces.
+- Preserve current Product Master, catalog, Favorites and Amazon handoff behavior.
+- Keep motion accessible and deterministic under reduced-motion / compact-device conditions.
+- Add focused regression coverage before merge and require the same PR + stable-main APK gates.
 
 ## Design program Definition of Done
 
