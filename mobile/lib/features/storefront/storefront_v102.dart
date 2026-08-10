@@ -190,7 +190,7 @@ class _WalkaStorefrontShellV102State extends State<WalkaStorefrontShellV102> {
         onSearch: () => _select(1),
       ),
       const WalkaSearchPremiumV130(),
-      const WalkaCategoriesPremiumV130(),
+      WalkaCategoriesPremiumV130(onSearch: () => _select(1)),
       WalkaFavoritesPremiumV130(onExplore: () => _select(2)),
       const WalkaAccountPremiumV130(),
     ];
