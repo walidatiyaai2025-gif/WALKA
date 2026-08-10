@@ -29,9 +29,9 @@ WALKA should feel like a premium US-market home-organization brand, not a generi
 | 2 | DESIGN-002 | App shell + bottom navigation premium polish | #48 | COMPLETED |
 | 3 | DESIGN-003 | Categories + Search discovery refinement | #49 | COMPLETED |
 | 4 | DESIGN-004 | Product Detail premium commerce hierarchy + gallery polish | #50 | COMPLETED |
-| 5 | DESIGN-005 | Favorites + Account + information consistency | #51 | IN PROGRESS |
-| 6 | DESIGN-006 | Motion + feedback + loading/offline state polish | #52 | P0 NEXT |
-| 7 | DESIGN-007 | Cross-device visual QA + golden regression matrix | #53 | P0 QUEUED |
+| 5 | DESIGN-005 | Favorites + Account + information consistency | #51 | COMPLETED |
+| 6 | DESIGN-006 | Motion + feedback + loading/offline state polish | #52 | IN PROGRESS |
+| 7 | DESIGN-007 | Cross-device visual QA + golden regression matrix | #53 | P0 NEXT |
 
 Parent design program: #46.
 
@@ -45,65 +45,77 @@ Parent design program: #46.
 - Stable-main Flutter run: `31344297255` — green.
 - Stable APK publication commit: `5e636306d62ce7e405816d77d58a184c1dda09d1`.
 - Verified APK SHA-256: `68759ecca4858804d5f80267eb71bf1e369e0e9b81a974ef19ed75e5c4def9e1`.
-- Compact 320×568 and 1.3× text-scaling regressions are part of the full Flutter gate.
 
 ## DESIGN-004 stable receipt
 
 - Issue: `#50` — completed through final reconciliation PR `#64`.
-- Superseded working PR: `#63` — closed without merge after `main` advanced.
 - Final validated PR head: `aa202b69c9d14e59a561a2adf5e4c203aa721f5b`.
-- PR-context Flutter run: `31345555110` / run `#350` — green.
-- PR APK candidate artifact: `9047257856`.
+- PR-context Flutter run: `31345555110` / #350 — green.
 - Squash merge commit: `757dc066fce56f9cb0c70c31208d2b27ddffbc22`.
-- Stable-main Flutter run: `31345765442` / run `#352` — green.
+- Stable-main Flutter run: `31345765442` / #352 — green.
 - Stable APK publication commit: `de69377c8d419c4a61bc5cb1aa818203f270617a`.
 - Stable APK bytes: `51,014,306`.
 - Stable APK SHA-256: `f39963ece4d16042e19e10a926423f3ef4357c0fe0b62a87ce25a8ea2e12fc70`.
 
-### DESIGN-004 delivered
+## DESIGN-005 stable receipt
 
-- Public V100 Drawer/Lunch entry points now promote the premium V110 Product Detail surface while retaining V10 as the legacy Product Master/behavior regression path.
-- Product-led three-view gallery with explicit fullscreen/tap-to-zoom affordances and zoomable fullscreen interaction.
-- Consolidated commerce hierarchy for title, verified facts, selected variant, variant controls and official-Amazon trust cue.
-- SafeArea-aware adaptive Amazon purchase bar for compact widths and increased text scale.
-- Persistent Drawer Favorites and variant-aware Amazon destinations preserved.
-- Drawer/Lunch Product Master facts, approved Lunch spill-resistant guidance and care rules preserved.
-- Focused compact 320×568 + 1.3× text-scale, gallery, share and variant-identity regressions green before merge.
+- Issue: `#51` — completed.
+- PR: `#65`.
+- Final feature head: `5583192ac200ef8e199a8faeaf812cdb9b812eff`.
+- Branch Flutter run: `31346663707` / #361 — green.
+- PR-context Flutter run: `31346813269` / #362 — green.
+- PR-context APK artifact: `9047655597`.
+- Squash merge commit: `be2fa40d1c154ea94cf6b4a6d64e6666180c7a79`.
+- Stable-main Flutter run: `31347074138` / #363 — green.
+- Stable APK publication commit: `fe5295b2663de683b8cd7c4ac771540890bfbda9`.
+- Stable APK bytes: `51,079,850`.
+- Stable APK SHA-256: `0e84156206943365294bd1d429aa31634ec8790ed2924ed960cf3a4f0bf4d46e`.
 
-## DESIGN-005 active execution boundary
+### DESIGN-005 delivered
 
-Issue: `#51` — Favorites + Account + information consistency.
+- Premium product-led Favorites empty and saved states.
+- Existing device-local Drawer Favorites persistence, removal and PDP-open behavior preserved.
+- Premium Account hierarchy with shared WALKA shell language.
+- Complete Story/FAQ/Contact/Amazon/Social/Privacy/Terms destinations preserved.
+- App Information corrected to the connected `1.2.0+120` catalog release.
+- 320×568 + 1.3× secondary-screen regressions green before merge.
 
-Branch: `agent/design-005-secondary-premium`.
-Work receipt: `docs/work/DESIGN-005.md`.
-Stable base: `de69377c8d419c4a61bc5cb1aa818203f270617a`.
+## DESIGN-006 active execution boundary
 
-### DESIGN-005 priorities
+Issue: `#52` — Motion + feedback + loading/offline state polish.
 
-- Bring Favorites saved/empty states to the same product-led visual quality as Home, discovery and PDP.
-- Preserve device-local Drawer Favorites persistence/removal/open behavior.
-- Bring Account hierarchy up to the DESIGN-002 shell standard without inventing login/profile functionality.
-- Harmonize About/Story, FAQ, Contact, Amazon Store, Social, Privacy, Terms and App Information navigation/presentation.
-- Normalize shared headers, cards, dividers, spacing, icon treatment and touch targets.
-- Reuse V102 corrected information/legal copy and Product Master facts rather than duplicating or inferring claims.
-- Add compact 320×568 and 1.3× text-scaling regressions before merge.
+Branch: `agent/design-006-motion-state-polish`.
+Work receipt: `docs/work/DESIGN-006.md`.
+Stable base: `fe5295b2663de683b8cd7c4ac771540890bfbda9`.
 
-### DESIGN-005 merge gate
+### DESIGN-006 priorities
+
+- Centralize WALKA micro-motion durations/easing and explicit reduced-motion behavior.
+- Keep state changes calm, short and non-blocking.
+- Unify loading/cache/bundled-fallback feedback across Home, Search and Categories.
+- Keep fallback catalog content usable during refresh; no blank full-screen spinner.
+- Add restrained transform-only press feedback without changing layout metrics.
+- Improve state semantics/live-region behavior for assistive technologies.
+- Preserve Search empty-state recovery and all catalog resilience behavior.
+- Add focused compact-width, 1.3× text-scale and reduced-motion regressions.
+
+### DESIGN-006 merge gate
 
 - Flutter Analyze green on exact final PR head.
 - Full Flutter test suite green.
-- Favorites persistence/removal/open behavior green.
-- Account/info routing contracts green.
-- Empty/saved Favorites and Account compact/text-scale regressions green.
+- Reduced-motion contract green.
+- Loading/cache/bundled state semantics green.
+- Press feedback causes no layout shift and does not block input.
+- Compact 320×568 + 1.3× state regressions green.
 - Android release-mode APK candidate build/upload green.
 - `main` untouched until all gates pass.
-- After merge, stable-main CI must pass independently and republish `Last verified APK/WALKA-latest.apk` sourced from the DESIGN-005 merge commit.
+- After merge, stable-main CI must pass independently and republish `Last verified APK/WALKA-latest.apk` sourced from the DESIGN-006 merge commit.
 
-## DESIGN-006 next execution boundary
+## DESIGN-007 next execution boundary
 
-Issue: `#52` — motion, feedback, loading/offline state polish.
+Issue: `#53` — cross-device visual QA + golden regression matrix.
 
-Do not begin owner-visible DESIGN-006 runtime changes until DESIGN-005 reaches stable `main` with a matching verified APK receipt.
+Do not begin owner-visible DESIGN-007 runtime changes until DESIGN-006 reaches stable `main` with a matching verified APK receipt.
 
 ## Design program Definition of Done
 
