@@ -11,6 +11,9 @@ void main() {
     final String account =
         File('lib/features/storefront/account_about_reference_v131.dart')
             .readAsStringSync();
+    final String accountGroups = File(
+      'lib/features/storefront/presentation/widgets/account/walka_account_groups.dart',
+    ).readAsStringSync();
     final String favorites =
         File('lib/features/storefront/favorites_reference_v131.dart')
             .readAsStringSync();
@@ -24,7 +27,8 @@ void main() {
     ]) {
       expect(shell, contains(destination), reason: 'Missing shell route $destination');
     }
-    expect(account, contains("title: 'Our Story'"));
+    expect(account, contains('WalkaAccountProductSupportGroup'));
+    expect(accountGroups, contains("title: 'Our Story'"));
     expect(account, contains('WalkaAboutReferenceV131'));
     expect(favorites, contains('WalkaDrawerProductDetailV100'));
   });
