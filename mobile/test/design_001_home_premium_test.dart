@@ -34,7 +34,6 @@ void main() {
     await tester.pump();
 
     expect(find.text('Organize Better.\nLive Better.'), findsOneWidget);
-    expect(find.text('Everything in Its Place'), findsOneWidget);
     expect(
       find.byKey(const ValueKey<String>('home-hero-lunch-visual')),
       findsOneWidget,
@@ -43,14 +42,23 @@ void main() {
       find.byKey(const ValueKey<String>('home-hero-drawer-visual')),
       findsOneWidget,
     );
+    expect(find.textContaining('10K'), findsNothing);
+    expect(find.textContaining('4.8/5'), findsNothing);
+    expect(find.textContaining('LEAK RESISTANT'), findsNothing);
+    expect(tester.takeException(), isNull);
+
+    await tester.drag(
+      find.byType(CustomScrollView),
+      const Offset(0, -650),
+    );
+    await tester.pumpAndSettle();
+
     expect(
       find.byKey(const ValueKey<String>('home-reference-benefits')),
       findsOneWidget,
     );
+    expect(find.text('Everything in Its Place'), findsOneWidget);
     expect(find.byType(WalkaProductVisual), findsWidgets);
-    expect(find.textContaining('10K'), findsNothing);
-    expect(find.textContaining('4.8/5'), findsNothing);
-    expect(find.textContaining('LEAK RESISTANT'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 
