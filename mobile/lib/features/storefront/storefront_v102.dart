@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../design_system/walka_adaptive.dart';
 import '../../design_system/walka_shell.dart';
@@ -18,76 +19,127 @@ class WalkaStorefrontSplashV102 extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool compact =
+        MediaQuery.sizeOf(context).width < WalkaAdaptiveMetrics.compactWidth;
+
     return Scaffold(
       backgroundColor: WalkaColors.navy,
       body: WalkaAdaptiveFrame(
         backgroundColor: WalkaColors.navy,
         child: SafeArea(
-          child: Padding(
-            padding: EdgeInsets.fromLTRB(
-              WalkaShellMetrics.horizontalGutter(context),
-              24,
-              WalkaShellMetrics.horizontalGutter(context),
-              28,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                const Spacer(),
-                const WalkaWordmark(onDark: true),
-                const SizedBox(height: 18),
-                Container(width: 54, height: 2, color: WalkaColors.gold),
-                const SizedBox(height: 20),
-                const SizedBox(
-                  width: 325,
-                  child: Text(
-                    'Thoughtful pieces.\nBeautifully organized.',
-                    style: TextStyle(
-                      fontFamily: 'serif',
-                      color: Colors.white,
-                      fontSize: 39,
-                      height: 1.05,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: -0.7,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                const SizedBox(
-                  width: 320,
-                  child: Text(
-                    'The complete WALKA experience for discovery, product detail, favorites, support and official Amazon purchase handoff.',
-                    style: TextStyle(
-                      color: Color(0xFFB6C5D4),
-                      height: 1.55,
-                      fontSize: 14,
-                    ),
-                  ),
-                ),
-                const Spacer(),
-                ElevatedButton(
-                  onPressed: () {
-                    Navigator.of(context).pushReplacement(
-                      MaterialPageRoute<void>(
-                        builder: (_) => const WalkaStorefrontShellV102(),
+          child: LayoutBuilder(
+            builder: (BuildContext context, BoxConstraints constraints) {
+              return SingleChildScrollView(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                  child: IntrinsicHeight(
+                    child: Padding(
+                      padding: EdgeInsets.fromLTRB(
+                        WalkaShellMetrics.horizontalGutter(context),
+                        compact ? 18 : 24,
+                        WalkaShellMetrics.horizontalGutter(context),
+                        compact ? 20 : 28,
                       ),
-                    );
-                  },
-                  child: const Text('ENTER WALKA'),
-                ),
-                const SizedBox(height: 12),
-                const Center(
-                  child: Text(
-                    'CONNECTED CATALOG · 1.2.0',
-                    style: TextStyle(
-                      color: Color(0xFF91A5B9),
-                      fontSize: 10,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 1.4,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          const Spacer(),
+                          _WalkaSplashBrandMark(compact: compact),
+                          SizedBox(height: compact ? 12 : 18),
+                          Container(width: 54, height: 2, color: WalkaColors.gold),
+                          SizedBox(height: compact ? 14 : 20),
+                          SizedBox(
+                            width: 325,
+                            child: Text(
+                              'Thoughtful pieces.\nBeautifully organized.',
+                              style: TextStyle(
+                                fontFamily: 'serif',
+                                color: Colors.white,
+                                fontSize: compact ? 32 : 39,
+                                height: 1.05,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: compact ? -0.45 : -0.7,
+                              ),
+                            ),
+                          ),
+                          SizedBox(height: compact ? 12 : 16),
+                          SizedBox(
+                            width: 320,
+                            child: Text(
+                              'The complete WALKA experience for discovery, product detail, favorites, support and official Amazon purchase handoff.',
+                              style: TextStyle(
+                                color: const Color(0xFFB6C5D4),
+                                height: compact ? 1.45 : 1.55,
+                                fontSize: compact ? 13 : 14,
+                              ),
+                            ),
+                          ),
+                          const Spacer(),
+                          SizedBox(height: compact ? 16 : 22),
+                          ElevatedButton(
+                            onPressed: () {
+                              Navigator.of(context).pushReplacement(
+                                MaterialPageRoute<void>(
+                                  builder: (_) => const WalkaStorefrontShellV102(),
+                                ),
+                              );
+                            },
+                            child: const Text('ENTER WALKA'),
+                          ),
+                          const SizedBox(height: 12),
+                          const Center(
+                            child: Text(
+                              'CONNECTED CATALOG · 1.2.0',
+                              style: TextStyle(
+                                color: Color(0xFF91A5B9),
+                                fontSize: 10,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 1.4,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _WalkaSplashBrandMark extends StatelessWidget {
+  const _WalkaSplashBrandMark({required this.compact});
+
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      image: true,
+      label: 'WALKA For You',
+      child: ExcludeSemantics(
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: RadialGradient(
+              center: Alignment.centerLeft,
+              radius: 1.15,
+              colors: <Color>[
+                WalkaColors.gold.withValues(alpha: 0.12),
+                WalkaColors.navy.withValues(alpha: 0),
               ],
+            ),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: SvgPicture.asset(
+              'assets/branding/walka_logo.svg',
+              width: compact ? 214 : 252,
+              fit: BoxFit.contain,
             ),
           ),
         ),
