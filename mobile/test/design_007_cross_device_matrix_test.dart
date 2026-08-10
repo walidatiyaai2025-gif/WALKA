@@ -123,6 +123,7 @@ void main() {
           favorites: favorites,
           textScale: 1.3,
           child: const WalkaStorefrontShellV102(),
+          wrapInScaffold: false,
         ),
       );
       await tester.pump();
@@ -163,6 +164,7 @@ void main() {
           textScale: 1.0,
           safeInsets: const EdgeInsets.only(top: 28, bottom: 24),
           child: const WalkaStorefrontShellV102(),
+          wrapInScaffold: false,
         ),
       );
       await tester.pump();
@@ -202,6 +204,7 @@ void main() {
               favorites: favorites,
               textScale: size.width <= 320 ? 1.3 : 1.0,
               child: product,
+              wrapInScaffold: false,
             ),
           );
           await tester.pump();
@@ -221,6 +224,7 @@ Widget _harness({
   required double textScale,
   required Widget child,
   EdgeInsets safeInsets = EdgeInsets.zero,
+  bool wrapInScaffold = true,
 }) {
   return WalkaCatalogScope(
     controller: catalog,
@@ -239,7 +243,7 @@ Widget _harness({
             child: builtChild!,
           );
         },
-        home: child,
+        home: wrapInScaffold ? Scaffold(body: child) : child,
       ),
     ),
   );
