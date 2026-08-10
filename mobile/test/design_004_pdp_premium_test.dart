@@ -116,6 +116,60 @@ void main() {
       expect(tester.takeException(), isNull);
     },
   );
+
+  testWidgets(
+    'Lunch variant choice updates the selected commerce identity',
+    (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: buildWalkaTheme(),
+          home: const WalkaLunchProductDetailV100(),
+        ),
+      );
+      await tester.pump();
+
+      expect(find.textContaining('Blue · PANTONE 4155 U'), findsOneWidget);
+      await tester.tap(
+        find.byKey(const ValueKey<String>('premium-lunch-pink')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('Pink · PANTONE 9242 U'), findsOneWidget);
+      expect(find.text('PINK'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets('premium PDP keeps share handoff discoverable',
+      (WidgetTester tester) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildWalkaTheme(),
+        home: const WalkaLunchProductDetailV100(
+          initialVariant: WalkaLunchVariant.green,
+        ),
+      ),
+    );
+    await tester.pump();
+
+    await tester.tap(find.byTooltip('Share product'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('SHARE WALKA'), findsOneWidget);
+    expect(find.text('COPY PRODUCT LINK'), findsOneWidget);
+    expect(find.textContaining('Green'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
 }
 
 WalkaFavoritesController _favorites() {
