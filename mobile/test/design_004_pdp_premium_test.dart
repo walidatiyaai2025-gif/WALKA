@@ -167,7 +167,7 @@ void main() {
 
     expect(find.text('SHARE WALKA'), findsOneWidget);
     expect(find.text('COPY PRODUCT LINK'), findsOneWidget);
-    expect(find.textContaining('Green'), findsOneWidget);
+    expect(find.text('WALKA Large Bento Lunch Box · Green'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }
