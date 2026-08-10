@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:walka/design_system/components/media/walka_product_media_resolver.dart';
 import 'package:walka/design_system/walka_product_visual.dart';
 import 'package:walka/design_system/walka_theme.dart';
 
@@ -13,8 +14,10 @@ class WalkaCategoryCard extends StatelessWidget {
     required this.badge,
     required this.onTap,
     super.key,
+    this.variantId,
   });
 
+  final String? variantId;
   final String title;
   final String subtitle;
   final WalkaProductVisualKind kind;
@@ -25,6 +28,23 @@ class WalkaCategoryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final Widget visual = variantId == null
+        ? WalkaProductVisual(
+            kind: kind,
+            primaryColor: primaryColor,
+            backgroundColor: surface,
+            compact: true,
+            semanticLabel: '$title category visual',
+          )
+        : WalkaResolvedProductMedia(
+            variantId: variantId!,
+            kind: kind,
+            primaryColor: primaryColor,
+            backgroundColor: surface,
+            compact: true,
+            semanticLabel: '$title category visual',
+          );
+
     return Material(
       color: Colors.white,
       borderRadius: BorderRadius.circular(22),
@@ -53,13 +73,7 @@ class WalkaCategoryCard extends StatelessWidget {
                   color: surface,
                   child: Padding(
                     padding: const EdgeInsets.all(8),
-                    child: WalkaProductVisual(
-                      kind: kind,
-                      primaryColor: primaryColor,
-                      backgroundColor: surface,
-                      compact: true,
-                      semanticLabel: '$title category visual',
-                    ),
+                    child: visual,
                   ),
                 ),
               ),
