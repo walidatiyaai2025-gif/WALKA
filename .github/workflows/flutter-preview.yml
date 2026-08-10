@@ -64,6 +64,12 @@ jobs:
           set -o pipefail
           flutter test --reporter expanded 2>&1 | tee flutter-test.log
 
+      - name: Report production product asset readiness
+        if: github.event_name == 'pull_request'
+        working-directory: mobile
+        shell: bash
+        run: bash tool/verify_production_assets.sh --report
+
       - name: Upload validation diagnostics
         if: failure()
         uses: actions/upload-artifact@v4
@@ -160,6 +166,12 @@ jobs:
             stable-apk-stage/VERIFIED_BUILD.md
           if-no-files-found: error
           retention-days: 14
+
+      - name: Enforce production product assets before stable publication
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        working-directory: mobile
+        shell: bash
+        run: bash tool/verify_production_assets.sh --enforce
 
       - name: Guard stable main publication
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
