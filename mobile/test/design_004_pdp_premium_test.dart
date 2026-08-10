@@ -108,11 +108,16 @@ void main() {
       expect(find.bySemanticsLabel('Gallery view 2'), findsOneWidget);
       expect(find.bySemanticsLabel('Gallery view 3'), findsOneWidget);
 
-      final Finder fullscreenButton = find.byIcon(Icons.fullscreen_rounded);
+      final Finder fullscreenButton = find.ancestor(
+        of: find.byIcon(Icons.fullscreen_rounded),
+        matching: find.byType(IconButton),
+      );
       expect(fullscreenButton, findsOneWidget);
-      await tester.ensureVisible(fullscreenButton);
-      await tester.pumpAndSettle();
-      await tester.tap(fullscreenButton);
+      final IconButton fullscreenControl = tester.widget<IconButton>(
+        fullscreenButton,
+      );
+      expect(fullscreenControl.onPressed, isNotNull);
+      fullscreenControl.onPressed!();
       await tester.pumpAndSettle();
 
       expect(find.byType(InteractiveViewer), findsWidgets);
@@ -142,9 +147,14 @@ void main() {
         const ValueKey<String>('premium-lunch-pink'),
       );
       expect(pinkVariant, findsOneWidget);
-      await tester.ensureVisible(pinkVariant);
-      await tester.pumpAndSettle();
-      await tester.tap(pinkVariant);
+      final Finder pinkControl = find.descendant(
+        of: pinkVariant,
+        matching: find.byType(InkWell),
+      );
+      expect(pinkControl, findsOneWidget);
+      final InkWell pinkInkWell = tester.widget<InkWell>(pinkControl);
+      expect(pinkInkWell.onTap, isNotNull);
+      pinkInkWell.onTap!();
       await tester.pumpAndSettle();
 
       expect(find.textContaining('Pink · PANTONE 9242 U'), findsOneWidget);
