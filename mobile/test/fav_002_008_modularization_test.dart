@@ -71,7 +71,10 @@ void main() {
     expect(find.text('All Favorites'), findsOneWidget);
     expect(find.text('Drawer Organizers'), findsOneWidget);
     expect(find.text('Lunch Boxes'), findsOneWidget);
-    await tester.tap(find.text('Drawer Organizers'));
+    final Finder drawerFilter = find.text('Drawer Organizers');
+    await tester.ensureVisible(drawerFilter);
+    await tester.pumpAndSettle();
+    await tester.tap(drawerFilter);
     await tester.pump();
     expect(drawerSelected, isTrue);
   });
