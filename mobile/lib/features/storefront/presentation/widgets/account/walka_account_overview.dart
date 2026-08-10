@@ -15,11 +15,11 @@ class WalkaAccountOverview extends StatelessWidget {
       children: <Widget>[
         const Text('Account Overview', style: WalkaType.sectionTitle),
         const SizedBox(height: 12),
-        WalkaSurfaceCard(
-          key: const ValueKey<String>('reference-account-overview'),
-          borderRadius: BorderRadius.circular(18),
-          padding: const EdgeInsets.all(12),
-          child: const WalkaResponsiveGrid(
+        const WalkaSurfaceCard(
+          key: ValueKey<String>('reference-account-overview'),
+          radius: 18,
+          padding: EdgeInsets.all(12),
+          child: WalkaResponsiveGrid(
             minItemWidth: 132,
             maxColumns: 4,
             gap: 8,
