@@ -9,15 +9,17 @@ Last updated: 2026-08-10
 **Flutter ↔ Laravel catalog integration 1.2.0: COMPLETED**  
 **Database-backed catalog persistence 1.3.0: COMPLETED**  
 **Authenticated catalog administration 1.4.0: COMPLETED**  
+**OPS-001 stable-main + verified APK delivery: COMPLETED**  
 **DESIGN-001 premium product-led Home: COMPLETED**  
-**OPS-001 stable-main + verified APK delivery: IN PROGRESS**  
-**Premium UI/UX program: DESIGN-002 NEXT (P0)**
+**DESIGN-002 premium app shell/navigation: COMPLETED**  
+**DESIGN-003 premium Categories + Search discovery: COMPLETED**  
+**Premium UI/UX program: DESIGN-004 NEXT (P0)**
 
-WALKA has a released Flutter storefront connected to a versioned Laravel 13 API with resilient mobile caching/fallback, a database-backed Product/Variant catalog, and a protected backend-only catalog authoring surface with optimistic revisions and immutable audit records. DESIGN-001 is on stable `main`, replacing the prototype-like icon-led Home with a product-led premium presentation. Public commerce still redirects to official Amazon product listings.
+WALKA has a released Flutter storefront connected to a versioned Laravel 13 API with resilient mobile caching/fallback, a database-backed Product/Variant catalog, and a protected backend-only catalog authoring surface with optimistic revisions and immutable audit records. The premium mobile program has completed Home, shared shell/navigation, and product-led Categories/Search discovery. Public commerce still redirects to official Amazon product listings.
 
-The owner-facing stable source is `main`. Implementation remains on dedicated task branches until the required CI gates are green. OPS-001 is establishing `Last verified APK/WALKA-latest.apk` as the persistent Android test target produced only from successful stable-main validation.
+The owner-facing stable source is `main`. Implementation remains on dedicated task branches until the required CI gates are green. OPS-001 is released: each successful current-`main` Flutter run can publish `Last verified APK/WALKA-latest.apk` plus `Last verified APK/VERIFIED_BUILD.md`; stale or failed runs cannot replace the last verified build.
 
-The current product priority is the P0 premium UI/UX program in `docs/UI_UX_PRIORITY_PLAN.md`: **DESIGN-002 app shell + bottom navigation premium polish is next**, followed by discovery, Product Detail, secondary screens, motion/state polish and cross-device QA. The next backend capability is **API-005 / 1.5.0 — administrator identities, scoped credentials and key rotation**, queued behind the P0 design program unless a critical backend/security/data blocker requires it sooner.
+The current product priority is the P0 premium UI/UX program in `docs/UI_UX_PRIORITY_PLAN.md`: **DESIGN-004 Product Detail premium commerce hierarchy + gallery polish is next**, followed by secondary-screen consistency, motion/state polish, and cross-device visual QA. The next backend capability is **API-005 / 1.5.0 — administrator identities, scoped credentials and key rotation**, queued behind the P0 design program unless a critical backend/security/data blocker requires it sooner.
 
 ## Release board
 
@@ -39,19 +41,22 @@ The current product priority is the P0 premium UI/UX program in `docs/UI_UX_PRIO
 | API-003 | 1.3.0 | Database-backed Product/Variant catalog persistence | COMPLETED |
 | API-004 | 1.4.0 | Authenticated catalog administration + safe authoring API | COMPLETED |
 | API-005 | 1.5.0 | Administrator identities + scoped credentials + key rotation | NEXT BACKEND |
+| OPS-001 | Delivery | Stable `main` + persistent `Last verified APK` pipeline | COMPLETED |
 | DESIGN-001 | P0 | Premium product-led Home fidelity | COMPLETED |
-| OPS-001 | Delivery | Stable `main` + persistent `Last verified APK` pipeline | IN PROGRESS |
-| DESIGN-002 | P0 | App shell + bottom navigation premium polish | NEXT |
-| DESIGN-003..007 | P0 | Discovery, PDP, secondary UI, motion/state and visual QA | QUEUED |
+| DESIGN-002 | P0 | App shell + bottom navigation premium polish | COMPLETED |
+| DESIGN-003 | P0 | Categories + Search premium discovery refinement | COMPLETED |
+| DESIGN-004 | P0 | Product Detail premium commerce hierarchy + gallery polish | NEXT |
+| DESIGN-005..007 | P0 | Secondary UI, motion/state, and visual QA | QUEUED |
 
 ## Active delivery and design coordination
 
-### OPS-001 — stable owner delivery
+### OPS-001 authoritative release receipt — stable owner delivery
 
-- Issue: `#43`.
-- Original draft PR: `#44` — validated on an older main baseline but became stale after API-003 advanced `main`; it must not be force-merged.
-- Final reconciliation PR: `#56`.
-- Final reconciliation branch: `agent/ops-001-stable-apk-delivery-final`.
+- Issue: `#43` — completed.
+- Original stale draft PR: `#44` — closed and superseded.
+- Final PR: `#56`.
+- Final validated head: `bea9603ce7307c07665645cab9646f8c694019ee`.
+- Squash merge commit: `7946200b8c1f7933ba9d3c113c177e092104a3a2`.
 - Root engineering rules: `AGENTS.md`.
 - Delivery lifecycle: `docs/DELIVERY_POLICY.md`.
 - Stable Android target: `Last verified APK/WALKA-latest.apk`.
@@ -59,6 +64,18 @@ The current product priority is the P0 premium UI/UX program in `docs/UI_UX_PRIO
 - PR/branch builds are candidates only; only a successful current-`main` run may publish the root APK.
 - Stale main runs skip publication, APK-only publication commits do not recursively retrigger the Flutter workflow, and final publication remains fast-forward-only.
 - User-facing Android delivery does not use ZIP files in project chat.
+- The pipeline has been proven by repeated stable-main publications through DESIGN-001/002/003; the current verified build receipt is recorded below.
+
+### Current last verified Android build
+
+- Stable source commit: `56863f06b603234e706a4be60509d8b166f84c64` — DESIGN-003 merge.
+- Stable-main Flutter run: `31344297255` / run number `333` — green.
+- APK publication commit: `5e636306d62ce7e405816d77d58a184c1dda09d1`.
+- APK type: `universal-release`.
+- APK bytes: `51,096,146`.
+- APK SHA-256: `68759ecca4858804d5f80267eb71bf1e369e0e9b81a974ef19ed75e5c4def9e1`.
+- Built UTC: `2026-08-10T00:28:18Z`.
+- Validation: Flutter Analyze + full Flutter tests + Android release APK build succeeded before publication.
 
 ### DESIGN-001 authoritative release receipt — P0 Home fidelity
 
@@ -82,6 +99,50 @@ The current product priority is the P0 premium UI/UX program in `docs/UI_UX_PRIO
 - [x] API-002 catalog controller, stable IDs, offline fallback and Amazon routing preserved.
 - [x] Original compact 320×568 overflow identified and fixed before merge.
 - [x] Analyze, full tests and Android APK build green before stable merge.
+
+### DESIGN-002 authoritative release receipt — P0 app shell/navigation
+
+- Parent design program: `#46`.
+- Issue: `#48` — completed.
+- PR: `#59`.
+- Final validated head: `058471a470cd6f7a0f63ebae29e965b4e0feae4f`.
+- Flutter Preview validation run: `31342948386` — green.
+- Stable merge commit: `d076fa779b6ca83cc3ff845298882bb059bde340`.
+- Stable-main Flutter run: `31343241512` — green.
+- Stable APK publication commit: `27ce6a9cd81377331a1fbc2935cd391bec5ea962`.
+- Stable APK SHA-256: `ce6edca62b3b97feb9b23a538a6829c5e3f4db00564b27bed7e9ceb1e2bdb5a3`.
+
+#### DESIGN-002 delivered
+
+- [x] Shared `WalkaShellMetrics`, `WalkaWordmark`, `WalkaShellIconButton`, and `WalkaPremiumNavigationBar` primitives.
+- [x] Safe-area-aware persistent five-destination navigation.
+- [x] Consistent WALKA wordmark and top-level shell treatment.
+- [x] Premium navy/gold active-state hierarchy with visible labels.
+- [x] 48dp interaction targets and compact 320×568 regressions.
+- [x] Existing catalog, Favorites, PDP, Amazon routing, and DESIGN-001 Home behavior preserved.
+
+### DESIGN-003 authoritative release receipt — P0 Categories/Search discovery
+
+- Parent design program: `#46`.
+- Issue: `#49` — completed.
+- PR: `#61`.
+- Final validated PR head: `26aa79dbae88f16dc2f2fc4d27446200a24a1040`.
+- PR-context Flutter run: `31344067109` — green.
+- Stable merge commit: `56863f06b603234e706a4be60509d8b166f84c64`.
+- Stable-main Flutter run: `31344297255` — green.
+- Stable APK publication commit: `5e636306d62ce7e405816d77d58a184c1dda09d1`.
+- Stable APK SHA-256: `68759ecca4858804d5f80267eb71bf1e369e0e9b81a974ef19ed75e5c4def9e1`.
+
+#### DESIGN-003 delivered
+
+- [x] Product-led Categories family treatments for Drawer Organizer and Lunch Box.
+- [x] Reusable `WalkaProductVisual` replaces generic Material product icons as the dominant discovery visual.
+- [x] Premium Search field, All/Drawer/Lunch filters, result metadata, product-led result rows, and recoverable no-results state.
+- [x] Existing API-002 remote/cache/bundled catalog path and stable Product/Variant IDs preserved.
+- [x] Existing token matching and family-filter semantics preserved.
+- [x] Existing Product Detail navigation and variant-aware Amazon handoff preserved.
+- [x] Compact 320×568 and 1.3× text-scaling regressions added and fixed in production layout.
+- [x] Analyze, full tests, release APK candidate, stable-main rebuild, and direct APK publication all green.
 
 ## API-004 authoritative release receipt — 1.4.0
 
@@ -275,7 +336,7 @@ Expected principles:
 
 1. `main` is stable-only and is the owner-facing source of truth.
 2. Implementation work uses dedicated task branches and only reaches `main` after the relevant CI gates are green.
-3. `Last verified APK/WALKA-latest.apk` is the owner-facing Android install target once OPS-001 is released; failed/stale builds must not replace it.
+3. `Last verified APK/WALKA-latest.apk` is the owner-facing Android install target; failed/stale builds must not replace it.
 4. Do not send or offer ZIP files through project chat for Android delivery.
 5. `Images/` remains the master visual-reference folder and must not be modified by implementation tasks.
 6. `docs/PRODUCT_MASTER.md` is the source of truth for product facts and approved usage/care language.
