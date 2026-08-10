@@ -8,7 +8,7 @@ import 'package:walka/features/favorites/favorites_state.dart';
 import 'package:walka/features/storefront/account_about_reference_v131.dart';
 import 'package:walka/features/storefront/discovery_reference_v123.dart';
 import 'package:walka/features/storefront/favorites_reference_v131.dart';
-import 'package:walka/features/storefront/home_premium_v121.dart';
+import 'package:walka/features/storefront/home_premium_v122.dart';
 
 void main() {
   testWidgets(
@@ -25,7 +25,7 @@ void main() {
       addTearDown(favorites.dispose);
 
       final List<Widget> catalogScreens = <Widget>[
-        WalkaHomePremiumV121(onShopAll: () {}, onSearch: () {}),
+        WalkaHomePremiumV122(onShopAll: () {}, onSearch: () {}),
         const WalkaCategoriesPremiumV123(),
         const WalkaSearchPremiumV123(),
       ];
@@ -100,11 +100,7 @@ void main() {
         const ValueKey<String>('contract-header'),
       );
       expect(header, findsOneWidget);
-      expect(
-        tester.getSize(header).height,
-        WalkaReferenceUi.headerSlotExtent +
-            (WalkaReferenceUi.headerVerticalPadding * 2),
-      );
+      expect(tester.getSize(header).height, WalkaReferenceUi.headerExtent);
       _expectReferenceWordmarkContract(tester, screenWidth: 390);
 
       await tester.tap(
@@ -137,7 +133,7 @@ void main() {
         _app(
           child: WalkaCatalogScope(
             controller: catalog,
-            child: WalkaHomePremiumV121(onShopAll: () {}, onSearch: () {}),
+            child: WalkaHomePremiumV122(onShopAll: () {}, onSearch: () {}),
           ),
         ),
       );
