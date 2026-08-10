@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:walka/design_system/components/media/walka_product_media_resolver.dart';
 import 'package:walka/design_system/walka_product_visual.dart';
 import 'package:walka/design_system/walka_theme.dart';
 import 'package:walka/features/lunch/lunch_box_v6.dart';
@@ -203,8 +204,9 @@ class _HeroVisualStage extends StatelessWidget {
             top: 0,
             width: 190,
             height: height * 0.70,
-            child: WalkaProductVisual(
+            child: WalkaResolvedProductMedia(
               key: const ValueKey<String>('home-hero-lunch-visual'),
+              variantId: 'lunch-box:green',
               kind: WalkaProductVisualKind.lunchBox,
               primaryColor: WalkaLunchVariant.green.color,
               backgroundColor: const Color(0xFFF6F2E8),
@@ -217,8 +219,9 @@ class _HeroVisualStage extends StatelessWidget {
             bottom: 0,
             width: 150,
             height: height * 0.48,
-            child: WalkaProductVisual(
+            child: WalkaResolvedProductMedia(
               key: const ValueKey<String>('home-hero-drawer-visual'),
+              variantId: 'drawer-organizer:white',
               kind: WalkaProductVisualKind.drawerOrganizer,
               primaryColor: const Color(0xFFF7F4EC),
               backgroundColor: const Color(0xFFF2E6C9),

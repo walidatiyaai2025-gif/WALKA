@@ -58,6 +58,22 @@ class _WalkaPdpFullscreenGalleryState extends State<WalkaPdpFullscreenGallery> {
                 itemCount: 3,
                 onPageChanged: (int value) => setState(() => _index = value),
                 itemBuilder: (BuildContext context, int index) {
+                  final Widget media = index == 0
+                      ? WalkaResolvedProductMedia(
+                          variantId: widget.variantId,
+                          kind: widget.kind,
+                          primaryColor: widget.primaryColor,
+                          backgroundColor: widget.surface,
+                          semanticLabel:
+                              '${widget.title} primary fullscreen product image',
+                        )
+                      : WalkaProductVisual(
+                          kind: widget.kind,
+                          primaryColor: widget.primaryColor,
+                          backgroundColor: widget.surface,
+                          semanticLabel:
+                              '${widget.title} illustrative fullscreen fallback view ${index + 1}; approved secondary product photography pending',
+                        );
                   return InteractiveViewer(
                     key: ValueKey<String>('walka-pdp-zoom-$index'),
                     minScale: 0.8,
@@ -65,14 +81,7 @@ class _WalkaPdpFullscreenGalleryState extends State<WalkaPdpFullscreenGallery> {
                     child: Center(
                       child: Padding(
                         padding: const EdgeInsets.all(28),
-                        child: WalkaResolvedProductMedia(
-                          variantId: widget.variantId,
-                          kind: widget.kind,
-                          primaryColor: widget.primaryColor,
-                          backgroundColor: widget.surface,
-                          semanticLabel:
-                              '${widget.title} fullscreen view ${index + 1}',
-                        ),
+                        child: media,
                       ),
                     ),
                   );

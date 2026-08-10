@@ -6,10 +6,10 @@ import '../../../../design_system/walka_theme.dart';
 
 /// Shared WALKA Product Detail gallery viewport.
 ///
-/// Based on the focused PDP-003 implementation from Issue #171. Controller and
-/// selection ownership remain caller-owned so indicator/fullscreen stay
-/// independent. Product media now resolves by stable variant ID first and uses
-/// the deterministic painted renderer when an approved bundle asset is absent.
+/// Controller and selection ownership remain caller-owned so the indicator and
+/// fullscreen viewer stay independent. Only the primary page may present the
+/// canonical production asset. Secondary pages remain deterministic
+/// illustrations until separately approved secondary photography exists.
 class WalkaPdpGalleryViewport extends StatelessWidget {
   const WalkaPdpGalleryViewport({
     required this.controller,
@@ -54,6 +54,23 @@ class WalkaPdpGalleryViewport extends StatelessWidget {
               itemCount: pageCount,
               onPageChanged: onPageChanged,
               itemBuilder: (BuildContext context, int index) {
+                final Widget media = index == 0
+                    ? WalkaResolvedProductMedia(
+                        variantId: variantId,
+                        kind: kind,
+                        primaryColor: primaryColor,
+                        backgroundColor: surface,
+                        semanticLabel: '$semanticLabel primary product image',
+                      )
+                    : WalkaProductVisual(
+                        kind: kind,
+                        primaryColor: primaryColor,
+                        backgroundColor: surface,
+                        compact: true,
+                        semanticLabel:
+                            '$semanticLabel illustrative fallback view ${index + 1}; approved secondary product photography pending',
+                      );
+
                 return InkWell(
                   key: ValueKey<String>('walka-pdp-gallery-page-$index'),
                   onTap: () => onExpand(index),
@@ -64,13 +81,7 @@ class WalkaPdpGalleryViewport extends StatelessWidget {
                         angle: index == 1 ? -0.035 : 0,
                         child: Transform.scale(
                           scale: index == 2 ? 0.90 : 1,
-                          child: WalkaResolvedProductMedia(
-                            variantId: variantId,
-                            kind: kind,
-                            primaryColor: primaryColor,
-                            backgroundColor: surface,
-                            semanticLabel: '$semanticLabel view ${index + 1}',
-                          ),
+                          child: media,
                         ),
                       ),
                     ),

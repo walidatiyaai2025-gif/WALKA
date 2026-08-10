@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:walka/design_system/components/media/walka_product_media_resolver.dart';
 import 'package:walka/design_system/walka_product_visual.dart';
 import 'package:walka/design_system/walka_theme.dart';
 
@@ -20,6 +21,8 @@ class WalkaSavedDrawerCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final String variant = gray ? 'Gray' : 'White';
+    final String variantId =
+        gray ? 'drawer-organizer:gray' : 'drawer-organizer:white';
     final Color productColor =
         gray ? const Color(0xFFD3D7D9) : const Color(0xFFF7F4EC);
     final Color surface =
@@ -49,7 +52,8 @@ class WalkaSavedDrawerCard extends StatelessWidget {
                         color: surface,
                         child: Padding(
                           padding: const EdgeInsets.all(10),
-                          child: WalkaProductVisual(
+                          child: WalkaResolvedProductMedia(
+                            variantId: variantId,
                             kind: WalkaProductVisualKind.drawerOrganizer,
                             primaryColor: productColor,
                             backgroundColor: surface,
