@@ -8,12 +8,7 @@ import 'account_about_reference_v131.dart';
 import 'favorites_reference_v131.dart';
 import 'storefront_resilient_v130.dart';
 
-/// API-002 connected storefront entry surface with DESIGN-002 premium chrome,
-/// DESIGN-005 secondary screens and DESIGN-006 resilient state feedback.
-///
-/// Home, Search, Categories, Favorites and Account preserve the released
-/// catalog/state/navigation contracts while sharing one premium WALKA visual
-/// language.
+/// API-002 connected storefront entry surface with premium reusable shell.
 class WalkaStorefrontSplashV102 extends StatelessWidget {
   const WalkaStorefrontSplashV102({super.key});
 
@@ -26,7 +21,8 @@ class WalkaStorefrontSplashV102 extends StatelessWidget {
       backgroundColor: WalkaColors.navy,
       body: WalkaAdaptiveFrame(
         backgroundColor: WalkaColors.navy,
-        child: SafeArea(
+        child: WalkaSafeAreaChrome(
+          backgroundColor: WalkaColors.navy,
           child: LayoutBuilder(
             builder: (BuildContext context, BoxConstraints constraints) {
               return SingleChildScrollView(
@@ -71,17 +67,17 @@ class WalkaStorefrontShellV102 extends StatefulWidget {
 }
 
 class _WalkaStorefrontShellV102State extends State<WalkaStorefrontShellV102> {
-  int _index = 0;
   late final WalkaCatalogController _fallbackCatalog = WalkaCatalogController();
+  late final WalkaShellController _shellController = WalkaShellController();
 
-  void _select(int value) {
+  void _select(WalkaShellDestination destination) {
     FocusManager.instance.primaryFocus?.unfocus();
-    if (_index == value) return;
-    setState(() => _index = value);
+    _shellController.select(destination);
   }
 
   @override
   void dispose() {
+    _shellController.dispose();
     _fallbackCatalog.dispose();
     super.dispose();
   }
@@ -100,31 +96,24 @@ class _WalkaStorefrontShellV102State extends State<WalkaStorefrontShellV102> {
   Widget _buildShell(BuildContext context) {
     final List<Widget> pages = <Widget>[
       WalkaHomePremiumV130(
-        onShopAll: () => _select(WalkaShellDestination.categories.index),
-        onSearch: () => _select(WalkaShellDestination.search.index),
+        onShopAll: () => _select(WalkaShellDestination.categories),
+        onSearch: () => _select(WalkaShellDestination.search),
       ),
       const WalkaSearchPremiumV130(),
       WalkaCategoriesPremiumV130(
-        onSearch: () => _select(WalkaShellDestination.search.index),
+        onSearch: () => _select(WalkaShellDestination.search),
       ),
       WalkaFavoritesReferenceV131(
-        onExplore: () => _select(WalkaShellDestination.categories.index),
+        onExplore: () => _select(WalkaShellDestination.categories),
       ),
       WalkaAccountReferenceV131(
-        onFavorites: () => _select(WalkaShellDestination.favorites.index),
+        onFavorites: () => _select(WalkaShellDestination.favorites),
       ),
     ];
 
-    return Scaffold(
-      body: WalkaAdaptiveFrame(
-        child: IndexedStack(index: _index, children: pages),
-      ),
-      bottomNavigationBar: WalkaAdaptiveNavigationFrame(
-        child: WalkaPremiumNavigationBar(
-          selectedIndex: _index,
-          onDestinationSelected: _select,
-        ),
-      ),
+    return WalkaMobileShellScaffold(
+      controller: _shellController,
+      pages: pages,
     );
   }
 }
