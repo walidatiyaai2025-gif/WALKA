@@ -30,6 +30,14 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Guard protected reference masters
+        shell: bash
+        env:
+          BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+        run: bash mobile/tool/guard_protected_reference_masters.sh "$BASE_SHA"
 
       - name: Setup Java
         uses: actions/setup-java@v5
