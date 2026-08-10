@@ -988,6 +988,7 @@ class _ReferenceAmazonBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool compact = MediaQuery.sizeOf(context).width < 350;
+    final double ctaWidth = compact ? 162 : 180;
     return Material(
       color: Colors.white,
       elevation: 14,
@@ -1027,8 +1028,8 @@ class _ReferenceAmazonBar extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 10),
-              ConstrainedBox(
-                constraints: BoxConstraints(minWidth: compact ? 162 : 180),
+              SizedBox(
+                width: ctaWidth,
                 child: ElevatedButton.icon(
                   onPressed: onPressed,
                   icon: const Icon(Icons.open_in_new_rounded, size: 17),
