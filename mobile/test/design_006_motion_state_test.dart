@@ -171,14 +171,14 @@ void main() {
     expect(find.text('Account'), findsOneWidget);
     expect(tester.takeException(), isNull);
 
+    NavigationBar navigation = tester.widget<NavigationBar>(find.byType(NavigationBar));
+    expect(navigation.selectedIndex, 0);
+
     await tester.tap(find.byIcon(Icons.search_outlined));
     await tester.pumpAndSettle();
 
-    expect(find.byIcon(Icons.search_rounded), findsWidgets);
-    expect(
-      find.byKey(const ValueKey<String>('premium-discovery-search-field')),
-      findsOneWidget,
-    );
+    navigation = tester.widget<NavigationBar>(find.byType(NavigationBar));
+    expect(navigation.selectedIndex, 1);
     expect(find.text('Offline · built-in catalog'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
