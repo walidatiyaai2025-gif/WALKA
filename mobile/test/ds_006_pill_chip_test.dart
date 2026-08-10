@@ -34,7 +34,6 @@ void main() {
   testWidgets('announces selected state and invokes selection callback',
       (WidgetTester tester) async {
     final SemanticsHandle handle = tester.ensureSemantics();
-    addTearDown(handle.dispose);
     bool? value;
 
     await tester.pumpWidget(
@@ -63,6 +62,7 @@ void main() {
     await tester.tap(find.byType(FilterChip));
     await tester.pump();
     expect(value, isFalse);
+    handle.dispose();
   });
 
   testWidgets('disables FilterChip when requested', (WidgetTester tester) async {
