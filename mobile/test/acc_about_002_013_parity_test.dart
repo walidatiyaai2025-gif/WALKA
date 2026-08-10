@@ -83,11 +83,9 @@ void main() {
         size: Size(width, 900),
       );
 
-      // The desktop composition is intentionally finite-height/non-scrollable;
-      // all destination groups are laid out in the wide grid at once.
-      expect(find.text('Product & Support'), findsOneWidget);
-      expect(find.text('Official Destinations'), findsOneWidget);
-      expect(find.text('Legal & App'), findsOneWidget);
+      expect(find.text('PRODUCT & SUPPORT'), findsOneWidget);
+      expect(find.text('OFFICIAL DESTINATIONS'), findsOneWidget);
+      expect(find.text('LEGAL & APP'), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
   }
