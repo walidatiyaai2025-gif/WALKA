@@ -6,7 +6,8 @@ import 'package:walka/features/catalog/catalog_state.dart';
 import 'package:walka/features/storefront/home_premium_v121.dart';
 
 void main() {
-  testWidgets('DESIGN-001 premium Home is product-led on compact Android width',
+  testWidgets(
+      'DESIGN-007B.1 Home follows Android reference hierarchy on compact width',
       (WidgetTester tester) async {
     tester.view.physicalSize = const Size(320, 568);
     tester.view.devicePixelRatio = 1;
@@ -32,14 +33,65 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.text('A place for everything.'), findsOneWidget);
+    expect(find.text('Organize Better.\nLive Better.'), findsOneWidget);
+    expect(find.text('Everything in Its Place'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey<String>('home-hero-lunch-visual')),
+      findsOneWidget,
+    );
     expect(
       find.byKey(const ValueKey<String>('home-hero-drawer-visual')),
       findsOneWidget,
     );
+    expect(
+      find.byKey(const ValueKey<String>('home-reference-benefits')),
+      findsOneWidget,
+    );
     expect(find.byType(WalkaProductVisual), findsWidgets);
-    expect(find.byIcon(Icons.grid_view_rounded), findsNothing);
-    expect(find.byIcon(Icons.lunch_dining_rounded), findsNothing);
+    expect(find.textContaining('10K'), findsNothing);
+    expect(find.textContaining('4.8/5'), findsNothing);
+    expect(find.textContaining('LEAK RESISTANT'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('reference Home keeps browse and search callbacks functional',
+      (WidgetTester tester) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final WalkaCatalogController controller = WalkaCatalogController();
+    addTearDown(controller.dispose);
+    int browseCount = 0;
+    int searchCount = 0;
+
+    await tester.pumpWidget(
+      WalkaCatalogScope(
+        controller: controller,
+        child: MaterialApp(
+          theme: buildWalkaTheme(),
+          home: Scaffold(
+            body: WalkaHomePremiumV121(
+              onShopAll: () => browseCount += 1,
+              onSearch: () => searchCount += 1,
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    await tester.tap(
+      find.byKey(const ValueKey<String>('home-reference-browse')),
+    );
+    await tester.tap(
+      find.byKey(const ValueKey<String>('home-reference-search')),
+    );
+    await tester.pump();
+
+    expect(browseCount, 1);
+    expect(searchCount, 1);
     expect(tester.takeException(), isNull);
   });
 
