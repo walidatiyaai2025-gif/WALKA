@@ -108,7 +108,11 @@ void main() {
       expect(find.bySemanticsLabel('Gallery view 2'), findsOneWidget);
       expect(find.bySemanticsLabel('Gallery view 3'), findsOneWidget);
 
-      await tester.tap(find.byTooltip('View fullscreen'));
+      final Finder fullscreenButton = find.byIcon(Icons.fullscreen_rounded);
+      expect(fullscreenButton, findsOneWidget);
+      await tester.ensureVisible(fullscreenButton);
+      await tester.pumpAndSettle();
+      await tester.tap(fullscreenButton);
       await tester.pumpAndSettle();
 
       expect(find.byType(InteractiveViewer), findsWidgets);
@@ -134,9 +138,13 @@ void main() {
       await tester.pump();
 
       expect(find.textContaining('Blue · PANTONE 4155 U'), findsOneWidget);
-      await tester.tap(
-        find.byKey(const ValueKey<String>('premium-lunch-pink')),
+      final Finder pinkVariant = find.byKey(
+        const ValueKey<String>('premium-lunch-pink'),
       );
+      expect(pinkVariant, findsOneWidget);
+      await tester.ensureVisible(pinkVariant);
+      await tester.pumpAndSettle();
+      await tester.tap(pinkVariant);
       await tester.pumpAndSettle();
 
       expect(find.textContaining('Pink · PANTONE 9242 U'), findsOneWidget);
