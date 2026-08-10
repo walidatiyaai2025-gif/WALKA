@@ -1,6 +1,6 @@
 # WALKA Creative Asset Manifest
 
-Status: **ASSET-001 initial audit / production-source admission matrix**  
+Status: **ASSET-001 source audit / production-source admission matrix**  
 Tracking: #197 / #198  
 Base media plumbing: #184 / commit `98212557615b670369901d3581734dd623361ed1`
 
@@ -30,13 +30,33 @@ The media resolver already owns these exact paths. The directories currently con
 
 | Variant | Canonical production path | Current creative status | Tracking |
 |---|---|---|---|
-| Drawer Organizer / White | `mobile/assets/products/drawer/white.png` | MISSING | ASSET-003 / #200 |
-| Drawer Organizer / Gray | `mobile/assets/products/drawer/gray.png` | MISSING | ASSET-004 / #201 |
-| Lunch Box / Blue | `mobile/assets/products/lunch/blue.png` | MISSING | ASSET-005 / #202 |
-| Lunch Box / Pink | `mobile/assets/products/lunch/pink.png` | MISSING | ASSET-006 / #203 |
-| Lunch Box / Green | `mobile/assets/products/lunch/green.png` | MISSING | ASSET-007 / #204 |
+| Drawer Organizer / White | `mobile/assets/products/drawer/white.png` | SOURCE ADMITTED; export pending | ASSET-003 / #200 |
+| Drawer Organizer / Gray | `mobile/assets/products/drawer/gray.png` | SOURCE PARTIAL; final expanded-view parity BLOCKED | ASSET-004 / #201 |
+| Lunch Box / Blue | `mobile/assets/products/lunch/blue.png` | SOURCE ADMITTED; export pending | ASSET-005 / #202 |
+| Lunch Box / Pink | `mobile/assets/products/lunch/pink.png` | SOURCE ADMITTED WITH CLEAN CROP; export pending | ASSET-006 / #203 |
+| Lunch Box / Green | `mobile/assets/products/lunch/green.png` | SOURCE ADMITTED; export/framing normalization pending | ASSET-007 / #204 |
 
 Until an approved binary exists at one of these paths, Flutter must keep using the deterministic painted fallback provided by the completed MEDIA lane.
+
+## Owner-provided source admission matrix
+
+The owner-connected image library contains product-source material that is materially stronger than the full-screen UI mockups. These sources are admitted for derivative app-asset production only; source masters remain outside the Flutter bundle and `Images/` stays untouched.
+
+| Product / variant | Owner source filename | Source type | Admission | Production use / blocker |
+|---|---|---|---|---|
+| Drawer Organizer / White | `51yxoCdmqrL._AC_SL1500_(1).jpg` | Clean listing product photo | **APPROVED** | Shows the real expanded organizer with both side wings and the central six sections, preserving the 8-compartment expandable identity. Suitable for transparent primary cutout. |
+| Drawer Organizer / Gray | `IMG-20250919-WA0035.jpg` | Owner product/packaging photo | **PARTIAL** | Faithful Gray material/color and real product structure are visible, but the organizer is photographed collapsed. Suitable as Gray truth/reference; do not fabricate an expanded 8-compartment view. ASSET-004 remains BLOCKED for final parity until an approved expanded Gray source is available or the owner approves a collapsed canonical presentation. |
+| Lunch Box / Blue | `main new(3).jpg` | Clean listing product photo | **APPROVED** | Clean white-background set with 4-compartment stainless tray, colored outer component, lid/bag and approved accessories visible. Suitable for transparent production extraction. |
+| Lunch Box / Pink | `1000389975.jpg` | Owner listing screenshot containing clean main product panel | **APPROVED WITH CROP** | The embedded main product panel shows the Pink set and 4-compartment tray clearly. Only the clean product image region may be extracted; Amazon/UI/title/rating/navigation pixels must never enter the production asset. |
+| Lunch Box / Green | `WhatsApp Image 2026-02-24 at 11.22.34 PM.jpeg` | Clean owner product photo | **APPROVED** | Clear Green set with 4-compartment SUS304 tray and accessories. Camera/layout differs from Blue/Pink, so export must normalize canvas, scale and visual center without reconstructing or inventing product geometry. |
+
+### Source-admission rules applied
+
+- Admitting a source does **not** admit unsupported copy or claims visible elsewhere in a screenshot/listing.
+- Product geometry is never recolored/rebuilt to make variants match. Real variant photography wins over artificial parity.
+- Cropping, masking, alpha cleanup, non-destructive tonal cleanup and canvas normalization are allowed.
+- No mock price, rating, review count, cart/payment UI or marketplace chrome may be baked into production assets.
+- Source/master files stay separate from optimized Flutter exports.
 
 ## Protected reference inventory
 
@@ -97,11 +117,11 @@ If these conditions are not met, the asset task is BLOCKED rather than filled wi
 
 | Surface | Primary need | Secondary need | Current status |
 |---|---|---|---|
-| Home | Reusable Drawer/Lunch product cutouts | Optional editorial composite only if reusable cutouts cannot reproduce reference cleanly | BLOCKED on primary cutouts |
-| Categories | Reusable product cutouts | Optional category composite | BLOCKED on primary cutouts |
-| Search | Reusable variant cutouts | None expected unless reference requires it | BLOCKED on primary cutouts |
-| Favorites | Reusable saved-product cutouts | None expected | BLOCKED on primary cutouts |
-| PDP | Primary variant cutout | Secondary gallery/detail views from approved sources | Primary BLOCKED; secondary source set not yet admitted |
+| Home | Reusable Drawer/Lunch product cutouts | Optional editorial composite only if reusable cutouts cannot reproduce reference cleanly | Source set admitted; production exports pending |
+| Categories | Reusable product cutouts | Optional category composite | Source set admitted; production exports pending |
+| Search | Reusable variant cutouts | None expected unless reference requires it | Source set admitted; production exports pending |
+| Favorites | Reusable saved-product cutouts | None expected | Source set admitted; production exports pending |
+| PDP | Primary variant cutout | Secondary gallery/detail views from approved sources | Primary sources admitted except Gray expanded parity; secondary source set still requires audit |
 | About | No product asset required by default | Decorative/editorial art only if a reference-specific need is confirmed | No new production asset admitted yet |
 | Account | No product asset required by default | Decorative art only if a reference-specific need is confirmed | No new production asset admitted yet |
 | Splash / launcher | Existing design program already delivered branded launch experience | No duplicate work in this lane | OUT OF SCOPE / already delivered |
@@ -111,9 +131,9 @@ If these conditions are not met, the asset task is BLOCKED rather than filled wi
 | ID | Issue | Deliverable | Dependency |
 |---|---|---|---|
 | ASSET-001 | #198 | This manifest + source admission audit | — |
-| ASSET-002 | #199 | Photoshop/master/export specification | ASSET-001 |
+| ASSET-002 | #199 | Photoshop/master/export specification | ASSET-001 source admission |
 | ASSET-003 | #200 | `drawer/white.png` | Approved source + ASSET-002 |
-| ASSET-004 | #201 | `drawer/gray.png` | Approved source + ASSET-002 |
+| ASSET-004 | #201 | `drawer/gray.png` | Approved expanded source/owner presentation decision + ASSET-002 |
 | ASSET-005 | #202 | `lunch/blue.png` | Approved source + ASSET-002 |
 | ASSET-006 | #203 | `lunch/pink.png` | Approved source + ASSET-002 |
 | ASSET-007 | #204 | `lunch/green.png` | Approved source + ASSET-002 |
@@ -123,8 +143,8 @@ If these conditions are not met, the asset task is BLOCKED rather than filled wi
 
 ## Current blockers / decisions required
 
-1. The five canonical production PNGs are still missing.
-2. No independent approved product-photo source set is present under `mobile/assets/`.
+1. The five canonical production PNGs are not all delivered yet.
+2. Gray has a faithful real-product source, but only in the collapsed presentation; no fabricated expanded Gray photography is allowed.
 3. Full-screen `Images/` references are not admitted as direct product-photo binaries.
 4. `f96465c7-d756-4409-9963-d96bb6b5893e.png` cannot be safely classified from repository metadata alone and remains BLOCKED pending visual review/owner confirmation.
 5. PDP secondary gallery work must not invent views that are unsupported by an approved source image.
@@ -133,6 +153,6 @@ If these conditions are not met, the asset task is BLOCKED rather than filled wi
 
 ASSET-001 can close when:
 
-- the UUID image is visually classified,
-- an approved source is identified for each primary product variant or each unavailable variant is explicitly marked BLOCKED,
+- the UUID image is visually classified or explicitly dispositioned as non-blocking for product-media production,
+- an approved source is identified for each primary product variant or each unavailable presentation is explicitly marked BLOCKED,
 - this manifest records the final source-to-production mapping for every admitted asset.
