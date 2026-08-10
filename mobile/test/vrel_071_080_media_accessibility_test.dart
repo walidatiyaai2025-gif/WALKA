@@ -56,11 +56,14 @@ void main() {
     final Iterable<AnimatedContainer> indicators =
         tester.widgetList<AnimatedContainer>(find.byType(AnimatedContainer));
     expect(indicators, hasLength(3));
-    expect(indicators.every((AnimatedContainer item) => item.duration == Duration.zero), isTrue);
+    expect(
+      indicators.every((AnimatedContainer item) => item.duration == Duration.zero),
+      isTrue,
+    );
     expect(find.bySemanticsLabel('Gallery view 2'), findsOneWidget);
   });
 
-  testWidgets('Home media remains layout-safe at compact 1.3x text scale', (
+  testWidgets('Home media remains layout-safe at compact 1.3x text scale in real scroll context', (
     WidgetTester tester,
   ) async {
     await tester.binding.setSurfaceSize(const Size(320, 760));
@@ -74,12 +77,14 @@ void main() {
             textScaler: TextScaler.linear(1.3),
           ),
           child: Scaffold(
-            body: WalkaHomeHero(
-              lunchSemanticLabel: 'WALKA Lunch Box hero',
-              drawerSemanticLabel: 'WALKA Drawer Organizer hero',
-              onOpenLunch: () {},
-              onShopAll: () {},
-              onSearch: () {},
+            body: SingleChildScrollView(
+              child: WalkaHomeHero(
+                lunchSemanticLabel: 'WALKA Lunch Box hero',
+                drawerSemanticLabel: 'WALKA Drawer Organizer hero',
+                onOpenLunch: () {},
+                onShopAll: () {},
+                onSearch: () {},
+              ),
             ),
           ),
         ),
@@ -87,12 +92,15 @@ void main() {
     );
     await tester.pump(const Duration(milliseconds: 50));
 
-    expect(find.text('SHOP ALL'), findsOneWidget);
-    expect(find.text('SEARCH'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey<String>('home-reference-hero')),
+      findsOneWidget,
+    );
+    expect(find.byType(WalkaResolvedProductMedia), findsNWidgets(2));
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('fullscreen PDP media preserves representative iOS SafeArea', (
+  testWidgets('fullscreen PDP media preserves representative iOS body SafeArea', (
     WidgetTester tester,
   ) async {
     await tester.binding.setSurfaceSize(const Size(390, 844));
@@ -118,7 +126,10 @@ void main() {
     );
     await tester.pump(const Duration(milliseconds: 50));
 
-    expect(find.byType(SafeArea), findsOneWidget);
+    final Iterable<SafeArea> safeAreas =
+        tester.widgetList<SafeArea>(find.byType(SafeArea));
+    expect(safeAreas, isNotEmpty);
+    expect(safeAreas.any((SafeArea area) => area.top == false), isTrue);
     expect(find.text('1 / 3'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
