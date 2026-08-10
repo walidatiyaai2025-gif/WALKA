@@ -1,0 +1,135 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:walka/design_system/walka_theme.dart';
+import 'package:walka/features/favorites/favorites_state.dart';
+import 'package:walka/features/lunch/lunch_box_v6.dart';
+import 'package:walka/features/products/product_experience_v100.dart';
+
+void main() {
+  testWidgets(
+    'Drawer PDP stays conversion-ready on 320x568 at 1.3x text scale',
+    (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(320, 568);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      final WalkaFavoritesController favorites = _favorites();
+      await favorites.load();
+      addTearDown(favorites.dispose);
+
+      await tester.pumpWidget(
+        WalkaFavoritesScope(
+          controller: favorites,
+          child: MaterialApp(
+            theme: buildWalkaTheme(),
+            builder: (BuildContext context, Widget? child) {
+              return MediaQuery(
+                data: MediaQuery.of(context).copyWith(
+                  textScaler: const TextScaler.linear(1.3),
+                ),
+                child: child!,
+              );
+            },
+            home: const WalkaDrawerProductDetailV100(initialGray: true),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(find.text('WALKA Drawer Organizer'), findsOneWidget);
+      expect(find.text('BUY ON AMAZON'), findsOneWidget);
+      expect(find.text('GRAY'), findsOneWidget);
+      expect(find.byTooltip('View fullscreen'), findsOneWidget);
+      expect(find.bySemanticsLabel('Gallery view 1'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'Lunch PDP stays accurate on 320x568 at 1.3x text scale',
+    (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(320, 568);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: buildWalkaTheme(),
+          builder: (BuildContext context, Widget? child) {
+            return MediaQuery(
+              data: MediaQuery.of(context).copyWith(
+                textScaler: const TextScaler.linear(1.3),
+              ),
+              child: child!,
+            );
+          },
+          home: const WalkaLunchProductDetailV100(
+            initialVariant: WalkaLunchVariant.green,
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(find.text('Large Stainless Steel Bento Lunch Box'), findsOneWidget);
+      expect(find.text('BUY ON AMAZON'), findsOneWidget);
+      expect(find.textContaining('Green · PANTONE 6198 U'), findsOneWidget);
+      expect(find.byTooltip('Share product'), findsOneWidget);
+      expect(find.byTooltip('View fullscreen'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'PDP gallery remains discoverable and opens zoomable fullscreen view',
+    (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      final WalkaFavoritesController favorites = _favorites();
+      await favorites.load();
+      addTearDown(favorites.dispose);
+
+      await tester.pumpWidget(
+        WalkaFavoritesScope(
+          controller: favorites,
+          child: MaterialApp(
+            theme: buildWalkaTheme(),
+            home: const WalkaDrawerProductDetailV100(),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(find.bySemanticsLabel('Gallery view 1'), findsOneWidget);
+      expect(find.bySemanticsLabel('Gallery view 2'), findsOneWidget);
+      expect(find.bySemanticsLabel('Gallery view 3'), findsOneWidget);
+
+      await tester.tap(find.byTooltip('View fullscreen'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(InteractiveViewer), findsWidgets);
+      expect(find.text('1 / 3'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
+}
+
+WalkaFavoritesController _favorites() {
+  return WalkaFavoritesController(_MemoryFavoritesStore());
+}
+
+class _MemoryFavoritesStore implements WalkaFavoritesStore {
+  Set<String> ids = <String>{};
+
+  @override
+  Future<Set<String>> readFavoriteIds() async => Set<String>.from(ids);
+
+  @override
+  Future<void> writeFavoriteIds(Set<String> favoriteIds) async {
+    ids = Set<String>.from(favoriteIds);
+  }
+}
