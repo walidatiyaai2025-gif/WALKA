@@ -21,7 +21,9 @@ if ! git cat-file -e "${base_sha}^{commit}" 2>/dev/null; then
   exit 2
 fi
 
-mapfile -t protected_changes < <(git diff --name-only "$base_sha" HEAD -- 'Images/' | sed '/^$/d')
+mapfile -t protected_changes < <(
+  git diff --name-only "$base_sha" HEAD -- ':(top)Images/' | sed '/^$/d'
+)
 if (( ${#protected_changes[@]} > 0 )); then
   echo 'FAIL: protected reference masters changed in normal CI:' >&2
   printf ' - %s\n' "${protected_changes[@]}" >&2
