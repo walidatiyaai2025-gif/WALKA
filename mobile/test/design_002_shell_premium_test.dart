@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:walka/design_system/walka_shell.dart';
 import 'package:walka/design_system/walka_theme.dart';
 import 'package:walka/features/storefront/storefront_v102.dart';
@@ -97,7 +98,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('storefront splash uses the shared WALKA wordmark',
+  testWidgets('storefront splash uses the owner WALKA brand mark',
       (WidgetTester tester) async {
     tester.view.physicalSize = const Size(390, 844);
     tester.view.devicePixelRatio = 1;
@@ -112,9 +113,9 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.byType(WalkaWordmark), findsOneWidget);
-    expect(find.text('WALKA'), findsOneWidget);
-    expect(find.text('PREMIUM HOME ORGANIZATION'), findsOneWidget);
+    expect(find.bySemanticsLabel('WALKA For You'), findsOneWidget);
+    expect(find.byType(SvgPicture), findsOneWidget);
+    expect(find.text('ENTER WALKA'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }
