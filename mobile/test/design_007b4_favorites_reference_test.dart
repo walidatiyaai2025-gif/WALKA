@@ -37,8 +37,14 @@ void main() {
       expect(find.textContaining(r'$'), findsNothing);
       expect(tester.takeException(), isNull);
 
-      await tester.ensureVisible(find.text('CONTINUE SHOPPING'));
-      await tester.tap(find.text('CONTINUE SHOPPING'));
+      final Finder explore = find.text('CONTINUE SHOPPING');
+      await tester.scrollUntilVisible(
+        explore,
+        220,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(explore);
       await tester.pump();
       expect(exploreCount, 1);
       expect(tester.takeException(), isNull);
