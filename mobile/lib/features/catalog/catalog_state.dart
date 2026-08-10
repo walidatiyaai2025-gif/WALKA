@@ -14,12 +14,21 @@ class WalkaCatalogController extends ChangeNotifier {
     WalkaAmazonPurchaseRegistry.replaceFromSnapshot(_snapshot);
   }
 
+  /// Side-effect-free base constructor for a presentation-only delegating
+  /// controller. It intentionally does not touch the global Amazon registry.
+  @protected
+  WalkaCatalogController.presentationProxy()
+      : _repository = null,
+        _snapshot = walkaPresentationSnapshot(WalkaBundledCatalog.snapshot()),
+        _isLoading = false;
+
   final WalkaCatalogRepository? _repository;
   WalkaCatalogSnapshot _snapshot;
   bool _isLoading;
 
   WalkaCatalogSnapshot get snapshot => _snapshot;
   bool get isLoading => _isLoading;
+  bool get canRefresh => _repository != null;
   bool get isOffline => _snapshot.source != WalkaCatalogSource.remote;
   bool get isUsingCache => _snapshot.source == WalkaCatalogSource.cache;
   bool get isUsingBundledFallback =>

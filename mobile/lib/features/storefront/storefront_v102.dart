@@ -4,12 +4,11 @@ import '../../design_system/walka_adaptive.dart';
 import '../../design_system/walka_shell.dart';
 import '../../design_system/walka_theme.dart';
 import '../catalog/catalog_state.dart';
-import 'discovery_premium_v122.dart';
-import 'home_premium_v121.dart';
 import 'secondary_premium_v130.dart';
+import 'storefront_resilient_v130.dart';
 
 /// API-002 connected storefront entry surface with DESIGN-002 premium chrome,
-/// DESIGN-003 product-led discovery and DESIGN-005 premium secondary screens.
+/// DESIGN-005 secondary screens and DESIGN-006 resilient state feedback.
 ///
 /// Home, Search, Categories, Favorites and Account preserve the released
 /// catalog/state/navigation contracts while sharing one premium WALKA visual
@@ -134,12 +133,12 @@ class _WalkaStorefrontShellV102State extends State<WalkaStorefrontShellV102> {
 
   Widget _buildShell(BuildContext context) {
     final List<Widget> pages = <Widget>[
-      WalkaHomePremiumV121(
+      WalkaHomePremiumV130(
         onShopAll: () => _select(2),
         onSearch: () => _select(1),
       ),
-      const WalkaSearchPremiumV122(),
-      const WalkaCategoriesPremiumV122(),
+      const WalkaSearchPremiumV130(),
+      const WalkaCategoriesPremiumV130(),
       WalkaFavoritesPremiumV130(onExplore: () => _select(2)),
       const WalkaAccountPremiumV130(),
     ];

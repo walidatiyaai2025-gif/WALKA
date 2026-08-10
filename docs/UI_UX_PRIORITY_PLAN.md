@@ -30,8 +30,8 @@ WALKA should feel like a premium US-market home-organization brand, not a generi
 | 3 | DESIGN-003 | Categories + Search discovery refinement | #49 | COMPLETED |
 | 4 | DESIGN-004 | Product Detail premium commerce hierarchy + gallery polish | #50 | COMPLETED |
 | 5 | DESIGN-005 | Favorites + Account + information consistency | #51 | COMPLETED |
-| 6 | DESIGN-006 | Motion + feedback + loading/offline state polish | #52 | P0 NEXT |
-| 7 | DESIGN-007 | Cross-device visual QA + golden regression matrix | #53 | P0 QUEUED |
+| 6 | DESIGN-006 | Motion + feedback + loading/offline state polish | #52 | IN PROGRESS |
+| 7 | DESIGN-007 | Cross-device visual QA + golden regression matrix | #53 | P0 NEXT |
 
 Parent design program: #46.
 
@@ -99,19 +99,44 @@ Parent design program: #46.
 - Compact 320×568 and 1.3× text-scaling regressions added for empty/saved Favorites, Account and App Information.
 - Analyze, full Flutter tests, release APK candidate, stable-main rebuild and verified APK publication all green.
 
-## DESIGN-006 next execution boundary
+## DESIGN-006 active execution boundary
 
-Issue: `#52` — motion, feedback, loading/offline state polish.
+Issue: `#52` — Motion + feedback + loading/offline state polish.
 
-DESIGN-005 is now stable on `main` with a matching verified APK receipt, so DESIGN-006 is the next owner-visible runtime design slice.
+Branch: `agent/design-006-motion-state-polish`.
+Work receipt: `docs/work/DESIGN-006.md`.
+Stable base: `fe5295b2663de683b8cd7c4ac771540890bfbda9`.
+Reconciled with stable-receipt docs commit: `c5dfba8a65bab98d4c04381e22883f517562ce93`.
 
 ### DESIGN-006 priorities
 
-- Refine route/tab transitions and interaction feedback without gratuitous animation.
-- Harmonize loading, cached/offline and recoverable error states across catalog-driven surfaces.
-- Preserve current Product Master, catalog, Favorites and Amazon handoff behavior.
-- Keep motion accessible and deterministic under reduced-motion / compact-device conditions.
-- Add focused regression coverage before merge and require the same PR + stable-main APK gates.
+- Centralize WALKA micro-motion durations/easing and explicit reduced-motion behavior.
+- Define named timings for card presses, variant changes, navigation selection and route transitions.
+- Keep state changes calm, short and non-blocking.
+- Unify loading/cache/bundled-fallback feedback across Home, Search and Categories.
+- Keep fallback catalog content usable during refresh; no blank full-screen spinner.
+- Add restrained transform-only press feedback without changing layout metrics.
+- Improve state semantics/live-region behavior for assistive technologies.
+- Preserve Search empty-state recovery and all catalog resilience behavior.
+- Add focused compact-width, 1.3× text-scale and reduced-motion regressions.
+
+### DESIGN-006 merge gate
+
+- Flutter Analyze green on exact final PR head.
+- Full Flutter test suite green.
+- Reduced-motion contract green.
+- Loading/cache/bundled state semantics green.
+- Press feedback causes no layout shift and does not block input.
+- Compact 320×568 + 1.3× state regressions green.
+- Android release-mode APK candidate build/upload green.
+- `main` untouched until all gates pass.
+- After merge, stable-main CI must pass independently and republish `Last verified APK/WALKA-latest.apk` sourced from the DESIGN-006 merge commit.
+
+## DESIGN-007 next execution boundary
+
+Issue: `#53` — cross-device visual QA + golden regression matrix.
+
+Do not begin owner-visible DESIGN-007 runtime changes until DESIGN-006 reaches stable `main` with a matching verified APK receipt.
 
 ## Design program Definition of Done
 
