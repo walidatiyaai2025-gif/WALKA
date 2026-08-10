@@ -828,7 +828,7 @@ class _ReferenceSourceBadge extends StatelessWidget {
     final String label = switch (source) {
       WalkaCatalogSource.remote => 'LIVE CATALOG',
       WalkaCatalogSource.cache => 'SAVED CATALOG',
-      WalkaCatalogSource.fallback => 'BUILT-IN CATALOG',
+      WalkaCatalogSource.bundled => 'BUILT-IN CATALOG',
     };
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
