@@ -27,38 +27,48 @@ WALKA should feel like a premium US-market home-organization brand, not a generi
 |---|---|---|---|---|
 | 1 | DESIGN-001 | Home premium visual fidelity + product presentation | #47 | COMPLETED |
 | 2 | DESIGN-002 | App shell + bottom navigation premium polish | #48 | COMPLETED |
-| 3 | DESIGN-003 | Categories + Search discovery refinement | #49 | IN PROGRESS |
-| 4 | DESIGN-004 | Product Detail premium commerce hierarchy + gallery polish | #50 | P0 NEXT |
-| 5 | DESIGN-005 | Favorites + Account + information consistency | #51 | P0 QUEUED |
+| 3 | DESIGN-003 | Categories + Search discovery refinement | #49 | COMPLETED |
+| 4 | DESIGN-004 | Product Detail premium commerce hierarchy + gallery polish | #50 | IN PROGRESS |
+| 5 | DESIGN-005 | Favorites + Account + information consistency | #51 | P0 NEXT |
 | 6 | DESIGN-006 | Motion + feedback + loading/offline state polish | #52 | P0 QUEUED |
 | 7 | DESIGN-007 | Cross-device visual QA + golden regression matrix | #53 | P0 QUEUED |
 
 Parent design program: #46.
 
-## DESIGN-003 active implementation
+## DESIGN-003 stable receipt
 
-Branch: `agent/design-003-premium-discovery`
+- Squash merge: `56863f06b603234e706a4be60509d8b166f84c64`.
+- Stable-main Flutter Preview: run `31344297255` (#333), green.
+- Verified APK publication commit: `5e636306d62ce7e405816d77d58a184c1dda09d1`.
+- `Last verified APK/VERIFIED_BUILD.md` points to the DESIGN-003 merge commit.
+
+## DESIGN-004 active implementation
+
+Branch: `agent/design-004-premium-pdp`
 
 ### Problem
 
-The released Search and Categories flows are functionally sound, but their dominant product surfaces still use generic `grid_view` and `lunch_dining` Material icons. That creates a visible quality gap next to the product-led DESIGN-001 Home and the shared premium DESIGN-002 shell.
+The released V10 Drawer and Lunch Product Detail surfaces already provide the correct Product Master facts, fullscreen gallery, share treatment and Amazon handoff. The remaining gap is commerce hierarchy: gallery, selected variant, verified facts, care/trust language and the Amazon action should read as one deliberate premium purchase surface rather than a sequence of independent widgets.
 
 ### Implementation direction
 
-- Replace dominant generic product icons in Categories and Search results with the reusable `WalkaProductVisual` family presentation.
-- Give Drawer Organizer and Lunch Box distinct editorial family treatments while keeping one WALKA visual system.
-- Preserve the released remote/cache/bundled catalog data path, stable Product/Variant IDs and search token matching.
-- Preserve All / Drawer / Lunch family filtering and Product Detail routing.
-- Improve search-field focus treatment, result count/source metadata and no-results recovery without changing semantics.
-- Keep adaptive shell gutters and shared `WalkaWordmark` treatment from DESIGN-002.
-- Add compact 320×568 regressions plus focused search/filter behavior tests.
+- Keep `product_experience_v10.dart` as the verified legacy/product-copy path and build DESIGN-004 as the next public Product Detail surface.
+- Make the selected product/variant and Amazon purchase action immediately legible after the gallery.
+- Use WALKA product-led visuals and a calmer editorial gallery treatment with explicit fullscreen/zoom/share affordances.
+- Make the persistent Amazon action adaptive instead of depending on a fixed-width desktop-like button treatment.
+- Keep Drawer and Lunch on one component system while preserving product-specific facts and approved usage/care language.
+- Preserve Drawer persistent Favorites behavior and all variant-aware Amazon URLs.
+- Preserve `docs/PRODUCT_MASTER.md` as the only fact source; do not add inferred specs or leakproof claims.
+- Add focused compact-width and 1.3× text-scale regressions for both Product Detail families.
 
 ### Merge gate
 
 - Flutter Analyze green.
 - Full Flutter test suite green.
-- DESIGN-003 focused compact Categories regression green.
-- Search query/filter/empty-state regressions green.
+- Drawer and Lunch DESIGN-004 behavior tests green.
+- 320×568 + 1.3× text-scaling Product Detail regressions green.
+- Fullscreen gallery/zoom/share discoverability green.
+- Product Master copy and Amazon routing contracts preserved.
 - Android release-mode APK candidate build/upload green.
 - Stable `main` remains untouched until the above gates pass.
 
