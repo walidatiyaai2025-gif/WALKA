@@ -28,8 +28,8 @@ WALKA should feel like a premium US-market home-organization brand, not a generi
 | 1 | DESIGN-001 | Home premium visual fidelity + product presentation | #47 | COMPLETED |
 | 2 | DESIGN-002 | App shell + bottom navigation premium polish | #48 | COMPLETED |
 | 3 | DESIGN-003 | Categories + Search discovery refinement | #49 | COMPLETED |
-| 4 | DESIGN-004 | Product Detail premium commerce hierarchy + gallery polish | #50 | IN PROGRESS |
-| 5 | DESIGN-005 | Favorites + Account + information consistency | #51 | P0 NEXT |
+| 4 | DESIGN-004 | Product Detail premium commerce hierarchy + gallery polish | #50 | P0 NEXT |
+| 5 | DESIGN-005 | Favorites + Account + information consistency | #51 | P0 QUEUED |
 | 6 | DESIGN-006 | Motion + feedback + loading/offline state polish | #52 | P0 QUEUED |
 | 7 | DESIGN-007 | Cross-device visual QA + golden regression matrix | #53 | P0 QUEUED |
 
@@ -56,37 +56,22 @@ Parent design program: #46.
 - Product Detail routing and variant-aware Amazon handoff remain unchanged.
 - Search empty-state recovery and compact/scaled layouts are regression-tested.
 
-## DESIGN-004 active implementation
+## DESIGN-004 next execution boundary
 
 Issue: `#50` — Product Detail premium commerce hierarchy + gallery polish.
 
-Branch: `agent/design-004-premium-pdp`
+The next slice should improve the existing Drawer and Lunch Product Detail experience without changing Product Master facts or the Amazon purchase architecture.
 
-### Problem
+### DESIGN-004 priorities
 
-The released V10 Drawer and Lunch Product Detail surfaces already provide the correct Product Master facts, fullscreen gallery, share treatment and Amazon handoff. The remaining gap is commerce hierarchy: gallery, selected variant, verified facts, care/trust language and the Amazon action should read as one deliberate premium purchase surface rather than a sequence of independent widgets.
-
-### Implementation direction
-
-- Keep `product_experience_v10.dart` as the verified legacy/product-copy path and build DESIGN-004 as the next public Product Detail surface.
-- Make the selected product/variant and Amazon purchase action immediately legible after the gallery.
-- Use WALKA product-led visuals and a calmer editorial gallery treatment with explicit fullscreen/zoom/share affordances.
-- Make the persistent Amazon action adaptive instead of depending on a fixed-width desktop-like button treatment.
-- Keep Drawer and Lunch on one component system while preserving product-specific facts and approved usage/care language.
-- Preserve Drawer persistent Favorites behavior and all variant-aware Amazon URLs.
-- Preserve `docs/PRODUCT_MASTER.md` as the only fact source; do not add inferred specs or leakproof claims.
-- Add focused compact-width and 1.3× text-scale regressions for both Product Detail families.
-
-### Merge gate
-
-- Flutter Analyze green.
-- Full Flutter test suite green.
-- Drawer and Lunch DESIGN-004 behavior tests green.
-- 320×568 + 1.3× text-scaling Product Detail regressions green.
-- Fullscreen gallery/zoom/share discoverability green.
-- Product Master copy and Amazon routing contracts preserved.
-- Android release-mode APK candidate build/upload green.
-- Stable `main` remains untouched until the above gates pass.
+- Strengthen product-first image/gallery hierarchy and gallery affordances.
+- Make selected variant, title, key facts and official Amazon action immediately clear.
+- Harmonize Drawer and Lunch PDP structure while preserving family-specific facts and care/safety language.
+- Keep zoom/share/gallery behavior discoverable and accessible.
+- Keep the Amazon purchase action prominent without introducing in-app cart/checkout/payment.
+- Preserve stable Product/Variant IDs and API-driven purchase destinations.
+- Add compact-width and text-scale regressions before merge.
+- Require Flutter Analyze, full tests, Android release APK candidate and stable-main verified APK publication.
 
 ## Design program Definition of Done
 
