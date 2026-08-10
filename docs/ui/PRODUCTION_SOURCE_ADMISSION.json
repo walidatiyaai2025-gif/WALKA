@@ -1,0 +1,67 @@
+{
+  "schemaVersion": 1,
+  "allowedSourceStates": ["APPROVED", "BLOCKED", "REPLACE"],
+  "protectedRuntimeSourcePrefixes": ["Images/"],
+  "variants": [
+    {
+      "variantId": "drawer-organizer:white",
+      "family": "Drawer Organizer",
+      "variant": "White",
+      "sourceId": "SRC-DRAWER-WHITE-001",
+      "sourceFilename": "51yxoCdmqrL._AC_SL1500_(1).jpg",
+      "sourceState": "APPROVED",
+      "canonicalPath": "assets/products/drawer/white.png",
+      "canonicalExportPresent": false,
+      "reason": "Manifest records a clean real expanded organizer source suitable for a transparent primary cutout.",
+      "unblockAction": "Export the approved source non-destructively to the canonical transparent PNG, then pass geometry, alpha, framing, file-budget and Flutter integration QA."
+    },
+    {
+      "variantId": "drawer-organizer:gray",
+      "family": "Drawer Organizer",
+      "variant": "Gray",
+      "sourceId": "SRC-DRAWER-GRAY-001",
+      "sourceFilename": "IMG-20250919-WA0035.jpg",
+      "sourceState": "BLOCKED",
+      "canonicalPath": "assets/products/drawer/gray.png",
+      "canonicalExportPresent": false,
+      "reason": "The real Gray source is collapsed and cannot truthfully provide expanded 8-compartment presentation parity without reconstruction.",
+      "unblockAction": "Provide/approve a faithful expanded Gray source, or explicitly approve a collapsed Gray canonical presentation; do not synthesize expanded geometry."
+    },
+    {
+      "variantId": "lunch-box:blue",
+      "family": "Lunch Box",
+      "variant": "Blue",
+      "sourceId": "SRC-LUNCH-BLUE-001",
+      "sourceFilename": "main new(3).jpg",
+      "sourceState": "APPROVED",
+      "canonicalPath": "assets/products/lunch/blue.png",
+      "canonicalExportPresent": false,
+      "reason": "Manifest records a clean source with the four-compartment stainless tray, colored outer component and approved set visible.",
+      "unblockAction": "Produce the canonical transparent cutout from the admitted source and pass Product Master, alpha, material, framing and file-budget QA."
+    },
+    {
+      "variantId": "lunch-box:pink",
+      "family": "Lunch Box",
+      "variant": "Pink",
+      "sourceId": "SRC-LUNCH-PINK-001",
+      "sourceFilename": "1000389975.jpg",
+      "sourceState": "APPROVED",
+      "canonicalPath": "assets/products/lunch/pink.png",
+      "canonicalExportPresent": false,
+      "reason": "Manifest approves only the clean embedded product panel; marketplace UI, title, rating and navigation pixels are excluded.",
+      "unblockAction": "Crop/extract only the approved product region, remove marketplace chrome, then export and validate the canonical transparent PNG."
+    },
+    {
+      "variantId": "lunch-box:green",
+      "family": "Lunch Box",
+      "variant": "Green",
+      "sourceId": "SRC-LUNCH-GREEN-001",
+      "sourceFilename": "WhatsApp Image 2026-02-24 at 11.22.34 PM.jpeg",
+      "sourceState": "APPROVED",
+      "canonicalPath": "assets/products/lunch/green.png",
+      "canonicalExportPresent": false,
+      "reason": "Manifest records a clear real Green set; its camera/layout differs from sibling colors and must be normalized without geometry reconstruction.",
+      "unblockAction": "Normalize canvas, scale and optical center from the approved real source without altering product geometry; export and pass canonical QA."
+    }
+  ]
+}
