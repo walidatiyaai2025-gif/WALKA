@@ -337,8 +337,15 @@ class _FamilyEditorialCard extends StatelessWidget {
     return LayoutBuilder(
       builder: (BuildContext context, BoxConstraints constraints) {
         final bool compact = constraints.maxWidth < 330;
+        final double textScale = MediaQuery.textScalerOf(context).scale(1.0);
+        final double scaleDelta = (textScale - 1.0)
+            .clamp(0.0, 0.5)
+            .toDouble();
+        final double cardHeight = (compact ? 192.0 : 205.0) +
+            scaleDelta * (compact ? 120.0 : 90.0);
+
         return Container(
-          height: compact ? 192 : 205,
+          height: cardHeight,
           decoration: BoxDecoration(
             color: surface,
             borderRadius: BorderRadius.circular(28),
