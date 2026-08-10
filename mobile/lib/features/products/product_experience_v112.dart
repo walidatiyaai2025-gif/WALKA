@@ -105,11 +105,13 @@ class _WalkaDrawerProductDetailV112State
               value: false,
               label: 'White',
               color: Color(0xFFF7F4EC),
+              key: ValueKey<String>('premium-drawer-white'),
             ),
             WalkaPdpVariantOption<bool>(
               value: true,
               label: 'Gray',
               color: Color(0xFFD3D7D9),
+              key: ValueKey<String>('premium-drawer-gray'),
             ),
           ],
           onChanged: (bool gray) => setState(() => _gray = gray),
@@ -215,6 +217,7 @@ class _WalkaLunchProductDetailV112State
                   value: variant,
                   label: variant.label,
                   color: variant.color,
+                  key: ValueKey<String>('premium-lunch-${variant.name}'),
                 ),
               )
               .toList(growable: false),
