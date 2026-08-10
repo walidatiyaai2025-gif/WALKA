@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 
 import '../lunch/lunch_box_v6.dart';
-import 'product_experience_v111.dart';
+import 'product_experience_v112.dart';
 
 /// Final Drawer Product Detail entry point.
 ///
-/// DESIGN-007B.3 promotes the approved Android-reference V111 composition while
-/// preserving the existing Product Master, favorites and Amazon commerce
-/// contracts behind the stable V100 entry point.
+/// V112 preserves the released Product Master, Favorites and Amazon contracts
+/// while composing the screen from independently tested PDP presentation atoms.
 class WalkaDrawerProductDetailV100 extends StatelessWidget {
   const WalkaDrawerProductDetailV100({super.key, this.initialGray = false});
 
@@ -15,7 +14,7 @@ class WalkaDrawerProductDetailV100 extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return WalkaDrawerProductDetailV111(initialGray: initialGray);
+    return WalkaDrawerProductDetailV112(initialGray: initialGray);
   }
 }
 
@@ -33,6 +32,6 @@ class WalkaLunchProductDetailV100 extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return WalkaLunchProductDetailV111(initialVariant: initialVariant);
+    return WalkaLunchProductDetailV112(initialVariant: initialVariant);
   }
 }
