@@ -12,11 +12,11 @@ const List<String> _paths = <String>[
   'assets/products/lunch/green.png',
 ];
 
-void main() {
-  late String validatorPath;
+late String _validatorPath;
 
+void main() {
   setUpAll(() {
-    validatorPath = File('tool/verify_production_assets.dart').absolute.path;
+    _validatorPath = File('tool/verify_production_assets.dart').absolute.path;
   });
 
   test('report mode names all five missing variants without failing PR validation', () async {
@@ -73,7 +73,10 @@ void main() {
     await _writePngHeader(root, _paths[1], width: 1024, height: 1024, colorType: 2);
     final File oversize = File('${root.path}/${_paths[2]}');
     await oversize.writeAsBytes(
-      <int>[..._pngHeader(width: 1024, height: 1024, colorType: 6), ...List<int>.filled(1258292, 0)],
+      <int>[
+        ..._pngHeader(width: 1024, height: 1024, colorType: 6),
+        ...List<int>.filled(1258292, 0),
+      ],
       flush: true,
     );
 
@@ -90,7 +93,7 @@ void main() {
 Future<ProcessResult> _run(Directory root, String mode) {
   return Process.run(
     Platform.resolvedExecutable,
-    <String>[validatorPath, mode, '--json', 'production-asset-readiness.json'],
+    <String>[_validatorPath, mode, '--json', 'production-asset-readiness.json'],
     workingDirectory: root.path,
   );
 }
