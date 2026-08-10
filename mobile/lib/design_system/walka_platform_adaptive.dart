@@ -42,19 +42,17 @@ abstract final class WalkaPlatformAdaptive {
     return WalkaContentWidthMetrics.gutterForTier(tier);
   }
 
-  /// Safe-area-aware page insets. iOS keeps a small breathing floor around
-  /// notch/home-indicator areas while Android/desktop use the reported inset.
+  /// Safe-area-aware page insets. System-reported top/bottom insets are kept
+  /// exactly; only the WALKA horizontal gutter is platform/window policy-owned.
   static EdgeInsets pageInsets(BuildContext context) {
     final Size size = MediaQuery.sizeOf(context);
     final EdgeInsets safe = MediaQuery.paddingOf(context);
     final double horizontal = horizontalGutterForWidth(size.width);
-    final bool ios = isIOS(context);
-    final double top = ios && safe.top < WalkaSpacing.sm
-        ? WalkaSpacing.sm
-        : safe.top;
-    final double bottom = ios && safe.bottom < WalkaSpacing.sm
-        ? WalkaSpacing.sm
-        : safe.bottom;
-    return EdgeInsets.fromLTRB(horizontal, top, horizontal, bottom);
+    return EdgeInsets.fromLTRB(
+      horizontal,
+      safe.top,
+      horizontal,
+      safe.bottom,
+    );
   }
 }
