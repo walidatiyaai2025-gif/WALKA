@@ -37,8 +37,6 @@ enum WalkaShellDestination {
   final IconData icon;
   final IconData selectedIcon;
 
-  int get index => WalkaShellDestination.values.indexOf(this);
-
   NavigationDestination toNavigationDestination() => NavigationDestination(
         icon: Icon(icon),
         selectedIcon: Icon(selectedIcon),
