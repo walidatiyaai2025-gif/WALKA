@@ -26,39 +26,39 @@ WALKA should feel like a premium US-market home-organization brand, not a generi
 | Order | Task | Scope | GitHub | Status |
 |---|---|---|---|---|
 | 1 | DESIGN-001 | Home premium visual fidelity + product presentation | #47 | COMPLETED |
-| 2 | DESIGN-002 | App shell + bottom navigation premium polish | #48 | IN PROGRESS |
-| 3 | DESIGN-003 | Categories + Search discovery refinement | #49 | P0 NEXT |
-| 4 | DESIGN-004 | Product Detail premium commerce hierarchy + gallery polish | #50 | P0 QUEUED |
+| 2 | DESIGN-002 | App shell + bottom navigation premium polish | #48 | COMPLETED |
+| 3 | DESIGN-003 | Categories + Search discovery refinement | #49 | IN PROGRESS |
+| 4 | DESIGN-004 | Product Detail premium commerce hierarchy + gallery polish | #50 | P0 NEXT |
 | 5 | DESIGN-005 | Favorites + Account + information consistency | #51 | P0 QUEUED |
 | 6 | DESIGN-006 | Motion + feedback + loading/offline state polish | #52 | P0 QUEUED |
 | 7 | DESIGN-007 | Cross-device visual QA + golden regression matrix | #53 | P0 QUEUED |
 
 Parent design program: #46.
 
-## DESIGN-002 active implementation
+## DESIGN-003 active implementation
 
-Branch: `agent/design-002-premium-shell`
+Branch: `agent/design-003-premium-discovery`
 
 ### Problem
 
-The released five-destination information architecture is sound, but persistent app chrome still relies on mostly default Material navigation treatment and locally repeated wordmark/header styling. That makes screen-to-screen polish less coherent than the new DESIGN-001 Home presentation.
+The released Search and Categories flows are functionally sound, but their dominant product surfaces still use generic `grid_view` and `lunch_dining` Material icons. That creates a visible quality gap next to the product-led DESIGN-001 Home and the shared premium DESIGN-002 shell.
 
 ### Implementation direction
 
-- Centralize shell metrics, WALKA wordmark, top-level circular icon action and bottom navigation in reusable design-system primitives.
-- Keep Home, Search, Categories, Favorites and Account in the released order with no route rewrite.
-- Reduce navigation visual weight while preserving visible labels and minimum 48dp touch targets.
-- Handle bottom system insets inside the shared navigation component.
-- Standardize adaptive gutters and vertical section rhythm for subsequent DESIGN-003..005 work.
-- Document the shared shell contract in `docs/DESIGN_SYSTEM_SHELL.md`.
-- Preserve catalog state, offline fallback, Favorites persistence, Product Master facts and Amazon routing.
+- Replace dominant generic product icons in Categories and Search results with the reusable `WalkaProductVisual` family presentation.
+- Give Drawer Organizer and Lunch Box distinct editorial family treatments while keeping one WALKA visual system.
+- Preserve the released remote/cache/bundled catalog data path, stable Product/Variant IDs and search token matching.
+- Preserve All / Drawer / Lunch family filtering and Product Detail routing.
+- Improve search-field focus treatment, result count/source metadata and no-results recovery without changing semantics.
+- Keep adaptive shell gutters and shared `WalkaWordmark` treatment from DESIGN-002.
+- Add compact 320×568 regressions plus focused search/filter behavior tests.
 
 ### Merge gate
 
 - Flutter Analyze green.
 - Full Flutter test suite green.
-- DESIGN-002 focused 320×568 navigation regression green.
-- 48dp shared icon-action target regression green.
+- DESIGN-003 focused compact Categories regression green.
+- Search query/filter/empty-state regressions green.
 - Android release-mode APK candidate build/upload green.
 - Stable `main` remains untouched until the above gates pass.
 
