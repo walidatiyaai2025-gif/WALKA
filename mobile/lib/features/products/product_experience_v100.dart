@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
 
 import '../lunch/lunch_box_v6.dart';
-import 'product_experience_v110.dart';
+import 'product_experience_v111.dart';
 
 /// Final Drawer Product Detail entry point.
 ///
-/// DESIGN-004 promotes the premium V110 commerce surface while the verified
-/// V10 implementation remains in the repository as the legacy Product Master
-/// copy contract and regression reference. Amazon routing and persistent Drawer
-/// favorites still use the same underlying services.
+/// DESIGN-007B.3 promotes the approved Android-reference V111 composition while
+/// preserving the existing Product Master, favorites and Amazon commerce
+/// contracts behind the stable V100 entry point.
 class WalkaDrawerProductDetailV100 extends StatelessWidget {
   const WalkaDrawerProductDetailV100({super.key, this.initialGray = false});
 
@@ -16,15 +15,14 @@ class WalkaDrawerProductDetailV100 extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return WalkaDrawerProductDetailV110(initialGray: initialGray);
+    return WalkaDrawerProductDetailV111(initialGray: initialGray);
   }
 }
 
 /// Final Lunch Product Detail entry point.
 ///
-/// Product Master facts and approved usage/care language are preserved on the
-/// premium V110 surface; purchase continues to hand off to the selected Amazon
-/// listing through the existing commerce registry.
+/// Product Master facts and approved usage/care language remain unchanged;
+/// purchase continues to hand off to the selected official Amazon listing.
 class WalkaLunchProductDetailV100 extends StatelessWidget {
   const WalkaLunchProductDetailV100({
     super.key,
@@ -35,6 +33,6 @@ class WalkaLunchProductDetailV100 extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return WalkaLunchProductDetailV110(initialVariant: initialVariant);
+    return WalkaLunchProductDetailV111(initialVariant: initialVariant);
   }
 }
