@@ -177,4 +177,61 @@ void main() {
       expect(tester.takeException(), isNull);
     },
   );
+
+  testWidgets(
+    'premium discovery survives 1.3x text scaling on 320x568',
+    (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(320, 568);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      final WalkaCatalogController controller = WalkaCatalogController();
+      addTearDown(controller.dispose);
+      final MediaQueryData scaledMedia = MediaQueryData.fromView(
+        tester.view,
+      ).copyWith(textScaler: const TextScaler.linear(1.3));
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: buildWalkaTheme(),
+          home: MediaQuery(
+            data: scaledMedia,
+            child: WalkaCatalogScope(
+              controller: controller,
+              child: const Scaffold(body: WalkaCategoriesPremiumV122()),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(
+        find.byKey(const ValueKey<String>('discovery-family-drawer')),
+        findsOneWidget,
+      );
+      expect(tester.takeException(), isNull);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: buildWalkaTheme(),
+          home: MediaQuery(
+            data: scaledMedia,
+            child: WalkaCatalogScope(
+              controller: controller,
+              child: const Scaffold(body: WalkaSearchPremiumV122()),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(
+        find.byKey(const ValueKey<String>('premium-discovery-search-field')),
+        findsOneWidget,
+      );
+      expect(find.text('5 results'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
 }
