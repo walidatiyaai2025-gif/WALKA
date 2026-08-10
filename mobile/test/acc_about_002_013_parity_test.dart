@@ -83,7 +83,10 @@ void main() {
         size: Size(width, 900),
       );
 
-      expect(find.text('Product & Support'), findsOneWidget);
+      final Finder productSupport = find.text('Product & Support');
+      await tester.scrollUntilVisible(productSupport, 240);
+      await tester.pumpAndSettle();
+      expect(productSupport, findsOneWidget);
       expect(find.text('Official Destinations'), findsOneWidget);
       expect(find.text('Legal & App'), findsOneWidget);
       expect(tester.takeException(), isNull);
