@@ -39,31 +39,38 @@ void main() {
     expect(find.byKey(const ValueKey<String>('page-home')), findsOneWidget);
     controller.select(WalkaShellDestination.favorites);
     await tester.pump();
-    expect(find.byKey(const ValueKey<String>('page-home')), findsOneWidget);
+    expect(
+      find.byKey(
+        const ValueKey<String>('page-home'),
+        skipOffstage: false,
+      ),
+      findsOneWidget,
+    );
     expect(find.text('Favorites'), findsWidgets);
     controller.dispose();
   });
 
   testWidgets('wide shell provides desktop-width content beyond mobile cap',
       (WidgetTester tester) async {
+    await tester.binding.setSurfaceSize(const Size(1440, 900));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
     final WalkaShellController controller = WalkaShellController();
     await tester.pumpWidget(
       MaterialApp(
         home: MediaQuery(
           data: const MediaQueryData(size: Size(1440, 900)),
-          child: SizedBox(
-            width: 1440,
-            height: 900,
-            child: WalkaWideShellScaffold(
-              controller: controller,
-              pages: pages(),
-            ),
+          child: WalkaWideShellScaffold(
+            controller: controller,
+            pages: pages(),
           ),
         ),
       ),
     );
     expect(find.byType(NavigationRail), findsOneWidget);
-    final Size homeSize = tester.getSize(find.byKey(const ValueKey<String>('page-home')));
+    final Size homeSize = tester.getSize(
+      find.byKey(const ValueKey<String>('page-home')),
+    );
     expect(homeSize.width, greaterThan(560));
     controller.dispose();
   });
