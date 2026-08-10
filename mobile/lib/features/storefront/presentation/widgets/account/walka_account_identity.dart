@@ -11,7 +11,7 @@ class WalkaAccountIdentity extends StatelessWidget {
     return WalkaSurfaceCard(
       key: const ValueKey<String>('reference-account-identity'),
       padding: const EdgeInsets.all(18),
-      borderRadius: BorderRadius.circular(22),
+      radius: 22,
       child: Row(
         children: <Widget>[
           Container(
