@@ -5,46 +5,58 @@ import '../../../../../design_system/walka_theme.dart';
 class WalkaFavoritesTitle extends StatelessWidget {
   const WalkaFavoritesTitle({
     required this.count,
+    required this.editMode,
+    required this.onEdit,
     super.key,
   });
 
   final int count;
+  final bool editMode;
+  final VoidCallback? onEdit;
 
   @override
   Widget build(BuildContext context) {
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.end,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        const Expanded(
+        Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              Text('SAVED FOR LATER', style: WalkaType.eyebrow),
-              SizedBox(height: 5),
-              Text(
-                'Favorites',
+              const Text(
+                'My Favorites',
                 key: ValueKey<String>('reference-favorites-title'),
                 style: TextStyle(
                   color: WalkaColors.navy,
                   fontFamily: 'serif',
-                  fontSize: 32,
-                  height: 1.02,
+                  fontSize: 33,
+                  height: 1.04,
                   fontWeight: FontWeight.w600,
-                  letterSpacing: -0.45,
+                  letterSpacing: -0.5,
+                ),
+              ),
+              const SizedBox(height: 7),
+              Text(
+                '$count ${count == 1 ? 'item' : 'items'} saved',
+                key: const ValueKey<String>('reference-favorites-count'),
+                style: const TextStyle(
+                  color: WalkaColors.muted,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ],
           ),
         ),
-        Text(
-          '$count SAVED',
-          key: const ValueKey<String>('reference-favorites-count'),
-          style: const TextStyle(
-            color: WalkaColors.gold,
-            fontSize: 9,
-            fontWeight: FontWeight.w900,
-            letterSpacing: 0.8,
+        const SizedBox(width: 12),
+        OutlinedButton(
+          key: const ValueKey<String>('reference-favorites-edit'),
+          onPressed: onEdit,
+          style: OutlinedButton.styleFrom(
+            minimumSize: const Size(70, 44),
+            padding: const EdgeInsets.symmetric(horizontal: 14),
           ),
+          child: Text(editMode ? 'DONE' : 'EDIT'),
         ),
       ],
     );
