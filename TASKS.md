@@ -222,7 +222,7 @@ Android reference fidelity is already stable; tasks below focus on extracting it
 | ID | Status | Lane | Atomic task | Expected output |
 |---|---|---|---|---|
 | PDP-001 | ✅ | Commerce UI | Android PDP reference fidelity | Existing V111 stable implementation |
-| PDP-002 | ♻️ | Commerce UI | Extract PDP app/header bar | Back + favorite/share action slots |
+| PDP-002 | ✅ | Commerce UI | Extract PDP app/header bar | Completed via #168 / PR #169; reusable app/header bar + focused tests |
 | PDP-003 | ♻️ | Commerce UI | Extract gallery viewport | Product media viewport with stable aspect ratio |
 | PDP-004 | ♻️ | Commerce UI | Extract gallery page indicator/thumbnails | Independent selection widget |
 | PDP-005 | ♻️ | Commerce UI | Extract fullscreen zoom viewer | Dedicated route/widget + gesture tests |
@@ -366,7 +366,7 @@ Developers should avoid editing the same page file simultaneously. Extract compo
 
 1. **Do not duplicate #82/#83.** Account + About Android reference fidelity is completed and stable on `main`.
 2. Continue `DS-014` through `DS-016` as independent extraction/reuse tasks; `DS-001` through `DS-013` are completed.
-3. Run `HOME-002..010`, `CAT-003..012`, `PDP-002..014`, and `FAV-002..008` as visual-preserving modularization tasks.
+3. Run `HOME-002..010`, `CAT-003..012`, `PDP-003..014`, and `FAV-002..008` as visual-preserving modularization tasks.
 4. Classify `f96465c7-...png` (`REF-003`) before claiming missing PC Product/Categories reference coverage.
 5. Implement iOS parity: Home → Categories → PDP → Favorites → Account → About.
 6. Implement desktop architecture, then the four explicitly named PC references: Home → Favorites → Account → About.
