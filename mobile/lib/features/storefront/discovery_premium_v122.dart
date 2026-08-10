@@ -197,7 +197,7 @@ class _WalkaSearchPremiumV122State extends State<WalkaSearchPremiumV122> {
               onChanged: (String value) => setState(() => _query = value),
               textInputAction: TextInputAction.search,
               decoration: InputDecoration(
-                hintText: 'Drawer, lunch box, blue, SUS304…',
+                hintText: 'Search WALKA…',
                 prefixIcon: const Icon(
                   Icons.search_rounded,
                   color: WalkaColors.navy,
@@ -266,7 +266,11 @@ class _WalkaSearchPremiumV122State extends State<WalkaSearchPremiumV122> {
               _DiscoveryCatalogStatus(controller: catalog),
             ],
             const SizedBox(height: 18),
-            Row(
+            Wrap(
+              alignment: WrapAlignment.spaceBetween,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 12,
+              runSpacing: 8,
               children: <Widget>[
                 Text(
                   '${results.length} ${results.length == 1 ? 'result' : 'results'}',
@@ -279,7 +283,6 @@ class _WalkaSearchPremiumV122State extends State<WalkaSearchPremiumV122> {
                     fontWeight: FontWeight.w900,
                   ),
                 ),
-                const Spacer(),
                 _CatalogSourceBadge(source: catalog.snapshot.source),
               ],
             ),
