@@ -4,7 +4,6 @@ import '../../design_system/walka_product_visual.dart';
 import '../../design_system/walka_shell.dart';
 import '../../design_system/walka_theme.dart';
 import '../catalog/catalog_state.dart';
-import '../catalog/domain/walka_catalog.dart';
 import '../lunch/lunch_box_v6.dart';
 import 'presentation/widgets/discovery/walka_categories_benefits.dart';
 import 'presentation/widgets/discovery/walka_category_card.dart';
