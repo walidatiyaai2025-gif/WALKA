@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:walka/design_system/components/media/walka_product_media_resolver.dart';
 import 'package:walka/design_system/walka_product_visual.dart';
 import 'package:walka/design_system/walka_theme.dart';
 
@@ -70,16 +71,17 @@ class WalkaHomeSmallChanges extends StatelessWidget {
 
         final Widget visual = SizedBox(
           height: stack ? 126 : 164,
-          child: ColoredBox(
-            color: const Color(0xFFEDE6DA),
+          child: const ColoredBox(
+            color: Color(0xFFEDE6DA),
             child: Padding(
-              padding: const EdgeInsets.all(8),
-              child: WalkaProductVisual(
+              padding: EdgeInsets.all(8),
+              child: WalkaResolvedProductMedia(
+                variantId: 'drawer-organizer:white',
                 kind: WalkaProductVisualKind.drawerOrganizer,
-                primaryColor: const Color(0xFFF7F4EC),
-                backgroundColor: const Color(0xFFEDE6DA),
+                primaryColor: Color(0xFFF7F4EC),
+                backgroundColor: Color(0xFFEDE6DA),
                 compact: true,
-                semanticLabel: drawerSemanticLabel,
+                semanticLabel: 'WALKA Drawer Organizer lifestyle visual',
               ),
             ),
           ),
