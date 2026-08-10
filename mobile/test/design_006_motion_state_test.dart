@@ -171,7 +171,7 @@ void main() {
     expect(find.text('Account'), findsOneWidget);
     expect(tester.takeException(), isNull);
 
-    await tester.tap(find.text('Search'));
+    await tester.tap(find.byIcon(Icons.search_outlined));
     await tester.pump();
 
     expect(find.text('Search WALKA'), findsOneWidget);
