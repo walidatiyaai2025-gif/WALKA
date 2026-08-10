@@ -56,6 +56,7 @@ class WalkaHomeCollectionSection extends StatelessWidget {
             children: <Widget>[
               WalkaHomeCollectionCard(
                 key: const ValueKey<String>('home-reference-lunch-card'),
+                variantId: 'lunch-box:blue',
                 title: 'Stainless Steel\nLunch Boxes',
                 subtitle: '1200 ml · SUS304 tray · 4 compartments.',
                 kind: WalkaProductVisualKind.lunchBox,
@@ -67,6 +68,7 @@ class WalkaHomeCollectionSection extends StatelessWidget {
               const SizedBox(width: 12),
               WalkaHomeCollectionCard(
                 key: const ValueKey<String>('home-reference-drawer-card'),
+                variantId: 'drawer-organizer:white',
                 title: 'Drawer Organizers',
                 subtitle: '8 compartments · expands from 13 to 22.4 in.',
                 kind: WalkaProductVisualKind.drawerOrganizer,

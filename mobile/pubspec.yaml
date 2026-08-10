@@ -22,3 +22,5 @@ flutter:
   uses-material-design: true
   assets:
     - assets/branding/walka_logo.svg
+    - assets/products/drawer/
+    - assets/products/lunch/
