@@ -19,6 +19,7 @@ class WalkaEmptyState extends StatelessWidget {
     this.actionKey,
     this.titleStyle,
     this.bodyStyle,
+    this.radius = WalkaRadius.md,
     this.padding = const EdgeInsets.fromLTRB(
       WalkaSpacing.lg,
       WalkaSpacing.xl,
@@ -40,12 +41,14 @@ class WalkaEmptyState extends StatelessWidget {
   final Key? actionKey;
   final TextStyle? titleStyle;
   final TextStyle? bodyStyle;
+  final double radius;
   final EdgeInsetsGeometry padding;
 
   @override
   Widget build(BuildContext context) {
     return WalkaSurfaceCard(
       padding: padding,
+      radius: radius,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
