@@ -151,18 +151,19 @@ void main() {
       await tester.pump();
 
       expect(find.text('App Information'), findsOneWidget);
-      expect(find.text('1.2.0+120'), findsOneWidget);
-      expect(find.text('1.0.0'), findsNothing);
-      expect(
-        find.text('Design-first visual freeze before backend integration.'),
-        findsNothing,
-      );
       expect(tester.takeException(), isNull);
 
       final Finder scrollable = find.byType(Scrollable).first;
       await tester.scrollUntilVisible(
+        find.text('1.2.0+120'),
+        140,
+        scrollable: scrollable,
+      );
+      expect(find.text('1.2.0+120'), findsOneWidget);
+
+      await tester.scrollUntilVisible(
         find.text('Versioned WALKA API + local fallback'),
-        160,
+        140,
         scrollable: scrollable,
       );
       expect(
@@ -172,10 +173,15 @@ void main() {
 
       await tester.scrollUntilVisible(
         find.text('Official Amazon handoff'),
-        160,
+        140,
         scrollable: scrollable,
       );
       expect(find.text('Official Amazon handoff'), findsOneWidget);
+      expect(find.text('1.0.0'), findsNothing);
+      expect(
+        find.text('Design-first visual freeze before backend integration.'),
+        findsNothing,
+      );
       expect(tester.takeException(), isNull);
     },
   );
