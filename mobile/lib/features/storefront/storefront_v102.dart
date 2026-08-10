@@ -5,6 +5,7 @@ import '../../design_system/walka_adaptive.dart';
 import '../../design_system/walka_shell.dart';
 import '../../design_system/walka_theme.dart';
 import '../catalog/catalog_state.dart';
+import 'favorites_reference_v131.dart';
 import 'secondary_premium_v130.dart';
 import 'storefront_resilient_v130.dart';
 
@@ -191,7 +192,7 @@ class _WalkaStorefrontShellV102State extends State<WalkaStorefrontShellV102> {
       ),
       const WalkaSearchPremiumV130(),
       WalkaCategoriesPremiumV130(onSearch: () => _select(1)),
-      WalkaFavoritesPremiumV130(onExplore: () => _select(2)),
+      WalkaFavoritesReferenceV131(onExplore: () => _select(2)),
       const WalkaAccountPremiumV130(),
     ];
 
