@@ -31,28 +31,23 @@ class WalkaAssetProductMedia implements WalkaProductMedia {
 
   @override
   Widget build(BuildContext context) {
-    return Semantics(
-      image: true,
-      label: semanticLabel,
-      child: ExcludeSemantics(
-        child: Image.asset(
-          asset.assetPath,
-          fit: BoxFit.contain,
-          cacheWidth: asset.cacheWidth,
-          filterQuality: FilterQuality.medium,
-          errorBuilder: (
-            BuildContext context,
-            Object error,
-            StackTrace? stackTrace,
-          ) {
-            return Semantics(
-              image: true,
-              label: '$semanticLabel. Product visual fallback.',
-              child: ExcludeSemantics(child: fallback.build(context)),
-            );
-          },
-        ),
-      ),
+    return Image.asset(
+      asset.assetPath,
+      fit: BoxFit.contain,
+      cacheWidth: asset.cacheWidth,
+      filterQuality: FilterQuality.medium,
+      semanticLabel: semanticLabel,
+      errorBuilder: (
+        BuildContext context,
+        Object error,
+        StackTrace? stackTrace,
+      ) {
+        return Semantics(
+          image: true,
+          label: '$semanticLabel. Product visual fallback.',
+          child: ExcludeSemantics(child: fallback.build(context)),
+        );
+      },
     );
   }
 }
