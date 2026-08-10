@@ -71,17 +71,17 @@ class WalkaHomeSmallChanges extends StatelessWidget {
 
         final Widget visual = SizedBox(
           height: stack ? 126 : 164,
-          child: const ColoredBox(
-            color: Color(0xFFEDE6DA),
+          child: ColoredBox(
+            color: const Color(0xFFEDE6DA),
             child: Padding(
-              padding: EdgeInsets.all(8),
+              padding: const EdgeInsets.all(8),
               child: WalkaResolvedProductMedia(
                 variantId: 'drawer-organizer:white',
                 kind: WalkaProductVisualKind.drawerOrganizer,
-                primaryColor: Color(0xFFF7F4EC),
-                backgroundColor: Color(0xFFEDE6DA),
+                primaryColor: const Color(0xFFF7F4EC),
+                backgroundColor: const Color(0xFFEDE6DA),
                 compact: true,
-                semanticLabel: 'WALKA Drawer Organizer lifestyle visual',
+                semanticLabel: drawerSemanticLabel,
               ),
             ),
           ),
