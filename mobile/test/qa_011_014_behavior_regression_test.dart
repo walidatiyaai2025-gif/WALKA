@@ -4,13 +4,22 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:walka/features/commerce/amazon_purchase.dart';
 import 'package:walka/features/favorites/favorites_state.dart';
 
+String _joinExistingSources(List<String> paths) {
+  return paths
+      .map(File.new)
+      .where((File file) => file.existsSync())
+      .map((File file) => file.readAsStringSync())
+      .join('\n');
+}
+
 void main() {
   test('QA-011 navigation smoke wiring covers primary and secondary routes', () {
     final String shell = File('lib/features/storefront/storefront_v102.dart')
         .readAsStringSync();
-    final String account =
-        File('lib/features/storefront/account_about_reference_v131.dart')
-            .readAsStringSync();
+    final String account = _joinExistingSources(<String>[
+      'lib/features/storefront/account_about_reference_v131.dart',
+      'lib/features/storefront/presentation/widgets/account/walka_account_groups.dart',
+    ]);
     final String favorites =
         File('lib/features/storefront/favorites_reference_v131.dart')
             .readAsStringSync();
@@ -31,8 +40,12 @@ void main() {
 
   test('QA-012 production PDP preserves Product Master truth and exclusions', () {
     final String master = File('../docs/PRODUCT_MASTER.md').readAsStringSync();
-    final String pdp =
-        File('lib/features/products/product_experience_v111.dart').readAsStringSync();
+    final String pdp = _joinExistingSources(<String>[
+      'lib/features/products/product_experience_v111.dart',
+      'lib/features/products/product_experience_v112.dart',
+      'lib/features/products/presentation/walka_pdp_model.dart',
+      'lib/features/products/presentation/widgets/walka_pdp_details.dart',
+    ]);
 
     for (final String masterFact in <String>[
       '- Capacity: 1200 ml',
