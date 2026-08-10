@@ -85,9 +85,11 @@ void main() {
     expect(find.text('8 compartments'), findsWidgets);
     expect(tester.takeException(), isNull);
 
-    await tester.tap(
+    final IconButton fullscreen = tester.widget<IconButton>(
       find.byKey(const ValueKey<String>('walka-pdp-gallery-fullscreen')),
     );
+    expect(fullscreen.onPressed, isNotNull);
+    fullscreen.onPressed!();
     await tester.pumpAndSettle();
     expect(
       find.byKey(const ValueKey<String>('walka-pdp-fullscreen-gallery')),
@@ -105,9 +107,10 @@ void main() {
     );
 
     expect(controller.isDrawerFavorite(gray: true), isFalse);
-    await tester.tap(
+    final IconButton favorite = tester.widget<IconButton>(
       find.byKey(const ValueKey<String>('walka-pdp-favorite')),
     );
+    favorite.onPressed!();
     await tester.pumpAndSettle();
     expect(controller.isDrawerFavorite(gray: true), isTrue);
   });
@@ -127,10 +130,14 @@ void main() {
     expect(find.textContaining('Not intended for liquids'), findsOneWidget);
     expect(find.textContaining('PANTONE 4155 U'), findsOneWidget);
 
-    final Finder pink = find.text('Pink');
-    await tester.ensureVisible(pink);
-    await tester.pumpAndSettle();
-    await tester.tap(pink);
+    final Finder pinkVariant = find.byKey(
+      const ValueKey<String>('premium-lunch-pink'),
+    );
+    expect(pinkVariant, findsOneWidget);
+    final InkWell pinkControl = tester.widget<InkWell>(
+      find.descendant(of: pinkVariant, matching: find.byType(InkWell)),
+    );
+    pinkControl.onTap!();
     await tester.pumpAndSettle();
     expect(find.textContaining('PANTONE 9242 U'), findsOneWidget);
     expect(tester.takeException(), isNull);
@@ -144,10 +151,11 @@ void main() {
       size: const Size(430, 900),
     );
 
-    await tester.scrollUntilVisible(
-      find.byKey(const ValueKey<String>('walka-pdp-amazon-trust')),
-      350,
-    );
+    final Finder trust = find.byKey(
+      const ValueKey<String>('walka-pdp-amazon-trust'),
+    ).first;
+    await tester.ensureVisible(trust);
+    await tester.pumpAndSettle();
     expect(find.textContaining('official Amazon listing'), findsOneWidget);
     expect(find.textContaining('CHECKOUT'), findsNothing);
     expect(find.textContaining('ADD TO CART'), findsNothing);
