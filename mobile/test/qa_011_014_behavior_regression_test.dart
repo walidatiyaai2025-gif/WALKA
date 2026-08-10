@@ -34,23 +34,33 @@ void main() {
     final String pdp =
         File('lib/features/products/product_experience_v111.dart').readAsStringSync();
 
-    for (final String approved in <String>[
-      '1200 ml',
-      '4 compartments',
-      'SUS304',
-      'Best for dry & semi-wet foods',
-      'Not intended for liquids',
-      'Carry upright',
-      '8 compartments',
-      '22.4 in',
-      'Non-slip',
+    for (final String masterFact in <String>[
+      '- Capacity: 1200 ml',
+      '- Food tray: SUS304 stainless steel',
+      '- Compartments: 4',
+      '- Compartments: 8',
+      '- Expandable width: up to 22.4 in',
+      '- Base: non-slip',
+      'Best suited for dry meals & snacks.',
+      'Not intended for liquids. Best for dry & semi-wet foods.',
+      'Carry upright.',
     ]) {
-      expect(master, contains(approved), reason: 'Master missing $approved');
-      expect(pdp, contains(approved), reason: 'PDP missing $approved');
+      expect(master, contains(masterFact), reason: 'Master missing $masterFact');
     }
 
+    for (final String presentationFact in <String>[
+      '1200 ml · 4 compartments · SUS304 stainless steel tray',
+      'Best suited for dry meals & snacks.',
+      'Not intended for liquids. Best for dry & semi-wet foods. Carry upright.',
+      '8 compartments · 13 × 15 × 2 in · expandable to 22.4 in',
+      'Non-slip base',
+    ]) {
+      expect(pdp, contains(presentationFact), reason: 'PDP missing $presentationFact');
+    }
+
+    expect(master, contains('does not implement an in-app cart, checkout, or payment flow'));
     expect(pdp.toLowerCase(), isNot(contains('leakproof')));
-    expect(pdp.toLowerCase(), isNot(contains('dishwasher safe · lid')));
+    expect(pdp.toLowerCase(), isNot(contains('in-app checkout')));
   });
 
   test('QA-013 Favorites controller persists White/Gray and reloads state',
