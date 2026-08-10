@@ -29,6 +29,8 @@ class WalkaCatalogStatusBanner extends StatelessWidget {
     final WalkaCatalogFeedbackKind kind = kindFor(controller);
     final _CatalogFeedbackCopy copy = _copyFor(kind);
     final bool reduceMotion = WalkaMotion.reduceMotion(context);
+    final bool canRetry = controller.canRefresh &&
+        kind != WalkaCatalogFeedbackKind.loading;
 
     return Semantics(
       key: ValueKey<String>('walka-catalog-status-${kind.name}'),
@@ -64,9 +66,9 @@ class WalkaCatalogStatusBanner extends StatelessWidget {
                     : const ColoredBox(color: WalkaColors.gold),
               ),
               Padding(
-                padding: const EdgeInsets.fromLTRB(12, 10, 12, 11),
+                padding: const EdgeInsets.fromLTRB(12, 10, 10, 11),
                 child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: <Widget>[
                     Container(
                       width: 34,
@@ -108,6 +110,23 @@ class WalkaCatalogStatusBanner extends StatelessWidget {
                         ],
                       ),
                     ),
+                    if (canRetry) ...<Widget>[
+                      const SizedBox(width: 8),
+                      WalkaPressFeedback(
+                        child: TextButton(
+                          key: const ValueKey<String>('walka-catalog-retry'),
+                          onPressed: controller.load,
+                          child: const Text(
+                            'RETRY',
+                            style: TextStyle(
+                              fontSize: 9,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 0.7,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),
