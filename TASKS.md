@@ -142,11 +142,11 @@ Legend: ✅ Done | 🟡 In progress | ⬜ Todo | ⛔ Blocked | ♻️ Existing c
 | ID | Status | Lane | Atomic task | Expected output |
 |---|---|---|---|---|
 | DS-001 | ✅ | Design System | Extract `WalkaSectionHeader` | Completed via #87 / PR #88; reusable eyebrow/title/action widget + focused tests |
-| DS-002 | ♻️ | Design System | Extract `WalkaReferenceTopBar` | Wordmark + action slots + safe-area handling |
-| DS-003 | ♻️ | Design System | Extract `WalkaPrimaryButton` | Gold primary CTA wrapper using Theme tokens |
-| DS-004 | ♻️ | Design System | Extract `WalkaSecondaryButton` | Navy outlined CTA wrapper |
-| DS-005 | ♻️ | Design System | Extract `WalkaCircularIconButton` | Shared 48x48 action button replacing duplicated local variants |
-| DS-006 | ⬜ | Design System | Create `WalkaPillChip` | Selectable/filter chip with active/inactive states |
+| DS-002 | ✅ | Design System | Extract `WalkaReferenceTopBar` | Completed via #92 / PR #98; extracted chrome + compatibility wrapper + focused tests |
+| DS-003 | ✅ | Design System | Extract `WalkaPrimaryButton` | Completed via #93 / PR #99; themed reusable primary CTA + focused tests |
+| DS-004 | ✅ | Design System | Extract `WalkaSecondaryButton` | Completed via #94 / PR #100; themed reusable secondary CTA + focused tests |
+| DS-005 | ✅ | Design System | Extract `WalkaCircularIconButton` | Completed via #95 / PR #101; shared 48x48 circular action + focused tests |
+| DS-006 | ✅ | Design System | Create `WalkaPillChip` | Completed via #96 / PR #102; accessible selectable/filter pill + focused tests |
 | DS-007 | ⬜ | Design System | Create `WalkaSurfaceCard` | Shared premium card surface/radius/border/elevation |
 | DS-008 | ⬜ | Design System | Create `WalkaEditorialCard` | Image/visual + heading + body + optional CTA slot |
 | DS-009 | ⬜ | Design System | Create `WalkaMetricTile` | Compact metric/value/label block |
@@ -365,7 +365,7 @@ Developers should avoid editing the same page file simultaneously. Extract compo
 # 7. Immediate execution queue
 
 1. **Do not duplicate #82/#83.** Account + About Android reference fidelity is completed and stable on `main`.
-2. Continue `DS-002` through `DS-010` as independent extraction/reuse tasks; `DS-001` is completed.
+2. Continue `DS-007` through `DS-010` as independent extraction/reuse tasks; `DS-001` through `DS-006` are completed.
 3. Run `HOME-002..010`, `CAT-003..012`, `PDP-002..014`, and `FAV-002..008` as visual-preserving modularization tasks.
 4. Classify `f96465c7-...png` (`REF-003`) before claiming missing PC Product/Categories reference coverage.
 5. Implement iOS parity: Home → Categories → PDP → Favorites → Account → About.
