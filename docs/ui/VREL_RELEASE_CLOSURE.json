@@ -1,0 +1,113 @@
+{
+  "schemaVersion": 1,
+  "batch": "VREL-001..100",
+  "parentBatchIssue": 244,
+  "parentVisualReleaseIssue": 230,
+  "overallVisualReleaseState": "BLOCKED",
+  "engineeringGateState": "REQUIRED_GREEN",
+  "artifactIdentityContract": {
+    "task": "VREL-091",
+    "receiptFields": [
+      "Source commit",
+      "Workflow run",
+      "Workflow run number",
+      "APK type",
+      "APK bytes",
+      "APK SHA-256"
+    ],
+    "candidateArtifactNameTemplate": "walka-installable-${github.sha}",
+    "exactIdentityTuple": [
+      "source commit",
+      "workflow run",
+      "APK SHA-256"
+    ]
+  },
+  "productionAssetReadinessContract": {
+    "task": "VREL-092",
+    "receiptFields": [
+      "Production asset readiness",
+      "Production asset report SHA-256"
+    ],
+    "currentRequiredCount": 5,
+    "currentReadyCount": 0,
+    "currentState": "BLOCKED"
+  },
+  "variants": [
+    {
+      "task": "VREL-093",
+      "variantId": "drawer-organizer:white",
+      "sourceState": "APPROVED",
+      "canonicalPath": "assets/products/drawer/white.png",
+      "canonicalPresent": false,
+      "releaseState": "BLOCKED",
+      "blocker": "Approved expanded White source exists, but canonical transparent production PNG is not present.",
+      "unblockAction": "Export the approved expanded White source non-destructively to the canonical PNG and pass geometry, alpha-edge, framing, file-budget and Flutter integration QA."
+    },
+    {
+      "task": "VREL-093",
+      "variantId": "drawer-organizer:gray",
+      "sourceState": "BLOCKED",
+      "canonicalPath": "assets/products/drawer/gray.png",
+      "canonicalPresent": false,
+      "releaseState": "BLOCKED",
+      "blocker": "Current real Gray source is collapsed and cannot truthfully provide expanded parity without reconstruction.",
+      "unblockAction": "Provide/approve a faithful expanded Gray source, or explicitly approve a collapsed Gray canonical presentation; then export and pass canonical QA."
+    },
+    {
+      "task": "VREL-093",
+      "variantId": "lunch-box:blue",
+      "sourceState": "APPROVED",
+      "canonicalPath": "assets/products/lunch/blue.png",
+      "canonicalPresent": false,
+      "releaseState": "BLOCKED",
+      "blocker": "Approved Blue source exists, but canonical transparent production PNG is not present.",
+      "unblockAction": "Produce the canonical transparent Blue cutout while preserving the four-compartment SUS304 tray, accessories and material highlights, then pass alpha/framing/file-budget QA."
+    },
+    {
+      "task": "VREL-093",
+      "variantId": "lunch-box:pink",
+      "sourceState": "APPROVED",
+      "canonicalPath": "assets/products/lunch/pink.png",
+      "canonicalPresent": false,
+      "releaseState": "BLOCKED",
+      "blocker": "Approved Pink source is embedded in a marketplace screenshot; canonical clean product-only PNG is not present.",
+      "unblockAction": "Extract only the approved clean product panel, exclude marketplace/title/rating/navigation pixels, then export and pass canonical QA."
+    },
+    {
+      "task": "VREL-093",
+      "variantId": "lunch-box:green",
+      "sourceState": "APPROVED",
+      "canonicalPath": "assets/products/lunch/green.png",
+      "canonicalPresent": false,
+      "releaseState": "BLOCKED",
+      "blocker": "Approved Green source exists with a different camera/layout; canonical normalized production PNG is not present.",
+      "unblockAction": "Normalize canvas, scale and optical center without reconstructing geometry, then export and pass alpha/framing/file-budget QA."
+    }
+  ],
+  "blockerSummary": {
+    "task": "VREL-094",
+    "canonicalAssetsMissing": 5,
+    "sourceBlockedVariants": ["drawer-organizer:gray"],
+    "ownerVisibleStablePublicationAllowed": false
+  },
+  "visualAcceptanceLifecycle": {
+    "task": "VREL-096",
+    "states": ["PENDING", "PASS", "BLOCKED", "REOPEN"],
+    "transitions": [
+      "PENDING->PASS",
+      "PENDING->BLOCKED",
+      "BLOCKED->REOPEN",
+      "REOPEN->PASS",
+      "REOPEN->BLOCKED",
+      "PASS->REOPEN"
+    ],
+    "passRule": "PASS requires the real canonical asset plus reference/runtime visual inspection; painted fallback never proves product-photo acceptance.",
+    "reopenRule": "Any visual, product-truth, alpha, mapping, performance or accessibility regression reopens the affected acceptance row before a new stable owner-visible publication."
+  },
+  "rollback": {
+    "task": "VREL-097",
+    "policyDocument": "docs/ui/VREL_ASSET_ROLLBACK.md",
+    "preservePreviousVerifiedApk": true,
+    "allowNewStablePublicationDuringRegression": false
+  }
+}
