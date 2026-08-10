@@ -79,6 +79,10 @@ jobs:
         working-directory: mobile
         run: flutter create --platforms=android --project-name walka .
 
+      - name: Apply WALKA Android branding
+        working-directory: mobile
+        run: bash tool/apply_android_branding.sh
+
       - name: Build installable release APK
         working-directory: mobile
         run: flutter build apk --release
@@ -127,7 +131,7 @@ jobs:
           app_version="$(awk '/^version:/ {print $2; exit}' mobile/pubspec.yaml)"
           built_utc="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
 
-          cat > stable-apk-stage/VERIFIED_BUILD.md <<EOF
+          cat > stable-apk-stage/VERIFIED_BUILD.md <<EOF_RECEIPT
           # WALKA Last Verified APK Receipt
 
           - App version: \`${app_version}\`
@@ -140,7 +144,7 @@ jobs:
           - Built UTC: \`${built_utc}\`
           - Validation: Flutter Analyze + full Flutter Test suite + Android release APK build succeeded before this receipt was generated.
           - Intended use: installable WALKA test build from stable \`main\`; this is not a Play Store signing receipt.
-          EOF
+          EOF_RECEIPT
 
           echo "apk_sha=${apk_sha}" >> "$GITHUB_OUTPUT"
           echo "apk_bytes=${apk_bytes}" >> "$GITHUB_OUTPUT"
