@@ -31,9 +31,9 @@ void main() {
   test('QA-017 stable-main publication is guarded against stale builds', () {
     expect(workflow, contains('- name: Guard stable main publication'));
     expect(workflow, contains('remote_main='));
-    expect(workflow, contains('remote_main\" == \"\$GITHUB_SHA'));
+    expect(workflow, contains(r'if [[ "$remote_main" == "$GITHUB_SHA" ]]'));
     expect(workflow, contains('- name: Publish latest verified APK to main'));
-    expect(workflow, contains("git push origin HEAD:main"));
+    expect(workflow, contains('git push origin HEAD:main'));
   });
 
   test('QA-017 checked-in verified APK receipt matches file size contract', () {
