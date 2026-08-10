@@ -37,6 +37,15 @@ void main() {
     );
     await tester.pump();
 
+    final FlutterExceptionHandler? previousOnError = FlutterError.onError;
+    FlutterError.onError = (FlutterErrorDetails details) {
+      debugPrint('=== DESIGN-007 LIVE HOME RENDER ERROR ===');
+      debugPrint(details.toString());
+      debugPrint('=== END DESIGN-007 LIVE HOME RENDER ERROR ===');
+      previousOnError?.call(details);
+    };
+    addTearDown(() => FlutterError.onError = previousOnError);
+
     final Finder scroll = find.byType(CustomScrollView);
     for (int index = 0; index < 3; index += 1) {
       await tester.drag(scroll, const Offset(0, -360));
@@ -44,15 +53,6 @@ void main() {
     }
 
     final Object? exception = tester.takeException();
-    if (exception is FlutterError) {
-      debugPrint('=== DESIGN-007 HOME OVERFLOW DIAGNOSTICS ===');
-      for (final DiagnosticsNode node in exception.diagnostics) {
-        debugPrint(node.toStringDeep());
-      }
-      debugPrint('=== END DESIGN-007 HOME OVERFLOW DIAGNOSTICS ===');
-    } else {
-      debugPrint('DESIGN-007 HOME diagnostic exception: $exception');
-    }
     expect(exception, isNotNull);
   });
 }
