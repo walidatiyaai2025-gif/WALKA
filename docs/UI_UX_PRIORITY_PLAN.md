@@ -28,8 +28,8 @@ WALKA should feel like a premium US-market home-organization brand, not a generi
 | 1 | DESIGN-001 | Home premium visual fidelity + product presentation | #47 | COMPLETED |
 | 2 | DESIGN-002 | App shell + bottom navigation premium polish | #48 | COMPLETED |
 | 3 | DESIGN-003 | Categories + Search discovery refinement | #49 | COMPLETED |
-| 4 | DESIGN-004 | Product Detail premium commerce hierarchy + gallery polish | #50 | P0 NEXT |
-| 5 | DESIGN-005 | Favorites + Account + information consistency | #51 | P0 QUEUED |
+| 4 | DESIGN-004 | Product Detail premium commerce hierarchy + gallery polish | #50 | IN PROGRESS |
+| 5 | DESIGN-005 | Favorites + Account + information consistency | #51 | P0 NEXT |
 | 6 | DESIGN-006 | Motion + feedback + loading/offline state polish | #52 | P0 QUEUED |
 | 7 | DESIGN-007 | Cross-device visual QA + golden regression matrix | #53 | P0 QUEUED |
 
@@ -56,22 +56,54 @@ Parent design program: #46.
 - Product Detail routing and variant-aware Amazon handoff remain unchanged.
 - Search empty-state recovery and compact/scaled layouts are regression-tested.
 
-## DESIGN-004 next execution boundary
+## DESIGN-004 active execution boundary
 
 Issue: `#50` — Product Detail premium commerce hierarchy + gallery polish.
 
-The next slice should improve the existing Drawer and Lunch Product Detail experience without changing Product Master facts or the Amazon purchase architecture.
+Final reconciliation branch: `agent/design-004-premium-pdp-final`.
 
-### DESIGN-004 priorities
+The implementation is reconciled onto the latest stable `main`, including the DESIGN-003 documentation receipt and latest verified-APK publication commit. The earlier working PR #63 remains a validation branch only and must not be merged after the documentation divergence.
 
-- Strengthen product-first image/gallery hierarchy and gallery affordances.
-- Make selected variant, title, key facts and official Amazon action immediately clear.
-- Harmonize Drawer and Lunch PDP structure while preserving family-specific facts and care/safety language.
-- Keep zoom/share/gallery behavior discoverable and accessible.
-- Keep the Amazon purchase action prominent without introducing in-app cart/checkout/payment.
-- Preserve stable Product/Variant IDs and API-driven purchase destinations.
-- Add compact-width and text-scale regressions before merge.
-- Require Flutter Analyze, full tests, Android release APK candidate and stable-main verified APK publication.
+### DESIGN-004 delivered on the branch
+
+- Promotes the public V100 Drawer/Lunch entry points to the new premium V110 Product Detail surface while retaining V10 as a legacy copy/behavior regression reference.
+- Adds a product-led three-view gallery with explicit fullscreen and tap-to-zoom affordances plus a zoomable `InteractiveViewer` fullscreen experience.
+- Consolidates title, verified facts, selected variant, variant controls and official-Amazon trust cue directly below the gallery.
+- Replaces the fixed-width purchase treatment with a SafeArea-aware responsive Amazon bar that stacks on compact width and elevated text scale.
+- Keeps Drawer persistent Favorites on the existing controller and keeps variant-aware Amazon destinations on the existing commerce registry.
+- Harmonizes Drawer and Lunch hierarchy through shared premium fact cards, editorial panels, disclosures and related-collection presentation.
+- Preserves approved Lunch spill-resistant, dry-meal and upright-carry guidance and documented care rules.
+- Keeps Drawer claims restricted to Product Master facts: plastic, 8 compartments, 13 × 15 × 2 in, expandable to 22.4 in, non-slip base, White/Gray.
+- Adds focused Drawer/Lunch compact 320×568 at 1.3× text-scaling coverage, gallery/fullscreen behavior, variant identity behavior and share-sheet discovery tests.
+- Fixes a real unbounded related-product visual found by CI without changing the shared product visual contract.
+
+### Reconciliation/validation state
+
+- Latest stable base before final reconciliation: `1c577ebb0f56bb5e219273dd80ff6de0ba1772ef`.
+- Pre-reconciliation implementation head: `a69efe941e844dd98963ea29b34c9f76e8051930`.
+- Pre-reconciliation Flutter Preview run: `31345401042` (#346).
+- Flutter Analyze: green.
+- Full Flutter tests: green.
+- Android release APK build/artifact remains a required gate before the final PR can become Ready.
+- The final reconciliation branch must independently rerun all gates against current `main`; the pre-reconciliation result alone is not merge authorization.
+
+### DESIGN-004 merge gate
+
+- Flutter Analyze green on the exact final PR head.
+- Full Flutter suite green, including direct V10 legacy contracts.
+- Drawer and Lunch DESIGN-004 behavior tests green.
+- 320×568 + 1.3× text-scaling Product Detail regressions green.
+- Fullscreen gallery/zoom/share discoverability green.
+- Product Master copy and Amazon routing contracts preserved.
+- Android release-mode APK candidate build/upload green.
+- Stable `main` untouched until those gates pass.
+- After merge, stable-main CI must pass independently and republish `Last verified APK/WALKA-latest.apk` sourced from the DESIGN-004 merge commit.
+
+## DESIGN-005 next execution boundary
+
+Issue: `#51` — Favorites + Account + information consistency.
+
+Do not begin owner-visible DESIGN-005 changes until DESIGN-004 reaches stable `main` and a matching verified APK receipt exists. Audit work may happen earlier, but runtime changes remain on a separate branch.
 
 ## Design program Definition of Done
 
