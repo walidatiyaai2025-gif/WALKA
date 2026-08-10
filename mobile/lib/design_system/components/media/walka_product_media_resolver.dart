@@ -3,6 +3,14 @@ import 'package:flutter/material.dart';
 import '../../walka_product_visual.dart';
 import 'walka_product_media.dart';
 
+abstract final class WalkaProductMediaDecodeBudget {
+  static const int home = 1200;
+  static const int discovery = 1200;
+  static const int pdp = 1600;
+  static const int favorites = 1200;
+  static const int defaultAsset = 1200;
+}
+
 class WalkaProductMediaAsset {
   const WalkaProductMediaAsset({
     required this.variantId,
@@ -13,6 +21,8 @@ class WalkaProductMediaAsset {
   final String variantId;
   final String assetPath;
   final int cacheWidth;
+
+  String get cacheIdentity => '$variantId::$assetPath@$cacheWidth';
 }
 
 /// Asset-backed product media that always falls back to deterministic WALKA
@@ -34,6 +44,7 @@ class WalkaAssetProductMedia implements WalkaProductMedia {
   Widget build(BuildContext context) {
     return Image.asset(
       asset.assetPath,
+      key: ValueKey<String>(asset.cacheIdentity),
       fit: BoxFit.contain,
       cacheWidth: asset.cacheWidth,
       filterQuality: FilterQuality.medium,
@@ -66,7 +77,8 @@ class WalkaProductMediaResolver {
   const WalkaProductMediaResolver.production()
       : assetsByVariant = productionAssets;
 
-  static const int defaultCacheWidth = 1200;
+  static const int defaultCacheWidth =
+      WalkaProductMediaDecodeBudget.defaultAsset;
 
   static const Map<String, WalkaProductMediaAsset> productionAssets =
       <String, WalkaProductMediaAsset>{
