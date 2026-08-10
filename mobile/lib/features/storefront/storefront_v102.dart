@@ -4,18 +4,16 @@ import '../../design_system/walka_adaptive.dart';
 import '../../design_system/walka_shell.dart';
 import '../../design_system/walka_theme.dart';
 import '../catalog/catalog_state.dart';
-import '../information/information_v102.dart';
 import 'discovery_premium_v122.dart';
 import 'home_premium_v121.dart';
-import 'storefront_v101.dart' show WalkaFavoritesV101;
+import 'secondary_premium_v130.dart';
 
-/// API-002 connected storefront entry surface with DESIGN-002 premium chrome
-/// and DESIGN-003 product-led discovery.
+/// API-002 connected storefront entry surface with DESIGN-002 premium chrome,
+/// DESIGN-003 product-led discovery and DESIGN-005 premium secondary screens.
 ///
-/// Home, Search and Categories consume the typed catalog repository while
-/// preserving the WALKA five-destination information architecture. Search and
-/// Categories keep the released catalog semantics but now share the premium
-/// product-led visual language established by DESIGN-001/002.
+/// Home, Search, Categories, Favorites and Account preserve the released
+/// catalog/state/navigation contracts while sharing one premium WALKA visual
+/// language.
 class WalkaStorefrontSplashV102 extends StatelessWidget {
   const WalkaStorefrontSplashV102({super.key});
 
@@ -142,8 +140,8 @@ class _WalkaStorefrontShellV102State extends State<WalkaStorefrontShellV102> {
       ),
       const WalkaSearchPremiumV122(),
       const WalkaCategoriesPremiumV122(),
-      WalkaFavoritesV101(onExplore: () => _select(2)),
-      const WalkaAccountV102(),
+      WalkaFavoritesPremiumV130(onExplore: () => _select(2)),
+      const WalkaAccountPremiumV130(),
     ];
 
     return Scaffold(
