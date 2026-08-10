@@ -27,7 +27,7 @@ WALKA should feel like a premium US-market home-organization brand, not a generi
 |---|---|---|---|---|
 | 1 | DESIGN-001 | Home premium visual fidelity + product presentation | #47 | COMPLETED |
 | 2 | DESIGN-002 | App shell + bottom navigation premium polish | #48 | COMPLETED |
-| 3 | DESIGN-003 | Categories + Search discovery refinement | #49 | IN PROGRESS |
+| 3 | DESIGN-003 | Categories + Search discovery refinement | #49 | COMPLETED |
 | 4 | DESIGN-004 | Product Detail premium commerce hierarchy + gallery polish | #50 | P0 NEXT |
 | 5 | DESIGN-005 | Favorites + Account + information consistency | #51 | P0 QUEUED |
 | 6 | DESIGN-006 | Motion + feedback + loading/offline state polish | #52 | P0 QUEUED |
@@ -35,32 +35,43 @@ WALKA should feel like a premium US-market home-organization brand, not a generi
 
 Parent design program: #46.
 
-## DESIGN-003 active implementation
+## DESIGN-003 stable receipt
 
-Branch: `agent/design-003-premium-discovery`
+- Issue: `#49` — completed.
+- PR: `#61`.
+- Final validated PR head: `26aa79dbae88f16dc2f2fc4d27446200a24a1040`.
+- PR-context Flutter run: `31344067109` — green.
+- Stable merge commit: `56863f06b603234e706a4be60509d8b166f84c64`.
+- Stable-main Flutter run: `31344297255` — green.
+- Stable APK publication commit: `5e636306d62ce7e405816d77d58a184c1dda09d1`.
+- Verified APK SHA-256: `68759ecca4858804d5f80267eb71bf1e369e0e9b81a974ef19ed75e5c4def9e1`.
+- Compact 320×568 and 1.3× text-scaling regressions are part of the full Flutter gate.
 
-### Problem
+### DESIGN-003 delivered
 
-The released Search and Categories flows are functionally sound, but their dominant product surfaces still use generic `grid_view` and `lunch_dining` Material icons. That creates a visible quality gap next to the product-led DESIGN-001 Home and the shared premium DESIGN-002 shell.
+- Product-led Categories with Drawer/Lunch editorial family presentation.
+- Product-led Search results and preserved All / Drawer / Lunch filtering semantics.
+- Reusable `WalkaProductVisual` replaces generic product icons as the dominant discovery visual.
+- Remote/cache/bundled catalog path, stable Product/Variant IDs and token matching remain unchanged.
+- Product Detail routing and variant-aware Amazon handoff remain unchanged.
+- Search empty-state recovery and compact/scaled layouts are regression-tested.
 
-### Implementation direction
+## DESIGN-004 next execution boundary
 
-- Replace dominant generic product icons in Categories and Search results with the reusable `WalkaProductVisual` family presentation.
-- Give Drawer Organizer and Lunch Box distinct editorial family treatments while keeping one WALKA visual system.
-- Preserve the released remote/cache/bundled catalog data path, stable Product/Variant IDs and search token matching.
-- Preserve All / Drawer / Lunch family filtering and Product Detail routing.
-- Improve search-field focus treatment, result count/source metadata and no-results recovery without changing semantics.
-- Keep adaptive shell gutters and shared `WalkaWordmark` treatment from DESIGN-002.
-- Add compact 320×568 regressions plus focused search/filter behavior tests.
+Issue: `#50` — Product Detail premium commerce hierarchy + gallery polish.
 
-### Merge gate
+The next slice should improve the existing Drawer and Lunch Product Detail experience without changing Product Master facts or the Amazon purchase architecture.
 
-- Flutter Analyze green.
-- Full Flutter test suite green.
-- DESIGN-003 focused compact Categories regression green.
-- Search query/filter/empty-state regressions green.
-- Android release-mode APK candidate build/upload green.
-- Stable `main` remains untouched until the above gates pass.
+### DESIGN-004 priorities
+
+- Strengthen product-first image/gallery hierarchy and gallery affordances.
+- Make selected variant, title, key facts and official Amazon action immediately clear.
+- Harmonize Drawer and Lunch PDP structure while preserving family-specific facts and care/safety language.
+- Keep zoom/share/gallery behavior discoverable and accessible.
+- Keep the Amazon purchase action prominent without introducing in-app cart/checkout/payment.
+- Preserve stable Product/Variant IDs and API-driven purchase destinations.
+- Add compact-width and text-scale regressions before merge.
+- Require Flutter Analyze, full tests, Android release APK candidate and stable-main verified APK publication.
 
 ## Design program Definition of Done
 
