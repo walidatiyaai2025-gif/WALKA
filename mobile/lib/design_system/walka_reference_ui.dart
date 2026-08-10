@@ -12,6 +12,8 @@ abstract final class WalkaReferenceUi {
   static const double headerHorizontalPadding = 12;
   static const double headerVerticalPadding = 10;
   static const double headerSlotExtent = 48;
+  static const double headerExtent =
+      headerSlotExtent + (headerVerticalPadding * 2);
   static const double headerDividerWidth = 0.7;
 
   static const TextStyle wordmarkStyle = TextStyle(
@@ -39,11 +41,11 @@ class WalkaReferenceViewport extends StatelessWidget {
   }
 }
 
-/// Shared top bar used by Home, Categories, Search, Favorites and Account.
+/// Shared top bar contract for Home, Categories, Search, Favorites and Account.
 ///
 /// A slot can be decorative (icon with no callback), interactive (icon +
-/// callback), or empty. All variants keep a fixed 48dp slot so the WALKA
-/// wordmark remains optically centered regardless of surrounding actions.
+/// callback), or empty. The bar and both slots use deterministic extents so the
+/// WALKA wordmark remains optically centered even inside loose layout parents.
 class WalkaReferenceHeader extends StatelessWidget {
   const WalkaReferenceHeader({
     this.headerKey,
@@ -74,43 +76,48 @@ class WalkaReferenceHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return SizedBox(
       key: headerKey,
-      padding: const EdgeInsets.symmetric(
-        horizontal: WalkaReferenceUi.headerHorizontalPadding,
-        vertical: WalkaReferenceUi.headerVerticalPadding,
-      ),
-      decoration: const BoxDecoration(
-        color: WalkaReferenceUi.headerBackground,
-        border: Border(
-          bottom: BorderSide(
-            color: WalkaColors.line,
-            width: WalkaReferenceUi.headerDividerWidth,
-          ),
-        ),
-      ),
-      child: Row(
-        children: <Widget>[
-          _ReferenceHeaderSlot(
-            icon: leadingIcon,
-            color: leadingColor,
-            tooltip: leadingTooltip,
-            actionKey: leadingKey,
-            onPressed: onLeading,
-          ),
-          const Expanded(
-            child: Center(
-              child: Text('WALKA', style: WalkaReferenceUi.wordmarkStyle),
+      height: WalkaReferenceUi.headerExtent,
+      child: DecoratedBox(
+        decoration: const BoxDecoration(
+          color: WalkaReferenceUi.headerBackground,
+          border: Border(
+            bottom: BorderSide(
+              color: WalkaColors.line,
+              width: WalkaReferenceUi.headerDividerWidth,
             ),
           ),
-          _ReferenceHeaderSlot(
-            icon: trailingIcon,
-            color: trailingColor,
-            tooltip: trailingTooltip,
-            actionKey: trailingKey,
-            onPressed: onTrailing,
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: WalkaReferenceUi.headerHorizontalPadding,
+            vertical: WalkaReferenceUi.headerVerticalPadding,
           ),
-        ],
+          child: Row(
+            children: <Widget>[
+              _ReferenceHeaderSlot(
+                icon: leadingIcon,
+                color: leadingColor,
+                tooltip: leadingTooltip,
+                actionKey: leadingKey,
+                onPressed: onLeading,
+              ),
+              const Expanded(
+                child: Center(
+                  child: Text('WALKA', style: WalkaReferenceUi.wordmarkStyle),
+                ),
+              ),
+              _ReferenceHeaderSlot(
+                icon: trailingIcon,
+                color: trailingColor,
+                tooltip: trailingTooltip,
+                actionKey: trailingKey,
+                onPressed: onTrailing,
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
