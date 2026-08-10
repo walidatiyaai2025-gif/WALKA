@@ -174,7 +174,11 @@ void main() {
     await tester.tap(find.byIcon(Icons.search_outlined));
     await tester.pumpAndSettle();
 
-    expect(find.text('Search WALKA'), findsOneWidget);
+    expect(find.byIcon(Icons.search_rounded), findsWidgets);
+    expect(
+      find.byKey(const ValueKey<String>('premium-discovery-search-field')),
+      findsOneWidget,
+    );
     expect(find.text('Offline · built-in catalog'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
