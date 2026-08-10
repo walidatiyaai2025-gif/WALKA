@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 
+import 'components/chrome/walka_reference_top_bar.dart';
 import 'walka_theme.dart';
+
+export 'components/chrome/walka_reference_top_bar.dart';
 
 /// Shared visual contract for the Android-reference storefront surfaces.
 ///
@@ -9,20 +12,14 @@ import 'walka_theme.dart';
 abstract final class WalkaReferenceUi {
   static const Color pageBackground = WalkaColors.ivory;
   static const Color headerBackground = WalkaColors.white;
-  static const double headerHorizontalPadding = 12;
-  static const double headerVerticalPadding = 10;
-  static const double headerSlotExtent = 48;
-  static const double headerExtent =
-      headerSlotExtent + (headerVerticalPadding * 2);
-  static const double headerDividerWidth = 0.7;
+  static const double headerHorizontalPadding =
+      WalkaReferenceTopBar.horizontalPadding;
+  static const double headerVerticalPadding = WalkaReferenceTopBar.verticalPadding;
+  static const double headerSlotExtent = WalkaReferenceTopBar.slotExtent;
+  static const double headerExtent = WalkaReferenceTopBar.extent;
+  static const double headerDividerWidth = WalkaReferenceTopBar.dividerWidth;
 
-  static const TextStyle wordmarkStyle = TextStyle(
-    color: WalkaColors.navy,
-    fontFamily: 'serif',
-    fontSize: 27,
-    fontWeight: FontWeight.w700,
-    letterSpacing: 2.8,
-  );
+  static const TextStyle wordmarkStyle = WalkaReferenceTopBar.wordmarkStyle;
 }
 
 /// Standard owner-visible reference viewport: warm WALKA background plus the
@@ -41,11 +38,11 @@ class WalkaReferenceViewport extends StatelessWidget {
   }
 }
 
-/// Shared top bar contract for Home, Categories, Search, Favorites and Account.
+/// Compatibility wrapper retained for existing released screens.
 ///
-/// A slot can be decorative (icon with no callback), interactive (icon +
-/// callback), or empty. The bar and both slots use deterministic extents so the
-/// WALKA wordmark remains optically centered even inside loose layout parents.
+/// New code should use [WalkaReferenceTopBar] directly. This wrapper preserves
+/// the established constructor and delegates all rendering to the extracted
+/// design-system component.
 class WalkaReferenceHeader extends StatelessWidget {
   const WalkaReferenceHeader({
     this.headerKey,
@@ -76,89 +73,18 @@ class WalkaReferenceHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      key: headerKey,
-      height: WalkaReferenceUi.headerExtent,
-      child: DecoratedBox(
-        decoration: const BoxDecoration(
-          color: WalkaReferenceUi.headerBackground,
-          border: Border(
-            bottom: BorderSide(
-              color: WalkaColors.line,
-              width: WalkaReferenceUi.headerDividerWidth,
-            ),
-          ),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: WalkaReferenceUi.headerHorizontalPadding,
-            vertical: WalkaReferenceUi.headerVerticalPadding,
-          ),
-          child: Row(
-            children: <Widget>[
-              _ReferenceHeaderSlot(
-                icon: leadingIcon,
-                color: leadingColor,
-                tooltip: leadingTooltip,
-                actionKey: leadingKey,
-                onPressed: onLeading,
-              ),
-              const Expanded(
-                child: Center(
-                  child: Text('WALKA', style: WalkaReferenceUi.wordmarkStyle),
-                ),
-              ),
-              _ReferenceHeaderSlot(
-                icon: trailingIcon,
-                color: trailingColor,
-                tooltip: trailingTooltip,
-                actionKey: trailingKey,
-                onPressed: onTrailing,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _ReferenceHeaderSlot extends StatelessWidget {
-  const _ReferenceHeaderSlot({
-    required this.icon,
-    required this.color,
-    required this.tooltip,
-    required this.actionKey,
-    required this.onPressed,
-  });
-
-  final IconData? icon;
-  final Color color;
-  final String? tooltip;
-  final Key? actionKey;
-  final VoidCallback? onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    if (icon == null) {
-      return const SizedBox.square(
-        dimension: WalkaReferenceUi.headerSlotExtent,
-      );
-    }
-    if (onPressed == null) {
-      return SizedBox.square(
-        dimension: WalkaReferenceUi.headerSlotExtent,
-        child: Icon(icon, color: color),
-      );
-    }
-    return SizedBox.square(
-      dimension: WalkaReferenceUi.headerSlotExtent,
-      child: IconButton(
-        key: actionKey,
-        onPressed: onPressed,
-        tooltip: tooltip,
-        icon: Icon(icon, color: color),
-      ),
+    return WalkaReferenceTopBar(
+      headerKey: headerKey,
+      leadingIcon: leadingIcon,
+      leadingColor: leadingColor,
+      leadingTooltip: leadingTooltip,
+      leadingKey: leadingKey,
+      onLeading: onLeading,
+      trailingIcon: trailingIcon,
+      trailingColor: trailingColor,
+      trailingTooltip: trailingTooltip,
+      trailingKey: trailingKey,
+      onTrailing: onTrailing,
     );
   }
 }
