@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:walka/design_system/components/media/walka_product_media_resolver.dart';
 import 'package:walka/design_system/walka_product_visual.dart';
 import 'package:walka/design_system/walka_theme.dart';
 
@@ -13,8 +14,10 @@ class WalkaHomeCollectionCard extends StatelessWidget {
     required this.semanticLabel,
     required this.onTap,
     super.key,
+    this.variantId,
   });
 
+  final String? variantId;
   final String title;
   final String subtitle;
   final WalkaProductVisualKind kind;
@@ -27,6 +30,22 @@ class WalkaHomeCollectionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final double scale = MediaQuery.textScalerOf(context).scale(1);
     final double bodyMinHeight = scale > 1.15 ? 138 : 116;
+    final Widget visual = variantId == null
+        ? WalkaProductVisual(
+            kind: kind,
+            primaryColor: primaryColor,
+            backgroundColor: visualBackground,
+            compact: true,
+            semanticLabel: semanticLabel,
+          )
+        : WalkaResolvedProductMedia(
+            variantId: variantId!,
+            kind: kind,
+            primaryColor: primaryColor,
+            backgroundColor: visualBackground,
+            compact: true,
+            semanticLabel: semanticLabel,
+          );
 
     return SizedBox(
       width: 238,
@@ -52,13 +71,7 @@ class WalkaHomeCollectionCard extends StatelessWidget {
                     color: visualBackground,
                     child: Padding(
                       padding: const EdgeInsets.all(10),
-                      child: WalkaProductVisual(
-                        kind: kind,
-                        primaryColor: primaryColor,
-                        backgroundColor: visualBackground,
-                        compact: true,
-                        semanticLabel: semanticLabel,
-                      ),
+                      child: visual,
                     ),
                   ),
                 ),
