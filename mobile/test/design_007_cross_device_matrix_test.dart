@@ -8,7 +8,7 @@ import 'package:walka/features/products/product_experience_v100.dart';
 import 'package:walka/features/storefront/account_about_reference_v131.dart';
 import 'package:walka/features/storefront/discovery_reference_v123.dart';
 import 'package:walka/features/storefront/favorites_reference_v131.dart';
-import 'package:walka/features/storefront/home_premium_v121.dart';
+import 'package:walka/features/storefront/home_premium_v122.dart';
 import 'package:walka/features/storefront/storefront_v102.dart';
 
 void main() {
@@ -39,8 +39,8 @@ void main() {
         final List<_SurfaceCase> surfaces = <_SurfaceCase>[
           _SurfaceCase(
             'Home',
-            WalkaHomePremiumV121(onShopAll: () {}, onSearch: () {}),
-            scrollPasses: 5,
+            WalkaHomePremiumV122(onShopAll: () {}, onSearch: () {}),
+            scrollPasses: 6,
           ),
           const _SurfaceCase(
             'Search',
@@ -176,6 +176,9 @@ void main() {
   testWidgets(
     'PDP sticky Amazon CTA remains present across compact and large widths',
     (WidgetTester tester) async {
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
       for (final Size size in <Size>[
         const Size(320, 568),
         const Size(430, 932),
@@ -208,8 +211,6 @@ void main() {
         favorites.dispose();
         catalog.dispose();
       }
-      tester.view.resetPhysicalSize();
-      tester.view.resetDevicePixelRatio();
     },
   );
 }
