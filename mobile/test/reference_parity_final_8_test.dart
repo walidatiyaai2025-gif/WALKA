@@ -308,10 +308,8 @@ void main() {
       const ValueKey<String>('reference-favorites-edit'),
     );
     await tester.ensureVisible(edit);
-    final InkWell editControl = tester.widget<InkWell>(
-      find.descendant(of: edit, matching: find.byType(InkWell)),
-    );
-    editControl.onTap!();
+    final OutlinedButton editControl = tester.widget<OutlinedButton>(edit);
+    editControl.onPressed!();
     await tester.pump();
 
     final Finder remove = find.byKey(const ValueKey<String>('reference-remove-gray'));
