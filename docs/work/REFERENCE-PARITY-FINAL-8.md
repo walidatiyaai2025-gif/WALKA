@@ -21,6 +21,7 @@ Branch: `agent/reference-parity-final-8`
 - Existing catalog/navigation/Favorites persistence preserved.
 - Amazon boundary unchanged.
 - Protected `Images/` unchanged.
+- QA-011/012 modular source-scan reconciliation landed separately in PR #234; this wave keeps those assertions and contains no workaround that bypasses them.
 
 ## Required validation
 - [ ] Flutter Analyze Green.
