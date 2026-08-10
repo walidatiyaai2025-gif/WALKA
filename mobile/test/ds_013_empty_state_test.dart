@@ -84,10 +84,7 @@ void main() {
     );
 
     final SemanticsNode node = tester.getSemantics(find.text('Empty heading'));
-    expect(
-      node.flagsCollection.contains(SemanticsFlag.isHeader),
-      isTrue,
-    );
+    expect(node.flagsCollection.isHeader, isTrue);
   });
 
   testWidgets('stays overflow-free at compact width and 1.3x text scale',
