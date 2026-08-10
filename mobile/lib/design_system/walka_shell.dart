@@ -1,28 +1,13 @@
 import 'package:flutter/material.dart';
 
-import 'walka_adaptive.dart';
-import 'walka_motion.dart';
+import 'components/chrome/walka_shell_metrics.dart';
 import 'walka_theme.dart';
 
-/// Shared chrome metrics for the premium WALKA mobile shell.
-abstract final class WalkaShellMetrics {
-  static const double navigationHeight = 72;
-  static const double headerTop = 16;
-  static const double headerBottom = 8;
-  static const double sectionGap = 32;
-  static const double compactSectionGap = 24;
-  static const double minimumTouchTarget = 48;
-
-  static double horizontalGutter(BuildContext context) {
-    return WalkaAdaptiveMetrics.horizontalPadding(context);
-  }
-
-  static double verticalSectionGap(BuildContext context) {
-    return MediaQuery.sizeOf(context).width < WalkaAdaptiveMetrics.compactWidth
-        ? compactSectionGap
-        : sectionGap;
-  }
-}
+export 'components/chrome/walka_shell_metrics.dart';
+export 'components/navigation/walka_premium_navigation_bar.dart';
+export 'components/navigation/walka_shell_destination.dart';
+export 'components/splash/walka_splash_brand_mark.dart';
+export 'components/splash/walka_splash_content.dart';
 
 class WalkaWordmark extends StatelessWidget {
   const WalkaWordmark({
@@ -109,83 +94,6 @@ class WalkaShellIconButton extends StatelessWidget {
           height: WalkaShellMetrics.minimumTouchTarget,
         ),
         icon: Icon(icon, color: WalkaColors.navy, size: 21),
-      ),
-    );
-  }
-}
-
-class WalkaPremiumNavigationBar extends StatelessWidget {
-  const WalkaPremiumNavigationBar({
-    required this.selectedIndex,
-    required this.onDestinationSelected,
-    super.key,
-  });
-
-  final int selectedIndex;
-  final ValueChanged<int> onDestinationSelected;
-
-  static const List<NavigationDestination> _destinations =
-      <NavigationDestination>[
-    NavigationDestination(
-      icon: Icon(Icons.home_outlined),
-      selectedIcon: Icon(Icons.home_rounded),
-      label: 'Home',
-      tooltip: 'Home',
-    ),
-    NavigationDestination(
-      icon: Icon(Icons.search_outlined),
-      selectedIcon: Icon(Icons.search_rounded),
-      label: 'Search',
-      tooltip: 'Search',
-    ),
-    NavigationDestination(
-      icon: Icon(Icons.grid_view_outlined),
-      selectedIcon: Icon(Icons.grid_view_rounded),
-      label: 'Categories',
-      tooltip: 'Categories',
-    ),
-    NavigationDestination(
-      icon: Icon(Icons.favorite_border_rounded),
-      selectedIcon: Icon(Icons.favorite_rounded),
-      label: 'Favorites',
-      tooltip: 'Favorites',
-    ),
-    NavigationDestination(
-      icon: Icon(Icons.person_outline_rounded),
-      selectedIcon: Icon(Icons.person_rounded),
-      label: 'Account',
-      tooltip: 'Account',
-    ),
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: WalkaColors.white,
-        border: const Border(
-          top: BorderSide(color: WalkaColors.line, width: 0.7),
-        ),
-        boxShadow: <BoxShadow>[
-          BoxShadow(
-            color: WalkaColors.navyDark.withValues(alpha: 0.06),
-            blurRadius: 18,
-            offset: const Offset(0, -6),
-          ),
-        ],
-      ),
-      child: SafeArea(
-        top: false,
-        child: NavigationBar(
-          height: WalkaShellMetrics.navigationHeight,
-          animationDuration: WalkaMotion.duration(
-            context,
-            WalkaMotion.navigationSelection,
-          ),
-          selectedIndex: selectedIndex,
-          onDestinationSelected: onDestinationSelected,
-          destinations: _destinations,
-        ),
       ),
     );
   }
