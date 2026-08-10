@@ -30,7 +30,10 @@ void main() {
       expect(find.text('Favorites'), findsOneWidget);
       expect(find.text('CURATE YOUR EDIT'), findsOneWidget);
       expect(find.text('EXPLORE COLLECTIONS'), findsOneWidget);
-      expect(find.bySemanticsLabel('WALKA Drawer Organizer preview'), findsOneWidget);
+      expect(
+        find.bySemanticsLabel('WALKA Drawer Organizer preview'),
+        findsOneWidget,
+      );
       expect(tester.takeException(), isNull);
     },
   );
@@ -90,7 +93,7 @@ void main() {
   );
 
   testWidgets(
-    'Account stays readable on compact width and exposes corrected app info',
+    'Account sections stay readable on 320x568 at 1.3x text scale',
     (WidgetTester tester) async {
       _setCompactViewport(tester);
 
@@ -131,24 +134,48 @@ void main() {
       );
       expect(find.text('LEGAL & APP'), findsOneWidget);
       expect(tester.takeException(), isNull);
+    },
+  );
 
-      final Finder appInfo = find.text('App Information');
-      await tester.scrollUntilVisible(
-        appInfo,
-        180,
-        scrollable: scrollable,
+  testWidgets(
+    'App Information reflects the connected 1.2.0 release',
+    (WidgetTester tester) async {
+      _setCompactViewport(tester);
+
+      await tester.pumpWidget(
+        _app(
+          home: const WalkaAppInfoPremiumV130(),
+          textScale: 1.3,
+        ),
       );
-      await tester.tap(appInfo);
-      await tester.pumpAndSettle();
+      await tester.pump();
 
+      expect(find.text('App Information'), findsOneWidget);
       expect(find.text('1.2.0+120'), findsOneWidget);
-      expect(find.text('Versioned WALKA API + local fallback'), findsOneWidget);
-      expect(find.text('Official Amazon handoff'), findsOneWidget);
       expect(find.text('1.0.0'), findsNothing);
       expect(
         find.text('Design-first visual freeze before backend integration.'),
         findsNothing,
       );
+      expect(tester.takeException(), isNull);
+
+      final Finder scrollable = find.byType(Scrollable).first;
+      await tester.scrollUntilVisible(
+        find.text('Versioned WALKA API + local fallback'),
+        160,
+        scrollable: scrollable,
+      );
+      expect(
+        find.text('Versioned WALKA API + local fallback'),
+        findsOneWidget,
+      );
+
+      await tester.scrollUntilVisible(
+        find.text('Official Amazon handoff'),
+        160,
+        scrollable: scrollable,
+      );
+      expect(find.text('Official Amazon handoff'), findsOneWidget);
       expect(tester.takeException(), isNull);
     },
   );
