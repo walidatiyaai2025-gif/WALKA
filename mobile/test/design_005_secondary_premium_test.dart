@@ -133,7 +133,11 @@ void main() {
       expect(tester.takeException(), isNull);
 
       final Finder appInfo = find.text('App Information');
-      await tester.ensureVisible(appInfo);
+      await tester.scrollUntilVisible(
+        appInfo,
+        180,
+        scrollable: scrollable,
+      );
       await tester.tap(appInfo);
       await tester.pumpAndSettle();
 
