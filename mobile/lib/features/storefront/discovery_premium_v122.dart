@@ -4,14 +4,15 @@ import '../../design_system/walka_product_visual.dart';
 import '../../design_system/walka_shell.dart';
 import '../../design_system/walka_theme.dart';
 import '../catalog/catalog_state.dart';
+import '../catalog/domain/walka_catalog.dart';
 import '../lunch/lunch_box_v6.dart';
 import 'storefront_catalog_v120.dart';
 
 /// DESIGN-003 product-led Categories experience.
 ///
-/// Keeps the released catalog/navigation behavior while replacing generic
-/// product-family icons with reusable WALKA product visuals and a more
-/// editorial discovery hierarchy.
+/// Keeps API-002 catalog/navigation behavior while replacing generic product
+/// icons with the reusable WALKA product presentation established by
+/// DESIGN-001.
 class WalkaCategoriesPremiumV122 extends StatelessWidget {
   const WalkaCategoriesPremiumV122({super.key});
 
@@ -21,107 +22,86 @@ class WalkaCategoriesPremiumV122 extends StatelessWidget {
     final List<WalkaCatalogViewItem> items = walkaCatalogViewItems(
       controller.snapshot,
     );
-    final List<WalkaCatalogViewItem> drawerItems = items
-        .where((WalkaCatalogViewItem item) => item.family == WalkaCatalogFamily.drawer)
-        .toList(growable: false);
-    final List<WalkaCatalogViewItem> lunchItems = items
-        .where((WalkaCatalogViewItem item) => item.family == WalkaCatalogFamily.lunch)
-        .toList(growable: false);
+    final int drawerCount = items
+        .where(
+          (WalkaCatalogViewItem item) =>
+              item.family == WalkaCatalogFamily.drawer,
+        )
+        .length;
+    final int lunchCount = items.length - drawerCount;
     final double gutter = WalkaShellMetrics.horizontalGutter(context);
 
     return SafeArea(
       bottom: false,
-      child: CustomScrollView(
+      child: SingleChildScrollView(
         key: const PageStorageKey<String>('walka-premium-categories-scroll'),
-        slivers: <Widget>[
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: EdgeInsets.fromLTRB(
-                gutter,
-                WalkaShellMetrics.headerTop,
-                gutter,
-                0,
-              ),
-              child: const WalkaWordmark(compact: true),
+        padding: EdgeInsets.fromLTRB(
+          gutter,
+          WalkaShellMetrics.headerTop,
+          gutter,
+          42,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            const WalkaWordmark(compact: true),
+            const SizedBox(height: 28),
+            const Text('SHOP WALKA', style: WalkaType.eyebrow),
+            const SizedBox(height: 8),
+            const Text(
+              'Two collections. One calm system.',
+              style: WalkaType.sectionTitle,
             ),
-          ),
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: EdgeInsets.fromLTRB(gutter, 28, gutter, 18),
-              child: const Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Text('SHOP WALKA', style: WalkaType.eyebrow),
-                  SizedBox(height: 8),
-                  Text('Two collections. One calm system.', style: WalkaType.sectionTitle),
-                  SizedBox(height: 10),
-                  Text(
-                    'Explore drawer organization and the WALKA lunch collection through their real product forms, then choose the variant that fits your space or routine.',
-                    style: WalkaType.body,
+            const SizedBox(height: 10),
+            const Text(
+              'Explore drawer organization and the WALKA lunch collection through their product forms, then choose the variant that fits your space or routine.',
+              style: WalkaType.body,
+            ),
+            if (controller.isLoading || controller.isOffline) ...<Widget>[
+              const SizedBox(height: 16),
+              _DiscoveryCatalogStatus(controller: controller),
+            ],
+            const SizedBox(height: 22),
+            _FamilyEditorialCard(
+              key: const ValueKey<String>('discovery-family-drawer'),
+              eyebrow: 'THE DRAWER EDIT',
+              title: 'Order for the everyday drawer.',
+              detail: '$drawerCount finishes · expandable · 8 compartments',
+              kind: WalkaProductVisualKind.drawerOrganizer,
+              primaryColor: const Color(0xFFF7F4EC),
+              surface: const Color(0xFFF2E9CF),
+            ),
+            const SizedBox(height: 14),
+            _FamilyEditorialCard(
+              key: const ValueKey<String>('discovery-family-lunch'),
+              eyebrow: 'LUNCH, REFINED',
+              title: 'A complete lunch system in color.',
+              detail: '$lunchCount colors · 1200 ml · SUS304 tray',
+              kind: WalkaProductVisualKind.lunchBox,
+              primaryColor: WalkaLunchVariant.blue.color,
+              surface: const Color(0xFFEAF0F5),
+            ),
+            const SizedBox(height: 32),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: <Widget>[
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Text('CURRENT COLLECTION', style: WalkaType.eyebrow),
+                      SizedBox(height: 7),
+                      Text('Choose your variant', style: WalkaType.sectionTitle),
+                    ],
                   ),
-                ],
-              ),
+                ),
+                _CountBadge(label: '${items.length} VARIANTS'),
+              ],
             ),
-          ),
-          if (controller.isLoading || controller.isOffline)
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: EdgeInsets.fromLTRB(gutter, 0, gutter, 16),
-                child: _DiscoveryCatalogStatus(controller: controller),
-              ),
-            ),
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: gutter),
-              child: Column(
-                children: <Widget>[
-                  _FamilyEditorialCard(
-                    key: const ValueKey<String>('discovery-family-drawer'),
-                    eyebrow: 'THE DRAWER EDIT',
-                    title: 'Order for the everyday drawer.',
-                    detail: '${drawerItems.length} finishes · expandable · 8 compartments',
-                    kind: WalkaProductVisualKind.drawerOrganizer,
-                    primaryColor: const Color(0xFFF7F4EC),
-                    surface: const Color(0xFFF2E9CF),
-                  ),
-                  const SizedBox(height: 14),
-                  _FamilyEditorialCard(
-                    key: const ValueKey<String>('discovery-family-lunch'),
-                    eyebrow: 'LUNCH, REFINED',
-                    title: 'A complete lunch system in color.',
-                    detail: '${lunchItems.length} colors · 1200 ml · SUS304 tray',
-                    kind: WalkaProductVisualKind.lunchBox,
-                    primaryColor: WalkaLunchVariant.blue.color,
-                    surface: const Color(0xFFEAF0F5),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: EdgeInsets.fromLTRB(gutter, 32, gutter, 14),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: <Widget>[
-                  const Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: <Widget>[
-                        Text('CURRENT COLLECTION', style: WalkaType.eyebrow),
-                        SizedBox(height: 7),
-                        Text('Choose your variant', style: WalkaType.sectionTitle),
-                      ],
-                    ),
-                  ),
-                  _CountBadge(label: '${items.length} VARIANTS'),
-                ],
-              ),
-            ),
-          ),
-          SliverPadding(
-            padding: EdgeInsets.symmetric(horizontal: gutter),
-            sliver: SliverGrid.builder(
+            const SizedBox(height: 14),
+            GridView.builder(
+              physics: const NeverScrollableScrollPhysics(),
+              shrinkWrap: true,
               itemCount: items.length,
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 2,
@@ -132,26 +112,29 @@ class WalkaCategoriesPremiumV122 extends StatelessWidget {
               itemBuilder: (BuildContext context, int index) {
                 final WalkaCatalogViewItem item = items[index];
                 return _DiscoveryVariantCard(
-                  key: ValueKey<String>('discovery-category-${item.variantId}'),
+                  key: ValueKey<String>(
+                    'discovery-category-${item.variantId}',
+                  ),
                   item: item,
                   onTap: () => openWalkaCatalogItem(context, item),
                 );
               },
             ),
-          ),
-          const SliverToBoxAdapter(child: SizedBox(height: 42)),
-        ],
+          ],
+        ),
       ),
     );
   }
 }
 
-/// DESIGN-003 search surface preserving API-002 query/family semantics.
+/// DESIGN-003 Search experience preserving the released query and family
+/// filtering semantics from WalkaSearchV120.
 class WalkaSearchPremiumV122 extends StatefulWidget {
   const WalkaSearchPremiumV122({super.key});
 
   @override
-  State<WalkaSearchPremiumV122> createState() => _WalkaSearchPremiumV122State();
+  State<WalkaSearchPremiumV122> createState() =>
+      _WalkaSearchPremiumV122State();
 }
 
 class _WalkaSearchPremiumV122State extends State<WalkaSearchPremiumV122> {
@@ -186,7 +169,7 @@ class _WalkaSearchPremiumV122State extends State<WalkaSearchPremiumV122> {
 
     return SafeArea(
       bottom: false,
-      child: ListView(
+      child: SingleChildScrollView(
         key: const PageStorageKey<String>('walka-premium-search-scroll'),
         padding: EdgeInsets.fromLTRB(
           gutter,
@@ -194,119 +177,138 @@ class _WalkaSearchPremiumV122State extends State<WalkaSearchPremiumV122> {
           gutter,
           42,
         ),
-        children: <Widget>[
-          const WalkaWordmark(compact: true),
-          const SizedBox(height: 28),
-          const Text('SEARCH WALKA', style: WalkaType.eyebrow),
-          const SizedBox(height: 8),
-          const Text('Find the piece that fits.', style: WalkaType.sectionTitle),
-          const SizedBox(height: 9),
-          const Text(
-            'Search by collection, finish, color or a verified product detail.',
-            style: WalkaType.body,
-          ),
-          const SizedBox(height: 18),
-          TextField(
-            key: const ValueKey<String>('premium-discovery-search-field'),
-            controller: _controller,
-            onChanged: (String value) => setState(() => _query = value),
-            textInputAction: TextInputAction.search,
-            decoration: InputDecoration(
-              hintText: 'Drawer, lunch box, blue, SUS304…',
-              prefixIcon: const Icon(Icons.search_rounded, color: WalkaColors.navy),
-              suffixIcon: _query.isEmpty
-                  ? null
-                  : IconButton(
-                      onPressed: () {
-                        _controller.clear();
-                        setState(() => _query = '');
-                      },
-                      tooltip: 'Clear search',
-                      icon: const Icon(Icons.close_rounded),
-                    ),
-              filled: true,
-              fillColor: WalkaColors.white,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 17),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(20),
-                borderSide: const BorderSide(color: WalkaColors.line),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(20),
-                borderSide: const BorderSide(color: WalkaColors.line),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(20),
-                borderSide: const BorderSide(color: WalkaColors.gold, width: 1.4),
-              ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            const WalkaWordmark(compact: true),
+            const SizedBox(height: 28),
+            const Text('SEARCH WALKA', style: WalkaType.eyebrow),
+            const SizedBox(height: 8),
+            const Text('Find the piece that fits.', style: WalkaType.sectionTitle),
+            const SizedBox(height: 9),
+            const Text(
+              'Search by collection, finish, color or a verified product detail.',
+              style: WalkaType.body,
             ),
-          ),
-          const SizedBox(height: 14),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: <Widget>[
-              _FamilyChoiceChip(
-                label: 'All',
-                selected: _family == null,
-                onSelected: () => setState(() => _family = null),
-              ),
-              _FamilyChoiceChip(
-                label: 'Drawer',
-                selected: _family == WalkaCatalogFamily.drawer,
-                onSelected: () => setState(() => _family = WalkaCatalogFamily.drawer),
-              ),
-              _FamilyChoiceChip(
-                label: 'Lunch',
-                selected: _family == WalkaCatalogFamily.lunch,
-                onSelected: () => setState(() => _family = WalkaCatalogFamily.lunch),
-              ),
-            ],
-          ),
-          const SizedBox(height: 18),
-          if (catalog.isLoading || catalog.isOffline)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 14),
-              child: _DiscoveryCatalogStatus(controller: catalog),
-            ),
-          Row(
-            children: <Widget>[
-              Text(
-                '${results.length} ${results.length == 1 ? 'result' : 'results'}',
-                key: const ValueKey<String>('premium-discovery-result-count'),
-                style: const TextStyle(
+            const SizedBox(height: 18),
+            TextField(
+              key: const ValueKey<String>('premium-discovery-search-field'),
+              controller: _controller,
+              onChanged: (String value) => setState(() => _query = value),
+              textInputAction: TextInputAction.search,
+              decoration: InputDecoration(
+                hintText: 'Drawer, lunch box, blue, SUS304…',
+                prefixIcon: const Icon(
+                  Icons.search_rounded,
                   color: WalkaColors.navy,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w900,
                 ),
-              ),
-              const Spacer(),
-              _CatalogSourceBadge(source: catalog.snapshot.source),
-            ],
-          ),
-          const SizedBox(height: 12),
-          if (results.isEmpty)
-            _NoDiscoveryResults(
-              onReset: () {
-                _controller.clear();
-                setState(() {
-                  _query = '';
-                  _family = null;
-                });
-              },
-            )
-          else
-            ...results.map(
-              (WalkaCatalogViewItem item) => Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: _PremiumSearchResult(
-                  key: ValueKey<String>('discovery-search-${item.variantId}'),
-                  item: item,
-                  onTap: () => openWalkaCatalogItem(context, item),
+                suffixIcon: _query.isEmpty
+                    ? null
+                    : IconButton(
+                        onPressed: () {
+                          _controller.clear();
+                          setState(() => _query = '');
+                        },
+                        tooltip: 'Clear search',
+                        icon: const Icon(Icons.close_rounded),
+                      ),
+                filled: true,
+                fillColor: WalkaColors.white,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 17,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(20),
+                  borderSide: const BorderSide(color: WalkaColors.line),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(20),
+                  borderSide: const BorderSide(color: WalkaColors.line),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(20),
+                  borderSide: const BorderSide(
+                    color: WalkaColors.gold,
+                    width: 1.4,
+                  ),
                 ),
               ),
             ),
-        ],
+            const SizedBox(height: 14),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: <Widget>[
+                _FamilyChoiceChip(
+                  label: 'All',
+                  selected: _family == null,
+                  onSelected: () => setState(() => _family = null),
+                ),
+                _FamilyChoiceChip(
+                  label: 'Drawer',
+                  selected: _family == WalkaCatalogFamily.drawer,
+                  onSelected: () => setState(
+                    () => _family = WalkaCatalogFamily.drawer,
+                  ),
+                ),
+                _FamilyChoiceChip(
+                  label: 'Lunch',
+                  selected: _family == WalkaCatalogFamily.lunch,
+                  onSelected: () => setState(
+                    () => _family = WalkaCatalogFamily.lunch,
+                  ),
+                ),
+              ],
+            ),
+            if (catalog.isLoading || catalog.isOffline) ...<Widget>[
+              const SizedBox(height: 16),
+              _DiscoveryCatalogStatus(controller: catalog),
+            ],
+            const SizedBox(height: 18),
+            Row(
+              children: <Widget>[
+                Text(
+                  '${results.length} ${results.length == 1 ? 'result' : 'results'}',
+                  key: const ValueKey<String>(
+                    'premium-discovery-result-count',
+                  ),
+                  style: const TextStyle(
+                    color: WalkaColors.navy,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const Spacer(),
+                _CatalogSourceBadge(source: catalog.snapshot.source),
+              ],
+            ),
+            const SizedBox(height: 12),
+            if (results.isEmpty)
+              _NoDiscoveryResults(
+                onReset: () {
+                  _controller.clear();
+                  setState(() {
+                    _query = '';
+                    _family = null;
+                  });
+                },
+              )
+            else
+              ...results.map(
+                (WalkaCatalogViewItem item) => Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: _PremiumSearchResult(
+                    key: ValueKey<String>(
+                      'discovery-search-${item.variantId}',
+                    ),
+                    item: item,
+                    onTap: () => openWalkaCatalogItem(context, item),
+                  ),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -332,68 +334,81 @@ class _FamilyEditorialCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 205,
-      decoration: BoxDecoration(
-        color: surface,
-        borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: WalkaColors.line),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Row(
-        children: <Widget>[
-          Expanded(
-            flex: 6,
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 22, 8, 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Text(eyebrow, style: WalkaType.eyebrow),
-                  const SizedBox(height: 9),
-                  Text(
-                    title,
-                    maxLines: 3,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontFamily: 'serif',
-                      color: WalkaColors.navy,
-                      fontSize: 24,
-                      height: 1.08,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const Spacer(),
-                  Text(
-                    detail,
-                    style: const TextStyle(
-                      color: WalkaColors.muted,
-                      fontSize: 10,
-                      height: 1.35,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ],
-              ),
-            ),
+    return LayoutBuilder(
+      builder: (BuildContext context, BoxConstraints constraints) {
+        final bool compact = constraints.maxWidth < 330;
+        return Container(
+          height: compact ? 192 : 205,
+          decoration: BoxDecoration(
+            color: surface,
+            borderRadius: BorderRadius.circular(28),
+            border: Border.all(color: WalkaColors.line),
           ),
-          Expanded(
-            flex: 5,
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(0, 18, 10, 12),
-              child: WalkaProductVisual(
-                kind: kind,
-                primaryColor: primaryColor,
-                backgroundColor: surface,
-                compact: true,
-                semanticLabel: kind == WalkaProductVisualKind.drawerOrganizer
-                    ? 'WALKA Drawer Organizer collection'
-                    : 'WALKA Lunch Box collection',
+          clipBehavior: Clip.antiAlias,
+          child: Row(
+            children: <Widget>[
+              Expanded(
+                flex: 6,
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    compact ? 16 : 20,
+                    compact ? 18 : 22,
+                    6,
+                    compact ? 16 : 20,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Text(eyebrow, style: WalkaType.eyebrow),
+                      const SizedBox(height: 8),
+                      Text(
+                        title,
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontFamily: 'serif',
+                          color: WalkaColors.navy,
+                          fontSize: compact ? 20 : 24,
+                          height: 1.08,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const Spacer(),
+                      Text(
+                        detail,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: WalkaColors.muted,
+                          fontSize: 9.5,
+                          height: 1.3,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
-            ),
+              Expanded(
+                flex: 5,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(0, 16, 8, 12),
+                  child: WalkaProductVisual(
+                    kind: kind,
+                    primaryColor: primaryColor,
+                    backgroundColor: surface,
+                    compact: true,
+                    semanticLabel:
+                        kind == WalkaProductVisualKind.drawerOrganizer
+                        ? 'WALKA Drawer Organizer collection'
+                        : 'WALKA Lunch Box collection',
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
@@ -427,11 +442,8 @@ class _DiscoveryVariantCard extends StatelessWidget {
               Expanded(
                 child: Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.all(9),
-                  decoration: BoxDecoration(
-                    color: item.tone,
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(21)),
-                  ),
+                  padding: const EdgeInsets.all(8),
+                  color: item.tone,
                   child: WalkaProductVisual(
                     kind: _visualKind(item),
                     primaryColor: _productColor(item),
@@ -442,69 +454,35 @@ class _DiscoveryVariantCard extends StatelessWidget {
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.fromLTRB(12, 12, 12, 14),
+                padding: const EdgeInsets.fromLTRB(11, 11, 11, 13),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     Text(
-                      item.family == WalkaCatalogFamily.drawer
-                          ? 'DRAWER ORGANIZATION'
-                          : 'LUNCH COLLECTION',
+                      _familyLabel(item),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
                         color: WalkaColors.muted,
                         fontSize: 7.5,
                         fontWeight: FontWeight.w800,
-                        letterSpacing: 0.8,
+                        letterSpacing: 0.7,
                       ),
                     ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 5),
                     Text(
                       item.title,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
                         color: WalkaColors.navy,
-                        fontSize: 12,
-                        height: 1.22,
+                        fontSize: 11.5,
+                        height: 1.2,
                         fontWeight: FontWeight.w800,
                       ),
                     ),
-                    const SizedBox(height: 9),
-                    Row(
-                      children: <Widget>[
-                        Container(
-                          width: 10,
-                          height: 10,
-                          decoration: BoxDecoration(
-                            color: _productColor(item),
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: WalkaColors.navy.withValues(alpha: 0.10),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 6),
-                        Expanded(
-                          child: Text(
-                            item.variant.toUpperCase(),
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              color: WalkaColors.gold,
-                              fontSize: 8.5,
-                              fontWeight: FontWeight.w900,
-                              letterSpacing: 0.7,
-                            ),
-                          ),
-                        ),
-                        const Icon(
-                          Icons.arrow_forward_rounded,
-                          size: 16,
-                          color: WalkaColors.navy,
-                        ),
-                      ],
-                    ),
+                    const SizedBox(height: 8),
+                    _VariantLabel(item: item),
                   ],
                 ),
               ),
@@ -543,8 +521,8 @@ class _PremiumSearchResult extends StatelessWidget {
           child: Row(
             children: <Widget>[
               Container(
-                width: 78,
-                height: 78,
+                width: 76,
+                height: 76,
                 padding: const EdgeInsets.all(5),
                 decoration: BoxDecoration(
                   color: item.tone,
@@ -564,14 +542,12 @@ class _PremiumSearchResult extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     Text(
-                      item.family == WalkaCatalogFamily.drawer
-                          ? 'DRAWER ORGANIZATION'
-                          : 'LUNCH COLLECTION',
+                      _familyLabel(item),
                       style: const TextStyle(
                         color: WalkaColors.muted,
                         fontSize: 7.5,
                         fontWeight: FontWeight.w800,
-                        letterSpacing: 0.8,
+                        letterSpacing: 0.7,
                       ),
                     ),
                     const SizedBox(height: 5),
@@ -582,47 +558,64 @@ class _PremiumSearchResult extends StatelessWidget {
                       style: const TextStyle(
                         color: WalkaColors.navy,
                         fontSize: 13,
-                        height: 1.22,
+                        height: 1.2,
                         fontWeight: FontWeight.w900,
                       ),
                     ),
-                    const SizedBox(height: 6),
-                    Row(
-                      children: <Widget>[
-                        Container(
-                          width: 9,
-                          height: 9,
-                          decoration: BoxDecoration(
-                            color: _productColor(item),
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: WalkaColors.navy.withValues(alpha: 0.10),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 6),
-                        Flexible(
-                          child: Text(
-                            item.variant,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              color: WalkaColors.muted,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+                    const SizedBox(height: 7),
+                    _VariantLabel(item: item),
                   ],
                 ),
               ),
-              const SizedBox(width: 8),
-              const Icon(Icons.arrow_forward_rounded, color: WalkaColors.gold, size: 20),
+              const SizedBox(width: 6),
+              const Icon(
+                Icons.arrow_forward_rounded,
+                color: WalkaColors.gold,
+                size: 20,
+              ),
             ],
           ),
         ),
       ),
+    );
+  }
+}
+
+class _VariantLabel extends StatelessWidget {
+  const _VariantLabel({required this.item});
+
+  final WalkaCatalogViewItem item;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: <Widget>[
+        Container(
+          width: 9,
+          height: 9,
+          decoration: BoxDecoration(
+            color: _productColor(item),
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: WalkaColors.navy.withValues(alpha: 0.10),
+            ),
+          ),
+        ),
+        const SizedBox(width: 6),
+        Expanded(
+          child: Text(
+            item.variant.toUpperCase(),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: WalkaColors.gold,
+              fontSize: 8.5,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 0.6,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -670,7 +663,7 @@ class _CountBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 7),
       decoration: BoxDecoration(
         color: WalkaColors.white,
         borderRadius: BorderRadius.circular(99),
@@ -682,7 +675,7 @@ class _CountBadge extends StatelessWidget {
           color: WalkaColors.muted,
           fontSize: 8,
           fontWeight: FontWeight.w900,
-          letterSpacing: 0.7,
+          letterSpacing: 0.6,
         ),
       ),
     );
@@ -711,7 +704,7 @@ class _CatalogSourceBadge extends StatelessWidget {
           color: WalkaColors.navy,
           fontSize: 7.5,
           fontWeight: FontWeight.w900,
-          letterSpacing: 0.7,
+          letterSpacing: 0.6,
         ),
       ),
     );
@@ -773,11 +766,14 @@ class _NoDiscoveryResults extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      width: double.infinity,
       padding: const EdgeInsets.fromLTRB(22, 28, 22, 22),
       decoration: BoxDecoration(
         color: const Color(0xFFF2E9CF),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: WalkaColors.gold.withValues(alpha: 0.16)),
+        border: Border.all(
+          color: WalkaColors.gold.withValues(alpha: 0.16),
+        ),
       ),
       child: Column(
         children: <Widget>[
@@ -788,7 +784,10 @@ class _NoDiscoveryResults extends StatelessWidget {
               color: WalkaColors.white,
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.search_off_rounded, color: WalkaColors.navy),
+            child: const Icon(
+              Icons.search_off_rounded,
+              color: WalkaColors.navy,
+            ),
           ),
           const SizedBox(height: 14),
           const Text(
@@ -813,6 +812,12 @@ class _NoDiscoveryResults extends StatelessWidget {
       ),
     );
   }
+}
+
+String _familyLabel(WalkaCatalogViewItem item) {
+  return item.family == WalkaCatalogFamily.drawer
+      ? 'DRAWER ORGANIZATION'
+      : 'LUNCH COLLECTION';
 }
 
 WalkaProductVisualKind _visualKind(WalkaCatalogViewItem item) {
