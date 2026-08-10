@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../design_system/walka_adaptive.dart';
 import '../../design_system/walka_shell.dart';
@@ -34,7 +35,7 @@ class WalkaStorefrontSplashV102 extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 const Spacer(),
-                const WalkaWordmark(onDark: true),
+                const _WalkaSplashBrandMark(),
                 const SizedBox(height: 18),
                 Container(width: 54, height: 2, color: WalkaColors.gold),
                 const SizedBox(height: 20),
@@ -88,6 +89,40 @@ class WalkaStorefrontSplashV102 extends StatelessWidget {
                   ),
                 ),
               ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _WalkaSplashBrandMark extends StatelessWidget {
+  const _WalkaSplashBrandMark();
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      image: true,
+      label: 'WALKA For You',
+      child: ExcludeSemantics(
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: RadialGradient(
+              center: Alignment.centerLeft,
+              radius: 1.15,
+              colors: <Color>[
+                WalkaColors.gold.withValues(alpha: 0.12),
+                WalkaColors.navy.withValues(alpha: 0),
+              ],
+            ),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: SvgPicture.asset(
+              'assets/branding/walka_logo.svg',
+              width: 252,
+              fit: BoxFit.contain,
             ),
           ),
         ),
