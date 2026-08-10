@@ -20,6 +20,7 @@ class WalkaCatalogController extends ChangeNotifier {
 
   WalkaCatalogSnapshot get snapshot => _snapshot;
   bool get isLoading => _isLoading;
+  bool get canRefresh => _repository != null;
   bool get isOffline => _snapshot.source != WalkaCatalogSource.remote;
   bool get isUsingCache => _snapshot.source == WalkaCatalogSource.cache;
   bool get isUsingBundledFallback =>
