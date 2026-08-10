@@ -55,15 +55,20 @@ void main() {
 
   testWidgets('MEDIA-005 painted fallback stays deterministic',
       (WidgetTester tester) async {
-    final WalkaProductMedia media = fallback();
     await tester.pumpWidget(
       MaterialApp(
-        home: Scaffold(body: media.build(tester.element(find.byType(MaterialApp)))),
+        home: Scaffold(
+          body: WalkaProductMediaView(media: fallback()),
+        ),
       ),
     );
 
     expect(find.byType(WalkaProductVisual), findsOneWidget);
-  }, skip: true);
+    expect(
+      find.bySemanticsLabel('WALKA Drawer Organizer White'),
+      findsOneWidget,
+    );
+  });
 
   testWidgets('MEDIA-006 missing asset exposes fallback semantics',
       (WidgetTester tester) async {
@@ -82,9 +87,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        home: Scaffold(
-          body: Builder(builder: (BuildContext context) => media.build(context)),
-        ),
+        home: Scaffold(body: WalkaProductMediaView(media: media)),
       ),
     );
     await tester.pumpAndSettle();
