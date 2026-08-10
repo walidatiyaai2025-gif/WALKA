@@ -3,40 +3,42 @@ import 'package:flutter/material.dart';
 import '../../../../../design_system/walka_theme.dart';
 
 class WalkaFavoritesSortRow extends StatelessWidget {
-  const WalkaFavoritesSortRow({
-    required this.editMode,
-    required this.onToggleEdit,
-    super.key,
-  });
-
-  final bool editMode;
-  final VoidCallback onToggleEdit;
+  const WalkaFavoritesSortRow({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: <Widget>[
-        const Expanded(
-          child: Text(
-            'Saved recently',
-            key: ValueKey<String>('reference-favorites-sort-label'),
+    return Container(
+      key: const ValueKey<String>('reference-favorites-sort'),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(color: WalkaColors.line),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: const Row(
+        children: <Widget>[
+          Text(
+            'Sort by:',
             style: TextStyle(
               color: WalkaColors.muted,
               fontSize: 11,
               fontWeight: FontWeight.w700,
             ),
           ),
-        ),
-        TextButton.icon(
-          key: const ValueKey<String>('reference-favorites-edit'),
-          onPressed: onToggleEdit,
-          icon: Icon(
-            editMode ? Icons.check_rounded : Icons.edit_outlined,
-            size: 17,
+          SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              'Saved variants',
+              style: TextStyle(
+                color: WalkaColors.navy,
+                fontSize: 11,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
           ),
-          label: Text(editMode ? 'DONE' : 'EDIT'),
-        ),
-      ],
+          Icon(Icons.view_module_outlined, color: WalkaColors.gold, size: 20),
+        ],
+      ),
     );
   }
 }
