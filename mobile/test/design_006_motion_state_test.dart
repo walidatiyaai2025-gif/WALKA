@@ -174,7 +174,7 @@ void main() {
     await tester.tap(find.text('Search'));
     await tester.pump();
 
-    expect(find.text('SEARCH WALKA'), findsOneWidget);
+    expect(find.text('Search WALKA'), findsOneWidget);
     expect(find.text('Offline · built-in catalog'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
