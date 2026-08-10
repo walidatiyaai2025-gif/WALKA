@@ -10,6 +10,13 @@ abstract final class WalkaMotion {
   static const Duration standard = Duration(milliseconds: 180);
   static const Duration emphasis = Duration(milliseconds: 240);
 
+  /// Interaction-specific aliases make the intended motion hierarchy explicit
+  /// without scattering magic numbers through product and shell code.
+  static const Duration cardPress = fast;
+  static const Duration variantChange = standard;
+  static const Duration navigationSelection = standard;
+  static const Duration routeTransition = emphasis;
+
   static const Curve standardCurve = Curves.easeOutCubic;
   static const Curve emphasizedCurve = Curves.easeInOutCubic;
 
@@ -61,7 +68,7 @@ class _WalkaPressFeedbackState extends State<WalkaPressFeedback> {
       onPointerCancel: (_) => _setPressed(false),
       child: AnimatedScale(
         scale: _pressed ? widget.pressedScale : 1,
-        duration: WalkaMotion.duration(context, WalkaMotion.fast),
+        duration: WalkaMotion.duration(context, WalkaMotion.cardPress),
         curve: WalkaMotion.standardCurve,
         alignment: Alignment.center,
         child: widget.child,
