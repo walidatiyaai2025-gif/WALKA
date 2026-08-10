@@ -60,6 +60,52 @@ abstract final class WalkaType {
     height: 1.55,
     color: WalkaColors.muted,
   );
+
+  /// Primary title for owner-visible pages below the hero/display level.
+  static const TextStyle pageTitle = TextStyle(
+    fontFamily: 'serif',
+    fontSize: 32,
+    height: 1.1,
+    fontWeight: FontWeight.w600,
+    letterSpacing: -0.4,
+    color: WalkaColors.navy,
+  );
+
+  /// Reusable editorial/card heading.
+  static const TextStyle cardTitle = TextStyle(
+    fontFamily: 'serif',
+    fontSize: 20,
+    height: 1.2,
+    fontWeight: FontWeight.w600,
+    color: WalkaColors.navy,
+  );
+
+  /// Compact interface label for controls, chips and section dividers.
+  static const TextStyle label = TextStyle(
+    fontSize: 12,
+    height: 1.2,
+    fontWeight: FontWeight.w700,
+    letterSpacing: 0.7,
+    color: WalkaColors.navy,
+  );
+
+  /// Secondary/supporting metadata text.
+  static const TextStyle caption = TextStyle(
+    fontSize: 12,
+    height: 1.4,
+    fontWeight: FontWeight.w500,
+    color: WalkaColors.muted,
+  );
+
+  /// Prominent numeric/value treatment used by truthful metric tiles only.
+  static const TextStyle metric = TextStyle(
+    fontFamily: 'serif',
+    fontSize: 30,
+    height: 1.0,
+    fontWeight: FontWeight.w700,
+    letterSpacing: -0.3,
+    color: WalkaColors.navy,
+  );
 }
 
 ThemeData buildWalkaTheme() {
