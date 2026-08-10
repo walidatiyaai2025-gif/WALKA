@@ -1,12 +1,12 @@
 # WALKA Last Verified APK Receipt
 
 - App version: `1.2.0+120`
-- Source commit: `b164ac3efa7df4ed36a2b480ea79e335a3d263b5`
-- Workflow run: `31384237806`
-- Workflow run number: `451`
+- Source commit: `61b21f8dee1dc1269855fb778108a1ab8d001b7f`
+- Workflow run: `31384966694`
+- Workflow run number: `455`
 - APK type: `universal-release`
 - APK bytes: `52717255`
-- APK SHA-256: `05838ff571e0d44fe0cceaf9e7ca4a067ed2191e6f5213c684d07ba7e5a25596`
-- Built UTC: `2026-08-10T11:41:20Z`
+- APK SHA-256: `8ee89ddda7d78bb55e1a5f1c7c2f266742edfd1575414c880d221a4516d88998`
+- Built UTC: `2026-08-10T11:51:39Z`
 - Validation: Flutter Analyze + full Flutter Test suite + Android release APK build succeeded before this receipt was generated.
 - Intended use: installable WALKA test build from stable `main`; this is not a Play Store signing receipt.
