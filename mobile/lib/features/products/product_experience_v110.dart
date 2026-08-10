@@ -8,8 +8,6 @@ import '../commerce/amazon_purchase.dart';
 import '../favorites/favorites_state.dart';
 import '../lunch/lunch_box_v6.dart';
 
-enum _PdpFamilyV110 { drawer, lunch }
-
 /// DESIGN-004 premium Drawer Product Detail surface.
 ///
 /// Product facts remain governed by docs/PRODUCT_MASTER.md. Purchase continues
@@ -65,7 +63,6 @@ class _WalkaDrawerProductDetailV110State
       MaterialPageRoute<void>(
         fullscreenDialog: true,
         builder: (_) => _PremiumFullscreenGalleryV110(
-          family: _PdpFamilyV110.drawer,
           initialIndex: index,
           title: 'Drawer Organizer',
           visualKind: WalkaProductVisualKind.drawerOrganizer,
@@ -108,7 +105,6 @@ class _WalkaDrawerProductDetailV110State
           children: <Widget>[
             _PremiumProductGalleryV110(
               key: ValueKey<String>('drawer-gallery-${_gray ? 'gray' : 'white'}'),
-              family: _PdpFamilyV110.drawer,
               visualKind: WalkaProductVisualKind.drawerOrganizer,
               primaryColor: _productColor,
               backgroundColor: _surface,
@@ -146,12 +142,12 @@ class _WalkaDrawerProductDetailV110State
             ),
             const SizedBox(height: 18),
             const _PremiumDisclosureV110(
-              title: 'Materials & care',
-              icon: Icons.cleaning_services_outlined,
+              title: 'Materials & finish',
+              icon: Icons.layers_outlined,
               rows: <(String, String)>[
                 ('Material', 'Plastic'),
                 ('Base', 'Non-slip'),
-                ('Care', 'Wipe clean'),
+                ('Expandable width', 'Up to 22.4 in'),
                 ('Approved colors', 'White · Gray'),
               ],
             ),
@@ -220,7 +216,6 @@ class _WalkaLunchProductDetailV110State
       MaterialPageRoute<void>(
         fullscreenDialog: true,
         builder: (_) => _PremiumFullscreenGalleryV110(
-          family: _PdpFamilyV110.lunch,
           initialIndex: index,
           title: '${_variant.label} Lunch Box',
           visualKind: WalkaProductVisualKind.lunchBox,
@@ -261,7 +256,6 @@ class _WalkaLunchProductDetailV110State
           children: <Widget>[
             _PremiumProductGalleryV110(
               key: ValueKey<WalkaLunchVariant>(_variant),
-              family: _PdpFamilyV110.lunch,
               visualKind: WalkaProductVisualKind.lunchBox,
               primaryColor: _variant.color,
               backgroundColor: _variant.surface,
@@ -308,7 +302,7 @@ class _WalkaLunchProductDetailV110State
                 ('Bento box', 'PP outer + SUS304 tray'),
                 ('Sauce cup', 'Stainless cup with lid'),
                 ('Utensils', 'Spoon + fork'),
-                ('Carry', 'Insulated bag'),
+                ('Carry', 'Carry bag'),
               ],
             ),
             const SizedBox(height: 10),
@@ -383,7 +377,6 @@ PreferredSizeWidget _premiumPdpAppBar({
 
 class _PremiumProductGalleryV110 extends StatefulWidget {
   const _PremiumProductGalleryV110({
-    required this.family,
     required this.visualKind,
     required this.primaryColor,
     required this.backgroundColor,
@@ -392,7 +385,6 @@ class _PremiumProductGalleryV110 extends StatefulWidget {
     super.key,
   });
 
-  final _PdpFamilyV110 family;
   final WalkaProductVisualKind visualKind;
   final Color primaryColor;
   final Color backgroundColor;
@@ -891,7 +883,7 @@ class _PremiumFactGridV110 extends StatelessWidget {
         return Wrap(
           spacing: 10,
           runSpacing: 10,
-          children: facts.map(((IconData, String, String) fact) {
+          children: facts.map((fact) {
             return SizedBox(
               width: width,
               child: _FactCardV110(
@@ -1057,7 +1049,7 @@ class _PremiumDisclosureV110 extends StatelessWidget {
               fontWeight: FontWeight.w900,
             ),
           ),
-          children: rows.map(((String, String) row) {
+          children: rows.map((row) {
             return _SpecRowV110(label: row.$1, value: row.$2);
           }).toList(growable: false),
         ),
@@ -1180,12 +1172,15 @@ class _RelatedCollectionV110 extends StatelessWidget {
               ),
               Expanded(
                 flex: 4,
-                child: WalkaProductVisual(
-                  kind: visualKind,
-                  primaryColor: productColor,
-                  backgroundColor: surface,
-                  compact: true,
-                  semanticLabel: title,
+                child: SizedBox(
+                  height: 118,
+                  child: WalkaProductVisual(
+                    kind: visualKind,
+                    primaryColor: productColor,
+                    backgroundColor: surface,
+                    compact: true,
+                    semanticLabel: title,
+                  ),
                 ),
               ),
             ],
@@ -1312,7 +1307,6 @@ class _PurchaseSelectionV110 extends StatelessWidget {
 
 class _PremiumFullscreenGalleryV110 extends StatefulWidget {
   const _PremiumFullscreenGalleryV110({
-    required this.family,
     required this.initialIndex,
     required this.title,
     required this.visualKind,
@@ -1320,7 +1314,6 @@ class _PremiumFullscreenGalleryV110 extends StatefulWidget {
     required this.backgroundColor,
   });
 
-  final _PdpFamilyV110 family;
   final int initialIndex;
   final String title;
   final WalkaProductVisualKind visualKind;
