@@ -775,7 +775,17 @@ class _ApprovedReferenceUsagePanel extends StatelessWidget {
           ),
           SizedBox(height: 6),
           Text(
-            'Best for dry & semi-wet foods · Not intended for liquids · Carry upright',
+            'Best suited for dry meals & snacks.',
+            style: TextStyle(
+              color: WalkaColors.navy,
+              fontSize: 11,
+              height: 1.4,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          SizedBox(height: 3),
+          Text(
+            'Not intended for liquids. Best for dry & semi-wet foods. Carry upright.',
             style: TextStyle(
               color: WalkaColors.navy,
               fontSize: 11,
