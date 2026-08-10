@@ -7,11 +7,13 @@ class WalkaPdpVariantOption<T> {
     required this.value,
     required this.label,
     required this.color,
+    this.key,
   });
 
   final T value;
   final String label;
   final Color color;
+  final Key? key;
 }
 
 class WalkaPdpVariantSelector<T> extends StatelessWidget {
@@ -60,6 +62,7 @@ class WalkaPdpVariantSelector<T> extends StatelessWidget {
           children: options.map((WalkaPdpVariantOption<T> option) {
             final bool isSelected = option.value == selected;
             return Semantics(
+              key: option.key,
               button: true,
               selected: isSelected,
               label: '${option.label} variant',
