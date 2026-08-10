@@ -38,7 +38,7 @@ void main() {
 
       await tester.drag(
         find.byType(CustomScrollView),
-        const Offset(0, -1000),
+        const Offset(0, -380),
       );
       await tester.pumpAndSettle();
 
@@ -46,6 +46,12 @@ void main() {
       expect(find.text('5 variants'), findsOneWidget);
       expect(find.text('Amazon'), findsOneWidget);
       expect(tester.takeException(), isNull);
+
+      await tester.drag(
+        find.byType(CustomScrollView),
+        const Offset(0, -430),
+      );
+      await tester.pumpAndSettle();
 
       final Finder favorites = find.byKey(
         const ValueKey<String>('reference-account-favorites'),
@@ -90,18 +96,27 @@ void main() {
       expect(find.byType(WalkaProductVisual), findsNWidgets(2));
       expect(tester.takeException(), isNull);
 
-      final Finder aboutScroll = find.byType(CustomScrollView);
-      for (int i = 0; i < 4; i += 1) {
-        await tester.drag(aboutScroll, const Offset(0, -420));
-        await tester.pumpAndSettle();
-      }
+      final Finder howWeDesign = find.text('HOW WE DESIGN');
+      await tester.scrollUntilVisible(
+        howWeDesign,
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+      expect(howWeDesign, findsOneWidget);
+      expect(find.text('Useful first'), findsOneWidget);
+      expect(tester.takeException(), isNull);
 
       final Finder closing = find.byKey(
         const ValueKey<String>('reference-about-closing'),
       );
+      await tester.scrollUntilVisible(
+        closing,
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
       expect(closing, findsOneWidget);
-      expect(find.text('HOW WE DESIGN'), findsOneWidget);
-      expect(find.text('Useful first'), findsOneWidget);
       expect(tester.takeException(), isNull);
     },
   );
