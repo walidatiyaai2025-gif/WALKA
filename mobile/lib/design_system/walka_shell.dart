@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'walka_adaptive.dart';
+import 'walka_motion.dart';
 import 'walka_theme.dart';
 
 /// Shared chrome metrics for the premium WALKA mobile shell.
@@ -177,6 +178,10 @@ class WalkaPremiumNavigationBar extends StatelessWidget {
         top: false,
         child: NavigationBar(
           height: WalkaShellMetrics.navigationHeight,
+          animationDuration: WalkaMotion.duration(
+            context,
+            WalkaMotion.standard,
+          ),
           selectedIndex: selectedIndex,
           onDestinationSelected: onDestinationSelected,
           destinations: _destinations,
