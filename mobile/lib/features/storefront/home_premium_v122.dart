@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../design_system/components/layout/walka_content_width.dart';
 import '../../design_system/walka_reference_ui.dart';
 import '../../design_system/walka_shell.dart';
 import '../catalog/catalog_state.dart';
@@ -11,10 +12,7 @@ import 'presentation/widgets/home/walka_home_small_changes.dart';
 import 'presentation/widgets/home/walka_home_trust_strip.dart';
 import 'storefront_catalog_v120.dart';
 
-/// DESIGN-007 responsive refinement of the approved Android-reference Home.
-///
-/// V122 keeps released catalog/routing behavior while composing isolated,
-/// independently testable Home presentation widgets.
+/// Reference Home composition shared by Android, iOS and wide desktop shells.
 class WalkaHomePremiumV122 extends StatelessWidget {
   const WalkaHomePremiumV122({
     required this.onShopAll,
@@ -37,60 +35,88 @@ class WalkaHomePremiumV122 extends StatelessWidget {
     final WalkaCatalogViewItem lunch = items.firstWhere(
       (WalkaCatalogViewItem item) => item.variantId == 'lunch-box:blue',
     );
-    final double gutter = WalkaShellMetrics.horizontalGutter(context);
     final String lunchLabel = '${lunch.title} ${lunch.variant}';
     final String drawerLabel = '${drawer.title} ${drawer.variant}';
 
     return WalkaReferenceViewport(
-      child: CustomScrollView(
-        key: const PageStorageKey<String>('walka-premium-home-scroll'),
-        slivers: <Widget>[
-          SliverToBoxAdapter(
-            child: WalkaHomeHeader(onBrowse: onShopAll, onSearch: onSearch),
-          ),
-          SliverToBoxAdapter(
-            child: WalkaHomeHero(
-              lunchSemanticLabel: '$lunchLabel hero product',
-              drawerSemanticLabel: '$drawerLabel hero product',
-              onOpenLunch: () => openWalkaCatalogItem(context, lunch),
-              onShopAll: onShopAll,
-              onSearch: onSearch,
-            ),
-          ),
-          SliverPadding(
-            padding: EdgeInsets.fromLTRB(gutter, 14, gutter, 0),
-            sliver: const SliverToBoxAdapter(child: WalkaHomeBenefitBand()),
-          ),
-          SliverPadding(
-            padding: EdgeInsets.fromLTRB(gutter, 28, gutter, 0),
-            sliver: SliverToBoxAdapter(
-              child: WalkaHomeCollectionSection(
-                lunchSemanticLabel: lunchLabel,
-                drawerSemanticLabel: drawerLabel,
-                onLunch: () => openWalkaCatalogItem(context, lunch),
-                onDrawer: () => openWalkaCatalogItem(context, drawer),
+      child: LayoutBuilder(
+        builder: (BuildContext context, BoxConstraints constraints) {
+          final WalkaContentTier tier =
+              WalkaContentWidthMetrics.tierForWidth(constraints.maxWidth);
+          final double maxWidth = WalkaContentWidthMetrics.maxWidthForTier(tier);
+          return Align(
+            alignment: Alignment.topCenter,
+            child: ConstrainedBox(
+              key: const ValueKey<String>('walka-home-responsive-frame'),
+              constraints: BoxConstraints(maxWidth: maxWidth),
+              child: Builder(
+                builder: (BuildContext context) {
+                  final double gutter = WalkaShellMetrics.horizontalGutter(context);
+                  return CustomScrollView(
+                    key: const PageStorageKey<String>('walka-premium-home-scroll'),
+                    slivers: <Widget>[
+                      SliverToBoxAdapter(
+                        child: WalkaHomeHeader(
+                          onBrowse: onShopAll,
+                          onSearch: onSearch,
+                        ),
+                      ),
+                      SliverToBoxAdapter(
+                        child: WalkaHomeHero(
+                          lunchSemanticLabel: '$lunchLabel hero product',
+                          drawerSemanticLabel: '$drawerLabel hero product',
+                          onOpenLunch: () => openWalkaCatalogItem(context, lunch),
+                          onShopAll: onShopAll,
+                          onSearch: onSearch,
+                        ),
+                      ),
+                      SliverPadding(
+                        padding: EdgeInsets.fromLTRB(gutter, 14, gutter, 0),
+                        sliver: const SliverToBoxAdapter(
+                          child: WalkaHomeBenefitBand(),
+                        ),
+                      ),
+                      SliverPadding(
+                        padding: EdgeInsets.fromLTRB(gutter, 28, gutter, 0),
+                        sliver: SliverToBoxAdapter(
+                          child: WalkaHomeCollectionSection(
+                            lunchSemanticLabel: lunchLabel,
+                            drawerSemanticLabel: drawerLabel,
+                            onLunch: () => openWalkaCatalogItem(context, lunch),
+                            onDrawer: () => openWalkaCatalogItem(context, drawer),
+                          ),
+                        ),
+                      ),
+                      SliverPadding(
+                        padding: EdgeInsets.fromLTRB(gutter, 18, gutter, 0),
+                        sliver: SliverToBoxAdapter(
+                          child: WalkaHomeSmallChanges(
+                            drawerSemanticLabel: '$drawerLabel lifestyle visual',
+                            onTap: () => openWalkaCatalogItem(context, drawer),
+                          ),
+                        ),
+                      ),
+                      SliverPadding(
+                        padding: EdgeInsets.fromLTRB(
+                          gutter,
+                          16,
+                          gutter,
+                          42 + MediaQuery.paddingOf(context).bottom,
+                        ),
+                        sliver: SliverToBoxAdapter(
+                          child: WalkaHomeTrustStrip(
+                            itemCount: items.length,
+                            release: controller.snapshot.config.release,
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                },
               ),
             ),
-          ),
-          SliverPadding(
-            padding: EdgeInsets.fromLTRB(gutter, 18, gutter, 0),
-            sliver: SliverToBoxAdapter(
-              child: WalkaHomeSmallChanges(
-                drawerSemanticLabel: '$drawerLabel lifestyle visual',
-                onTap: () => openWalkaCatalogItem(context, drawer),
-              ),
-            ),
-          ),
-          SliverPadding(
-            padding: EdgeInsets.fromLTRB(gutter, 16, gutter, 42),
-            sliver: SliverToBoxAdapter(
-              child: WalkaHomeTrustStrip(
-                itemCount: items.length,
-                release: controller.snapshot.config.release,
-              ),
-            ),
-          ),
-        ],
+          );
+        },
       ),
     );
   }
