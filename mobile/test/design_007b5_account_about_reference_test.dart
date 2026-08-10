@@ -25,9 +25,6 @@ void main() {
 
       expect(find.text('Your WALKA Space'), findsWidgets);
       expect(find.text('No account or sign-in is required.'), findsOneWidget);
-      expect(find.text('Account Overview'), findsOneWidget);
-      expect(find.text('5 variants'), findsOneWidget);
-      expect(find.text('Amazon'), findsOneWidget);
 
       // Reference-only mock commerce/account data must never become release truth.
       expect(find.text('Waleed Atiya'), findsNothing);
@@ -39,14 +36,21 @@ void main() {
       expect(find.textContaining(r'$287'), findsNothing);
       expect(tester.takeException(), isNull);
 
+      await tester.drag(
+        find.byType(CustomScrollView),
+        const Offset(0, -380),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Account Overview'), findsOneWidget);
+      expect(find.text('5 variants'), findsOneWidget);
+      expect(find.text('Amazon'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+
       final Finder favorites = find.byKey(
         const ValueKey<String>('reference-account-favorites'),
       );
-      await tester.scrollUntilVisible(
-        favorites,
-        220,
-        scrollable: find.byType(Scrollable).first,
-      );
+      expect(favorites, findsOneWidget);
       await tester.tap(favorites);
       await tester.pump();
       expect(favoritesCount, 1);
@@ -67,14 +71,16 @@ void main() {
       );
       await tester.pump();
 
+      await tester.drag(
+        find.byType(CustomScrollView),
+        const Offset(0, -560),
+      );
+      await tester.pumpAndSettle();
+
       final Finder story = find.byKey(
         const ValueKey<String>('reference-account-our-story'),
       );
-      await tester.scrollUntilVisible(
-        story,
-        220,
-        scrollable: find.byType(Scrollable).first,
-      );
+      expect(story, findsOneWidget);
       await tester.tap(story);
       await tester.pumpAndSettle();
 
@@ -84,15 +90,15 @@ void main() {
       expect(find.byType(WalkaProductVisual), findsNWidgets(2));
       expect(tester.takeException(), isNull);
 
+      final Finder aboutScroll = find.byType(CustomScrollView);
+      for (int i = 0; i < 4; i += 1) {
+        await tester.drag(aboutScroll, const Offset(0, -420));
+        await tester.pumpAndSettle();
+      }
+
       final Finder closing = find.byKey(
         const ValueKey<String>('reference-about-closing'),
       );
-      await tester.scrollUntilVisible(
-        closing,
-        260,
-        scrollable: find.byType(Scrollable).first,
-      );
-      await tester.pumpAndSettle();
       expect(closing, findsOneWidget);
       expect(find.text('HOW WE DESIGN'), findsOneWidget);
       expect(find.text('Useful first'), findsOneWidget);
