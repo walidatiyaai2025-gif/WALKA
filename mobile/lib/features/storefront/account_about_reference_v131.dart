@@ -8,10 +8,9 @@ import 'secondary_premium_v130.dart' show WalkaAppInfoPremiumV130;
 
 /// DESIGN-007B.5 Android-reference Account surface.
 ///
-/// The approved Android reference contains sample identity, VIP, order, spend,
-/// payment and sign-out data. WALKA mobile does not currently have an account
-/// backend, so this surface preserves the reference hierarchy without presenting
-/// those mock capabilities as real product behavior.
+/// The approved reference contains sample identity, VIP, orders, spend,
+/// payment methods and sign-out data. WALKA mobile has no account backend, so
+/// this screen keeps the visual hierarchy while exposing only real capabilities.
 class WalkaAccountReferenceV131 extends StatelessWidget {
   const WalkaAccountReferenceV131({required this.onFavorites, super.key});
 
@@ -24,46 +23,43 @@ class WalkaAccountReferenceV131 extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final double gutter = WalkaShellMetrics.horizontalGutter(context);
-
     return SafeArea(
       bottom: false,
       child: CustomScrollView(
         key: const PageStorageKey<String>('walka-reference-account-scroll'),
         slivers: <Widget>[
-          const SliverToBoxAdapter(child: _ReferenceAccountTopBar()),
+          const SliverToBoxAdapter(child: _AccountTopBar()),
           SliverPadding(
             padding: EdgeInsets.fromLTRB(gutter, 22, gutter, 0),
-            sliver: const SliverToBoxAdapter(child: _ReferenceAccountIdentity()),
+            sliver: const SliverToBoxAdapter(child: _AccountIdentity()),
           ),
           SliverPadding(
             padding: EdgeInsets.fromLTRB(gutter, 16, gutter, 0),
-            sliver: const SliverToBoxAdapter(child: _ReferenceAccountNotice()),
+            sliver: const SliverToBoxAdapter(child: _AccountNotice()),
           ),
           SliverPadding(
             padding: EdgeInsets.fromLTRB(gutter, 24, gutter, 0),
-            sliver: const SliverToBoxAdapter(
-              child: _ReferenceAccountOverview(),
-            ),
+            sliver: const SliverToBoxAdapter(child: _AccountOverview()),
           ),
           SliverPadding(
             padding: EdgeInsets.fromLTRB(gutter, 24, gutter, 0),
             sliver: SliverToBoxAdapter(
-              child: _ReferenceAccountSection(
+              child: _AccountSection(
                 title: 'Your WALKA Space',
                 children: <Widget>[
-                  _ReferenceAccountAction(
+                  _AccountAction(
                     icon: Icons.favorite_border_rounded,
                     title: 'Favorites',
                     subtitle: 'Drawer Organizer variants saved on this device',
                     onTap: onFavorites,
                   ),
-                  _ReferenceAccountAction(
+                  _AccountAction(
                     icon: Icons.auto_stories_outlined,
                     title: 'Our Story',
                     subtitle: 'Thoughtful organization, designed for daily life',
                     onTap: () => _push(context, const WalkaAboutReferenceV131()),
                   ),
-                  _ReferenceAccountAction(
+                  _AccountAction(
                     icon: Icons.info_outline_rounded,
                     title: 'App Information',
                     subtitle: 'Release, catalog and purchase-boundary details',
@@ -76,29 +72,29 @@ class WalkaAccountReferenceV131 extends StatelessWidget {
           SliverPadding(
             padding: EdgeInsets.fromLTRB(gutter, 22, gutter, 0),
             sliver: SliverToBoxAdapter(
-              child: _ReferenceAccountSection(
+              child: _AccountSection(
                 title: 'Support & Destinations',
                 children: <Widget>[
-                  _ReferenceAccountAction(
+                  _AccountAction(
                     icon: Icons.help_outline_rounded,
                     title: 'FAQ',
                     subtitle: 'Verified product care, use and purchase guidance',
                     onTap: () => _push(context, const WalkaFaqV102()),
                   ),
-                  _ReferenceAccountAction(
+                  _AccountAction(
                     icon: Icons.mail_outline_rounded,
                     title: 'Contact Us',
                     subtitle: 'WALKA product support and Amazon order routes',
                     onTap: () => _push(context, const WalkaContactV102()),
                   ),
-                  _ReferenceAccountAction(
+                  _AccountAction(
                     icon: Icons.storefront_outlined,
                     title: 'Amazon Store',
                     subtitle: 'Official WALKA purchase destination',
                     external: true,
                     onTap: () => _push(context, const WalkaAmazonStoreV102()),
                   ),
-                  _ReferenceAccountAction(
+                  _AccountAction(
                     icon: Icons.public_rounded,
                     title: 'Follow WALKA',
                     subtitle: 'Website and Instagram destinations',
@@ -112,10 +108,10 @@ class WalkaAccountReferenceV131 extends StatelessWidget {
           SliverPadding(
             padding: EdgeInsets.fromLTRB(gutter, 22, gutter, 42),
             sliver: SliverToBoxAdapter(
-              child: _ReferenceAccountSection(
+              child: _AccountSection(
                 title: 'Privacy & App',
                 children: <Widget>[
-                  _ReferenceAccountAction(
+                  _AccountAction(
                     icon: Icons.shield_outlined,
                     title: 'Privacy',
                     subtitle: 'Local Favorites, catalog behavior and handoffs',
@@ -124,7 +120,7 @@ class WalkaAccountReferenceV131 extends StatelessWidget {
                       const WalkaLegalV102(type: WalkaLegalTypeV102.privacy),
                     ),
                   ),
-                  _ReferenceAccountAction(
+                  _AccountAction(
                     icon: Icons.description_outlined,
                     title: 'Terms',
                     subtitle: 'Discovery and marketplace boundaries',
@@ -143,8 +139,8 @@ class WalkaAccountReferenceV131 extends StatelessWidget {
   }
 }
 
-class _ReferenceAccountTopBar extends StatelessWidget {
-  const _ReferenceAccountTopBar();
+class _AccountTopBar extends StatelessWidget {
+  const _AccountTopBar();
 
   @override
   Widget build(BuildContext context) {
@@ -187,8 +183,8 @@ class _ReferenceAccountTopBar extends StatelessWidget {
   }
 }
 
-class _ReferenceAccountIdentity extends StatelessWidget {
-  const _ReferenceAccountIdentity();
+class _AccountIdentity extends StatelessWidget {
+  const _AccountIdentity();
 
   @override
   Widget build(BuildContext context) {
@@ -201,7 +197,6 @@ class _ReferenceAccountIdentity extends StatelessWidget {
         border: Border.all(color: WalkaColors.line),
       ),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
         children: <Widget>[
           Container(
             width: 74,
@@ -269,8 +264,8 @@ class _ReferenceAccountIdentity extends StatelessWidget {
   }
 }
 
-class _ReferenceAccountNotice extends StatelessWidget {
-  const _ReferenceAccountNotice();
+class _AccountNotice extends StatelessWidget {
+  const _AccountNotice();
 
   @override
   Widget build(BuildContext context) {
@@ -318,11 +313,17 @@ class _ReferenceAccountNotice extends StatelessWidget {
   }
 }
 
-class _ReferenceAccountOverview extends StatelessWidget {
-  const _ReferenceAccountOverview();
+class _AccountOverview extends StatelessWidget {
+  const _AccountOverview();
 
   @override
   Widget build(BuildContext context) {
+    const List<(IconData, String, String)> items = <(IconData, String, String)>[
+      (Icons.person_off_outlined, 'Sign-in', 'Not required'),
+      (Icons.inventory_2_outlined, 'Catalog', '5 variants'),
+      (Icons.favorite_border_rounded, 'Favorites', 'On device'),
+      (Icons.open_in_new_rounded, 'Purchase', 'Amazon'),
+    ];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
@@ -345,46 +346,23 @@ class _ReferenceAccountOverview extends StatelessWidget {
           ),
           child: LayoutBuilder(
             builder: (BuildContext context, BoxConstraints constraints) {
-              final List<_ReferenceOverviewItem> items =
-                  <_ReferenceOverviewItem>[
-                const _ReferenceOverviewItem(
-                  Icons.person_off_outlined,
-                  'Sign-in',
-                  'Not required',
-                ),
-                const _ReferenceOverviewItem(
-                  Icons.inventory_2_outlined,
-                  'Catalog',
-                  '5 variants',
-                ),
-                const _ReferenceOverviewItem(
-                  Icons.favorite_border_rounded,
-                  'Favorites',
-                  'On device',
-                ),
-                const _ReferenceOverviewItem(
-                  Icons.open_in_new_rounded,
-                  'Purchase',
-                  'Amazon',
-                ),
-              ];
-              final double width = constraints.maxWidth < 330
+              final bool twoColumns = constraints.maxWidth < 330;
+              final double width = twoColumns
                   ? (constraints.maxWidth - 4) / 2
                   : (constraints.maxWidth - 12) / 4;
               return Wrap(
                 spacing: 4,
                 runSpacing: 16,
-                alignment: WrapAlignment.center,
                 children: items
                     .map(
-                      (_ReferenceOverviewItem item) => SizedBox(
+                      ((IconData, String, String) item) => SizedBox(
                         width: width,
                         child: Column(
                           children: <Widget>[
-                            Icon(item.icon, color: WalkaColors.navy, size: 24),
+                            Icon(item.$1, color: WalkaColors.navy, size: 24),
                             const SizedBox(height: 7),
                             Text(
-                              item.label,
+                              item.$2,
                               textAlign: TextAlign.center,
                               style: const TextStyle(
                                 color: WalkaColors.navy,
@@ -394,7 +372,7 @@ class _ReferenceAccountOverview extends StatelessWidget {
                             ),
                             const SizedBox(height: 3),
                             Text(
-                              item.value,
+                              item.$3,
                               textAlign: TextAlign.center,
                               style: const TextStyle(
                                 color: WalkaColors.muted,
@@ -416,16 +394,8 @@ class _ReferenceAccountOverview extends StatelessWidget {
   }
 }
 
-class _ReferenceOverviewItem {
-  const _ReferenceOverviewItem(this.icon, this.label, this.value);
-
-  final IconData icon;
-  final String label;
-  final String value;
-}
-
-class _ReferenceAccountSection extends StatelessWidget {
-  const _ReferenceAccountSection({required this.title, required this.children});
+class _AccountSection extends StatelessWidget {
+  const _AccountSection({required this.title, required this.children});
 
   final String title;
   final List<Widget> children;
@@ -453,9 +423,9 @@ class _ReferenceAccountSection extends StatelessWidget {
           clipBehavior: Clip.antiAlias,
           child: Column(
             children: <Widget>[
-              for (int index = 0; index < children.length; index++) ...<Widget>[
-                children[index],
-                if (index != children.length - 1)
+              for (int i = 0; i < children.length; i++) ...<Widget>[
+                children[i],
+                if (i != children.length - 1)
                   const Divider(height: 1, color: WalkaColors.line),
               ],
             ],
@@ -466,8 +436,8 @@ class _ReferenceAccountSection extends StatelessWidget {
   }
 }
 
-class _ReferenceAccountAction extends StatelessWidget {
-  const _ReferenceAccountAction({
+class _AccountAction extends StatelessWidget {
+  const _AccountAction({
     required this.icon,
     required this.title,
     required this.subtitle,
@@ -486,7 +456,9 @@ class _ReferenceAccountAction extends StatelessWidget {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        key: ValueKey<String>('reference-account-${title.toLowerCase().replaceAll(' ', '-')}'),
+        key: ValueKey<String>(
+          'reference-account-${title.toLowerCase().replaceAll(' ', '-')}',
+        ),
         onTap: onTap,
         child: Padding(
           padding: const EdgeInsets.fromLTRB(14, 13, 12, 13),
@@ -542,10 +514,6 @@ class _ReferenceAccountAction extends StatelessWidget {
 }
 
 /// DESIGN-007B.5 Android-reference Our Story / About surface.
-///
-/// This keeps the established truthful WALKA design philosophy while moving the
-/// composition into the same editorial hierarchy as the approved Android About
-/// reference.
 class WalkaAboutReferenceV131 extends StatelessWidget {
   const WalkaAboutReferenceV131({super.key});
 
@@ -581,27 +549,23 @@ class WalkaAboutReferenceV131 extends StatelessWidget {
           slivers: <Widget>[
             SliverPadding(
               padding: EdgeInsets.fromLTRB(gutter, 18, gutter, 0),
-              sliver: const SliverToBoxAdapter(child: _ReferenceAboutHero()),
+              sliver: const SliverToBoxAdapter(child: _AboutHero()),
             ),
             SliverPadding(
               padding: EdgeInsets.fromLTRB(gutter, 32, gutter, 0),
-              sliver: const SliverToBoxAdapter(
-                child: _ReferenceAboutStoryBlock(),
-              ),
+              sliver: const SliverToBoxAdapter(child: _AboutStory()),
             ),
             SliverPadding(
               padding: EdgeInsets.fromLTRB(gutter, 28, gutter, 0),
-              sliver: const SliverToBoxAdapter(child: _ReferenceAboutValues()),
+              sliver: const SliverToBoxAdapter(child: _AboutValues()),
             ),
             SliverPadding(
               padding: EdgeInsets.fromLTRB(gutter, 28, gutter, 0),
-              sliver: const SliverToBoxAdapter(
-                child: _ReferenceAboutPrinciples(),
-              ),
+              sliver: const SliverToBoxAdapter(child: _AboutPrinciples()),
             ),
             SliverPadding(
               padding: EdgeInsets.fromLTRB(gutter, 28, gutter, 42),
-              sliver: const SliverToBoxAdapter(child: _ReferenceAboutClosing()),
+              sliver: const SliverToBoxAdapter(child: _AboutClosing()),
             ),
           ],
         ),
@@ -610,14 +574,13 @@ class WalkaAboutReferenceV131 extends StatelessWidget {
   }
 }
 
-class _ReferenceAboutHero extends StatelessWidget {
-  const _ReferenceAboutHero();
+class _AboutHero extends StatelessWidget {
+  const _AboutHero();
 
   @override
   Widget build(BuildContext context) {
     return Container(
       key: const ValueKey<String>('reference-about-hero'),
-      constraints: const BoxConstraints(minHeight: 410),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(26),
         gradient: const LinearGradient(
@@ -631,14 +594,14 @@ class _ReferenceAboutHero extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Padding(
-            padding: const EdgeInsets.fromLTRB(22, 24, 22, 18),
+          const Padding(
+            padding: EdgeInsets.fromLTRB(22, 24, 22, 18),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                const Text('OUR STORY', style: WalkaType.eyebrow),
-                const SizedBox(height: 9),
-                const Text(
+                Text('OUR STORY', style: WalkaType.eyebrow),
+                SizedBox(height: 9),
+                Text(
                   'Organized living.\nElevated everyday.',
                   style: TextStyle(
                     color: WalkaColors.navy,
@@ -649,8 +612,8 @@ class _ReferenceAboutHero extends StatelessWidget {
                     letterSpacing: -0.45,
                   ),
                 ),
-                const SizedBox(height: 12),
-                const Text(
+                SizedBox(height: 12),
+                Text(
                   'Thoughtful organization essentials that make everyday spaces easier to use and calmer to look at.',
                   style: TextStyle(
                     color: WalkaColors.muted,
@@ -661,11 +624,11 @@ class _ReferenceAboutHero extends StatelessWidget {
               ],
             ),
           ),
-          Expanded(
-            child: Container(
-              constraints: const BoxConstraints(minHeight: 190),
-              padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
-              child: const Row(
+          const SizedBox(
+            height: 196,
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(12, 4, 12, 12),
+              child: Row(
                 children: <Widget>[
                   Expanded(
                     child: WalkaProductVisual(
@@ -696,8 +659,8 @@ class _ReferenceAboutHero extends StatelessWidget {
   }
 }
 
-class _ReferenceAboutStoryBlock extends StatelessWidget {
-  const _ReferenceAboutStoryBlock();
+class _AboutStory extends StatelessWidget {
+  const _AboutStory();
 
   @override
   Widget build(BuildContext context) {
@@ -720,12 +683,12 @@ class _ReferenceAboutStoryBlock extends StatelessWidget {
   }
 }
 
-class _ReferenceAboutValues extends StatelessWidget {
-  const _ReferenceAboutValues();
+class _AboutValues extends StatelessWidget {
+  const _AboutValues();
 
   @override
   Widget build(BuildContext context) {
-    final List<(IconData, String, String)> values = <(IconData, String, String)>[
+    const List<(IconData, String, String)> values = <(IconData, String, String)>[
       (
         Icons.tune_rounded,
         'Purposeful',
@@ -744,7 +707,7 @@ class _ReferenceAboutValues extends StatelessWidget {
     ];
     return Container(
       key: const ValueKey<String>('reference-about-values'),
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.fromLTRB(18, 18, 18, 4),
       decoration: BoxDecoration(
         color: WalkaColors.navy,
         borderRadius: BorderRadius.circular(24),
@@ -812,8 +775,8 @@ class _ReferenceAboutValues extends StatelessWidget {
   }
 }
 
-class _ReferenceAboutPrinciples extends StatelessWidget {
-  const _ReferenceAboutPrinciples();
+class _AboutPrinciples extends StatelessWidget {
+  const _AboutPrinciples();
 
   @override
   Widget build(BuildContext context) {
@@ -824,21 +787,21 @@ class _ReferenceAboutPrinciples extends StatelessWidget {
         SizedBox(height: 9),
         Text('Simple choices, made deliberately.', style: WalkaType.sectionTitle),
         SizedBox(height: 16),
-        _ReferencePrinciple(
+        _Principle(
           number: '01',
           title: 'Useful first',
           body:
               'Every WALKA product starts with the routine it needs to improve, then removes unnecessary complexity.',
         ),
         SizedBox(height: 10),
-        _ReferencePrinciple(
+        _Principle(
           number: '02',
           title: 'Calm by design',
           body:
               'Clean proportions, restrained color and considered details help products sit naturally in the home.',
         ),
         SizedBox(height: 10),
-        _ReferencePrinciple(
+        _Principle(
           number: '03',
           title: 'Made for repetition',
           body:
@@ -849,8 +812,8 @@ class _ReferenceAboutPrinciples extends StatelessWidget {
   }
 }
 
-class _ReferencePrinciple extends StatelessWidget {
-  const _ReferencePrinciple({
+class _Principle extends StatelessWidget {
+  const _Principle({
     required this.number,
     required this.title,
     required this.body,
@@ -912,8 +875,8 @@ class _ReferencePrinciple extends StatelessWidget {
   }
 }
 
-class _ReferenceAboutClosing extends StatelessWidget {
-  const _ReferenceAboutClosing();
+class _AboutClosing extends StatelessWidget {
+  const _AboutClosing();
 
   @override
   Widget build(BuildContext context) {
