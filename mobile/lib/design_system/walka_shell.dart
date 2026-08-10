@@ -180,7 +180,7 @@ class WalkaPremiumNavigationBar extends StatelessWidget {
           height: WalkaShellMetrics.navigationHeight,
           animationDuration: WalkaMotion.duration(
             context,
-            WalkaMotion.standard,
+            WalkaMotion.navigationSelection,
           ),
           selectedIndex: selectedIndex,
           onDestinationSelected: onDestinationSelected,
