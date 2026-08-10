@@ -49,7 +49,7 @@ The Android fidelity program is already partially delivered. Do not redo complet
 | Android Categories + Search consistency | ✅ COMPLETED / stable on `main` | Issue #74 / PR #75 |
 | Android Product Detail reference fidelity | ✅ COMPLETED / stable on `main` | Issue #76 / final PR #80 |
 | Android Favorites reference fidelity | ✅ COMPLETED / stable on `main` | Issue #78 / PR #81 |
-| Android Account + About fidelity | 🟡 IN PROGRESS | Issue #82 / PR #83 |
+| Android Account + About fidelity | ✅ COMPLETED / stable on `main` | Issue #82 / PR #83 |
 | Cross-screen modularization | ⬜ TODO | This plan |
 | iOS reference parity | ⬜ TODO | This plan |
 | PC/Desktop reference parity | ⬜ TODO | This plan |
@@ -141,7 +141,7 @@ Legend: ✅ Done | 🟡 In progress | ⬜ Todo | ⛔ Blocked | ♻️ Existing c
 
 | ID | Status | Lane | Atomic task | Expected output |
 |---|---|---|---|---|
-| DS-001 | ♻️ | Design System | Extract `WalkaSectionHeader` | Reusable eyebrow/title/action widget file + tests |
+| DS-001 | ✅ | Design System | Extract `WalkaSectionHeader` | Completed via #87 / PR #88; reusable eyebrow/title/action widget + focused tests |
 | DS-002 | ♻️ | Design System | Extract `WalkaReferenceTopBar` | Wordmark + action slots + safe-area handling |
 | DS-003 | ♻️ | Design System | Extract `WalkaPrimaryButton` | Gold primary CTA wrapper using Theme tokens |
 | DS-004 | ♻️ | Design System | Extract `WalkaSecondaryButton` | Navy outlined CTA wrapper |
@@ -259,7 +259,7 @@ Android reference fidelity is already stable; tasks below focus on extracting it
 
 | ID | Status | Lane | Atomic task | Expected output |
 |---|---|---|---|---|
-| ACC-001 | 🟡 | Account | Android Account reference fidelity | Finish #82/#83 and merge only when Green |
+| ACC-001 | ✅ | Account | Android Account reference fidelity | Completed via #82 / PR #83 and stable on `main` |
 | ACC-002 | 🟡 | Account | Extract Account reference top bar | Reusable top chrome from active branch implementation |
 | ACC-003 | 🟡 | Account | Extract truthful profile/status hero | No fake identity/VIP/order/payment information |
 | ACC-004 | 🟡 | Account | Extract overview metrics row | Released-state metrics only |
@@ -277,7 +277,7 @@ Android reference fidelity is already stable; tasks below focus on extracting it
 
 | ID | Status | Lane | Atomic task | Expected output |
 |---|---|---|---|---|
-| ABOUT-001 | 🟡 | Information | Android About reference fidelity | Finish #82/#83 |
+| ABOUT-001 | ✅ | Information | Android About reference fidelity | Completed via #82 / PR #83 and stable on `main` |
 | ABOUT-002 | 🟡 | Information | Extract About editorial hero | Bounded hero safe inside vertical scroll |
 | ABOUT-003 | 🟡 | Information | Extract story intro block | Editorial title/body component |
 | ABOUT-004 | 🟡 | Information | Extract product-story visual block | Drawer/Lunch visual + narrative layout |
@@ -364,8 +364,8 @@ Developers should avoid editing the same page file simultaneously. Extract compo
 
 # 7. Immediate execution queue
 
-1. **Do not duplicate #82/#83.** Let the active Account + About PR finish its CI/merge path.
-2. Start `DS-001` through `DS-010` as independent extraction/reuse tasks, prioritizing widgets needed by multiple screens.
+1. **Do not duplicate #82/#83.** Account + About Android reference fidelity is completed and stable on `main`.
+2. Continue `DS-002` through `DS-010` as independent extraction/reuse tasks; `DS-001` is completed.
 3. Run `HOME-002..010`, `CAT-003..012`, `PDP-002..014`, and `FAV-002..008` as visual-preserving modularization tasks.
 4. Classify `f96465c7-...png` (`REF-003`) before claiming missing PC Product/Categories reference coverage.
 5. Implement iOS parity: Home → Categories → PDP → Favorites → Account → About.
