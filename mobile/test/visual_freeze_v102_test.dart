@@ -7,7 +7,7 @@ import 'package:walka/features/favorites/favorites_state.dart';
 import 'package:walka/features/information/information_v102.dart';
 import 'package:walka/features/lunch/lunch_box_v6.dart';
 import 'package:walka/features/products/product_experience_v100.dart';
-import 'package:walka/features/products/product_experience_v10.dart';
+import 'package:walka/features/products/product_experience_v110.dart';
 import 'package:walka/features/storefront/storefront_v101.dart';
 import 'package:walka/features/storefront/storefront_v102.dart';
 import 'package:walka/main.dart';
@@ -20,8 +20,14 @@ void main() {
     expect(const WalkaStorefrontShellV102(), isA<WalkaStorefrontShellV102>());
     expect(const WalkaSearchV101(), isA<WalkaSearchV101>());
     expect(const WalkaCategoriesV101(), isA<WalkaCategoriesV101>());
-    expect(const WalkaDrawerProductDetailV100(), isA<WalkaDrawerProductDetailV100>());
-    expect(const WalkaLunchProductDetailV100(), isA<WalkaLunchProductDetailV100>());
+    expect(
+      const WalkaDrawerProductDetailV100(),
+      isA<WalkaDrawerProductDetailV100>(),
+    );
+    expect(
+      const WalkaLunchProductDetailV100(),
+      isA<WalkaLunchProductDetailV100>(),
+    );
   });
 
   test('final product copy follows docs/PRODUCT_MASTER.md', () async {
@@ -46,8 +52,8 @@ void main() {
       ),
     );
 
-    expect(finalProduct, contains('WalkaDrawerProductDetailV10'));
-    expect(finalProduct, contains('WalkaLunchProductDetailV10'));
+    expect(finalProduct, contains('WalkaDrawerProductDetailV110'));
+    expect(finalProduct, contains('WalkaLunchProductDetailV110'));
     expect(finalProduct, isNot(contains('1.72 lb')));
     expect(finalProduct, isNot(contains('Hand wash')));
 
@@ -66,94 +72,100 @@ void main() {
     expect(app, contains('WalkaStorefrontSplashV102'));
   });
 
-  testWidgets('Search Green result opens final Product-Master-safe Lunch PDP',
-      (WidgetTester tester) async {
-    tester.view.physicalSize = const Size(390, 844);
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.resetPhysicalSize);
-    addTearDown(tester.view.resetDevicePixelRatio);
+  testWidgets(
+    'Search Green result opens final Product-Master-safe Lunch PDP',
+    (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
 
-    await tester.pumpWidget(
-      MaterialApp(
-        theme: buildWalkaTheme(),
-        home: const Scaffold(body: WalkaSearchV101()),
-      ),
-    );
-    await tester.pump();
-
-    await tester.enterText(find.byType(TextField), 'green');
-    await tester.pump();
-
-    expect(find.text('1 result'), findsOneWidget);
-    await tester.tap(find.text('Large Stainless Steel Bento Lunch Box'));
-    await tester.pumpAndSettle();
-
-    expect(find.byType(WalkaLunchProductDetailV100), findsOneWidget);
-    expect(find.byType(WalkaLunchProductDetailV10), findsOneWidget);
-    expect(find.textContaining('Green · PANTONE 6198 U'), findsOneWidget);
-    expect(find.text('BUY ON AMAZON'), findsOneWidget);
-    expect(tester.takeException(), isNull);
-  });
-
-  testWidgets('final Drawer route preserves persistent Favorites',
-      (WidgetTester tester) async {
-    final WalkaFavoritesController controller = _controller();
-    await controller.load();
-
-    await tester.pumpWidget(
-      WalkaFavoritesScope(
-        controller: controller,
-        child: MaterialApp(
+      await tester.pumpWidget(
+        MaterialApp(
           theme: buildWalkaTheme(),
-          home: const WalkaDrawerProductDetailV100(initialGray: true),
+          home: const Scaffold(body: WalkaSearchV101()),
         ),
-      ),
-    );
-    await tester.pump();
+      );
+      await tester.pump();
 
-    expect(controller.isDrawerFavorite(gray: true), isFalse);
-    expect(find.byType(WalkaDrawerProductDetailV10), findsOneWidget);
-    expect(find.byTooltip('Add favorite'), findsOneWidget);
-    await tester.tap(find.byTooltip('Add favorite'));
-    await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField), 'green');
+      await tester.pump();
 
-    expect(controller.isDrawerFavorite(gray: true), isTrue);
-    expect(find.byTooltip('Remove favorite'), findsOneWidget);
-    expect(tester.takeException(), isNull);
-  });
+      expect(find.text('1 result'), findsOneWidget);
+      await tester.tap(find.text('Large Stainless Steel Bento Lunch Box'));
+      await tester.pumpAndSettle();
 
-  testWidgets('final FAQ exposes approved care and microwave guidance',
-      (WidgetTester tester) async {
-    tester.view.physicalSize = const Size(390, 844);
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.resetPhysicalSize);
-    addTearDown(tester.view.resetDevicePixelRatio);
+      expect(find.byType(WalkaLunchProductDetailV100), findsOneWidget);
+      expect(find.byType(WalkaLunchProductDetailV110), findsOneWidget);
+      expect(find.textContaining('Green · PANTONE 6198 U'), findsOneWidget);
+      expect(find.text('BUY ON AMAZON'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
 
-    await tester.pumpWidget(
-      MaterialApp(
-        theme: buildWalkaTheme(),
-        home: const WalkaFaqV102(),
-      ),
-    );
-    await tester.pump();
+  testWidgets(
+    'final Drawer route preserves persistent Favorites',
+    (WidgetTester tester) async {
+      final WalkaFavoritesController controller = _controller();
+      await controller.load();
 
-    expect(find.text('Frequently Asked Questions'), findsOneWidget);
-    await tester.tap(find.text('What can go in the dishwasher?'));
-    await tester.pumpAndSettle();
-    expect(
-      find.textContaining('dishwasher safe on the top rack'),
-      findsOneWidget,
-    );
+      await tester.pumpWidget(
+        WalkaFavoritesScope(
+          controller: controller,
+          child: MaterialApp(
+            theme: buildWalkaTheme(),
+            home: const WalkaDrawerProductDetailV100(initialGray: true),
+          ),
+        ),
+      );
+      await tester.pump();
 
-    await tester.tap(find.text('What can go in the microwave?'));
-    await tester.pumpAndSettle();
-    expect(
-      find.textContaining('Microwave only the PP outer body'),
-      findsOneWidget,
-    );
-    expect(find.textContaining('Hand wash'), findsNothing);
-    expect(tester.takeException(), isNull);
-  });
+      expect(controller.isDrawerFavorite(gray: true), isFalse);
+      expect(find.byType(WalkaDrawerProductDetailV110), findsOneWidget);
+      expect(find.byTooltip('Add favorite'), findsOneWidget);
+      await tester.tap(find.byTooltip('Add favorite'));
+      await tester.pumpAndSettle();
+
+      expect(controller.isDrawerFavorite(gray: true), isTrue);
+      expect(find.byTooltip('Remove favorite'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'final FAQ exposes approved care and microwave guidance',
+    (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: buildWalkaTheme(),
+          home: const WalkaFaqV102(),
+        ),
+      );
+      await tester.pump();
+
+      expect(find.text('Frequently Asked Questions'), findsOneWidget);
+      await tester.tap(find.text('What can go in the dishwasher?'));
+      await tester.pumpAndSettle();
+      expect(
+        find.textContaining('dishwasher safe on the top rack'),
+        findsOneWidget,
+      );
+
+      await tester.tap(find.text('What can go in the microwave?'));
+      await tester.pumpAndSettle();
+      expect(
+        find.textContaining('Microwave only the PP outer body'),
+        findsOneWidget,
+      );
+      expect(find.textContaining('Hand wash'), findsNothing);
+      expect(tester.takeException(), isNull);
+    },
+  );
 
   testWidgets('Account routes to the verified FAQ surface',
       (WidgetTester tester) async {
@@ -205,31 +217,37 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('final Lunch route preserves approved use guidance',
-      (WidgetTester tester) async {
-    tester.view.physicalSize = const Size(390, 844);
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.resetPhysicalSize);
-    addTearDown(tester.view.resetDevicePixelRatio);
+  testWidgets(
+    'final Lunch route preserves approved use guidance',
+    (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
 
-    await tester.pumpWidget(
-      MaterialApp(
-        theme: buildWalkaTheme(),
-        home: const WalkaLunchProductDetailV100(
-          initialVariant: WalkaLunchVariant.pink,
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: buildWalkaTheme(),
+          home: const WalkaLunchProductDetailV100(
+            initialVariant: WalkaLunchVariant.pink,
+          ),
         ),
-      ),
-    );
-    await tester.pump();
+      );
+      await tester.pump();
 
-    expect(find.byType(WalkaLunchProductDetailV10), findsOneWidget);
-    expect(find.textContaining('Pink · PANTONE 9242 U'), findsOneWidget);
-    expect(find.textContaining('Best for dry & semi-wet foods'), findsOneWidget);
-    expect(find.textContaining('Not intended for liquids'), findsOneWidget);
-    expect(find.textContaining('Carry upright'), findsOneWidget);
-    expect(find.text('BUY ON AMAZON'), findsOneWidget);
-    expect(tester.takeException(), isNull);
-  });
+      expect(find.byType(WalkaLunchProductDetailV110), findsOneWidget);
+      expect(find.textContaining('Pink · PANTONE 9242 U'), findsOneWidget);
+      expect(
+        find.textContaining('Best suited for dry meals & snacks'),
+        findsOneWidget,
+      );
+      expect(find.textContaining('Best for dry & semi-wet foods'), findsOneWidget);
+      expect(find.textContaining('Not intended for liquids'), findsOneWidget);
+      expect(find.textContaining('Carry upright'), findsOneWidget);
+      expect(find.text('BUY ON AMAZON'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
 }
 
 WalkaFavoritesController _controller() {
