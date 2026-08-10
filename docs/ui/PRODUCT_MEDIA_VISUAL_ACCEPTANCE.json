@@ -1,0 +1,76 @@
+{
+  "schemaVersion": 1,
+  "statusPolicy": ["PENDING", "PASS", "BLOCKED", "REOPEN"],
+  "screens": [
+    {
+      "task": "VREL-081",
+      "screen": "Home",
+      "references": ["Images/Home for Android.png", "Images/Home for ios.png", "Images/Home for pc.png"],
+      "requiredVariants": ["drawer-organizer:white", "lunch-box:blue", "lunch-box:green"],
+      "checks": ["hero framing", "collection framing", "Small Changes framing", "light-background separation", "no baked copy in product pixels"],
+      "status": "PENDING"
+    },
+    {
+      "task": "VREL-082",
+      "screen": "Discovery",
+      "references": ["Images/Categories page for Android.png", "Images/Categories page for ios.png"],
+      "requiredVariants": ["drawer-organizer:white", "drawer-organizer:gray", "lunch-box:blue", "lunch-box:pink", "lunch-box:green"],
+      "checks": ["category crop", "search result crop", "variant identity", "card-scale edge quality"],
+      "status": "PENDING",
+      "notes": "PC Categories fidelity remains separately blocked until an approved PC reference exists."
+    },
+    {
+      "task": "VREL-083",
+      "screen": "PDP",
+      "references": ["Images/Product page for Android.png", "Images/Product page for ios.png"],
+      "requiredVariants": ["drawer-organizer:white", "drawer-organizer:gray", "lunch-box:blue", "lunch-box:pink", "lunch-box:green"],
+      "checks": ["primary product framing", "zoom edge quality", "variant switch identity", "primary-vs-illustrative-secondary truth"],
+      "status": "PENDING",
+      "notes": "PC PDP fidelity remains separately blocked until an approved PC reference exists."
+    },
+    {
+      "task": "VREL-084",
+      "screen": "Favorites",
+      "references": ["Images/Faivorets page for Android.png", "Images/Faivorets page for ios.png", "Images/Faivorets page for PC.png"],
+      "requiredVariants": ["drawer-organizer:white", "drawer-organizer:gray"],
+      "checks": ["saved variant identity", "card crop", "White/Gray separation", "remove/edit overlay clearance"],
+      "status": "PENDING"
+    },
+    {
+      "task": "VREL-085",
+      "screen": "Account/About",
+      "references": ["Images/About for Android.png", "Images/About for ios.png", "Images/About page for PC.png", "Images/Account profile page for Android.png", "Images/Account profile page for ios.png", "Images/Account profile page for PC.png"],
+      "requiredVariants": ["drawer-organizer:white", "lunch-box:blue"],
+      "checks": ["About story crop", "About dual-product balance", "Account remains product-media independent"],
+      "status": "PENDING"
+    }
+  ],
+  "crossVariant": {
+    "task": "VREL-086",
+    "checks": ["variant ID matches Product Master color identity", "no recolored sibling presented as real source", "lighting normalization does not alter material/color truth"],
+    "status": "PENDING"
+  },
+  "alphaEdges": {
+    "task": "VREL-087",
+    "checks": ["no white matte", "no dark fringe", "no halo", "no clipped handles/clips/dividers", "transparent corners remain transparent"],
+    "status": "PENDING"
+  },
+  "bakedContent": {
+    "task": "VREL-088",
+    "forbidden": ["price", "rating", "review count", "marketplace navigation", "coupon", "unsupported leak-proof claim", "cart or checkout UI"],
+    "manualRequirement": "Inspect product pixels at 200% because automated source-code scanning cannot prove absence of text baked into image pixels.",
+    "status": "PENDING"
+  },
+  "protectedMasters": {
+    "task": "VREL-089",
+    "pathPrefix": "Images/",
+    "normalCiMutationAllowed": false,
+    "explicitOverrideEnvironment": "WALKA_ALLOW_PROTECTED_IMAGES_MUTATION=1"
+  },
+  "reconciliation": {
+    "task": "VREL-090",
+    "variantRegistry": "mobile/lib/design_system/components/media/walka_product_media_resolver.dart",
+    "sourceAdmission": "docs/ui/PRODUCTION_SOURCE_ADMISSION.json",
+    "acceptanceMatrix": "docs/ui/PRODUCT_MEDIA_VISUAL_ACCEPTANCE.json"
+  }
+}
