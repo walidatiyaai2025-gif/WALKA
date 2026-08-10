@@ -7,7 +7,7 @@ import 'package:walka/features/favorites/favorites_state.dart';
 import 'package:walka/features/information/information_v102.dart';
 import 'package:walka/features/lunch/lunch_box_v6.dart';
 import 'package:walka/features/products/product_experience_v100.dart';
-import 'package:walka/features/products/product_experience_v110.dart';
+import 'package:walka/features/products/product_experience_v111.dart';
 import 'package:walka/features/storefront/storefront_v101.dart';
 import 'package:walka/features/storefront/storefront_v102.dart';
 import 'package:walka/main.dart';
@@ -52,8 +52,8 @@ void main() {
       ),
     );
 
-    expect(finalProduct, contains('WalkaDrawerProductDetailV110'));
-    expect(finalProduct, contains('WalkaLunchProductDetailV110'));
+    expect(finalProduct, contains('WalkaDrawerProductDetailV111'));
+    expect(finalProduct, contains('WalkaLunchProductDetailV111'));
     expect(finalProduct, isNot(contains('1.72 lb')));
     expect(finalProduct, isNot(contains('Hand wash')));
 
@@ -96,7 +96,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byType(WalkaLunchProductDetailV100), findsOneWidget);
-      expect(find.byType(WalkaLunchProductDetailV110), findsOneWidget);
+      expect(find.byType(WalkaLunchProductDetailV111), findsOneWidget);
       expect(find.textContaining('Green · PANTONE 6198 U'), findsOneWidget);
       expect(find.text('BUY ON AMAZON'), findsOneWidget);
       expect(tester.takeException(), isNull);
@@ -121,7 +121,7 @@ void main() {
       await tester.pump();
 
       expect(controller.isDrawerFavorite(gray: true), isFalse);
-      expect(find.byType(WalkaDrawerProductDetailV110), findsOneWidget);
+      expect(find.byType(WalkaDrawerProductDetailV111), findsOneWidget);
       expect(find.byTooltip('Add favorite'), findsOneWidget);
       await tester.tap(find.byTooltip('Add favorite'));
       await tester.pumpAndSettle();
@@ -235,7 +235,7 @@ void main() {
       );
       await tester.pump();
 
-      expect(find.byType(WalkaLunchProductDetailV110), findsOneWidget);
+      expect(find.byType(WalkaLunchProductDetailV111), findsOneWidget);
       expect(find.textContaining('Pink · PANTONE 9242 U'), findsOneWidget);
       expect(
         find.textContaining('Best suited for dry meals & snacks'),
