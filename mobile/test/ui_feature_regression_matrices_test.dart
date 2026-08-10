@@ -32,14 +32,15 @@ void main() {
         _app(
           state: state,
           device: device,
-          textScale: device == WalkaTestDevice.androidCompact ? 1.3 : 1,
+          textScale: device.size.width <= 320 ? 1.3 : 1,
           child: WalkaHomePremiumV122(onShopAll: () {}, onSearch: () {}),
         ),
       );
       await tester.pump();
 
       expect(find.text('WALKA'), findsWidgets);
-      expect(find.textContaining('Thoughtful organization'), findsWidgets);
+      expect(find.textContaining('Organize Better.'), findsOneWidget);
+      expect(find.textContaining('Premium drawer organizers'), findsOneWidget);
       await _scroll(tester, 4);
       expect(tester.takeException(), isNull, reason: device.name);
     });
@@ -60,7 +61,7 @@ void main() {
         _app(
           state: state,
           device: device,
-          textScale: device == WalkaTestDevice.androidCompact ? 1.3 : 1,
+          textScale: device.size.width <= 320 ? 1.3 : 1,
           child: const WalkaCategoriesPremiumV123(),
         ),
       );
@@ -73,7 +74,7 @@ void main() {
         _app(
           state: state,
           device: device,
-          textScale: device == WalkaTestDevice.androidCompact ? 1.3 : 1,
+          textScale: device.size.width <= 320 ? 1.3 : 1,
           child: const WalkaSearchPremiumV123(),
         ),
       );
@@ -105,7 +106,7 @@ void main() {
           _app(
             state: state,
             device: device,
-            textScale: device == WalkaTestDevice.androidCompact ? 1.3 : 1,
+            textScale: device.size.width <= 320 ? 1.3 : 1,
             child: product,
             scaffold: false,
           ),
@@ -162,7 +163,7 @@ void main() {
         _app(
           state: empty,
           device: device,
-          textScale: device == WalkaTestDevice.androidCompact ? 1.3 : 1,
+          textScale: device.size.width <= 320 ? 1.3 : 1,
           child: WalkaFavoritesReferenceV131(onExplore: () {}),
         ),
       );
@@ -181,7 +182,7 @@ void main() {
         _app(
           state: saved,
           device: device,
-          textScale: device == WalkaTestDevice.androidCompact ? 1.3 : 1,
+          textScale: device.size.width <= 320 ? 1.3 : 1,
           child: WalkaFavoritesReferenceV131(onExplore: () {}),
         ),
       );
