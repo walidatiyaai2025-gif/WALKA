@@ -7,10 +7,12 @@ import '../catalog/domain/walka_catalog.dart';
 import '../lunch/lunch_box_v6.dart';
 import 'storefront_catalog_v120.dart';
 
-/// DESIGN-001 premium Home pass.
+/// DESIGN-007B.1 Android-reference Home fidelity pass.
 ///
-/// This surface keeps API-002 catalog/navigation behavior intact while making
-/// the first owner-visible screen product-led rather than icon-led.
+/// The composition follows the owner-approved `Images/Home for Android.png`
+/// hierarchy while preserving catalog-driven navigation and verified Product
+/// Master / Amazon boundaries. Unsupported social-proof or leakproof claims are
+/// intentionally not reproduced from visual reference art.
 class WalkaHomePremiumV121 extends StatelessWidget {
   const WalkaHomePremiumV121({
     required this.onShopAll,
@@ -40,7 +42,10 @@ class WalkaHomePremiumV121 extends StatelessWidget {
         key: const PageStorageKey<String>('walka-premium-home-scroll'),
         slivers: <Widget>[
           SliverToBoxAdapter(
-            child: _HomeHeader(onSearch: onSearch),
+            child: _ReferenceHeader(
+              onBrowse: onShopAll,
+              onSearch: onSearch,
+            ),
           ),
           if (controller.isLoading || controller.isOffline)
             SliverToBoxAdapter(
@@ -50,73 +55,45 @@ class WalkaHomePremiumV121 extends StatelessWidget {
               ),
             ),
           SliverToBoxAdapter(
+            child: _ReferenceHero(
+              lunchItem: lunchHero,
+              drawerItem: drawerHero,
+              onOpenLunch: () => openWalkaCatalogItem(context, lunchHero),
+              onShopAll: onShopAll,
+              onSearch: onSearch,
+            ),
+          ),
+          const SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-              child: _PremiumHero(
-                item: drawerHero,
+              padding: EdgeInsets.fromLTRB(16, 14, 16, 0),
+              child: _BenefitBand(),
+            ),
+          ),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 28, 16, 0),
+              child: _CollectionSection(
+                lunchItem: lunchHero,
+                drawerItem: drawerHero,
+                onLunch: () => openWalkaCatalogItem(context, lunchHero),
+                onDrawer: () => openWalkaCatalogItem(context, drawerHero),
+              ),
+            ),
+          ),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 18, 16, 0),
+              child: _SmallChangesBanner(
+                drawerItem: drawerHero,
                 onTap: () => openWalkaCatalogItem(context, drawerHero),
               ),
             ),
           ),
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 34, 14, 14),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: <Widget>[
-                  const Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: <Widget>[
-                        Text('THE WALKA EDIT', style: WalkaType.eyebrow),
-                        SizedBox(height: 8),
-                        Text(
-                          'Curated for everyday order',
-                          style: WalkaType.sectionTitle,
-                        ),
-                      ],
-                    ),
-                  ),
-                  TextButton(
-                    onPressed: onShopAll,
-                    child: const Text('VIEW ALL'),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          SliverToBoxAdapter(
-            child: SizedBox(
-              height: 326,
-              child: ListView.separated(
-                key: const PageStorageKey<String>('walka-premium-home-products'),
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 42),
+              child: _VerifiedTrustStrip(
                 itemCount: items.length,
-                separatorBuilder: (_, __) => const SizedBox(width: 12),
-                itemBuilder: (BuildContext context, int index) {
-                  final WalkaCatalogViewItem item = items[index];
-                  return _PremiumProductCard(
-                    item: item,
-                    onTap: () => openWalkaCatalogItem(context, item),
-                  );
-                },
-              ),
-            ),
-          ),
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 34, 16, 0),
-              child: _LunchEditorialFeature(
-                item: lunchHero,
-                onTap: () => openWalkaCatalogItem(context, lunchHero),
-              ),
-            ),
-          ),
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 34, 20, 42),
-              child: _HomePromiseCard(
                 release: controller.snapshot.config.release,
               ),
             ),
@@ -127,60 +104,47 @@ class WalkaHomePremiumV121 extends StatelessWidget {
   }
 }
 
-class _HomeHeader extends StatelessWidget {
-  const _HomeHeader({required this.onSearch});
+class _ReferenceHeader extends StatelessWidget {
+  const _ReferenceHeader({required this.onBrowse, required this.onSearch});
 
+  final VoidCallback onBrowse;
   final VoidCallback onSearch;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 16, 14, 6),
+    return Container(
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(bottom: BorderSide(color: WalkaColors.line, width: 0.7)),
+      ),
       child: Row(
         children: <Widget>[
-          const Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Text(
+          IconButton(
+            key: const ValueKey<String>('home-reference-browse'),
+            onPressed: onBrowse,
+            tooltip: 'Browse categories',
+            icon: const Icon(Icons.menu_rounded, color: WalkaColors.navy),
+          ),
+          const Expanded(
+            child: Center(
+              child: Text(
                 'WALKA',
                 style: TextStyle(
                   color: WalkaColors.navy,
-                  fontSize: 22,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 5.2,
+                  fontFamily: 'serif',
+                  fontSize: 27,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 2.8,
                 ),
               ),
-              SizedBox(height: 3),
-              Text(
-                'PREMIUM HOME ORGANIZATION',
-                style: TextStyle(
-                  color: WalkaColors.muted,
-                  fontSize: 8,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 1.35,
-                ),
-              ),
-            ],
+            ),
           ),
-          const Spacer(),
-          DecoratedBox(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              shape: BoxShape.circle,
-              border: Border.fromBorderSide(BorderSide(color: WalkaColors.line)),
-              boxShadow: <BoxShadow>[
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.04),
-                  blurRadius: 12,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: IconButton(
-              onPressed: onSearch,
-              tooltip: 'Search',
-              icon: const Icon(Icons.search_rounded, color: WalkaColors.navy),
-            ),
+          IconButton(
+            key: const ValueKey<String>('home-reference-search'),
+            onPressed: onSearch,
+            tooltip: 'Search WALKA',
+            icon: const Icon(Icons.search_rounded, color: WalkaColors.navy),
           ),
         ],
       ),
@@ -188,145 +152,167 @@ class _HomeHeader extends StatelessWidget {
   }
 }
 
-class _PremiumHero extends StatelessWidget {
-  const _PremiumHero({required this.item, required this.onTap});
+class _ReferenceHero extends StatelessWidget {
+  const _ReferenceHero({
+    required this.lunchItem,
+    required this.drawerItem,
+    required this.onOpenLunch,
+    required this.onShopAll,
+    required this.onSearch,
+  });
 
-  final WalkaCatalogViewItem item;
-  final VoidCallback onTap;
+  final WalkaCatalogViewItem lunchItem;
+  final WalkaCatalogViewItem drawerItem;
+  final VoidCallback onOpenLunch;
+  final VoidCallback onShopAll;
+  final VoidCallback onSearch;
 
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (BuildContext context, BoxConstraints constraints) {
-        final bool compact = constraints.maxWidth < 350;
+        final bool compact = constraints.maxWidth < 360;
         return Material(
-          color: WalkaColors.navy,
-          borderRadius: BorderRadius.circular(30),
-          clipBehavior: Clip.antiAlias,
+          color: const Color(0xFFFFFCF7),
           child: InkWell(
-            onTap: onTap,
-            child: SizedBox(
-              height: compact ? 424 : 430,
+            onTap: onOpenLunch,
+            child: Container(
+              key: const ValueKey<String>('home-reference-hero'),
+              constraints: BoxConstraints(minHeight: compact ? 500 : 470),
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: <Color>[
+                    Color(0xFFFFFEFC),
+                    Color(0xFFF8F4EC),
+                    Color(0xFFFFFFFF),
+                  ],
+                ),
+              ),
               child: Stack(
                 children: <Widget>[
                   Positioned(
-                    right: -70,
-                    top: -74,
+                    right: compact ? -52 : -28,
+                    top: compact ? 92 : 46,
                     child: Container(
-                      width: 225,
-                      height: 225,
+                      width: compact ? 250 : 290,
+                      height: compact ? 250 : 290,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: WalkaColors.gold.withValues(alpha: 0.10),
+                        color: const Color(0xFFD4AF37).withValues(alpha: 0.08),
                       ),
                     ),
                   ),
                   Positioned(
-                    right: compact ? -42 : -30,
-                    bottom: compact ? 48 : 42,
-                    width: compact ? 210 : 250,
-                    height: compact ? 145 : 172,
+                    right: compact ? -28 : -10,
+                    top: compact ? 120 : 72,
+                    width: compact ? 190 : 230,
+                    height: compact ? 150 : 175,
+                    child: WalkaProductVisual(
+                      key: const ValueKey<String>('home-hero-lunch-visual'),
+                      kind: WalkaProductVisualKind.lunchBox,
+                      primaryColor: WalkaLunchVariant.green.color,
+                      backgroundColor: const Color(0xFFF6F2E8),
+                      compact: compact,
+                      semanticLabel: 'WALKA Lunch Box hero product',
+                    ),
+                  ),
+                  Positioned(
+                    right: compact ? 6 : 26,
+                    bottom: compact ? 78 : 60,
+                    width: compact ? 158 : 190,
+                    height: compact ? 118 : 136,
                     child: WalkaProductVisual(
                       key: const ValueKey<String>('home-hero-drawer-visual'),
                       kind: WalkaProductVisualKind.drawerOrganizer,
                       primaryColor: const Color(0xFFF7F4EC),
-                      backgroundColor: const Color(0xFFF3E8C3),
-                      compact: compact,
+                      backgroundColor: const Color(0xFFF2E6C9),
+                      compact: true,
                       semanticLabel: 'WALKA White Drawer Organizer hero product',
                     ),
                   ),
                   Padding(
                     padding: EdgeInsets.fromLTRB(
-                      compact ? 21 : 24,
-                      compact ? 24 : 28,
-                      compact ? 20 : 24,
-                      22,
+                      compact ? 18 : 22,
+                      compact ? 28 : 32,
+                      compact ? 18 : 22,
+                      compact ? 22 : 26,
                     ),
                     child: Column(
+                      mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
                         const Text(
-                          'THE DRAWER EDIT',
+                          'PREMIUM ORGANIZATION\nELEVATED EVERYDAY.',
                           style: TextStyle(
                             color: WalkaColors.gold,
                             fontSize: 10,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 2.1,
+                            height: 1.45,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 0.7,
                           ),
                         ),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 14),
                         SizedBox(
-                          width: compact ? 225 : 270,
+                          width: compact ? 198 : 230,
                           child: Text(
-                            'A place for everything.',
+                            'Organize Better.\nLive Better.',
                             style: TextStyle(
+                              color: WalkaColors.navy,
                               fontFamily: 'serif',
-                              color: Colors.white,
-                              fontSize: compact ? 35 : 41,
-                              height: 1.01,
+                              fontSize: compact ? 35 : 42,
+                              height: 0.98,
                               fontWeight: FontWeight.w600,
-                              letterSpacing: -0.7,
+                              letterSpacing: -0.8,
                             ),
                           ),
                         ),
-                        const SizedBox(height: 13),
+                        const SizedBox(height: 14),
                         SizedBox(
-                          width: compact ? 230 : 275,
+                          width: compact ? 188 : 224,
                           child: const Text(
-                            'Expandable organization with a calm profile, eight compartments and a non-slip base.',
+                            'Premium drawer organizers and stainless steel lunch boxes designed for calm, everyday order.',
                             style: TextStyle(
-                              color: Color(0xFFC5D1DC),
-                              fontSize: 13,
-                              height: 1.5,
+                              color: Color(0xFF59616A),
+                              fontSize: 12.5,
+                              height: 1.55,
+                              fontWeight: FontWeight.w500,
                             ),
                           ),
                         ),
-                        const Spacer(),
+                        SizedBox(height: compact ? 112 : 88),
+                        SizedBox(
+                          width: compact ? 192 : 220,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: <Widget>[
+                              ElevatedButton.icon(
+                                key: const ValueKey<String>('home-reference-shop'),
+                                onPressed: onShopAll,
+                                iconAlignment: IconAlignment.end,
+                                icon: const Icon(Icons.arrow_forward_rounded, size: 18),
+                                label: const Text('SHOP PRODUCTS'),
+                              ),
+                              const SizedBox(height: 8),
+                              OutlinedButton(
+                                key: const ValueKey<String>('home-reference-search-cta'),
+                                onPressed: onSearch,
+                                child: const Text('SEARCH COLLECTION'),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 16),
                         Row(
                           children: <Widget>[
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 9,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.08),
-                                borderRadius: BorderRadius.circular(99),
-                                border: Border.all(
-                                  color: Colors.white.withValues(alpha: 0.14),
-                                ),
-                              ),
-                              child: Text(
-                                item.variant.toUpperCase(),
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 9,
-                                  fontWeight: FontWeight.w800,
-                                  letterSpacing: 1,
-                                ),
-                              ),
-                            ),
-                            const Spacer(),
-                            const Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: <Widget>[
-                                Text(
-                                  'EXPLORE',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 9,
-                                    fontWeight: FontWeight.w900,
-                                    letterSpacing: 1.1,
-                                  ),
-                                ),
-                                SizedBox(width: 7),
-                                Icon(
-                                  Icons.arrow_forward_rounded,
-                                  size: 18,
-                                  color: WalkaColors.gold,
-                                ),
-                              ],
-                            ),
+                            _HeroDot(active: true),
+                            const SizedBox(width: 8),
+                            const _HeroDot(),
+                            const SizedBox(width: 8),
+                            const _HeroDot(),
+                            const SizedBox(width: 8),
+                            const _HeroDot(),
                           ],
                         ),
                       ],
@@ -342,16 +328,253 @@ class _PremiumHero extends StatelessWidget {
   }
 }
 
-class _PremiumProductCard extends StatelessWidget {
-  const _PremiumProductCard({required this.item, required this.onTap});
+class _HeroDot extends StatelessWidget {
+  const _HeroDot({this.active = false});
+
+  final bool active;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 7,
+      height: 7,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: active ? WalkaColors.navy : const Color(0xFFD6D6D6),
+      ),
+    );
+  }
+}
+
+class _BenefitBand extends StatelessWidget {
+  const _BenefitBand();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      key: const ValueKey<String>('home-reference-benefits'),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 18),
+      decoration: BoxDecoration(
+        color: WalkaColors.navy,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: <BoxShadow>[
+          BoxShadow(
+            color: WalkaColors.navy.withValues(alpha: 0.12),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: LayoutBuilder(
+        builder: (BuildContext context, BoxConstraints constraints) {
+          final bool compact = constraints.maxWidth < 350;
+          final List<_BenefitData> benefits = <_BenefitData>[
+            const _BenefitData(
+              icon: Icons.verified_outlined,
+              title: 'Premium Quality',
+              subtitle: 'Thoughtful materials and construction.',
+            ),
+            const _BenefitData(
+              icon: Icons.eco_outlined,
+              title: 'BPA Free',
+              subtitle: 'Food-contact materials made for daily use.',
+            ),
+            const _BenefitData(
+              icon: Icons.cleaning_services_outlined,
+              title: 'Easy to Care For',
+              subtitle: 'Clear product-specific care guidance.',
+            ),
+            const _BenefitData(
+              icon: Icons.lock_outline_rounded,
+              title: 'Secure Lock',
+              subtitle: 'Helps prevent spills. Carry upright.',
+            ),
+          ];
+
+          if (compact) {
+            return Wrap(
+              spacing: 8,
+              runSpacing: 14,
+              children: benefits
+                  .map(
+                    (_BenefitData benefit) => SizedBox(
+                      width: (constraints.maxWidth - 8) / 2,
+                      child: _BenefitTile(data: benefit),
+                    ),
+                  )
+                  .toList(growable: false),
+            );
+          }
+
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: benefits
+                .map(
+                  (_BenefitData benefit) => Expanded(
+                    child: _BenefitTile(data: benefit),
+                  ),
+                )
+                .toList(growable: false),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _BenefitData {
+  const _BenefitData({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+}
+
+class _BenefitTile extends StatelessWidget {
+  const _BenefitTile({required this.data});
+
+  final _BenefitData data;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 5),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Icon(data.icon, color: WalkaColors.gold, size: 25),
+          const SizedBox(height: 8),
+          Text(
+            data.title,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 10.5,
+              height: 1.15,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            data.subtitle,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: Color(0xFFD2DDE7),
+              fontSize: 8.5,
+              height: 1.35,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CollectionSection extends StatelessWidget {
+  const _CollectionSection({
+    required this.lunchItem,
+    required this.drawerItem,
+    required this.onLunch,
+    required this.onDrawer,
+  });
+
+  final WalkaCatalogViewItem lunchItem;
+  final WalkaCatalogViewItem drawerItem;
+  final VoidCallback onLunch;
+  final VoidCallback onDrawer;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        const Text(
+          'OUR COLLECTION',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: WalkaColors.gold,
+            fontSize: 10,
+            fontWeight: FontWeight.w900,
+            letterSpacing: 0.8,
+          ),
+        ),
+        const SizedBox(height: 6),
+        const Text(
+          'Everything in Its Place',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: WalkaColors.navy,
+            fontFamily: 'serif',
+            fontSize: 27,
+            height: 1.1,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 16),
+        SizedBox(
+          height: 300,
+          child: ListView(
+            key: const PageStorageKey<String>('home-reference-collection'),
+            scrollDirection: Axis.horizontal,
+            children: <Widget>[
+              _ReferenceCollectionCard(
+                key: const ValueKey<String>('home-reference-lunch-card'),
+                item: lunchItem,
+                title: 'Stainless Steel\nLunch Boxes',
+                subtitle: '1200 ml · SUS304 tray · 4 compartments.',
+                kind: WalkaProductVisualKind.lunchBox,
+                primaryColor: WalkaLunchVariant.blue.color,
+                visualBackground: const Color(0xFFEAF0F5),
+                onTap: onLunch,
+              ),
+              const SizedBox(width: 12),
+              _ReferenceCollectionCard(
+                key: const ValueKey<String>('home-reference-drawer-card'),
+                item: drawerItem,
+                title: 'Drawer Organizers',
+                subtitle: '8 compartments · expands from 13 to 22.4 in.',
+                kind: WalkaProductVisualKind.drawerOrganizer,
+                primaryColor: const Color(0xFFF7F4EC),
+                visualBackground: const Color(0xFFF0E2C7),
+                onTap: onDrawer,
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _ReferenceCollectionCard extends StatelessWidget {
+  const _ReferenceCollectionCard({
+    required this.item,
+    required this.title,
+    required this.subtitle,
+    required this.kind,
+    required this.primaryColor,
+    required this.visualBackground,
+    required this.onTap,
+    super.key,
+  });
 
   final WalkaCatalogViewItem item;
+  final String title;
+  final String subtitle;
+  final WalkaProductVisualKind kind;
+  final Color primaryColor;
+  final Color visualBackground;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: 220,
+      width: 238,
       child: Material(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
@@ -366,89 +589,66 @@ class _PremiumProductCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                Expanded(
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
-                    decoration: BoxDecoration(
-                      color: item.tone,
-                      borderRadius: const BorderRadius.vertical(
-                        top: Radius.circular(23),
+                SizedBox(
+                  height: 174,
+                  width: double.infinity,
+                  child: ColoredBox(
+                    color: visualBackground,
+                    child: Padding(
+                      padding: const EdgeInsets.all(10),
+                      child: WalkaProductVisual(
+                        kind: kind,
+                        primaryColor: primaryColor,
+                        backgroundColor: visualBackground,
+                        compact: true,
+                        semanticLabel: '${item.title} ${item.variant}',
                       ),
-                    ),
-                    child: WalkaProductVisual(
-                      key: ValueKey<String>('home-product-${item.variantId}'),
-                      kind: _visualKind(item),
-                      primaryColor: _productColor(item),
-                      backgroundColor: item.tone,
-                      compact: true,
-                      semanticLabel: '${item.title} ${item.variant}',
                     ),
                   ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(15, 14, 15, 15),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      Text(
-                        item.family == WalkaCatalogFamily.drawer
-                            ? 'DRAWER ORGANIZATION'
-                            : 'LUNCH COLLECTION',
-                        style: const TextStyle(
-                          color: WalkaColors.muted,
-                          fontSize: 8,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 1.1,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        item.title,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: WalkaColors.navy,
-                          fontSize: 13,
-                          height: 1.25,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      Row(
-                        children: <Widget>[
-                          Container(
-                            width: 10,
-                            height: 10,
-                            decoration: BoxDecoration(
-                              color: _productColor(item),
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: WalkaColors.navy.withValues(alpha: 0.10),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 13, 13, 13),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: <Widget>[
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: <Widget>[
+                              Text(
+                                title,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  color: WalkaColors.navy,
+                                  fontSize: 15,
+                                  height: 1.15,
+                                  fontWeight: FontWeight.w800,
+                                ),
                               ),
-                            ),
-                          ),
-                          const SizedBox(width: 7),
-                          Expanded(
-                            child: Text(
-                              item.variant.toUpperCase(),
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                color: WalkaColors.gold,
-                                fontSize: 9,
-                                fontWeight: FontWeight.w900,
-                                letterSpacing: 0.8,
+                              const SizedBox(height: 8),
+                              Text(
+                                subtitle,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  color: WalkaColors.muted,
+                                  fontSize: 10.5,
+                                  height: 1.35,
+                                ),
                               ),
-                            ),
+                            ],
                           ),
-                          const Icon(
-                            Icons.arrow_forward_rounded,
-                            color: WalkaColors.navy,
-                            size: 17,
-                          ),
-                        ],
-                      ),
-                    ],
+                        ),
+                        const SizedBox(width: 6),
+                        const Icon(
+                          Icons.chevron_right_rounded,
+                          color: WalkaColors.gold,
+                          size: 28,
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ],
@@ -460,121 +660,92 @@ class _PremiumProductCard extends StatelessWidget {
   }
 }
 
-class _LunchEditorialFeature extends StatelessWidget {
-  const _LunchEditorialFeature({required this.item, required this.onTap});
+class _SmallChangesBanner extends StatelessWidget {
+  const _SmallChangesBanner({required this.drawerItem, required this.onTap});
 
-  final WalkaCatalogViewItem item;
+  final WalkaCatalogViewItem drawerItem;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: const Color(0xFFEAF0F5),
-      borderRadius: BorderRadius.circular(30),
+      color: const Color(0xFFF8F2E7),
+      borderRadius: BorderRadius.circular(24),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
         child: SizedBox(
-          height: 370,
-          child: Padding(
-            padding: const EdgeInsets.all(22),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                const Text('LUNCH, REFINED', style: WalkaType.eyebrow),
-                const SizedBox(height: 8),
-                const SizedBox(
-                  width: 285,
-                  child: Text(
-                    'A complete lunch system in one calm silhouette.',
-                    style: WalkaType.sectionTitle,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  '1200 ml · SUS304 tray · 4 compartments',
-                  style: TextStyle(
-                    color: WalkaColors.muted,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 10),
-                Expanded(
-                  child: Row(
+          height: 150,
+          child: Row(
+            children: <Widget>[
+              Expanded(
+                flex: 5,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(18, 16, 8, 16),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
-                      Expanded(
-                        child: WalkaProductVisual(
-                          key: const ValueKey<String>('home-lunch-editorial-visual'),
-                          kind: WalkaProductVisualKind.lunchBox,
-                          primaryColor: WalkaLunchVariant.blue.color,
-                          backgroundColor: const Color(0xFFEAF0F5),
-                          semanticLabel: 'WALKA Blue Lunch Box editorial product',
-                        ),
-                      ),
-                      const SizedBox(width: 14),
-                      Column(
-                        mainAxisAlignment: MainAxisAlignment.end,
+                      Row(
                         children: <Widget>[
-                          ...WalkaLunchVariant.values.map(
-                            (WalkaLunchVariant variant) => Padding(
-                              padding: const EdgeInsets.only(top: 8),
-                              child: Container(
-                                width: 28,
-                                height: 28,
-                                decoration: BoxDecoration(
-                                  color: variant.color,
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color: Colors.white,
-                                    width: 2.5,
-                                  ),
-                                  boxShadow: <BoxShadow>[
-                                    BoxShadow(
-                                      color: WalkaColors.navy.withValues(alpha: 0.10),
-                                      blurRadius: 8,
-                                    ),
-                                  ],
-                                ),
+                          Container(
+                            width: 40,
+                            height: 40,
+                            decoration: const BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: WalkaColors.gold,
+                            ),
+                            child: const Icon(
+                              Icons.grid_view_rounded,
+                              color: Colors.white,
+                              size: 20,
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          const Expanded(
+                            child: Text(
+                              'Small Changes,\nBetter Living',
+                              style: TextStyle(
+                                color: WalkaColors.navy,
+                                fontSize: 17,
+                                height: 1.05,
+                                fontWeight: FontWeight.w900,
                               ),
                             ),
                           ),
                         ],
                       ),
+                      const SizedBox(height: 10),
+                      const Text(
+                        'Simple solutions that bring order, beauty and peace of mind.',
+                        style: TextStyle(
+                          color: WalkaColors.muted,
+                          fontSize: 10.5,
+                          height: 1.35,
+                        ),
+                      ),
                     ],
                   ),
                 ),
-                Row(
-                  children: <Widget>[
-                    Text(
-                      item.variant.toUpperCase(),
-                      style: const TextStyle(
-                        color: WalkaColors.navy,
-                        fontSize: 9,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 1,
-                      ),
+              ),
+              Expanded(
+                flex: 4,
+                child: ColoredBox(
+                  color: const Color(0xFFEDE6DA),
+                  child: Padding(
+                    padding: const EdgeInsets.all(8),
+                    child: WalkaProductVisual(
+                      kind: WalkaProductVisualKind.drawerOrganizer,
+                      primaryColor: const Color(0xFFF7F4EC),
+                      backgroundColor: const Color(0xFFEDE6DA),
+                      compact: true,
+                      semanticLabel:
+                          '${drawerItem.title} ${drawerItem.variant} lifestyle visual',
                     ),
-                    const Spacer(),
-                    const Text(
-                      'DISCOVER',
-                      style: TextStyle(
-                        color: WalkaColors.navy,
-                        fontSize: 9,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 1,
-                      ),
-                    ),
-                    const SizedBox(width: 7),
-                    const Icon(
-                      Icons.arrow_forward_rounded,
-                      size: 18,
-                      color: WalkaColors.gold,
-                    ),
-                  ],
+                  ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
@@ -582,58 +753,135 @@ class _LunchEditorialFeature extends StatelessWidget {
   }
 }
 
-class _HomePromiseCard extends StatelessWidget {
-  const _HomePromiseCard({required this.release});
+class _VerifiedTrustStrip extends StatelessWidget {
+  const _VerifiedTrustStrip({required this.itemCount, required this.release});
 
+  final int itemCount;
   final String release;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(22),
+      key: const ValueKey<String>('home-reference-trust-strip'),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 16),
       decoration: BoxDecoration(
-        color: const Color(0xFFF2E9CF),
-        borderRadius: BorderRadius.circular(26),
-        border: Border.all(
-          color: WalkaColors.gold.withValues(alpha: 0.18),
-        ),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: WalkaColors.line),
+        boxShadow: <BoxShadow>[
+          BoxShadow(
+            color: WalkaColors.navy.withValues(alpha: 0.05),
+            blurRadius: 18,
+            offset: const Offset(0, 7),
+          ),
+        ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          const Text('THE WALKA APPROACH', style: WalkaType.eyebrow),
-          const SizedBox(height: 8),
-          const Text(
-            'Useful first. Calm by design.',
-            style: WalkaType.sectionTitle,
+      child: LayoutBuilder(
+        builder: (BuildContext context, BoxConstraints constraints) {
+          final bool compact = constraints.maxWidth < 330;
+          final List<_TrustData> data = <_TrustData>[
+            _TrustData(
+              icon: Icons.inventory_2_outlined,
+              label: '$itemCount variants',
+              detail: 'Current WALKA catalog',
+            ),
+            const _TrustData(
+              icon: Icons.open_in_new_rounded,
+              label: 'Official Amazon',
+              detail: 'Purchase handoff',
+            ),
+            _TrustData(
+              icon: Icons.verified_user_outlined,
+              label: 'Catalog $release',
+              detail: 'Verified product facts',
+            ),
+          ];
+
+          if (compact) {
+            return Column(
+              children: data
+                  .map(
+                    (_TrustData item) => Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 6),
+                      child: _TrustTile(data: item),
+                    ),
+                  )
+                  .toList(growable: false),
+            );
+          }
+
+          return Row(
+            children: data
+                .map(
+                  (_TrustData item) => Expanded(
+                    child: _TrustTile(data: item),
+                  ),
+                )
+                .toList(growable: false),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _TrustData {
+  const _TrustData({required this.icon, required this.label, required this.detail});
+
+  final IconData icon;
+  final String label;
+  final String detail;
+}
+
+class _TrustTile extends StatelessWidget {
+  const _TrustTile({required this.data});
+
+  final _TrustData data;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: <Widget>[
+        Container(
+          width: 34,
+          height: 34,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: WalkaColors.gold.withValues(alpha: 0.14),
           ),
-          const SizedBox(height: 10),
-          const Text(
-            'Discover the WALKA collection here, then complete your purchase through the official Amazon listing.',
-            style: WalkaType.body,
-          ),
-          const SizedBox(height: 14),
-          Row(
+          child: Icon(data.icon, color: WalkaColors.gold, size: 18),
+        ),
+        const SizedBox(width: 8),
+        Flexible(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              Container(
-                width: 34,
-                height: 2,
-                color: WalkaColors.gold,
-              ),
-              const SizedBox(width: 10),
               Text(
-                'CATALOG $release',
+                data.label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: WalkaColors.navy,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                data.detail,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
                   color: WalkaColors.muted,
-                  fontSize: 9,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 0.9,
+                  fontSize: 8.5,
+                  height: 1.2,
                 ),
               ),
             ],
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
@@ -683,17 +931,4 @@ class _HomeCatalogStatus extends StatelessWidget {
       ),
     );
   }
-}
-
-WalkaProductVisualKind _visualKind(WalkaCatalogViewItem item) {
-  return item.family == WalkaCatalogFamily.drawer
-      ? WalkaProductVisualKind.drawerOrganizer
-      : WalkaProductVisualKind.lunchBox;
-}
-
-Color _productColor(WalkaCatalogViewItem item) {
-  if (item.family == WalkaCatalogFamily.drawer) {
-    return item.gray ? const Color(0xFFD3D7D9) : const Color(0xFFF7F4EC);
-  }
-  return item.lunchVariant?.color ?? WalkaColors.navy;
 }
