@@ -66,7 +66,10 @@ void main() {
         ),
       );
       await tester.pump();
-      expect(find.text('Categories'), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey<String>('reference-categories-title')),
+        findsOneWidget,
+      );
       await _scroll(tester, 4);
       expect(tester.takeException(), isNull, reason: 'Categories ${device.name}');
 
@@ -237,13 +240,13 @@ Widget _app({
   double textScale = 1,
   bool scaffold = true,
 }) {
-  return WalkaCatalogScope(
-    controller: state.catalog,
-    child: WalkaFavoritesScope(
-      controller: state.favorites,
-      child: WalkaTestHarness(
-        device: device,
-        textScale: textScale,
+  return WalkaTestHarness(
+    device: device,
+    textScale: textScale,
+    child: WalkaCatalogScope(
+      controller: state.catalog,
+      child: WalkaFavoritesScope(
+        controller: state.favorites,
         child: scaffold ? Scaffold(body: child) : child,
       ),
     ),
