@@ -52,7 +52,9 @@ void main() {
       matchesSemantics(
         label: 'Lunch',
         isButton: true,
+        hasEnabledState: true,
         isEnabled: true,
+        hasSelectedState: true,
         isSelected: true,
         hasTapAction: true,
       ),
