@@ -92,7 +92,7 @@ void main() {
 
 Future<ProcessResult> _run(Directory root, String mode) {
   return Process.run(
-    Platform.resolvedExecutable,
+    'dart',
     <String>[_validatorPath, mode, '--json', 'production-asset-readiness.json'],
     workingDirectory: root.path,
   );
