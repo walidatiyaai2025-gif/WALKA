@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 
 import 'catalog_state_surface_v130.dart';
 import 'discovery_reference_v123.dart';
-import 'home_premium_v121.dart';
+import 'home_premium_v122.dart';
 
-/// DESIGN-006 public Home surface. The validated DESIGN-001/007B.1 visual
-/// hierarchy remains intact while catalog loading/offline feedback is promoted
-/// to the shared V130 state surface.
+/// DESIGN-007 public Home surface. V122 keeps the approved Android-reference
+/// hierarchy while removing fixed-height content areas found by the final
+/// cross-device QA matrix.
 class WalkaHomePremiumV130 extends StatelessWidget {
   const WalkaHomePremiumV130({
     required this.onShopAll,
@@ -20,7 +20,7 @@ class WalkaHomePremiumV130 extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return WalkaCatalogStateSurfaceV130(
-      child: WalkaHomePremiumV121(
+      child: WalkaHomePremiumV122(
         onShopAll: onShopAll,
         onSearch: onSearch,
       ),

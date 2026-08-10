@@ -3,11 +3,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:walka/design_system/walka_product_visual.dart';
 import 'package:walka/design_system/walka_theme.dart';
 import 'package:walka/features/catalog/catalog_state.dart';
-import 'package:walka/features/storefront/home_premium_v121.dart';
+import 'package:walka/features/storefront/home_premium_v122.dart';
 
 void main() {
   testWidgets(
-      'DESIGN-007B.1 Home follows Android reference hierarchy on compact width',
+      'DESIGN-007 Home follows Android reference hierarchy on compact width',
       (WidgetTester tester) async {
     tester.view.physicalSize = const Size(320, 568);
     tester.view.devicePixelRatio = 1;
@@ -23,7 +23,7 @@ void main() {
         child: MaterialApp(
           theme: buildWalkaTheme(),
           home: Scaffold(
-            body: WalkaHomePremiumV121(
+            body: WalkaHomePremiumV122(
               onShopAll: () {},
               onSearch: () {},
             ),
@@ -80,7 +80,7 @@ void main() {
         child: MaterialApp(
           theme: buildWalkaTheme(),
           home: Scaffold(
-            body: WalkaHomePremiumV121(
+            body: WalkaHomePremiumV122(
               onShopAll: () => browseCount += 1,
               onSearch: () => searchCount += 1,
             ),
