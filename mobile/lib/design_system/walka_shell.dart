@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'components/chrome/walka_shell_metrics.dart';
 import 'walka_theme.dart';
 
+export 'components/chrome/walka_desktop_header.dart';
 export 'components/chrome/walka_safe_area_chrome.dart';
 export 'components/chrome/walka_shell_metrics.dart';
 export 'components/navigation/walka_mobile_shell_scaffold.dart';
