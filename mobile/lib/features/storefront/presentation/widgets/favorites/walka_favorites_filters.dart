@@ -1,50 +1,138 @@
 import 'package:flutter/material.dart';
 
-import '../../../../../design_system/components/buttons/walka_pill_chip.dart';
-
-enum WalkaFavoritesFilter { all, white, gray }
+import '../../../../../design_system/walka_theme.dart';
 
 class WalkaFavoritesFilters extends StatelessWidget {
   const WalkaFavoritesFilters({
-    required this.selected,
-    required this.totalCount,
-    required this.whiteCount,
-    required this.grayCount,
-    required this.onChanged,
+    required this.count,
+    required this.drawerSelected,
+    required this.onAll,
+    required this.onDrawer,
     super.key,
   });
 
-  final WalkaFavoritesFilter selected;
-  final int totalCount;
-  final int whiteCount;
-  final int grayCount;
-  final ValueChanged<WalkaFavoritesFilter> onChanged;
+  final int count;
+  final bool drawerSelected;
+  final VoidCallback onAll;
+  final VoidCallback onDrawer;
 
   @override
   Widget build(BuildContext context) {
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: <Widget>[
-        WalkaPillChip(
-          key: const ValueKey<String>('reference-favorites-filter-all'),
-          label: 'All $totalCount',
-          selected: selected == WalkaFavoritesFilter.all,
-          onSelected: (_) => onChanged(WalkaFavoritesFilter.all),
+    return Container(
+      key: const ValueKey<String>('reference-favorites-filters'),
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(color: WalkaColors.line),
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: <Widget>[
+            _FavoriteFilter(
+              icon: Icons.favorite_border_rounded,
+              label: 'All Favorites',
+              countLabel: '$count',
+              selected: !drawerSelected,
+              onTap: onAll,
+            ),
+            const SizedBox(width: 4),
+            _FavoriteFilter(
+              icon: Icons.inventory_2_outlined,
+              label: 'Drawer Organizers',
+              countLabel: '$count',
+              selected: drawerSelected,
+              onTap: onDrawer,
+            ),
+            const SizedBox(width: 4),
+            const _FavoriteFilter(
+              icon: Icons.lunch_dining_outlined,
+              label: 'Lunch Boxes',
+              countLabel: '—',
+              selected: false,
+              enabled: false,
+            ),
+          ],
         ),
-        WalkaPillChip(
-          key: const ValueKey<String>('reference-favorites-filter-white'),
-          label: 'White $whiteCount',
-          selected: selected == WalkaFavoritesFilter.white,
-          onSelected: (_) => onChanged(WalkaFavoritesFilter.white),
+      ),
+    );
+  }
+}
+
+class _FavoriteFilter extends StatelessWidget {
+  const _FavoriteFilter({
+    required this.icon,
+    required this.label,
+    required this.countLabel,
+    required this.selected,
+    this.enabled = true,
+    this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final String countLabel;
+  final bool selected;
+  final bool enabled;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final Color foreground = enabled ? WalkaColors.navy : WalkaColors.muted;
+    return Material(
+      color: selected ? const Color(0xFFFFF8EA) : Colors.transparent,
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        onTap: enabled ? onTap : null,
+        borderRadius: BorderRadius.circular(14),
+        child: Container(
+          constraints: const BoxConstraints(minHeight: 48),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+          decoration: selected
+              ? const BoxDecoration(
+                  border: Border(
+                    bottom: BorderSide(color: WalkaColors.gold, width: 2),
+                  ),
+                )
+              : null,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Icon(icon, size: 18, color: foreground),
+              const SizedBox(width: 7),
+              Text(
+                label,
+                style: TextStyle(
+                  color: foreground,
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(width: 7),
+              Container(
+                constraints: const BoxConstraints(minWidth: 22, minHeight: 22),
+                alignment: Alignment.center,
+                padding: const EdgeInsets.symmetric(horizontal: 6),
+                decoration: BoxDecoration(
+                  color: enabled
+                      ? WalkaColors.gold.withValues(alpha: 0.16)
+                      : const Color(0xFFF1F2F3),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  countLabel,
+                  style: TextStyle(
+                    color: enabled ? WalkaColors.navy : WalkaColors.muted,
+                    fontSize: 9,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
-        WalkaPillChip(
-          key: const ValueKey<String>('reference-favorites-filter-gray'),
-          label: 'Gray $grayCount',
-          selected: selected == WalkaFavoritesFilter.gray,
-          onSelected: (_) => onChanged(WalkaFavoritesFilter.gray),
-        ),
-      ],
+      ),
     );
   }
 }
