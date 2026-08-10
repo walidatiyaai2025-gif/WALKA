@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 
+import 'package:walka/design_system/components/media/walka_product_media_resolver.dart';
 import 'package:walka/design_system/walka_product_visual.dart';
 import 'package:walka/design_system/walka_theme.dart';
 
 class WalkaHomeCollectionCard extends StatelessWidget {
   const WalkaHomeCollectionCard({
+    required this.variantId,
     required this.title,
     required this.subtitle,
     required this.kind,
@@ -15,6 +17,7 @@ class WalkaHomeCollectionCard extends StatelessWidget {
     super.key,
   });
 
+  final String variantId;
   final String title;
   final String subtitle;
   final WalkaProductVisualKind kind;
@@ -52,7 +55,8 @@ class WalkaHomeCollectionCard extends StatelessWidget {
                     color: visualBackground,
                     child: Padding(
                       padding: const EdgeInsets.all(10),
-                      child: WalkaProductVisual(
+                      child: WalkaResolvedProductMedia(
+                        variantId: variantId,
                         kind: kind,
                         primaryColor: primaryColor,
                         backgroundColor: visualBackground,
