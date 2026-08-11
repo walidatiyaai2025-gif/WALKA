@@ -58,9 +58,9 @@ abstract final class WalkaProductMediaAdmissionRegistry {
     'drawer-organizer:white': WalkaProductMediaAdmissionEntry(
       variantId: 'drawer-organizer:white',
       canonicalPath: 'assets/products/drawer/white.png',
-      state: WalkaProductMediaAdmissionState.pending,
+      state: WalkaProductMediaAdmissionState.admitted,
       sourceApproved: true,
-      canonicalExportPresent: false,
+      canonicalExportPresent: true,
     ),
     'drawer-organizer:gray': WalkaProductMediaAdmissionEntry(
       variantId: 'drawer-organizer:gray',
