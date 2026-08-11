@@ -81,18 +81,18 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
+    final WalkaShellController controller = WalkaShellController();
+    addTearDown(controller.dispose);
     await tester.pumpWidget(
       MaterialApp(
         theme: buildWalkaTheme(),
-        home: Scaffold(
-          body: const SizedBox.expand(
-            key: ValueKey<String>('visible-shell-body'),
-            child: ColoredBox(color: Colors.red),
-          ),
-          bottomNavigationBar: WalkaAdaptiveNavigationFrame(
-            child: WalkaPremiumNavigationBar(
-              selectedIndex: 0,
-              onDestinationSelected: (_) {},
+        home: WalkaMobileShellScaffold(
+          controller: controller,
+          pages: List<Widget>.generate(
+            5,
+            (int index) => SizedBox.expand(
+              key: ValueKey<String>('visible-shell-body-$index'),
+              child: const ColoredBox(color: Colors.red),
             ),
           ),
         ),
@@ -104,7 +104,7 @@ void main() {
       find.byType(WalkaAdaptiveNavigationFrame),
     );
     final Size bodySize = tester.getSize(
-      find.byKey(const ValueKey<String>('visible-shell-body')),
+      find.byKey(const ValueKey<String>('visible-shell-body-0')),
     );
     expect(frameSize.height, 72);
     expect(bodySize.height, 772);

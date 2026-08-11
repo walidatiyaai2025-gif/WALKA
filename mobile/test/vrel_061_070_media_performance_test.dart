@@ -4,7 +4,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:walka/design_system/components/media/walka_product_media_resolver.dart';
 
 void main() {
-  test('surface decode budgets are explicit and current default stays within them', () {
+  test(
+      'surface decode budgets are explicit and current default stays within them',
+      () {
     expect(WalkaProductMediaDecodeBudget.home, 1200);
     expect(WalkaProductMediaDecodeBudget.discovery, 1200);
     expect(WalkaProductMediaDecodeBudget.pdp, 1600);
@@ -48,20 +50,33 @@ void main() {
     );
   });
 
-  test('performance audit passes current empty canonical folders and reports verified APK', () async {
+  test(
+      'performance audit passes admitted canonical assets and reports verified APK',
+      () async {
     final ProcessResult result = await Process.run(
       'bash',
       <String>['tool/audit_product_media_performance.sh'],
     );
     expect(result.exitCode, 0, reason: '${result.stdout}\n${result.stderr}');
-    expect(result.stdout, contains('Canonical PNG count: 0'));
+    expect(result.stdout, contains('Canonical PNG count: 5'));
     expect(result.stdout, contains('Duplicate PNG checksums: 0'));
     expect(result.stdout, contains('Verified APK bytes:'));
   });
 
-  test('runtime audit rejects source/master extensions and defines hard budgets', () {
-    final String source = File('tool/audit_product_media_performance.sh').readAsStringSync();
-    for (final String extension in <String>['*.jpg', '*.jpeg', '*.psd', '*.tif', '*.tiff', '*.raw', '*.heic']) {
+  test(
+      'runtime audit rejects source/master extensions and defines hard budgets',
+      () {
+    final String source =
+        File('tool/audit_product_media_performance.sh').readAsStringSync();
+    for (final String extension in <String>[
+      '*.jpg',
+      '*.jpeg',
+      '*.psd',
+      '*.tif',
+      '*.tiff',
+      '*.raw',
+      '*.heic'
+    ]) {
       expect(source, contains(extension));
     }
     expect(source, contains('6 * 1024 * 1024'));

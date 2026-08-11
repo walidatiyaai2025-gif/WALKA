@@ -126,7 +126,7 @@ void main() {
     );
   });
 
-  testWidgets('owner-visible resolved media falls back until image is admitted',
+  testWidgets('owner-visible resolved media loads the admitted product image',
       (WidgetTester tester) async {
     await tester.pumpWidget(
       const MaterialApp(
@@ -147,11 +147,10 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(
-      find.bySemanticsLabel(
-        'WALKA Drawer Organizer White. Product visual fallback.',
-      ),
+      find.bySemanticsLabel('WALKA Drawer Organizer White'),
       findsOneWidget,
     );
+    expect(find.byType(Image), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }

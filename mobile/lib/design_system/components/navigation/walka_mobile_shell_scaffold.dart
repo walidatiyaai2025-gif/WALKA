@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../walka_adaptive.dart';
+import '../chrome/walka_shell_metrics.dart';
 import 'walka_premium_navigation_bar.dart';
 import 'walka_shell_controller.dart';
 import 'walka_shell_destination.dart';
@@ -28,13 +29,16 @@ class WalkaMobileShellScaffold extends StatelessWidget {
               children: pages,
             ),
           ),
-          bottomNavigationBar: WalkaAdaptiveNavigationFrame(
-            child: WalkaPremiumNavigationBar(
-              selectedIndex: controller.selectedIndex,
-              onDestinationSelected: (int index) {
-                FocusManager.instance.primaryFocus?.unfocus();
-                controller.selectIndex(index);
-              },
+          bottomNavigationBar: SizedBox(
+            height: WalkaShellMetrics.navigationHeight,
+            child: WalkaAdaptiveNavigationFrame(
+              child: WalkaPremiumNavigationBar(
+                selectedIndex: controller.selectedIndex,
+                onDestinationSelected: (int index) {
+                  FocusManager.instance.primaryFocus?.unfocus();
+                  controller.selectIndex(index);
+                },
+              ),
             ),
           ),
         );
