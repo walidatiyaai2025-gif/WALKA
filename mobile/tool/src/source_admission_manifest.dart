@@ -177,9 +177,12 @@ class PavSourceAdmissionReader {
     required List<PavDiagnostic> diagnostics,
   }) {
     final List<String> ids = variants.map((PavManifestVariant row) => row.variantId).toList();
+    final Set<String> actualIds = ids.toSet();
     final Set<String> expectedIds =
         pavRequiredAssets.map((PavAssetContract asset) => asset.variantId).toSet();
-    if (ids.length != pavRequiredAssets.length || ids.toSet() != expectedIds) {
+    if (ids.length != pavRequiredAssets.length ||
+        actualIds.length != expectedIds.length ||
+        !actualIds.containsAll(expectedIds)) {
       diagnostics.add(
         const PavDiagnostic(
           code: 'manifest.released-variant-set-invalid',
