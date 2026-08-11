@@ -29,22 +29,38 @@ void main() {
   for (final MapEntry<String, String> entry in _released.entries) {
     testWidgets('${entry.key} canonical asset is bundle-decodable',
         (WidgetTester tester) async {
-      final ByteData data = await rootBundle.load(entry.value);
-      expect(data.lengthInBytes, greaterThan(0));
+      late int byteLength;
+      late int decodedWidth;
+      late int decodedHeight;
 
-      final ui.Codec codec = await ui.instantiateImageCodec(
-        data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes),
-      );
-      addTearDown(codec.dispose);
-      final ui.FrameInfo frame = await codec.getNextFrame();
-      addTearDown(frame.image.dispose);
-      expect(frame.image.width, greaterThan(0));
-      expect(frame.image.height, greaterThan(0));
+      await tester.runAsync(() async {
+        final ByteData data = await rootBundle.load(entry.value);
+        byteLength = data.lengthInBytes;
+
+        final ui.Codec codec = await ui.instantiateImageCodec(
+          data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes),
+        );
+        try {
+          final ui.FrameInfo frame = await codec.getNextFrame();
+          try {
+            decodedWidth = frame.image.width;
+            decodedHeight = frame.image.height;
+          } finally {
+            frame.image.dispose();
+          }
+        } finally {
+          codec.dispose();
+        }
+      });
+
+      expect(byteLength, greaterThan(0));
+      expect(decodedWidth, greaterThan(0));
+      expect(decodedHeight, greaterThan(0));
 
       final Map<String, dynamic> row = _provenanceByVariant()[entry.key]!;
       if (row['lifecycleState'] == 'ADMITTED') {
-        expect(frame.image.width, row['width']);
-        expect(frame.image.height, row['height']);
+        expect(decodedWidth, row['width']);
+        expect(decodedHeight, row['height']);
       }
     });
   }
