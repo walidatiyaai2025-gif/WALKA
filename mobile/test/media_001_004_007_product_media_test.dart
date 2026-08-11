@@ -44,9 +44,10 @@ void main() {
     );
     for (final String variantId
         in WalkaProductMediaResolver.productionAssets.keys) {
+      final bool expectedAdmitted = variantId == 'drawer-organizer:white';
       expect(resolver.hasRegisteredAsset(variantId), isTrue);
       expect(resolver.hasApprovedAsset(variantId), isTrue);
-      expect(resolver.hasAdmittedAsset(variantId), isFalse);
+      expect(resolver.hasAdmittedAsset(variantId), expectedAdmitted);
     }
   });
 
@@ -114,7 +115,7 @@ void main() {
     );
   });
 
-  testWidgets('owner-visible resolved media quarantines provisional product image',
+  testWidgets('owner-visible resolved media renders admitted White asset',
       (WidgetTester tester) async {
     await tester.pumpWidget(
       const MaterialApp(
@@ -134,8 +135,8 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(find.bySemanticsLabel('WALKA Drawer Organizer White'), findsOneWidget);
-    expect(find.byType(WalkaProductVisual), findsOneWidget);
-    expect(find.byType(Image), findsNothing);
+    expect(find.byType(Image), findsOneWidget);
+    expect(find.byType(WalkaProductVisual), findsNothing);
     expect(tester.takeException(), isNull);
   });
 }
