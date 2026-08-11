@@ -1,0 +1,105 @@
+name: TEMP White admission resume
+
+on:
+  push:
+    branches:
+      - agent/white-canonical-ci-0812
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+  actions: read
+
+jobs:
+  verify-pr-ci-merge:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      GH_TOKEN: ${{ github.token }}
+      REPO: ${{ github.repository }}
+      BRANCH: agent/white-canonical-ci-0812
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: agent/white-canonical-ci-0812
+
+      - name: Verify generated White admission state
+        run: |
+          test -f mobile/assets/products/drawer/white.png
+          test ! -f mobile/tool/_temp_generate_white_canonical.py
+          test ! -f .github/workflows/_temp-white-canonical.yml
+          python - <<'PY'
+          import hashlib, json
+          from pathlib import Path
+          from PIL import Image
+          p=Path('mobile/assets/products/drawer/white.png')
+          d=p.read_bytes()
+          im=Image.open(p)
+          assert im.size==(1024,1024)
+          assert im.mode=='RGBA'
+          source=json.loads(Path('docs/ui/PRODUCTION_SOURCE_ADMISSION.json').read_text())
+          prov=json.loads(Path('docs/ui/PRODUCTION_ASSET_PROVENANCE.json').read_text())
+          s=next(v for v in source['variants'] if v['variantId']=='drawer-organizer:white')
+          r=next(v for v in prov['variants'] if v['variantId']=='drawer-organizer:white')
+          assert s['sourceState']=='APPROVED'
+          assert s['canonicalExportPresent'] is True
+          assert r['lifecycleState']=='ADMITTED'
+          assert r['sha256']==hashlib.sha256(d).hexdigest()
+          assert r['width']==1024 and r['height']==1024
+          assert int(r['nearestTransparentSafeMargin'])>=51
+          print(r['sha256'], len(d), r['nearestTransparentSafeMargin'])
+          PY
+          git diff --name-only origin/main...HEAD | grep '^Images/' && exit 1 || true
+
+      - name: Remove resume workflow from final PR diff
+        run: |
+          rm -f .github/workflows/_temp-white-resume.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git diff --cached --quiet || git commit -m 'LIMG-WHITE: remove temporary admission runner'
+          git push origin HEAD:${BRANCH}
+
+      - name: Resolve PR and make ready
+        id: pr
+        run: |
+          PR=$(gh pr list --repo "$REPO" --head "$BRANCH" --state open --json number,isDraft --jq '.[0].number')
+          if [ -z "$PR" ]; then
+            URL=$(gh pr create --repo "$REPO" --base main --head "$BRANCH" --title 'LIMG-WHITE: admit canonical White production asset' --body 'Approved-source White canonical admission. Protected Images unchanged. White only; #230 remains open until 5/5 + final visual acceptance.')
+            PR=${URL##*/}
+          fi
+          DRAFT=$(gh pr view "$PR" --repo "$REPO" --json isDraft --jq .isDraft)
+          if [ "$DRAFT" = true ]; then gh pr ready "$PR" --repo "$REPO"; fi
+          echo "number=$PR" >> "$GITHUB_OUTPUT"
+
+      - name: Wait for exact-head PR workflow
+        run: |
+          PR='${{ steps.pr.outputs.number }}'
+          HEAD_SHA=$(gh pr view "$PR" --repo "$REPO" --json headRefOid --jq .headRefOid)
+          seen=0
+          for i in $(seq 1 120); do
+            JSON=$(gh api "repos/$REPO/actions/runs?head_sha=$HEAD_SHA&event=pull_request&per_page=50")
+            COUNT=$(printf '%s' "$JSON" | jq '.workflow_runs | length')
+            [ "$COUNT" -gt 0 ] && seen=1
+            FAIL=$(printf '%s' "$JSON" | jq '[.workflow_runs[] | select(.status=="completed" and .conclusion!="success")] | length')
+            PENDING=$(printf '%s' "$JSON" | jq '[.workflow_runs[] | select(.status!="completed")] | length')
+            if [ "$FAIL" -gt 0 ]; then
+              gh pr comment "$PR" --repo "$REPO" --body 'White admission resume stopped: normal PR CI failed. No merge performed.'
+              exit 1
+            fi
+            if [ "$seen" -eq 1 ] && [ "$PENDING" -eq 0 ]; then break; fi
+            sleep 15
+          done
+          [ "$seen" -eq 1 ]
+          JSON=$(gh api "repos/$REPO/actions/runs?head_sha=$HEAD_SHA&event=pull_request&per_page=50")
+          test "$(printf '%s' "$JSON" | jq '[.workflow_runs[] | select(.status!="completed" or .conclusion!="success")] | length')" -eq 0
+          gh pr merge "$PR" --repo "$REPO" --squash --delete-branch --match-head-commit "$HEAD_SHA"
+
+      - name: Record partial visual-release progress
+        run: |
+          PR='${{ steps.pr.outputs.number }}'
+          MAIN_SHA=$(gh api "repos/$REPO/commits/main" --jq .sha)
+          gh issue comment 230 --repo "$REPO" --body "White canonical admission merged via PR #$PR. Current main: \`$MAIN_SHA\`. White is the only variant advanced by this change; protected \`Images/\` remained unchanged. #230 stays OPEN until the remaining canonical variants and final visual acceptance are complete."
