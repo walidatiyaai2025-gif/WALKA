@@ -15,7 +15,7 @@ Artisan::command('walka:production-check', function () {
 
     $check = function (string $name, bool $ok, string $detail) use (&$rows, &$failed): void {
         $rows[] = [$ok ? 'PASS' : 'FAIL', $name, $detail];
-        if (!$ok) {
+        if (! $ok) {
             $failed++;
         }
     };
@@ -54,7 +54,7 @@ Artisan::command('walka:production-check', function () {
     );
     $check(
         'Persistent session driver',
-        !in_array($sessionDriver, ['array', 'cookie'], true),
+        ! in_array($sessionDriver, ['array', 'cookie'], true),
         "SESSION_DRIVER={$sessionDriver}"
     );
 
