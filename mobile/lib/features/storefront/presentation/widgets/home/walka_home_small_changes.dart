@@ -8,11 +8,15 @@ class WalkaHomeSmallChanges extends StatelessWidget {
   const WalkaHomeSmallChanges({
     required this.drawerSemanticLabel,
     required this.onTap,
+    this.title = 'Small Changes,\nBetter Living',
+    this.body = 'Simple solutions that bring order, beauty and peace of mind.',
     super.key,
   });
 
   final String drawerSemanticLabel;
   final VoidCallback onTap;
+  final String title;
+  final String body;
 
   @override
   Widget build(BuildContext context) {
@@ -43,10 +47,10 @@ class WalkaHomeSmallChanges extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 10),
-                  const Expanded(
+                  Expanded(
                     child: Text(
-                      'Small Changes,\nBetter Living',
-                      style: TextStyle(
+                      title,
+                      style: const TextStyle(
                         color: WalkaColors.navy,
                         fontSize: 17,
                         height: 1.05,
@@ -57,9 +61,9 @@ class WalkaHomeSmallChanges extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 10),
-              const Text(
-                'Simple solutions that bring order, beauty and peace of mind.',
-                style: TextStyle(
+              Text(
+                body,
+                style: const TextStyle(
                   color: WalkaColors.muted,
                   fontSize: 10.5,
                   height: 1.35,

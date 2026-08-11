@@ -12,6 +12,8 @@ class WalkaHomeCollectionSection extends StatelessWidget {
     required this.drawerSemanticLabel,
     required this.onLunch,
     required this.onDrawer,
+    this.eyebrow = 'OUR COLLECTION',
+    this.title = 'Everything in Its Place',
     super.key,
   });
 
@@ -19,16 +21,18 @@ class WalkaHomeCollectionSection extends StatelessWidget {
   final String drawerSemanticLabel;
   final VoidCallback onLunch;
   final VoidCallback onDrawer;
+  final String eyebrow;
+  final String title;
 
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
-        const Text(
-          'OUR COLLECTION',
+        Text(
+          eyebrow,
           textAlign: TextAlign.center,
-          style: TextStyle(
+          style: const TextStyle(
             color: WalkaColors.gold,
             fontSize: 10,
             fontWeight: FontWeight.w900,
@@ -36,10 +40,10 @@ class WalkaHomeCollectionSection extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 6),
-        const Text(
-          'Everything in Its Place',
+        Text(
+          title,
           textAlign: TextAlign.center,
-          style: TextStyle(
+          style: const TextStyle(
             color: WalkaColors.navy,
             fontFamily: 'serif',
             fontSize: 27,

@@ -12,16 +12,20 @@
     </div>
 </div>
 
-<section class="card" style="border-color:#eadba8;background:linear-gradient(135deg,#fffefb,#fbf6e7)">
-    <div class="page-head" style="margin-bottom:0;align-items:center">
-        <div>
-            <p class="eyebrow">LIVE-CONTROLLED SURFACE</p>
-            <h2 style="margin-bottom:7px">Home Hero</h2>
-            <p class="muted" style="margin:0;max-width:700px">Edit the Home eyebrow, headline, body and CTA labels with typed validation, mobile preview, publish history and rollback. No JSON required.</p>
-        </div>
-        <a class="btn primary" href="{{ route('admin.content.home.hero.edit') }}">Edit Home Hero →</a>
-    </div>
-</section>
+<div class="grid two">
+    <section class="card" style="border-color:#eadba8;background:linear-gradient(135deg,#fffefb,#fbf6e7)">
+        <p class="eyebrow">LIVE-CONTROLLED COPY</p>
+        <h2>Home Hero</h2>
+        <p class="muted">Edit the Home eyebrow, headline, body and CTA labels with typed validation, mobile preview, publish history and rollback.</p>
+        <a class="btn primary section-space" href="{{ route('admin.content.home.hero.edit') }}">Edit Home Hero →</a>
+    </section>
+    <section class="card" style="border-color:#d7e4ec;background:linear-gradient(135deg,#ffffff,#f4f8fb)">
+        <p class="eyebrow">LIVE-CONTROLLED COMPOSITION</p>
+        <h2>Home Layout</h2>
+        <p class="muted">Reorder approved Home modules, hide optional sections and edit safe section headings. Core Hero and Collection modules stay protected.</p>
+        <a class="btn navy section-space" href="{{ route('admin.content.home.layout.edit') }}">Edit Home Layout →</a>
+    </section>
+</div>
 
 <div class="grid two section-space">
     <section class="card">
@@ -36,14 +40,7 @@
             <div class="table-wrap">
                 <table>
                     <thead>
-                    <tr>
-                        <th>Key</th>
-                        <th>Type</th>
-                        <th>State</th>
-                        <th>Revision</th>
-                        <th>History</th>
-                        <th>Action</th>
-                    </tr>
+                    <tr><th>Key</th><th>Type</th><th>State</th><th>Revision</th><th>History</th><th>Action</th></tr>
                     </thead>
                     <tbody>
                     @foreach ($entries as $entry)
@@ -68,6 +65,8 @@
                             <td>
                                 @if ($entry->content_key === 'home.hero' && $entry->content_type === 'home.hero')
                                     <a class="btn secondary" href="{{ route('admin.content.home.hero.edit') }}">Typed editor</a>
+                                @elseif ($entry->content_key === 'home.layout' && $entry->content_type === 'home.layout')
+                                    <a class="btn secondary" href="{{ route('admin.content.home.layout.edit') }}">Typed editor</a>
                                 @else
                                     <a class="btn secondary" href="{{ route('admin.content.show', ['content' => $entry->id]) }}">Open</a>
                                 @endif

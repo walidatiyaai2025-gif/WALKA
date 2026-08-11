@@ -13,6 +13,8 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
     Route::get('/config', ConfigController::class)->name('config');
     Route::get('/catalog', CatalogController::class)->name('catalog');
     Route::get('/content/home', [PublishedContentController::class, 'home'])->name('content.home');
+    Route::get('/content/home-layout', [PublishedContentController::class, 'homeLayout'])
+        ->name('content.home-layout');
 
     Route::prefix('admin/catalog')
         ->middleware('catalog.admin')
