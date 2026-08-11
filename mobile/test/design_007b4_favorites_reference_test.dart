@@ -95,6 +95,7 @@ void main() {
       expect(find.text('4.7'), findsNothing);
       expect(tester.takeException(), isNull);
     },
+    timeout: const Timeout(Duration(seconds: 30)),
   );
 
   testWidgets(
