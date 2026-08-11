@@ -111,7 +111,7 @@ void main() {
     final PimgProvenanceInspection inspection = await reader.inspect(
       provenancePath: provenanceFile.path,
       sourceAdmissionPath: '../docs/ui/PRODUCTION_SOURCE_ADMISSION.json',
-      mobileRoot: Directory.current.path,
+      mobileRoot: '${temp.path}/empty-mobile-root',
     );
     final Set<String> codes = inspection.diagnostics.map((d) => d.code).toSet();
     expect(codes, contains('provenance.admitted-fingerprint-missing'));
