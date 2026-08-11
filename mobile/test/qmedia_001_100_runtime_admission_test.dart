@@ -126,15 +126,17 @@ void main() {
     const WalkaProductMediaResolver resolver =
         WalkaProductMediaResolver.production();
 
-    final List<WalkaProductMediaPrefetchResult> results =
-        await resolver.prefetchVariants(
-      context,
-      variantIds: <String>[
-        ...WalkaProductMediaResolver.productionVariantIds,
-        'drawer-organizer:white',
-      ],
-      surface: WalkaProductMediaSurface.home,
-    );
+    late List<WalkaProductMediaPrefetchResult> results;
+    await tester.runAsync(() async {
+      results = await resolver.prefetchVariants(
+        context,
+        variantIds: <String>[
+          ...WalkaProductMediaResolver.productionVariantIds,
+          'drawer-organizer:white',
+        ],
+        surface: WalkaProductMediaSurface.home,
+      );
+    });
 
     expect(results, hasLength(5));
     expect(results.first.variantId, 'drawer-organizer:white');
