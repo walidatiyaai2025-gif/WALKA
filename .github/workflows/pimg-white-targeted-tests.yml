@@ -1,0 +1,33 @@
+name: PIMG White Targeted Tests
+
+on:
+  push:
+    branches:
+      - agent/pimg-031-070-white-approved-ingest-v2
+    paths:
+      - .github/workflows/pimg-white-targeted-tests.yml
+
+jobs:
+  targeted:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Get packages
+        working-directory: mobile
+        run: flutter pub get
+      - name: MEDIA admission tests
+        working-directory: mobile
+        run: timeout 120s flutter test test/media_001_004_007_product_media_test.dart -r expanded
+      - name: Favorites reference tests
+        working-directory: mobile
+        run: timeout 120s flutter test test/design_007b4_favorites_reference_test.dart -r expanded
+      - name: Account About reference tests
+        working-directory: mobile
+        run: timeout 120s flutter test test/design_007b5_account_about_reference_test.dart -r expanded
+      - name: Cross-screen reference tests
+        working-directory: mobile
+        run: timeout 120s flutter test test/design_007b6_cross_screen_consistency_test.dart -r expanded
