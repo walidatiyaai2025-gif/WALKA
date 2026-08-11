@@ -4,24 +4,19 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Models\ContentEntry;
+use App\Services\Content\HomeHeroContentDefinition;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\ValidationException;
 
 final class PublishedContentController extends Controller
 {
-    private const HOME_HERO_KEY = 'home.hero';
-
-    private const HOME_HERO_TYPE = 'home.hero';
-
-    private const SCHEMA_VERSION = 1;
-
     public function home(Request $request): JsonResponse|Response
     {
         $entry = ContentEntry::query()
-            ->where('content_key', self::HOME_HERO_KEY)
-            ->where('content_type', self::HOME_HERO_TYPE)
+            ->where('content_key', HomeHeroContentDefinition::KEY)
+            ->where('content_type', HomeHeroContentDefinition::TYPE)
             ->whereNotNull('published_revision')
             ->first();
 
@@ -34,7 +29,11 @@ final class PublishedContentController extends Controller
             ], 404);
         }
 
-        if (! $this->validHomeHeroPayload($entry->published_payload)) {
+        try {
+            $publicPayload = HomeHeroContentDefinition::validateAndNormalize(
+                $entry->published_payload,
+            );
+        } catch (ValidationException) {
             return response()->json([
                 'error' => [
                     'code' => 'content_invalid',
@@ -55,28 +54,17 @@ final class PublishedContentController extends Controller
 
         return response()->json([
             'data' => [
-                'key' => self::HOME_HERO_KEY,
-                'type' => self::HOME_HERO_TYPE,
-                'schema_version' => self::SCHEMA_VERSION,
+                'key' => HomeHeroContentDefinition::KEY,
+                'type' => HomeHeroContentDefinition::TYPE,
+                'schema_version' => HomeHeroContentDefinition::SCHEMA_VERSION,
                 'revision' => $revision,
                 'published_at' => $entry->published_at?->toIso8601String(),
-                'payload' => $entry->published_payload,
+                'payload' => $publicPayload,
             ],
             'meta' => [
                 'api_version' => 'v1',
             ],
         ])->header('ETag', $etag)
             ->header('Cache-Control', $cacheControl);
-    }
-
-    private function validHomeHeroPayload(array $payload): bool
-    {
-        return ! Validator::make($payload, [
-            'eyebrow' => ['required', 'string', 'max:120'],
-            'title' => ['required', 'string', 'max:160'],
-            'body' => ['required', 'string', 'max:500'],
-            'shop_label' => ['required', 'string', 'max:64'],
-            'search_label' => ['required', 'string', 'max:64'],
-        ])->fails();
     }
 }

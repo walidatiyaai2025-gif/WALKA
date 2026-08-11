@@ -8,18 +8,29 @@
     <div>
         <p class="eyebrow">CMS CONTROL PLANE</p>
         <h1>Mobile content</h1>
-        <p class="lead">Draft, preview and publish structured mobile content without shipping a new app build. This is the advanced foundation editor; typed Home, PDP and media editors will sit on the same revision system.</p>
+        <p class="lead">Draft, preview and publish owner-changeable mobile content without shipping a new app build. Prefer typed editors for supported surfaces; the generic structured editor remains available for advanced CMS work.</p>
     </div>
 </div>
 
-<div class="grid two">
+<section class="card" style="border-color:#eadba8;background:linear-gradient(135deg,#fffefb,#fbf6e7)">
+    <div class="page-head" style="margin-bottom:0;align-items:center">
+        <div>
+            <p class="eyebrow">LIVE-CONTROLLED SURFACE</p>
+            <h2 style="margin-bottom:7px">Home Hero</h2>
+            <p class="muted" style="margin:0;max-width:700px">Edit the Home eyebrow, headline, body and CTA labels with typed validation, mobile preview, publish history and rollback. No JSON required.</p>
+        </div>
+        <a class="btn primary" href="{{ route('admin.content.home.hero.edit') }}">Edit Home Hero →</a>
+    </div>
+</section>
+
+<div class="grid two section-space">
     <section class="card">
         <p class="eyebrow">CONTENT REGISTRY</p>
         <h2>Managed entries</h2>
         @if ($entries->isEmpty())
             <div class="locked">
                 <strong>No CMS content entries yet.</strong>
-                <p class="muted">Create the first draft using a stable key. Nothing becomes public until Publish is used explicitly.</p>
+                <p class="muted">Opening a typed editor can safely bootstrap its first private draft. Nothing becomes public until Publish is used explicitly.</p>
             </div>
         @else
             <div class="table-wrap">
@@ -54,7 +65,13 @@
                             </td>
                             <td>{{ $entry->revision }} <span class="muted">/ live {{ $entry->published_revision ?? '—' }}</span></td>
                             <td>{{ $entry->revisions_count }}</td>
-                            <td><a class="btn secondary" href="{{ route('admin.content.show', ['content' => $entry->id]) }}">Open</a></td>
+                            <td>
+                                @if ($entry->content_key === 'home.hero' && $entry->content_type === 'home.hero')
+                                    <a class="btn secondary" href="{{ route('admin.content.home.hero.edit') }}">Typed editor</a>
+                                @else
+                                    <a class="btn secondary" href="{{ route('admin.content.show', ['content' => $entry->id]) }}">Open</a>
+                                @endif
+                            </td>
                         </tr>
                     @endforeach
                     </tbody>
@@ -64,28 +81,28 @@
     </section>
 
     <aside class="card">
-        <p class="eyebrow">NEW DRAFT</p>
+        <p class="eyebrow">ADVANCED DRAFT</p>
         <h2>Create content entry</h2>
-        <p class="muted">Use permanent machine-readable keys. The content type cannot be changed after creation.</p>
+        <p class="muted">Use this structured foundation editor only for content families that do not yet have a typed owner UI. Stable content type cannot be changed after creation.</p>
         <form method="post" action="{{ route('admin.content.store') }}" class="stack section-space">
             @csrf
             <div class="field">
                 <label for="content_key">Stable content key</label>
-                <input id="content_key" name="content_key" value="{{ old('content_key') }}" placeholder="home.hero" required>
+                <input id="content_key" name="content_key" value="{{ old('content_key') }}" placeholder="about.story" required>
             </div>
             <div class="field">
                 <label for="content_type">Content type</label>
-                <input id="content_type" name="content_type" value="{{ old('content_type') }}" placeholder="home.hero" required>
+                <input id="content_type" name="content_type" value="{{ old('content_type') }}" placeholder="about.story" required>
             </div>
             <div class="field">
                 <label for="payload_json">Structured JSON draft</label>
-                <textarea id="payload_json" name="payload_json" spellcheck="false" required>{{ old('payload_json', "{\n  \"title\": \"\",\n  \"subtitle\": \"\"\n}") }}</textarea>
+                <textarea id="payload_json" name="payload_json" spellcheck="false" required>{{ old('payload_json', "{\n  \"title\": \"\",\n  \"body\": \"\"\n}") }}</textarea>
             </div>
-            <button class="btn navy" type="submit">Create draft</button>
+            <button class="btn navy" type="submit">Create private draft</button>
         </form>
         <div class="locked section-space">
             <small>Safety boundary</small>
-            <strong>Structured data only. No HTML/JavaScript execution, secrets, Product Master facts or unrestricted commerce destinations.</strong>
+            <strong>Structured data only. Public APIs expose explicit allowlisted typed fields, never arbitrary generic payload keys.</strong>
         </div>
     </aside>
 </div>

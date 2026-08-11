@@ -1,12 +1,12 @@
 # WALKA Backend-First Mobile Content Control Plan
 
-Last updated: 2026-08-11
+Last updated: 2026-08-12
 Owner direction: **Every mobile-facing value that can be changed safely without shipping a new app build should be controlled from the WALKA backend/dashboard.**
 Tracking: #278
 
 ## 1. Target operating model
 
-WALKA moves from a mostly code-authored Flutter storefront with a small remote catalog surface to a **backend-first mobile CMS/control plane**.
+WALKA is moving from a mostly code-authored Flutter storefront with a small remote catalog surface to a **backend-first mobile CMS/control plane**.
 
 ```text
 WALKA Admin Dashboard
@@ -19,22 +19,32 @@ Laravel CMS + Catalog + Media + Remote Config
         v
 Flutter Android / iOS / Web
         |
-        +-- remote live content
-        +-- last-known-good cache
+        +-- validated remote published content
+        +-- revision-aware last-known-good cache
         +-- bundled safe fallback
         |
         v
 Amazon official purchase destination
 ```
 
-The intended owner workflow is:
+The owner workflow is:
 
 1. Open `/admin`.
 2. Change mobile content or presentation settings.
-3. Preview the effect.
-4. Publish.
-5. Flutter receives the new content without requiring an APK/App Store release where technically safe.
-6. If a bad change is published, rollback to the previous revision from the dashboard.
+3. Save a private draft.
+4. Preview draft versus published state.
+5. Publish explicitly.
+6. Compatible Flutter clients receive the new content without an APK/App Store release where technically safe.
+7. If a bad change is published, restore a previous immutable revision into a new draft, review it, then publish again.
+
+### Current implementation milestone
+
+The generic CMS foundation is now delivered through CMS-003:
+
+- **CMS-001 completed** — stable content keys/types, draft/published snapshots, optimistic revisions, immutable history and restore primitives.
+- **CMS-002 completed** — protected `/admin/content` registry, draft editor, preview, explicit publish, history and restore controls.
+- **CMS-003 completed** — allowlisted published Home content API plus Flutter remote -> last-known-good cache -> bundled fallback and live Home Hero rendering.
+- **CMS-020 is code-complete and validating in #292 / PR #293** — first owner-friendly typed Home Hero editor, eliminating raw JSON for this surface.
 
 ## 2. What must become backend-controlled
 
@@ -55,9 +65,9 @@ The intended owner workflow is:
 
 ### Home / Landing
 
-- hero title, subtitle and supporting copy
+- hero title, eyebrow/subtitle and supporting copy
 - hero media
-- CTA labels and destinations within the approved app navigation model
+- safe CTA labels; navigation behavior remains executable Flutter logic
 - featured collections
 - featured products / variants
 - editorial blocks
@@ -144,16 +154,17 @@ Amazon destinations may later become dashboard-managed **only through a validate
 
 ## 4. Mandatory CMS safety contract
 
-Every dynamic-content family must implement all applicable controls before it is considered production-ready:
+Every dynamic-content family must implement all applicable controls before it is production-ready:
 
 - stable record keys
+- explicit public allowlisting of content keys/types and fields
 - optimistic revision/concurrency protection
-- validation on write
+- validation on write and again at public delivery boundaries
 - draft vs published state
 - preview before publish
-- immutable audit trail
+- immutable audit/history snapshots
 - previous-version history
-- one-click rollback
+- rollback by restoring into a new draft, never silent history rewrite
 - safe defaults
 - last-known-good mobile cache
 - bundled fallback for critical screen availability
@@ -161,22 +172,22 @@ Every dynamic-content family must implement all applicable controls before it is
 - schema/content versioning
 - deterministic ordering
 - explicit empty/null behavior
-- no secret fields in public API responses
+- no secret/admin/draft fields in public API responses
 - server-side authorization
 - production tests for Dashboard -> DB -> API -> Flutter propagation
 
 ## 5. Delivery priority
 
-This program becomes a **P0 backend/mobile architecture priority**. New mobile presentation work should avoid hard-coding owner-changeable content when that content belongs to this plan.
+This program is a **P0 backend/mobile architecture priority**. New mobile presentation work must avoid hard-coding owner-changeable content when that content belongs to this plan; hard-coded values are acceptable only as explicit bundled fallbacks.
 
 ### Phase A — CMS foundation and publication model
 
 | ID | Priority | Scope | Status |
 |---|---|---|---|
-| CMS-001 | P0 | Generic content revision model: draft/published state, optimistic revision, audit, history | TODO |
-| CMS-002 | P0 | Preview/publish/rollback service + dashboard controls | TODO |
-| CMS-003 | P0 | Public API content-version envelope + Flutter last-known-good/bundled fallback contract | TODO |
-| CMS-004 | P0 | Dashboard navigation/permissions for Content, Media, App Config | TODO |
+| CMS-001 | P0 | Generic content revision model: draft/published state, optimistic revision, audit/history | ✅ COMPLETED · #284 / PR #286 |
+| CMS-002 | P0 | Protected Content workspace: preview/publish/history/restore controls | ✅ COMPLETED · #287 / PR #288 |
+| CMS-003 | P0 | Public content envelope + Flutter last-known-good/bundled fallback vertical slice | ✅ COMPLETED · #289 / PR #290 |
+| CMS-004 | P0 | Dashboard roles/navigation/permissions for Content, Media and App Config | TODO |
 
 ### Phase B — Product and PDP control
 
@@ -192,8 +203,8 @@ This program becomes a **P0 backend/mobile architecture priority**. New mobile p
 
 | ID | Priority | Scope | Status |
 |---|---|---|---|
-| CMS-020 | P0 | Home hero CMS | TODO |
-| CMS-021 | P0 | Home section block model and ordering | TODO |
+| CMS-020 | P0 | Typed Home Hero editor on CMS-001..003 foundation | 🟡 VALIDATING · #292 / PR #293 |
+| CMS-021 | P0 | Home section block model, ordering and visibility | TODO |
 | CMS-022 | P0 | Featured collections/products/variants | TODO |
 | CMS-023 | P0 | Announcement/promo banners + scheduling | TODO |
 | CMS-024 | P0 | Categories display metadata/order/visibility | TODO |
@@ -226,8 +237,8 @@ This program becomes a **P0 backend/mobile architecture priority**. New mobile p
 | ID | Priority | Scope | Status |
 |---|---|---|---|
 | CMS-050 | P1 | Scheduled publish/unpublish | TODO |
-| CMS-051 | P1 | Content diff view before publish | TODO |
-| CMS-052 | P1 | Rollback UI and rollback audit events | TODO |
+| CMS-051 | P1 | Rich content diff view before publish | TODO |
+| CMS-052 | P1 | Owner rollback shortcuts and rollback audit UX | TODO |
 | CMS-053 | P1 | API/content freshness, cache and publication observability | TODO |
 | CMS-054 | P1 | Backup/restore validation for CMS/catalog/media metadata | TODO |
 | CMS-055 | P1 | Full production smoke matrix across Admin/API/Flutter | TODO |
@@ -244,27 +255,36 @@ This program becomes a **P0 backend/mobile architecture priority**. New mobile p
 
 When adding or polishing a Flutter screen, developers must classify every user-visible value as one of:
 
-1. **Dynamic content** — should come from backend/CMS.
-2. **Protected product truth** — comes from Product Master/governed data.
+1. **Dynamic content** — backend/CMS controlled.
+2. **Protected product truth** — Product Master/governed data.
 3. **Design-system constant** — spacing, typography, component behavior.
-4. **Executable behavior** — requires code/release.
+4. **Executable behavior** — code/release required.
 
 New owner-changeable copy, images, banners, ordering, visibility or merchandising must not be buried as new hard-coded Flutter constants unless it is explicitly a bundled fallback for a remote CMS field.
 
 ## 7. API strategy
 
-Keep `/api/v1` backward compatible. Prefer additive endpoints/fields, for example:
+Keep `/api/v1` backward compatible. Current and planned additive surfaces include:
 
 ```text
 GET /api/v1/catalog
-GET /api/v1/content/home
-GET /api/v1/content/categories
-GET /api/v1/content/information
-GET /api/v1/app-config
+GET /api/v1/content/home        # delivered by CMS-003
+GET /api/v1/content/categories  # planned
+GET /api/v1/content/information # planned
+GET /api/v1/app-config          # planned
 ```
 
-The exact endpoint split is an implementation detail, but every response must carry enough version/revision metadata for deterministic caching and rollback-safe mobile behavior.
+Every dynamic response must carry enough schema/revision metadata for deterministic validation, caching and rollback-safe mobile behavior.
 
-## 8. Definition of done for this program
+## 8. Production deployment rule
 
-The program is complete only when the owner can change all approved mutable mobile presentation/content surfaces from `/admin`, publish them, see them propagate to the live mobile/web client without a new app release, and safely rollback while protected Product Master/security/runtime invariants remain enforced.
+A merged CMS slice is not considered **live** until both production halves are updated:
+
+1. Laravel code/migrations are deployed to `api.walkastore.com` and production readiness remains green.
+2. Any Flutter consumption change is deployed to the target client build/web channel with the production API base URL.
+
+Never report a newly merged CMS control as live merely because CI passed.
+
+## 9. Definition of done for this program
+
+The program is complete only when the owner can change all approved mutable mobile presentation/content surfaces from `/admin`, publish them, see them propagate to the live mobile/web client without a new app release where technically safe, and safely rollback while protected Product Master/security/runtime invariants remain enforced.
