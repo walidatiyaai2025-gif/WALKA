@@ -8,6 +8,7 @@ on:
       - 'agent/api-*'
       - 'agent/design-*'
       - 'agent/ops-*'
+      - 'agent/pav-*'
     paths-ignore:
       - 'Last verified APK/**'
   pull_request:
@@ -79,18 +80,41 @@ jobs:
         run: |
           set -euo pipefail
           report='production-asset-readiness.json'
-          bash tool/verify_production_assets.sh --report --json "$report"
+          manifest='../docs/ui/PRODUCTION_SOURCE_ADMISSION.json'
+          bash tool/verify_production_assets.sh --report --root . --manifest "$manifest" --json "$report"
           ready="$(python3 -c "import json; print(str(json.load(open('$report'))['ready']).lower())")"
+          ready_count="$(python3 -c "import json; print(json.load(open('$report'))['readyCount'])")"
+          blocker_count="$(python3 -c "import json; print(json.load(open('$report'))['blockerCount'])")"
+          warning_count="$(python3 -c "import json; print(json.load(open('$report'))['warningCount'])")"
+          state="$(python3 -c "import json; print(json.load(open('$report'))['state'])")"
           report_sha="$(sha256sum "$report" | awk '{print $1}')"
           echo "ready=$ready" >> "$GITHUB_OUTPUT"
+          echo "ready_count=$ready_count" >> "$GITHUB_OUTPUT"
+          echo "blocker_count=$blocker_count" >> "$GITHUB_OUTPUT"
+          echo "warning_count=$warning_count" >> "$GITHUB_OUTPUT"
+          echo "state=$state" >> "$GITHUB_OUTPUT"
           echo "report_sha=$report_sha" >> "$GITHUB_OUTPUT"
           {
             echo '### WALKA production asset readiness'
             echo
+            echo "- State: **$state**"
             echo "- Ready for stable owner-visible publication: **$ready**"
+            echo "- Ready variants: **${ready_count}/5**"
+            echo "- Blockers: **$blocker_count**"
+            echo "- Warnings: **$warning_count**"
             echo "- Readiness report SHA-256: \`$report_sha\`"
             echo '- Canonical variants: Drawer White, Drawer Gray, Lunch Blue, Lunch Pink, Lunch Green'
+            echo
+            echo '#### Per-variant admission state'
           } >> "$GITHUB_STEP_SUMMARY"
+          REPORT_PATH="$report" python3 - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import json, os
+          report = json.load(open(os.environ['REPORT_PATH']))
+          for asset in report['assets']:
+              state = 'READY' if asset['ready'] else 'BLOCKED'
+              issues = ', '.join(asset.get('issues', [])) or 'none'
+              print(f"- `{asset['variantId']}`: **{state}** — {issues}")
+          PY
 
       - name: Upload production asset readiness report
         uses: actions/upload-artifact@v4
@@ -218,7 +242,7 @@ jobs:
         continue-on-error: true
         working-directory: mobile
         shell: bash
-        run: bash tool/verify_production_assets.sh --enforce --json production-asset-readiness-enforce.json
+        run: bash tool/verify_production_assets.sh --enforce --root . --manifest ../docs/ui/PRODUCTION_SOURCE_ADMISSION.json --json production-asset-readiness-enforce.json
 
       - name: Upload production asset enforcement diagnostics
         if: github.event_name == 'push' && github.ref == 'refs/heads/main' && steps.production_asset_enforce.outcome == 'failure'
