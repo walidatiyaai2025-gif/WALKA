@@ -3,7 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:walka/design_system/walka_theme.dart';
 import 'package:walka/features/favorites/favorites_state.dart';
 import 'package:walka/features/products/product_experience_v100.dart';
-import 'package:walka/features/storefront/storefront_v101.dart';
+import 'package:walka/features/storefront/storefront_v102.dart';
 
 void main() {
   testWidgets('final Drawer PDP is stable on compact 320 by 568 phones',
@@ -55,7 +55,7 @@ void main() {
               child: child!,
             );
           },
-          home: const WalkaStorefrontShellV101(),
+          home: const WalkaStorefrontShellV102(),
         ),
       ),
     );
@@ -81,7 +81,7 @@ void main() {
         controller: controller,
         child: MaterialApp(
           theme: buildWalkaTheme(),
-          home: const WalkaStorefrontShellV101(),
+          home: const WalkaStorefrontShellV102(),
         ),
       ),
     );

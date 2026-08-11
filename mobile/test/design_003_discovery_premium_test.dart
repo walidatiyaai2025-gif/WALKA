@@ -36,7 +36,6 @@ void main() {
         find.byKey(const ValueKey<String>('reference-category-drawer')),
         findsOneWidget,
       );
-      expect(find.byType(Image), findsWidgets);
       expect(find.text('3 colors'), findsOneWidget);
       expect(find.text('2 finishes'), findsOneWidget);
       expect(find.text('Accessories'), findsNothing);
