@@ -60,6 +60,7 @@ class WalkaPdpGalleryViewport extends StatelessWidget {
                         kind: kind,
                         primaryColor: primaryColor,
                         backgroundColor: surface,
+                        mediaSurface: WalkaProductMediaSurface.pdp,
                         semanticLabel: '$semanticLabel primary product image',
                       )
                     : WalkaProductVisual(

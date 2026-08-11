@@ -58,6 +58,7 @@ class WalkaSavedDrawerCard extends StatelessWidget {
                             primaryColor: productColor,
                             backgroundColor: surface,
                             compact: true,
+                            mediaSurface: WalkaProductMediaSurface.favorites,
                             semanticLabel:
                                 'WALKA Drawer Organizer $variant favorite',
                           ),
