@@ -244,8 +244,8 @@ class PavPngInspector {
 
     if (formatDecodable) {
       final _DecodeResult decoded = _decodeRgba(
-        width: width!,
-        height: height!,
+        width: width,
+        height: height,
         idatChunks: idatChunks,
       );
       diagnostics.addAll(decoded.diagnostics);
@@ -387,7 +387,8 @@ class PavPngInspector {
       }
 
       final Uint8List data = Uint8List.sublistView(bytes, dataStart, dataEnd);
-      final int storedCrc = ByteData.sublistView(bytes, dataEnd, crcEnd).getUint32(0, Endian.big);
+      final int storedCrc =
+          ByteData.sublistView(bytes, dataEnd, crcEnd).getUint32(0, Endian.big);
       final Uint8List crcInput = Uint8List(typeBytes.length + data.length)
         ..setRange(0, typeBytes.length, typeBytes)
         ..setRange(typeBytes.length, typeBytes.length + data.length, data);
@@ -452,7 +453,7 @@ class PavPngInspector {
     late final Uint8List inflated;
     try {
       inflated = Uint8List.fromList(
-        const ZLibDecoder().convert(compressedBuilder.takeBytes()),
+        ZLibDecoder().convert(compressedBuilder.takeBytes()),
       );
     } on Object catch (error) {
       diagnostics.add(
@@ -499,9 +500,11 @@ class PavPngInspector {
         return _DecodeResult(rgba: null, diagnostics: diagnostics);
       }
       for (int x = 0; x < rowBytes; x += 1) {
-        final int left = x >= bytesPerPixel ? reconstructed[x - bytesPerPixel] : 0;
+        final int left =
+            x >= bytesPerPixel ? reconstructed[x - bytesPerPixel] : 0;
         final int up = previous[x];
-        final int upLeft = x >= bytesPerPixel ? previous[x - bytesPerPixel] : 0;
+        final int upLeft =
+            x >= bytesPerPixel ? previous[x - bytesPerPixel] : 0;
         final int predictor = switch (filter) {
           0 => 0,
           1 => left,
@@ -544,7 +547,8 @@ class PavPngInspector {
       for (int x = 0; x < width; x += 1) {
         final int alpha = rgba[(y * width + x) * 4 + 3];
         if (alpha < 255) hasTransparent = true;
-        if ((x == 0 || y == 0 || x == width - 1 || y == height - 1) && alpha != 0) {
+        if ((x == 0 || y == 0 || x == width - 1 || y == height - 1) &&
+            alpha != 0) {
           perimeterTransparent = false;
         }
         if (alpha > 0) {
@@ -575,8 +579,10 @@ class PavPngInspector {
       );
     }
 
-    final double centerX = alphaWeight == 0 ? (width - 1) / 2 : weightedX / alphaWeight;
-    final double centerY = alphaWeight == 0 ? (height - 1) / 2 : weightedY / alphaWeight;
+    final double centerX =
+        alphaWeight == 0 ? (width - 1) / 2 : weightedX / alphaWeight;
+    final double centerY =
+        alphaWeight == 0 ? (height - 1) / 2 : weightedY / alphaWeight;
     return PavAlphaMetrics(
       hasTransparentPixels: hasTransparent,
       perimeterTransparent: perimeterTransparent,
