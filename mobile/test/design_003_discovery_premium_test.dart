@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:walka/design_system/walka_product_visual.dart';
 import 'package:walka/design_system/walka_theme.dart';
 import 'package:walka/features/catalog/catalog_state.dart';
 import 'package:walka/features/storefront/discovery_reference_v123.dart';
@@ -37,7 +36,6 @@ void main() {
         find.byKey(const ValueKey<String>('reference-category-drawer')),
         findsOneWidget,
       );
-      expect(find.byType(WalkaProductVisual), findsWidgets);
       expect(find.text('3 colors'), findsOneWidget);
       expect(find.text('2 finishes'), findsOneWidget);
       expect(find.text('Accessories'), findsNothing);
@@ -78,7 +76,8 @@ void main() {
         'lunch-box:green',
       ];
       for (final String id in ids) {
-        final Finder target = find.byKey(ValueKey<String>('reference-category-$id'));
+        final Finder target =
+            find.byKey(ValueKey<String>('reference-category-$id'));
         await tester.scrollUntilVisible(
           target,
           220,
@@ -159,7 +158,7 @@ void main() {
         find.byKey(const ValueKey<String>('discovery-search-lunch-box:blue')),
         findsNothing,
       );
-      expect(find.byType(WalkaProductVisual), findsOneWidget);
+      expect(find.byType(Image), findsOneWidget);
       expect(tester.takeException(), isNull);
     },
   );

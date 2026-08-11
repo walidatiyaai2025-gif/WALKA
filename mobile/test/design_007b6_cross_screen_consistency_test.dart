@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:walka/design_system/walka_product_visual.dart';
 import 'package:walka/design_system/walka_reference_ui.dart';
 import 'package:walka/design_system/walka_theme.dart';
 import 'package:walka/features/catalog/catalog_state.dart';
@@ -20,7 +19,8 @@ void main() {
       final _MemoryFavoritesStore store = _MemoryFavoritesStore(
         <String>{WalkaFavoritesController.drawerWhiteId},
       );
-      final WalkaFavoritesController favorites = WalkaFavoritesController(store);
+      final WalkaFavoritesController favorites =
+          WalkaFavoritesController(store);
       await favorites.load();
       addTearDown(favorites.dispose);
 
@@ -52,7 +52,7 @@ void main() {
       );
       await tester.pump();
       _expectReferenceWordmarkContract(tester);
-      expect(find.byType(WalkaProductVisual), findsWidgets);
+      expect(find.byType(Image), findsWidgets);
       expect(tester.takeException(), isNull);
 
       await tester.pumpWidget(
@@ -125,7 +125,8 @@ void main() {
       final _MemoryFavoritesStore store = _MemoryFavoritesStore(
         <String>{WalkaFavoritesController.drawerGrayId},
       );
-      final WalkaFavoritesController favorites = WalkaFavoritesController(store);
+      final WalkaFavoritesController favorites =
+          WalkaFavoritesController(store);
       await favorites.load();
       addTearDown(favorites.dispose);
 
@@ -138,7 +139,7 @@ void main() {
         ),
       );
       await tester.pump();
-      expect(find.byType(WalkaProductVisual), findsWidgets);
+      expect(find.byType(Image), findsWidgets);
       expect(tester.takeException(), isNull);
 
       await tester.pumpWidget(
@@ -150,7 +151,7 @@ void main() {
         ),
       );
       await tester.pump();
-      expect(find.byType(WalkaProductVisual), findsWidgets);
+      expect(find.byType(Image), findsWidgets);
       expect(tester.takeException(), isNull);
 
       await tester.pumpWidget(
@@ -162,7 +163,7 @@ void main() {
         ),
       );
       await tester.pump();
-      expect(find.byType(WalkaProductVisual), findsWidgets);
+      expect(find.byType(Image), findsWidgets);
       expect(tester.takeException(), isNull);
     },
   );

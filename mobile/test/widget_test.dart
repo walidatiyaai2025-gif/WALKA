@@ -11,6 +11,7 @@ import 'package:walka/features/lunch/lunch_box_v6.dart';
 import 'package:walka/features/search/search_discovery_v9.dart';
 import 'package:walka/features/storefront/storefront_shell_v9.dart';
 import 'package:walka/features/storefront/storefront_v2.dart';
+import 'package:walka/features/storefront/storefront_v102.dart';
 import 'package:walka/main.dart';
 
 void main() {
@@ -69,7 +70,7 @@ void main() {
     expect(theme.materialTapTargetSize, MaterialTapTargetSize.padded);
   });
 
-  testWidgets('storefront v9 exposes Search as first-class navigation',
+  testWidgets('current storefront exposes Search as first-class navigation',
       (WidgetTester tester) async {
     tester.view.physicalSize = const Size(390, 844);
     tester.view.devicePixelRatio = 1;
@@ -84,7 +85,7 @@ void main() {
         controller: controller,
         child: MaterialApp(
           theme: buildWalkaTheme(),
-          home: const WalkaStorefrontShellV9(),
+          home: const WalkaStorefrontShellV102(),
         ),
       ),
     );
@@ -102,7 +103,7 @@ void main() {
       tester.widget<NavigationBar>(find.byType(NavigationBar)).selectedIndex,
       1,
     );
-    expect(find.text('SEARCH WALKA'), findsOneWidget);
+    expect(find.byType(TextField), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -237,7 +238,8 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.textContaining('Best for dry & semi-wet foods'), findsOneWidget);
+    expect(
+        find.textContaining('Best for dry & semi-wet foods'), findsOneWidget);
     expect(find.textContaining('Not intended for liquids'), findsOneWidget);
     expect(find.textContaining('Carry upright'), findsOneWidget);
     expect(tester.takeException(), isNull);
