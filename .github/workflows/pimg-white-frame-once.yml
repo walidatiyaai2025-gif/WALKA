@@ -50,16 +50,70 @@ jobs:
           mkdir -p /tmp/review
           cp mobile/assets/products/drawer/white.png /tmp/review/white.png
           python3 - <<'PY'
-          from PIL import Image
-          import hashlib,pathlib
-          p=pathlib.Path('mobile/assets/products/drawer/white.png'); d=p.read_bytes(); im=Image.open(p).convert('RGBA')
-          alpha=im.getchannel('A'); bbox=alpha.getbbox(); assert bbox
-          left,top,right,bottom=bbox; margins=[left,1024-right,top,1024-bottom]
-          assert min(margins)>=51,margins
-          assert max(margins[:2])-min(margins[:2])<=1,margins
-          assert len(d)<=1200*1024,len(d)
-          text=f"bytes={len(d)}\nsha256={hashlib.sha256(d).hexdigest()}\nwidth=1024\nheight=1024\nalpha_bbox={[left,top,right-1,bottom-1]}\nsafe_margins={margins}\nnearest_safe_margin={min(margins)}\nprofile=sRGB\n"
-          print(text); pathlib.Path('/tmp/review/metadata.txt').write_text(text)
+          import hashlib, pathlib, struct, zlib
+          p = pathlib.Path('mobile/assets/products/drawer/white.png')
+          data = p.read_bytes()
+          assert data[:8] == b'\x89PNG\r\n\x1a\n'
+          assert len(data) <= 1200 * 1024, len(data)
+          off = 8
+          chunks = []
+          idat = bytearray()
+          while off < len(data):
+              n = struct.unpack('>I', data[off:off+4])[0]
+              kind = data[off+4:off+8]
+              payload = data[off+8:off+8+n]
+              stored = struct.unpack('>I', data[off+8+n:off+12+n])[0]
+              assert stored == (zlib.crc32(kind + payload) & 0xffffffff)
+              chunks.append(kind)
+              if kind == b'IHDR':
+                  width, height, bit_depth, color_type, compression, filtering, interlace = struct.unpack('>IIBBBBB', payload)
+              elif kind == b'IDAT':
+                  idat.extend(payload)
+              off += 12 + n
+          assert (width, height, bit_depth, color_type) == (1024, 1024, 8, 6)
+          assert b'sRGB' in chunks
+          raw = zlib.decompress(bytes(idat))
+          stride = width * 4
+          previous = bytearray(stride)
+          cursor = 0
+          visible = []
+          partial = 0
+          for y in range(height):
+              ft = raw[cursor]; cursor += 1
+              scan = bytearray(raw[cursor:cursor+stride]); cursor += stride
+              recon = bytearray(stride)
+              for x in range(stride):
+                  left = recon[x-4] if x >= 4 else 0
+                  up = previous[x]
+                  ul = previous[x-4] if x >= 4 else 0
+                  value = scan[x]
+                  if ft == 0: pred = 0
+                  elif ft == 1: pred = left
+                  elif ft == 2: pred = up
+                  elif ft == 3: pred = (left + up) // 2
+                  elif ft == 4:
+                      q = left + up - ul
+                      pa, pb, pc = abs(q-left), abs(q-up), abs(q-ul)
+                      pred = left if pa <= pb and pa <= pc else (up if pb <= pc else ul)
+                  else: raise AssertionError(ft)
+                  recon[x] = (value + pred) & 255
+              for x in range(width):
+                  a = recon[x*4+3]
+                  if a: visible.append((x,y))
+                  if 0 < a < 255: partial += 1
+              previous = recon
+          assert visible
+          xs=[x for x,_ in visible]; ys=[y for _,y in visible]
+          bbox=[min(xs),min(ys),max(xs),max(ys)]
+          margins=[bbox[0],width-1-bbox[2],bbox[1],height-1-bbox[3]]
+          assert min(margins) >= 51, margins
+          assert abs(margins[0]-margins[1]) <= 1, margins
+          sha=hashlib.sha256(data).hexdigest()
+          text=(f'bytes={len(data)}\nsha256={sha}\nwidth={width}\nheight={height}\n'
+                f'alpha_bbox={bbox}\nsafe_margins={margins}\nnearest_safe_margin={min(margins)}\n'
+                f'partial_alpha_pixels={partial}\nprofile=sRGB\n')
+          print(text)
+          pathlib.Path('/tmp/review/metadata.txt').write_text(text)
           PY
           convert -size 1024x1024 xc:white mobile/assets/products/drawer/white.png -gravity center -compose over -composite /tmp/review/white-on-white.jpg
           convert -size 1024x1024 xc:'#F8F6F1' mobile/assets/products/drawer/white.png -gravity center -compose over -composite /tmp/review/white-on-ivory.jpg
