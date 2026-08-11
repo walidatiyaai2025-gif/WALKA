@@ -44,6 +44,7 @@ class WalkaHomeCollectionCard extends StatelessWidget {
             primaryColor: primaryColor,
             backgroundColor: visualBackground,
             compact: true,
+            mediaSurface: WalkaProductMediaSurface.home,
             semanticLabel: semanticLabel,
           );
 
