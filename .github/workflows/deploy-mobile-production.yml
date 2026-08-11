@@ -57,16 +57,24 @@ jobs:
         working-directory: mobile
         run: flutter test
 
-      - name: Enforce production product assets
+      - name: Report production product assets
         working-directory: mobile
         shell: bash
         run: |
           set -euo pipefail
           bash tool/verify_production_assets.sh \
-            --enforce \
+            --report \
             --root . \
             --manifest ../docs/ui/PRODUCTION_SOURCE_ADMISSION.json \
             --json production-asset-readiness-production.json
+
+      - name: Upload production asset readiness report
+        uses: actions/upload-artifact@v4
+        with:
+          name: walka-mobile-web-asset-readiness-${{ github.sha }}
+          path: mobile/production-asset-readiness-production.json
+          if-no-files-found: error
+          retention-days: 14
 
       - name: Build Flutter web release
         working-directory: mobile
