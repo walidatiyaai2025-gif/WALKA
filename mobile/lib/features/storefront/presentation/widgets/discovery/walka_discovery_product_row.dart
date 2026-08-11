@@ -46,6 +46,7 @@ class WalkaDiscoveryProductRow extends StatelessWidget {
                   primaryColor: walkaDiscoveryProductColor(item),
                   backgroundColor: item.tone,
                   compact: true,
+                  mediaSurface: WalkaProductMediaSurface.discovery,
                   semanticLabel: '${item.title} ${item.variant}',
                 ),
               ),
