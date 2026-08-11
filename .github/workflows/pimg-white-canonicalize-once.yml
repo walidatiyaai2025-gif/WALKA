@@ -5,8 +5,6 @@ on:
     branches:
       - agent/pimg-031-070-white-canonical
     paths:
-      - mobile/tool/pimg_white_canonical_payload.json
-      - mobile/tool/pimg_white_alpha_mask.b64
       - .github/workflows/pimg-white-canonicalize-once.yml
 
 permissions:
@@ -31,33 +29,8 @@ jobs:
             sudo apt-get install -y imagemagick
           fi
           convert -version
-          identify -version
 
-      - name: Reconstruct reviewed alpha mask and sRGB profile
-        shell: bash
-        run: |
-          set -euo pipefail
-          base64 --decode mobile/tool/pimg_white_alpha_mask.b64 > /tmp/pimg-white-alpha.png
-          echo 'a814b51a8fb2351da840e39edad85b19096903135553acea7717223f7e2d92fe  /tmp/pimg-white-alpha.png' | sha256sum -c -
-          test "$(identify -format '%w %h' /tmp/pimg-white-alpha.png)" = '1024 1024'
-          convert /tmp/pimg-white-alpha.png -depth 8 gray:/tmp/pimg-white-alpha.raw
-          python3 - <<'PY'
-          import base64
-          import hashlib
-          import json
-          import pathlib
-
-          raw = pathlib.Path('/tmp/pimg-white-alpha.raw').read_bytes()
-          assert len(raw) == 1024 * 1024, len(raw)
-          assert hashlib.sha256(raw).hexdigest() == 'dfb34e55d46564407f5477b34985a8e8b2816e54b3de455656d68c33f608b0b3'
-
-          payload = json.loads(pathlib.Path('mobile/tool/pimg_white_canonical_payload.json').read_text())
-          icc = base64.b64decode(payload['iccBase64'])
-          assert hashlib.sha256(icc).hexdigest() == payload['iccSha256']
-          pathlib.Path('/tmp/pimg-srgb.icc').write_bytes(icc)
-          PY
-
-      - name: Apply reviewed cutout mask without changing product geometry
+      - name: Derive canonical cutout from owner-provided White image
         shell: bash
         run: |
           set -euo pipefail
@@ -65,10 +38,21 @@ jobs:
           test -f "$src"
           test "$(identify -format '%w %h' "$src")" = '1024 1024'
           cp "$src" /tmp/pimg-white-owner-source.png
-          convert /tmp/pimg-white-owner-source.png /tmp/pimg-white-alpha.png \
-            -alpha off -compose CopyOpacity -composite \
-            -strip -profile /tmp/pimg-srgb.icc -depth 8 \
-            -define png:color-type=6 -define png:exclude-chunk=time \
+
+          # Remove only the exterior near-white region connected to the canvas
+          # perimeter. This preserves the organizer's internal white surfaces,
+          # dividers and real expanded 8-compartment geometry.
+          convert /tmp/pimg-white-owner-source.png \
+            -bordercolor white -border 1 \
+            -alpha set -channel RGBA -fuzz 2% -fill none \
+            -draw 'matte 0,0 floodfill' \
+            -shave 1x1 \
+            -trim +repage \
+            -resize '922x922>' \
+            -background none -gravity center -extent 1024x1024 \
+            -channel RGBA -depth 8 -strip -colorspace sRGB -set colorspace sRGB \
+            -define png:color-type=6 -define png:exclude-chunk=date,time \
+            -define png:include-chunk=sRGB \
             PNG32:"$src"
 
       - name: Validate canonical White mechanical contract
@@ -93,6 +77,9 @@ jobs:
             size = struct.unpack('>I', data[offset:offset + 4])[0]
             kind = data[offset + 4:offset + 8]
             payload = data[offset + 8:offset + 8 + size]
+            stored_crc = struct.unpack('>I', data[offset + 8 + size:offset + 12 + size])[0]
+            calculated_crc = zlib.crc32(kind + payload) & 0xffffffff
+            assert stored_crc == calculated_crc, (kind, offset)
             chunks.append(kind)
             if kind == b'IHDR':
               width, height, bit_depth, color_type, compression, filtering, interlace = struct.unpack('>IIBBBBB', payload)
@@ -139,10 +126,14 @@ jobs:
             previous = recon
 
           visible = []
+          partial_alpha = 0
           for y, row in enumerate(rows):
             for x in range(width):
-              if row[x * 4 + 3] != 0:
+              alpha = row[x * 4 + 3]
+              if alpha:
                 visible.append((x, y))
+              if 0 < alpha < 255:
+                partial_alpha += 1
           assert visible
           xs = [point[0] for point in visible]
           ys = [point[1] for point in visible]
@@ -161,6 +152,7 @@ jobs:
             f"alpha_bbox={bbox}\n"
             f"safe_margins={margins}\n"
             f"nearest_safe_margin={min(margins)}\n"
+            f"partial_alpha_pixels={partial_alpha}\n"
             f"profile={'iCCP' if b'iCCP' in chunks else 'sRGB'}\n"
           )
           print(receipt.read_text())
@@ -173,10 +165,13 @@ jobs:
           mkdir -p /tmp/pimg-review
           cp mobile/assets/products/drawer/white.png /tmp/pimg-review/white.png
           cp /tmp/pimg-white-metadata.txt /tmp/pimg-review/metadata.txt
+          convert -size 1024x1024 xc:white mobile/assets/products/drawer/white.png -gravity center -compose over -composite /tmp/pimg-review/white-on-white.jpg
           convert -size 1024x1024 xc:'#F8F6F1' mobile/assets/products/drawer/white.png -gravity center -compose over -composite /tmp/pimg-review/white-on-ivory.jpg
           convert -size 1024x1024 xc:'#003366' mobile/assets/products/drawer/white.png -gravity center -compose over -composite /tmp/pimg-review/white-on-navy.jpg
           convert mobile/assets/products/drawer/white.png -resize 384x384 /tmp/pimg-review/white-384.png
+          convert mobile/assets/products/drawer/white.png -resize 240x240 /tmp/pimg-review/white-240.png
           convert mobile/assets/products/drawer/white.png -resize 160x160 /tmp/pimg-review/white-160.png
+          convert mobile/assets/products/drawer/white.png -resize 96x96 /tmp/pimg-review/white-96.png
 
       - name: Upload White canonical review artifact
         uses: actions/upload-artifact@v4
@@ -185,7 +180,7 @@ jobs:
           path: /tmp/pimg-review/
           if-no-files-found: error
 
-      - name: Commit canonical asset and remove one-shot payload
+      - name: Commit canonical asset and remove one-shot transfer files
         shell: bash
         run: |
           set -euo pipefail
