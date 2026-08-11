@@ -20,19 +20,32 @@ void main() {
     for (final int targetWidth in _targetWidths) {
       testWidgets('${entry.key} decodes at ${targetWidth}px without failure',
           (WidgetTester tester) async {
-        final ByteData data = await rootBundle.load(entry.value);
-        final ui.Codec codec = await ui.instantiateImageCodec(
-          data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes),
-          targetWidth: targetWidth,
-          allowUpscaling: false,
-        );
-        addTearDown(codec.dispose);
-        final ui.FrameInfo frame = await codec.getNextFrame();
-        addTearDown(frame.image.dispose);
+        late int decodedWidth;
+        late int decodedHeight;
 
-        expect(frame.image.width, greaterThan(0));
-        expect(frame.image.width, lessThanOrEqualTo(targetWidth));
-        expect(frame.image.height, greaterThan(0));
+        await tester.runAsync(() async {
+          final ByteData data = await rootBundle.load(entry.value);
+          final ui.Codec codec = await ui.instantiateImageCodec(
+            data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes),
+            targetWidth: targetWidth,
+            allowUpscaling: false,
+          );
+          try {
+            final ui.FrameInfo frame = await codec.getNextFrame();
+            try {
+              decodedWidth = frame.image.width;
+              decodedHeight = frame.image.height;
+            } finally {
+              frame.image.dispose();
+            }
+          } finally {
+            codec.dispose();
+          }
+        });
+
+        expect(decodedWidth, greaterThan(0));
+        expect(decodedWidth, lessThanOrEqualTo(targetWidth));
+        expect(decodedHeight, greaterThan(0));
       });
     }
   }
