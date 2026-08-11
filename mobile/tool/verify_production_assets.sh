@@ -7,7 +7,7 @@ shift || true
 case "$mode" in
   --report|--enforce) ;;
   *)
-    echo "Usage: $0 [--report|--enforce] [--json <path>]" >&2
+    echo "Usage: $0 [--report|--enforce] [--json <path>] [--root <path>] [--manifest <path>] [--strict-warnings]" >&2
     exit 2
     ;;
 esac
