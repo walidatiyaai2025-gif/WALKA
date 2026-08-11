@@ -185,8 +185,7 @@ final class AdminHomeLayoutController extends Controller
 
         uasort(
             $sectionsById,
-            fn (array $left, array $right): int =>
-                ((int) $orders[$left['id']]) <=> ((int) $orders[$right['id']]),
+            fn (array $left, array $right): int => ((int) $orders[$left['id']]) <=> ((int) $orders[$right['id']]),
         );
 
         return HomeLayoutContentDefinition::validateAndNormalize([
