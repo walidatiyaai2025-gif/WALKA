@@ -64,6 +64,7 @@ class _WalkaPdpFullscreenGalleryState extends State<WalkaPdpFullscreenGallery> {
                           kind: widget.kind,
                           primaryColor: widget.primaryColor,
                           backgroundColor: widget.surface,
+                          mediaSurface: WalkaProductMediaSurface.pdp,
                           semanticLabel:
                               '${widget.title} primary fullscreen product image',
                         )
