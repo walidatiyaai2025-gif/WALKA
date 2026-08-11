@@ -97,6 +97,11 @@
         .locked small { color: var(--muted); display: block; margin-bottom: 4px; }
         .locked strong { color: #365068; font-size: 12px; overflow-wrap: anywhere; }
         .section-space { margin-top: 22px; }
+        .actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+        .json-editor { min-height: 360px !important; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 13px; tab-size: 2; }
+        .preview-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+        .preview-label { margin-bottom: 8px; color: var(--muted); font-size: 11px; font-weight: 850; letter-spacing: .08em; }
+        .json-preview { margin: 0; min-height: 180px; max-height: 460px; overflow: auto; border: 1px solid #d9e3ea; border-radius: 13px; background: #f7f9fb; padding: 16px; color: #24435c; font: 12px/1.55 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; white-space: pre-wrap; overflow-wrap: anywhere; }
         @media (max-width: 1080px) {
             .metrics { grid-template-columns: repeat(2, minmax(0,1fr)); }
             .two { grid-template-columns: 1fr; }
@@ -105,7 +110,7 @@
         @media (max-width: 760px) {
             .shell { display: block; }
             .sidebar { position: relative; height: auto; padding: 18px; gap: 16px; }
-            .nav { grid-template-columns: repeat(3, minmax(0,1fr)); }
+            .nav { grid-template-columns: repeat(2, minmax(0,1fr)); }
             .nav a { justify-content: center; padding: 10px 8px; font-size: 12px; }
             .nav-icon { display: none; }
             .sidebar-foot { display: none; }
@@ -116,6 +121,7 @@
             .metrics { grid-template-columns: 1fr 1fr; gap: 12px; }
             .card { border-radius: 15px; padding: 17px; }
             .locked-grid { grid-template-columns: 1fr; }
+            .preview-grid { grid-template-columns: 1fr; }
         }
         @media (max-width: 430px) {
             .metrics { grid-template-columns: 1fr; }
@@ -134,7 +140,8 @@
         <nav class="nav" aria-label="Admin navigation">
             <a href="{{ route('admin.dashboard') }}" class="{{ request()->routeIs('admin.dashboard') ? 'active' : '' }}"><span class="nav-icon">01</span>Overview</a>
             <a href="{{ route('admin.catalog') }}" class="{{ request()->routeIs('admin.catalog*') ? 'active' : '' }}"><span class="nav-icon">02</span>Catalog</a>
-            <a href="{{ route('admin.audits') }}" class="{{ request()->routeIs('admin.audits') ? 'active' : '' }}"><span class="nav-icon">03</span>Audit log</a>
+            <a href="{{ route('admin.content.index') }}" class="{{ request()->routeIs('admin.content*') ? 'active' : '' }}"><span class="nav-icon">03</span>Content</a>
+            <a href="{{ route('admin.audits') }}" class="{{ request()->routeIs('admin.audits') ? 'active' : '' }}"><span class="nav-icon">04</span>Audit log</a>
         </nav>
         <div class="sidebar-foot">
             <p>Protected server-side dashboard. Mobile clients never receive these credentials.</p>
