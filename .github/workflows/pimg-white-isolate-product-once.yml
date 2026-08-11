@@ -1,0 +1,192 @@
+name: PIMG White Isolate Product Once
+
+on:
+  push:
+    branches:
+      - agent/pimg-031-070-white-canonical
+    paths:
+      - .github/workflows/pimg-white-isolate-product-once.yml
+
+permissions:
+  contents: write
+
+jobs:
+  isolate-white-product:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout PIMG branch
+        uses: actions/checkout@v5
+        with:
+          ref: agent/pimg-031-070-white-canonical
+          fetch-depth: 0
+
+      - name: Ensure ImageMagick
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! command -v convert >/dev/null 2>&1 || ! command -v identify >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y imagemagick
+          fi
+
+      - name: Isolate only the real expanded organizer region
+        shell: bash
+        run: |
+          set -euo pipefail
+          src='mobile/assets/products/drawer/white.png'
+          test -f "$src"
+          test "$(identify -format '%w %h' "$src")" = '1024 1024'
+          cp "$src" /tmp/white-before-isolation.png
+
+          # The current provisional export originated from an owner-approved
+          # creative panel. Keep only the photographed organizer region; the
+          # logo, headline, supporting copy and CTA live outside this ROI.
+          # No pixels are synthesized and no product geometry is reconstructed.
+          convert /tmp/white-before-isolation.png \
+            -crop '520x440+90+450' +repage \
+            -trim +repage \
+            -resize '922x922>' \
+            -background none -gravity center -extent 1024x1024 \
+            -channel RGBA -depth 8 -strip -colorspace sRGB -set colorspace sRGB \
+            -define png:color-type=6 -define png:exclude-chunk=date,time \
+            PNG32:"$src"
+
+      - name: Normalize deterministic PNG chunks
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import pathlib, struct, zlib
+          path = pathlib.Path('mobile/assets/products/drawer/white.png')
+          data = path.read_bytes()
+          assert data[:8] == b'\x89PNG\r\n\x1a\n'
+          offset = 8
+          chunks = []
+          while offset < len(data):
+              size = struct.unpack('>I', data[offset:offset+4])[0]
+              kind = data[offset+4:offset+8]
+              payload = data[offset+8:offset+8+size]
+              chunks.append((kind, payload))
+              offset += 12 + size
+          def chunk(kind, payload):
+              return struct.pack('>I', len(payload)) + kind + payload + struct.pack('>I', zlib.crc32(kind + payload) & 0xffffffff)
+          out = bytearray(data[:8])
+          for kind, payload in chunks:
+              if kind in {b'tEXt', b'zTXt', b'iTXt', b'tIME', b'bKGD', b'sRGB', b'iCCP'}:
+                  continue
+              out.extend(chunk(kind, payload))
+              if kind == b'IHDR':
+                  out.extend(chunk(b'sRGB', b'\x00'))
+          path.write_bytes(bytes(out))
+          PY
+
+      - name: Validate mechanical and content-isolation contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import hashlib, pathlib, struct, zlib
+          path = pathlib.Path('mobile/assets/products/drawer/white.png')
+          data = path.read_bytes()
+          assert len(data) <= 1200 * 1024, len(data)
+          offset = 8
+          idat = bytearray()
+          chunks = []
+          while offset < len(data):
+              size = struct.unpack('>I', data[offset:offset+4])[0]
+              kind = data[offset+4:offset+8]
+              payload = data[offset+8:offset+8+size]
+              stored = struct.unpack('>I', data[offset+8+size:offset+12+size])[0]
+              assert stored == (zlib.crc32(kind + payload) & 0xffffffff)
+              chunks.append(kind)
+              if kind == b'IHDR':
+                  width, height, bit_depth, color_type, compression, filtering, interlace = struct.unpack('>IIBBBBB', payload)
+              elif kind == b'IDAT':
+                  idat.extend(payload)
+              offset += 12 + size
+          assert (width, height, bit_depth, color_type) == (1024, 1024, 8, 6)
+          assert b'sRGB' in chunks
+
+          raw = zlib.decompress(bytes(idat))
+          stride = width * 4
+          previous = bytearray(stride)
+          visible = []
+          partial = 0
+          cursor = 0
+          for y in range(height):
+              ft = raw[cursor]; cursor += 1
+              scan = bytearray(raw[cursor:cursor+stride]); cursor += stride
+              recon = bytearray(stride)
+              for x in range(stride):
+                  left = recon[x-4] if x >= 4 else 0
+                  up = previous[x]
+                  ul = previous[x-4] if x >= 4 else 0
+                  value = scan[x]
+                  if ft == 0: pred = 0
+                  elif ft == 1: pred = left
+                  elif ft == 2: pred = up
+                  elif ft == 3: pred = (left + up) // 2
+                  elif ft == 4:
+                      p = left + up - ul
+                      pa, pb, pc = abs(p-left), abs(p-up), abs(p-ul)
+                      pred = left if pa <= pb and pa <= pc else (up if pb <= pc else ul)
+                  else: raise AssertionError(ft)
+                  recon[x] = (value + pred) & 255
+              for x in range(width):
+                  a = recon[x*4+3]
+                  if a: visible.append((x,y))
+                  if 0 < a < 255: partial += 1
+              previous = recon
+          assert visible
+          xs = [p[0] for p in visible]; ys = [p[1] for p in visible]
+          bbox = [min(xs), min(ys), max(xs), max(ys)]
+          margins = [bbox[0], width-1-bbox[2], bbox[1], height-1-bbox[3]]
+          assert min(margins) >= 51, (bbox, margins)
+          print(f'bytes={len(data)}')
+          print(f'sha256={hashlib.sha256(data).hexdigest()}')
+          print(f'width={width}')
+          print(f'height={height}')
+          print(f'alpha_bbox={bbox}')
+          print(f'safe_margins={margins}')
+          print(f'nearest_safe_margin={min(margins)}')
+          print(f'partial_alpha_pixels={partial}')
+          print('profile=sRGB')
+          pathlib.Path('/tmp/metadata.txt').write_text(
+              f'bytes={len(data)}\nsha256={hashlib.sha256(data).hexdigest()}\nwidth={width}\nheight={height}\nalpha_bbox={bbox}\nsafe_margins={margins}\nnearest_safe_margin={min(margins)}\npartial_alpha_pixels={partial}\nprofile=sRGB\n'
+          )
+          PY
+
+      - name: Create visual QA artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/pimg-white-review-v2
+          cp mobile/assets/products/drawer/white.png /tmp/pimg-white-review-v2/white.png
+          cp /tmp/metadata.txt /tmp/pimg-white-review-v2/metadata.txt
+          convert -size 1024x1024 xc:white mobile/assets/products/drawer/white.png -gravity center -compose over -composite /tmp/pimg-white-review-v2/white-on-white.jpg
+          convert -size 1024x1024 xc:'#F8F6F1' mobile/assets/products/drawer/white.png -gravity center -compose over -composite /tmp/pimg-white-review-v2/white-on-ivory.jpg
+          convert -size 1024x1024 xc:'#003366' mobile/assets/products/drawer/white.png -gravity center -compose over -composite /tmp/pimg-white-review-v2/white-on-navy.jpg
+          for size in 96 160 240 384; do
+            convert mobile/assets/products/drawer/white.png -resize "${size}x${size}" "/tmp/pimg-white-review-v2/white-${size}.png"
+          done
+
+      - name: Upload White v2 review artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: pimg-white-product-only-review-${{ github.sha }}
+          path: /tmp/pimg-white-review-v2/
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Commit product-only canonical and remove one-shot workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f .github/workflows/pimg-white-isolate-product-once.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add mobile/assets/products/drawer/white.png .github/workflows/pimg-white-isolate-product-once.yml
+          git diff --cached --quiet && { echo 'No isolation change produced'; exit 1; }
+          git commit -m 'PIMG-032..040: isolate product-only Drawer White canonical'
+          git push origin HEAD:agent/pimg-031-070-white-canonical
