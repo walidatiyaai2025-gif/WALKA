@@ -45,7 +45,8 @@ void main() {
     for (final String variantId
         in WalkaProductMediaResolver.productionAssets.keys) {
       expect(resolver.hasRegisteredAsset(variantId), isTrue);
-      expect(resolver.hasApprovedAsset(variantId), isFalse);
+      expect(resolver.hasApprovedAsset(variantId), isTrue);
+      expect(resolver.hasAdmittedAsset(variantId), isFalse);
     }
   });
 
@@ -64,6 +65,7 @@ void main() {
     );
     expect(resolved, isA<WalkaAssetProductMedia>());
     expect(resolver.hasApprovedAsset('drawer-organizer:white'), isTrue);
+    expect(resolver.hasAdmittedAsset('drawer-organizer:white'), isTrue);
   });
 
   test('MEDIA-007 provides bounded default decode width', () {
