@@ -32,6 +32,7 @@ jobs:
             status="$(curl --silent --show-error \
               --connect-timeout 15 \
               --max-time 30 \
+              --user-agent 'WALKA-GitHub-Deployment/1.0' \
               --header "Authorization: cpanel ${CPANEL_USER}:${CPANEL_API_TOKEN}" \
               --get \
               --data-urlencode 'dir=public_html/mobile.walkastore.com' \
@@ -42,12 +43,17 @@ jobs:
               "https://${host}:2083/execute/Fileman/list_files" || true)"
 
             echo "HTTP ${status}"
-            grep -i '^content-type:' "$headers" | tail -1 | tr -d '\r' || true
+            grep -Ei '^(content-type|server|location|set-cookie|x-|cf-):' "$headers" | sed -E 's/(set-cookie:).*/\1 [redacted]/I' | tail -20 | tr -d '\r' || true
             if jq -e . "$body" >/dev/null 2>&1; then
               jq -c '{module,func,result:{status:.result.status,errors:.result.errors,messages:.result.messages}}' "$body"
             else
-              echo 'Non-JSON response prefix:'
-              head -c 240 "$body" | tr '\n' ' '
+              echo 'HTML title:'
+              grep -oEi '<title[^>]*>[^<]*</title>' "$body" | head -1 || true
+              echo 'Visible-text signature:'
+              sed -E 's/<script[^>]*>.*<\/script>/ /Ig; s/<style[^>]*>.*<\/style>/ /Ig; s/<[^>]+>/ /g' "$body" \
+                | tr '\n\t' '  ' | tr -s ' ' | cut -c1-1000
+              echo 'Raw prefix:'
+              head -c 800 "$body" | tr '\n' ' '
               echo
             fi
           done
