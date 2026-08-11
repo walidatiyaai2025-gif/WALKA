@@ -1,0 +1,205 @@
+name: PIMG White Canonicalize Once
+
+on:
+  push:
+    branches:
+      - agent/pimg-031-070-white-canonical
+    paths:
+      - mobile/tool/pimg_white_canonical_payload.json
+      - .github/workflows/pimg-white-canonicalize-once.yml
+
+permissions:
+  contents: write
+
+jobs:
+  canonicalize-white:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout PIMG branch
+        uses: actions/checkout@v4
+        with:
+          ref: agent/pimg-031-070-white-canonical
+          fetch-depth: 0
+
+      - name: Ensure ImageMagick
+        shell: bash
+        run: |
+          set -euo pipefail
+          if command -v magick >/dev/null 2>&1; then
+            echo "IM=magick" >> "$GITHUB_ENV"
+          elif command -v convert >/dev/null 2>&1; then
+            echo "IM=convert" >> "$GITHUB_ENV"
+          else
+            sudo apt-get update
+            sudo apt-get install -y imagemagick
+            if command -v magick >/dev/null 2>&1; then
+              echo "IM=magick" >> "$GITHUB_ENV"
+            else
+              echo "IM=convert" >> "$GITHUB_ENV"
+            fi
+          fi
+
+      - name: Reconstruct reviewed alpha mask and sRGB profile
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import base64
+          import hashlib
+          import json
+          import pathlib
+          import zlib
+
+          payload = json.loads(pathlib.Path('mobile/tool/pimg_white_canonical_payload.json').read_text())
+          raw = zlib.decompress(base64.b64decode(payload['alphaZBase64']))
+          assert len(raw) == payload['alphaWidth'] * payload['alphaHeight'] == 1024 * 1024
+          assert hashlib.sha256(raw).hexdigest() == payload['alphaRawSha256']
+          pathlib.Path('/tmp/pimg-white-alpha.raw').write_bytes(raw)
+
+          icc = base64.b64decode(payload['iccBase64'])
+          assert hashlib.sha256(icc).hexdigest() == payload['iccSha256']
+          pathlib.Path('/tmp/pimg-srgb.icc').write_bytes(icc)
+          PY
+          "$IM" -size 1024x1024 -depth 8 gray:/tmp/pimg-white-alpha.raw /tmp/pimg-white-alpha.png
+
+      - name: Apply reviewed cutout mask without changing product geometry
+        shell: bash
+        run: |
+          set -euo pipefail
+          src='mobile/assets/products/drawer/white.png'
+          test -f "$src"
+          dims="$("$IM" identify -format '%w %h' "$src")"
+          test "$dims" = '1024 1024'
+          cp "$src" /tmp/pimg-white-owner-source.png
+          "$IM" /tmp/pimg-white-owner-source.png /tmp/pimg-white-alpha.png \
+            -alpha off -compose CopyOpacity -composite \
+            -profile /tmp/pimg-srgb.icc \
+            -define png:color-type=6 \
+            "$src"
+
+      - name: Validate canonical White mechanical contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import hashlib
+          import pathlib
+          import struct
+          import zlib
+
+          path = pathlib.Path('mobile/assets/products/drawer/white.png')
+          data = path.read_bytes()
+          assert data[:8] == b'\x89PNG\r\n\x1a\n'
+          assert len(data) <= 1200 * 1024, len(data)
+          offset = 8
+          chunks = []
+          width = height = bit_depth = color_type = None
+          idat = bytearray()
+          while offset < len(data):
+            size = struct.unpack('>I', data[offset:offset + 4])[0]
+            kind = data[offset + 4:offset + 8]
+            payload = data[offset + 8:offset + 8 + size]
+            chunks.append(kind)
+            if kind == b'IHDR':
+              width, height, bit_depth, color_type, compression, filtering, interlace = struct.unpack('>IIBBBBB', payload)
+              assert (compression, filtering, interlace) == (0, 0, 0)
+            if kind == b'IDAT':
+              idat.extend(payload)
+            offset += 12 + size
+          assert (width, height, bit_depth, color_type) == (1024, 1024, 8, 6)
+          assert b'iCCP' in chunks or b'sRGB' in chunks, chunks
+
+          # Decode RGBA scanlines to prove perimeter transparency and >=5% safe margin.
+          raw = zlib.decompress(bytes(idat))
+          stride = width * 4
+          rows = []
+          previous = bytearray(stride)
+          cursor = 0
+          for _ in range(height):
+            filter_type = raw[cursor]
+            cursor += 1
+            scan = bytearray(raw[cursor:cursor + stride])
+            cursor += stride
+            recon = bytearray(stride)
+            for x in range(stride):
+              left = recon[x - 4] if x >= 4 else 0
+              up = previous[x]
+              up_left = previous[x - 4] if x >= 4 else 0
+              value = scan[x]
+              if filter_type == 0:
+                recon[x] = value
+              elif filter_type == 1:
+                recon[x] = (value + left) & 255
+              elif filter_type == 2:
+                recon[x] = (value + up) & 255
+              elif filter_type == 3:
+                recon[x] = (value + ((left + up) // 2)) & 255
+              elif filter_type == 4:
+                p = left + up - up_left
+                pa, pb, pc = abs(p - left), abs(p - up), abs(p - up_left)
+                predictor = left if pa <= pb and pa <= pc else (up if pb <= pc else up_left)
+                recon[x] = (value + predictor) & 255
+              else:
+                raise AssertionError(filter_type)
+            rows.append(recon)
+            previous = recon
+
+          visible = []
+          for y, row in enumerate(rows):
+            for x in range(width):
+              if row[x * 4 + 3] != 0:
+                visible.append((x, y))
+          assert visible
+          xs = [point[0] for point in visible]
+          ys = [point[1] for point in visible]
+          bbox = [min(xs), min(ys), max(xs), max(ys)]
+          margins = [bbox[0], width - 1 - bbox[2], bbox[1], height - 1 - bbox[3]]
+          assert min(margins) >= 51, (bbox, margins)
+          assert all(rows[0][x * 4 + 3] == 0 for x in range(width))
+          assert all(rows[-1][x * 4 + 3] == 0 for x in range(width))
+          assert all(row[3] == 0 and row[(width - 1) * 4 + 3] == 0 for row in rows)
+
+          receipt = pathlib.Path('/tmp/pimg-white-metadata.txt')
+          receipt.write_text(
+            f"bytes={len(data)}\n"
+            f"sha256={hashlib.sha256(data).hexdigest()}\n"
+            f"width={width}\nheight={height}\n"
+            f"alpha_bbox={bbox}\n"
+            f"safe_margins={margins}\n"
+            f"nearest_safe_margin={min(margins)}\n"
+            f"profile={'iCCP' if b'iCCP' in chunks else 'sRGB'}\n"
+          )
+          print(receipt.read_text())
+          PY
+
+      - name: Create visual review previews
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/pimg-review
+          cp mobile/assets/products/drawer/white.png /tmp/pimg-review/white.png
+          cp /tmp/pimg-white-metadata.txt /tmp/pimg-review/metadata.txt
+          "$IM" -size 1024x1024 xc:'#F8F6F1' mobile/assets/products/drawer/white.png -gravity center -compose over -composite /tmp/pimg-review/white-on-ivory.jpg
+          "$IM" -size 1024x1024 xc:'#003366' mobile/assets/products/drawer/white.png -gravity center -compose over -composite /tmp/pimg-review/white-on-navy.jpg
+          "$IM" mobile/assets/products/drawer/white.png -resize 384x384 /tmp/pimg-review/white-384.png
+          "$IM" mobile/assets/products/drawer/white.png -resize 160x160 /tmp/pimg-review/white-160.png
+
+      - name: Upload White canonical review artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: pimg-white-canonical-review-${{ github.sha }}
+          path: /tmp/pimg-review/
+          if-no-files-found: error
+
+      - name: Commit canonical asset and remove one-shot payload
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f mobile/tool/pimg_white_canonical_payload.json
+          rm -f .github/workflows/pimg-white-canonicalize-once.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add mobile/assets/products/drawer/white.png mobile/tool/pimg_white_canonical_payload.json .github/workflows/pimg-white-canonicalize-once.yml
+          git diff --cached --quiet && { echo 'No canonical asset change produced'; exit 1; }
+          git commit -m 'PIMG-031..040: ingest canonical Drawer White cutout'
+          git push origin HEAD:agent/pimg-031-070-white-canonical
