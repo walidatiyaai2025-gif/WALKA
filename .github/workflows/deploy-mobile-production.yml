@@ -18,7 +18,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  FTP_HOST: 50sols.com
+  FTP_HOST: server11.hhost.host
   FTP_PORT: '21'
   FTP_USER: mobile@walkastore.com
   SITE_URL: https://mobile.walkastore.com
