@@ -36,6 +36,27 @@ final class AdminDashboardTest extends TestCase
             ->assertRedirect(route('admin.login'));
     }
 
+    public function test_dashboard_surface_emits_defensive_security_headers(): void
+    {
+        $response = $this->get('/admin/login')
+            ->assertOk()
+            ->assertHeader('X-Content-Type-Options', 'nosniff')
+            ->assertHeader('X-Frame-Options', 'DENY')
+            ->assertHeader('Referrer-Policy', 'no-referrer')
+            ->assertHeader('Cross-Origin-Opener-Policy', 'same-origin')
+            ->assertHeader('Cross-Origin-Resource-Policy', 'same-origin')
+            ->assertHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()')
+            ->assertHeader(
+                'Content-Security-Policy',
+                "default-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; img-src 'self' data:; font-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'"
+            );
+
+        $cacheControl = (string) $response->headers->get('Cache-Control');
+        $this->assertStringContainsString('no-store', $cacheControl);
+        $this->assertStringContainsString('no-cache', $cacheControl);
+        $this->assertStringContainsString('private', $cacheControl);
+    }
+
     public function test_valid_credentials_create_server_side_dashboard_session(): void
     {
         $this->post('/admin/login', [
