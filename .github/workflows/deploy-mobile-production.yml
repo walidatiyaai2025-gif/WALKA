@@ -18,9 +18,10 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  FTP_HOST: server11.hhost.host
-  FTP_PORT: '21'
-  FTP_USER: mobile@walkastore.com
+  CPANEL_HOST: 50sols.com
+  CPANEL_PORT: '2083'
+  CPANEL_USER: solscool
+  CPANEL_TARGET_DIR: public_html/mobile.walkastore.com
   SITE_URL: https://mobile.walkastore.com
 
 jobs:
@@ -113,49 +114,126 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
-      - name: Verify FTPS secret is configured
+      - name: Verify cPanel API secret is configured
         shell: bash
         env:
-          FTP_PASSWORD: ${{ secrets.CPANEL_FTP_PASSWORD }}
+          CPANEL_API_TOKEN: ${{ secrets.CPANEL_API_TOKEN }}
         run: |
           set -euo pipefail
-          if [[ -z "${FTP_PASSWORD:-}" ]]; then
-            echo 'Missing repository secret: CPANEL_FTP_PASSWORD' >&2
+          if [[ -z "${CPANEL_API_TOKEN:-}" ]]; then
+            echo 'Missing repository secret: CPANEL_API_TOKEN' >&2
             echo 'Add it under Settings > Secrets and variables > Actions, then re-run this workflow.' >&2
             exit 1
           fi
 
-      - name: Install FTPS client
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends lftp
-
-      - name: Deploy build to cPanel by explicit FTPS
+      - name: Verify cPanel API access
         shell: bash
         env:
-          FTP_PASSWORD: ${{ secrets.CPANEL_FTP_PASSWORD }}
+          CPANEL_API_TOKEN: ${{ secrets.CPANEL_API_TOKEN }}
+        run: |
+          set -euo pipefail
+          api_url="https://${CPANEL_HOST}:${CPANEL_PORT}/execute/Fileman/list_files"
+          response="$(curl --fail-with-body --silent --show-error \
+            --header "Authorization: cpanel ${CPANEL_USER}:${CPANEL_API_TOKEN}" \
+            --get \
+            --data-urlencode "dir=${CPANEL_TARGET_DIR}" \
+            --data-urlencode 'show_hidden=1' \
+            "$api_url")"
+
+          if [[ "$(jq -r '.result.status // 0' <<<"$response")" != '1' ]]; then
+            echo 'cPanel UAPI authentication or target-directory preflight failed.' >&2
+            jq -c '{module,func,result:{status:.result.status,errors:.result.errors,messages:.result.messages}}' <<<"$response" >&2
+            exit 1
+          fi
+          echo "cPanel API preflight passed for ${CPANEL_TARGET_DIR}."
+
+      - name: Deploy build through cPanel API
+        shell: bash
+        env:
+          CPANEL_API_TOKEN: ${{ secrets.CPANEL_API_TOKEN }}
         run: |
           set -euo pipefail
 
-          lftp \
-            -u "$FTP_USER","$FTP_PASSWORD" \
-            -p "$FTP_PORT" \
-            "$FTP_HOST" \
-            -e "
-              set cmd:fail-exit yes;
-              set ftp:ssl-force true;
-              set ftp:ssl-protect-data true;
-              set ssl:verify-certificate yes;
-              set net:max-retries 2;
-              set net:timeout 20;
-              mirror --reverse --delete --verbose --parallel=4 \
-                --exclude-glob '.well-known' \
-                --exclude-glob '.well-known/**' \
-                --exclude-glob 'cgi-bin' \
-                --exclude-glob 'cgi-bin/**' \
-                mobile/build/web/ /;
-              bye;
-            "
+          uapi_base="https://${CPANEL_HOST}:${CPANEL_PORT}/execute"
+          api2_url="https://${CPANEL_HOST}:${CPANEL_PORT}/json-api/cpanel"
+          auth_header="Authorization: cpanel ${CPANEL_USER}:${CPANEL_API_TOKEN}"
+          local_root="mobile/build/web"
+
+          ensure_remote_dir() {
+            local remote_dir="$1"
+            local info
+            info="$(curl --silent --show-error \
+              --header "$auth_header" \
+              --get \
+              --data-urlencode "path=${remote_dir}" \
+              "${uapi_base}/Fileman/get_file_information")"
+
+            if [[ "$(jq -r '.result.status // 0' <<<"$info")" == '1' ]]; then
+              return 0
+            fi
+
+            local parent name response result
+            parent="${remote_dir%/*}"
+            name="${remote_dir##*/}"
+            response="$(curl --fail-with-body --silent --show-error \
+              --header "$auth_header" \
+              --get \
+              --data-urlencode "cpanel_jsonapi_user=${CPANEL_USER}" \
+              --data-urlencode 'cpanel_jsonapi_apiversion=2' \
+              --data-urlencode 'cpanel_jsonapi_module=Fileman' \
+              --data-urlencode 'cpanel_jsonapi_func=mkdir' \
+              --data-urlencode "path=${parent}" \
+              --data-urlencode "name=${name}" \
+              --data-urlencode 'permissions=0755' \
+              "$api2_url")"
+            result="$(jq -r '.cpanelresult.data[0].result // .cpanelresult.event.result // 0' <<<"$response")"
+            if [[ "$result" != '1' ]]; then
+              echo "Unable to create remote directory: ${remote_dir}" >&2
+              jq -c '.cpanelresult | {event,data}' <<<"$response" >&2
+              exit 1
+            fi
+            echo "Created ${remote_dir}"
+          }
+
+          upload_file() {
+            local local_file="$1"
+            local relative remote_relative remote_dir filename response
+            relative="${local_file#${local_root}/}"
+            remote_relative="${relative%/*}"
+            filename="${relative##*/}"
+
+            if [[ "$relative" == "$filename" ]]; then
+              remote_dir="$CPANEL_TARGET_DIR"
+            else
+              remote_dir="${CPANEL_TARGET_DIR}/${remote_relative}"
+            fi
+
+            response="$(curl --fail-with-body --silent --show-error \
+              --header "$auth_header" \
+              --form "dir=${remote_dir}" \
+              --form "file-1=@${local_file};filename=${filename}" \
+              "${uapi_base}/Fileman/upload_files")"
+
+            if [[ "$(jq -r '.result.status // 0' <<<"$response")" != '1' ]]; then
+              echo "Upload failed: ${relative}" >&2
+              jq -c '{module,func,result:{status:.result.status,errors:.result.errors,messages:.result.messages}}' <<<"$response" >&2
+              exit 1
+            fi
+            echo "Uploaded ${relative}"
+          }
+
+          # Create every generated directory first, shallowest to deepest.
+          while IFS= read -r relative_dir; do
+            [[ -n "$relative_dir" ]] || continue
+            ensure_remote_dir "${CPANEL_TARGET_DIR}/${relative_dir}"
+          done < <(find "$local_root" -mindepth 1 -type d -printf '%P\n' | awk '{ print gsub("/","/"), $0 }' | sort -n -k1,1 -k2,2 | cut -d' ' -f2-)
+
+          # Upload every generated file, including .htaccess.
+          while IFS= read -r file; do
+            upload_file "$file"
+          done < <(find "$local_root" -type f -print | sort)
+
+          echo 'cPanel API file deployment completed.'
 
       - name: Production smoke test
         shell: bash
@@ -174,3 +252,50 @@ jobs:
           done
           echo 'Production smoke test failed after deployment.' >&2
           exit 1
+
+      - name: Remove known repository leftovers from document root
+        if: success()
+        shell: bash
+        env:
+          CPANEL_API_TOKEN: ${{ secrets.CPANEL_API_TOKEN }}
+        run: |
+          set -euo pipefail
+          api2_url="https://${CPANEL_HOST}:${CPANEL_PORT}/json-api/cpanel"
+          auth_header="Authorization: cpanel ${CPANEL_USER}:${CPANEL_API_TOKEN}"
+
+          leftovers=(
+            '.git'
+            '.github'
+            'backend'
+            'docs'
+            'Images'
+            'Last verified APK'
+            'mobile'
+            'walka_repo'
+            '.gitignore'
+            'AGENTS.md'
+            'README.md'
+            'TASKS.md'
+            'walka_repo.zip'
+          )
+
+          for item in "${leftovers[@]}"; do
+            remote_path="${CPANEL_TARGET_DIR}/${item}"
+            response="$(curl --silent --show-error \
+              --header "$auth_header" \
+              --get \
+              --data-urlencode "cpanel_jsonapi_user=${CPANEL_USER}" \
+              --data-urlencode 'cpanel_jsonapi_apiversion=2' \
+              --data-urlencode 'cpanel_jsonapi_module=Fileman' \
+              --data-urlencode 'cpanel_jsonapi_func=fileop' \
+              --data-urlencode 'op=trash' \
+              --data-urlencode "sourcefiles=${remote_path}" \
+              --data-urlencode 'doubledecode=1' \
+              "$api2_url")"
+
+            if [[ "$(jq -r '.cpanelresult.data[0].result // 0' <<<"$response")" == '1' ]]; then
+              echo "Removed legacy item: ${item}"
+            else
+              echo "Legacy item absent or already removed: ${item}"
+            fi
+          done
