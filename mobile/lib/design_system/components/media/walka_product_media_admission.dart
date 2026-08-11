@@ -1,12 +1,9 @@
-import 'package:flutter/foundation.dart';
-
 enum WalkaProductMediaAdmissionState {
   pending,
   admitted,
   blocked,
 }
 
-@immutable
 class WalkaProductMediaAdmissionEntry {
   const WalkaProductMediaAdmissionEntry({
     required this.variantId,
