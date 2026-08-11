@@ -93,8 +93,10 @@ void main() {
       expect(find.byType(WalkaAboutReferenceV131), findsOneWidget);
       expect(find.text('OUR STORY'), findsOneWidget);
       expect(find.textContaining('Organized living.'), findsOneWidget);
-      expect(find.byType(WalkaProductVisual), findsNWidgets(2));
-      expect(find.byType(Image), findsNothing);
+      // Drawer White is now admitted production media; the remaining product
+      // slot stays on its deterministic painted fallback until admitted.
+      expect(find.byType(Image), findsOneWidget);
+      expect(find.byType(WalkaProductVisual), findsOneWidget);
       expect(tester.takeException(), isNull);
 
       final Finder howWeDesign = find.text('HOW WE DESIGN');
@@ -120,6 +122,7 @@ void main() {
       expect(closing, findsOneWidget);
       expect(tester.takeException(), isNull);
     },
+    timeout: const Timeout(Duration(seconds: 30)),
   );
 
   testWidgets(

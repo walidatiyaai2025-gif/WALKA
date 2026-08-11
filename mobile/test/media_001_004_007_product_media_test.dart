@@ -44,9 +44,10 @@ void main() {
     );
     for (final String variantId
         in WalkaProductMediaResolver.productionAssets.keys) {
+      final bool expectedAdmitted = variantId == 'drawer-organizer:white';
       expect(resolver.hasRegisteredAsset(variantId), isTrue);
       expect(resolver.hasApprovedAsset(variantId), isTrue);
-      expect(resolver.hasAdmittedAsset(variantId), isFalse);
+      expect(resolver.hasAdmittedAsset(variantId), expectedAdmitted);
     }
   });
 
@@ -114,28 +115,34 @@ void main() {
     );
   });
 
-  testWidgets('owner-visible resolved media quarantines provisional product image',
-      (WidgetTester tester) async {
-    await tester.pumpWidget(
-      const MaterialApp(
-        home: Scaffold(
-          body: SizedBox.square(
-            dimension: 180,
-            child: WalkaResolvedProductMedia(
-              variantId: 'drawer-organizer:white',
-              kind: WalkaProductVisualKind.drawerOrganizer,
-              primaryColor: Color(0xFFF7F4EC),
-              backgroundColor: Color(0xFFF4EEDF),
-              semanticLabel: 'WALKA Drawer Organizer White',
+  testWidgets(
+    'owner-visible resolved media renders admitted White asset',
+    (WidgetTester tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(
+            body: SizedBox.square(
+              dimension: 180,
+              child: WalkaResolvedProductMedia(
+                variantId: 'drawer-organizer:white',
+                kind: WalkaProductVisualKind.drawerOrganizer,
+                primaryColor: Color(0xFFF7F4EC),
+                backgroundColor: Color(0xFFF4EEDF),
+                semanticLabel: 'WALKA Drawer Organizer White',
+              ),
             ),
           ),
         ),
-      ),
-    );
-    await tester.pumpAndSettle();
-    expect(find.bySemanticsLabel('WALKA Drawer Organizer White'), findsOneWidget);
-    expect(find.byType(WalkaProductVisual), findsOneWidget);
-    expect(find.byType(Image), findsNothing);
-    expect(tester.takeException(), isNull);
-  });
+      );
+      await tester.pumpAndSettle();
+      expect(
+        find.bySemanticsLabel('WALKA Drawer Organizer White'),
+        findsOneWidget,
+      );
+      expect(find.byType(Image), findsOneWidget);
+      expect(find.byType(WalkaProductVisual), findsNothing);
+      expect(tester.takeException(), isNull);
+    },
+    timeout: const Timeout(Duration(seconds: 30)),
+  );
 }

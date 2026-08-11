@@ -11,8 +11,7 @@ void main() {
     (WidgetTester tester) async {
       _setCompactViewport(tester);
       final _MemoryFavoritesStore store = _MemoryFavoritesStore();
-      final WalkaFavoritesController favorites =
-          WalkaFavoritesController(store);
+      final WalkaFavoritesController favorites = WalkaFavoritesController(store);
       await favorites.load();
       addTearDown(favorites.dispose);
       int exploreCount = 0;
@@ -64,8 +63,7 @@ void main() {
         WalkaFavoritesController.drawerWhiteId,
         WalkaFavoritesController.drawerGrayId,
       });
-      final WalkaFavoritesController favorites =
-          WalkaFavoritesController(store);
+      final WalkaFavoritesController favorites = WalkaFavoritesController(store);
       await favorites.load();
       addTearDown(favorites.dispose);
 
@@ -88,14 +86,16 @@ void main() {
         find.byKey(const ValueKey<String>('reference-favorite-gray')),
         findsOneWidget,
       );
-      expect(find.byType(WalkaProductVisual), findsNWidgets(2));
-      expect(find.byType(Image), findsNothing);
+      // White is admitted asset media; Gray remains a painted fallback.
+      expect(find.byType(Image), findsOneWidget);
+      expect(find.byType(WalkaProductVisual), findsOneWidget);
       expect(find.text('Lunch Boxes'), findsOneWidget);
       expect(find.text('Add to Cart'), findsNothing);
       expect(find.text('4.8'), findsNothing);
       expect(find.text('4.7'), findsNothing);
       expect(tester.takeException(), isNull);
     },
+    timeout: const Timeout(Duration(seconds: 30)),
   );
 
   testWidgets(
@@ -109,8 +109,7 @@ void main() {
       final _MemoryFavoritesStore store = _MemoryFavoritesStore(
         <String>{WalkaFavoritesController.drawerGrayId},
       );
-      final WalkaFavoritesController favorites =
-          WalkaFavoritesController(store);
+      final WalkaFavoritesController favorites = WalkaFavoritesController(store);
       await favorites.load();
       addTearDown(favorites.dispose);
 
@@ -153,8 +152,7 @@ void main() {
       final _MemoryFavoritesStore store = _MemoryFavoritesStore(
         <String>{WalkaFavoritesController.drawerWhiteId},
       );
-      final WalkaFavoritesController favorites =
-          WalkaFavoritesController(store);
+      final WalkaFavoritesController favorites = WalkaFavoritesController(store);
       await favorites.load();
       addTearDown(favorites.dispose);
 

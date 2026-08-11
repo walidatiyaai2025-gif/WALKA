@@ -11,9 +11,9 @@
       "sourceFilename": "51yxoCdmqrL._AC_SL1500_(1).jpg",
       "sourceState": "APPROVED",
       "canonicalPath": "assets/products/drawer/white.png",
-      "canonicalExportPresent": false,
-      "reason": "Manifest records a clean real expanded organizer source suitable for a transparent primary cutout.",
-      "unblockAction": "Export the approved source non-destructively to the canonical transparent PNG, then pass geometry, alpha, framing, file-budget and Flutter integration QA."
+      "canonicalExportPresent": true,
+      "reason": "Manifest records a clean real expanded organizer source suitable for a transparent primary cutout; the exact approved source has now been materialized to the canonical PNG with fingerprint-locked tooling.",
+      "unblockAction": "Keep the admitted White binary, source fingerprint, geometry, transparent framing and PAV metadata stable; any future replacement must repeat source admission and visual QA."
     },
     {
       "variantId": "drawer-organizer:gray",
