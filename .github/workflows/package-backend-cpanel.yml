@@ -1,0 +1,157 @@
+name: Package Backend for cPanel
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - production
+    paths:
+      - '.github/workflows/package-backend-cpanel.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    name: Build cPanel deployment ZIP
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout production
+        uses: actions/checkout@v5
+
+      - name: Setup PHP 8.4
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, intl, pdo_mysql, bcmath, curl, fileinfo, openssl, tokenizer, xml, ctype, json
+          coverage: none
+
+      - name: Validate Composer manifest
+        working-directory: backend
+        run: composer validate --no-check-publish
+
+      - name: Install production PHP dependencies
+        working-directory: backend
+        run: composer install --no-dev --prefer-dist --optimize-autoloader --no-interaction --no-progress
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Build dashboard assets
+        working-directory: backend
+        run: |
+          npm ci --no-audit --no-fund
+          npm run build
+
+      - name: Stage cPanel package
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf dist-cpanel
+          mkdir -p dist-cpanel/walka_backend
+          mkdir -p dist-cpanel/public_html_api
+
+          # Copy the full Laravel application, including vendor and built assets.
+          rsync -a backend/ dist-cpanel/walka_backend/ \
+            --exclude='.env' \
+            --exclude='node_modules' \
+            --exclude='tests' \
+            --exclude='.phpunit.cache' \
+            --exclude='storage/logs/*.log'
+
+          mkdir -p dist-cpanel/walka_backend/storage/framework/cache/data
+          mkdir -p dist-cpanel/walka_backend/storage/framework/sessions
+          mkdir -p dist-cpanel/walka_backend/storage/framework/views
+          mkdir -p dist-cpanel/walka_backend/storage/logs
+          mkdir -p dist-cpanel/walka_backend/bootstrap/cache
+
+          # Copy only Laravel public assets into the actual web document root package.
+          cp -a backend/public/. dist-cpanel/public_html_api/
+
+          cat > dist-cpanel/public_html_api/index.php <<'PHP'
+          <?php
+
+          use Illuminate\Foundation\Application;
+          use Illuminate\Http\Request;
+
+          define('LARAVEL_START', microtime(true));
+
+          $basePath = '/home/solscool/walka_backend';
+
+          if (file_exists($maintenance = $basePath.'/storage/framework/maintenance.php')) {
+              require $maintenance;
+          }
+
+          require $basePath.'/vendor/autoload.php';
+
+          /** @var Application $app */
+          $app = require_once $basePath.'/bootstrap/app.php';
+
+          $app->handleRequest(Request::capture());
+          PHP
+
+          cat > dist-cpanel/DEPLOY-README.txt <<'README'
+          WALKA Backend - cPanel Production Package
+          =========================================
+
+          Target host: api.walkastore.com
+          cPanel user: solscool
+          PHP: 8.4
+
+          1) Extract folder "walka_backend" to:
+             /home/solscool/walka_backend
+
+          2) Copy the CONTENTS of "public_html_api" to:
+             /home/solscool/public_html/api.walkastore.com
+
+          3) Create /home/solscool/walka_backend/.env from .env.example.
+             DO NOT place .env in public_html.
+
+          4) Ensure these paths are writable by PHP:
+             /home/solscool/walka_backend/storage
+             /home/solscool/walka_backend/bootstrap/cache
+
+          5) Run the one-time Laravel production commands using cPanel Cron Jobs
+             if Terminal/SSH is unavailable:
+
+             php /home/solscool/walka_backend/artisan migrate --force
+             php /home/solscool/walka_backend/artisan db:seed --class='Database\Seeders\WalkaCatalogSeeder' --force
+             php /home/solscool/walka_backend/artisan config:cache
+             php /home/solscool/walka_backend/artisan route:cache
+             php /home/solscool/walka_backend/artisan view:cache
+             php /home/solscool/walka_backend/artisan walka:production-check
+
+          APP_KEY must be generated once and retained. Never commit production secrets.
+          README
+
+          # Ensure no accidental environment file enters the package.
+          if find dist-cpanel -name '.env' -print -quit | grep -q .; then
+            echo 'ERROR: .env unexpectedly present in deployment package.' >&2
+            exit 1
+          fi
+
+      - name: Create ZIP
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd dist-cpanel
+          zip -r -9 ../WALKA-backend-cPanel-production.zip . >/dev/null
+          cd ..
+          sha256sum WALKA-backend-cPanel-production.zip | tee WALKA-backend-cPanel-production.zip.sha256
+          ls -lh WALKA-backend-cPanel-production.zip
+
+      - name: Upload package artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: WALKA-backend-cPanel-production
+          path: |
+            WALKA-backend-cPanel-production.zip
+            WALKA-backend-cPanel-production.zip.sha256
+          if-no-files-found: error
+          retention-days: 14
