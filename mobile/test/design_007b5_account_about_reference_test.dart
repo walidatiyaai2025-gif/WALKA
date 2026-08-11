@@ -122,6 +122,7 @@ void main() {
       expect(closing, findsOneWidget);
       expect(tester.takeException(), isNull);
     },
+    timeout: const Timeout(Duration(seconds: 30)),
   );
 
   testWidgets(
