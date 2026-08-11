@@ -9,7 +9,9 @@ void main() {
     expect(workflow, contains("- 'agent/pav-*'"));
     expect(
       workflow,
-      contains('verify_production_assets.sh --report --root . --manifest "$manifest" --json "$report"'),
+      contains(
+        r'verify_production_assets.sh --report --root . --manifest "$manifest" --json "$report"',
+      ),
     );
     expect(workflow, contains("manifest='../docs/ui/PRODUCTION_SOURCE_ADMISSION.json'"));
     expect(workflow, contains("['blockerCount']"));
@@ -18,7 +20,9 @@ void main() {
     expect(workflow, contains("asset['variantId']"));
     expect(
       workflow,
-      contains('verify_production_assets.sh --enforce --root . --manifest ../docs/ui/PRODUCTION_SOURCE_ADMISSION.json --json production-asset-readiness-enforce.json'),
+      contains(
+        'verify_production_assets.sh --enforce --root . --manifest ../docs/ui/PRODUCTION_SOURCE_ADMISSION.json --json production-asset-readiness-enforce.json',
+      ),
     );
     expect(workflow, isNot(contains('Images/')));
   });
