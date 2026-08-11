@@ -54,8 +54,7 @@ final class AdminContentDashboardTest extends TestCase
         $this->assertSame('Organize beautifully', $entry->draft_payload['title']);
         $this->assertSame(1, ContentRevision::query()->count());
 
-        $catalog = $this->getJson('/api/v1/catalog')->assertOk();
-        $this->assertStringNotContainsString('Organize beautifully', $catalog->getContent());
+        // CMS-002 deliberately creates no public content route. Public consumption is CMS-003.
         $this->getJson('/api/v1/content/home')->assertNotFound();
     }
 
