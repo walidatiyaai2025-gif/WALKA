@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\AdminContentController;
 use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\AdminHomeHeroController;
+use App\Http\Controllers\Admin\AdminHomeLayoutController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -38,6 +39,15 @@ Route::prefix('admin')
                 ->name('content.home.hero.publish');
             Route::post('/content/home/hero/restore', [AdminHomeHeroController::class, 'restore'])
                 ->name('content.home.hero.restore');
+
+            Route::get('/content/home/layout', [AdminHomeLayoutController::class, 'edit'])
+                ->name('content.home.layout.edit');
+            Route::patch('/content/home/layout', [AdminHomeLayoutController::class, 'update'])
+                ->name('content.home.layout.update');
+            Route::post('/content/home/layout/publish', [AdminHomeLayoutController::class, 'publish'])
+                ->name('content.home.layout.publish');
+            Route::post('/content/home/layout/restore', [AdminHomeLayoutController::class, 'restore'])
+                ->name('content.home.layout.restore');
 
             Route::get('/content/{content}', [AdminContentController::class, 'show'])->name('content.show');
             Route::patch('/content/{content}/draft', [AdminContentController::class, 'updateDraft'])

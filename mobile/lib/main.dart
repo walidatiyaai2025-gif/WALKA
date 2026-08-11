@@ -10,6 +10,8 @@ import 'features/catalog/data/walka_catalog_repository.dart';
 import 'features/content/content_state.dart';
 import 'features/content/data/walka_home_hero_cache.dart';
 import 'features/content/data/walka_home_hero_repository.dart';
+import 'features/content/data/walka_home_layout_cache.dart';
+import 'features/content/data/walka_home_layout_repository.dart';
 import 'features/favorites/favorites_state.dart';
 import 'features/storefront/storefront_v102.dart';
 
@@ -37,6 +39,10 @@ Future<void> main() async {
     homeRepository: WalkaHomeHeroRepository(
       cache: SharedPreferencesWalkaHomeHeroCache(),
       remoteLoader: apiClient?.fetchHomeHero,
+    ),
+    homeLayoutRepository: WalkaHomeLayoutRepository(
+      cache: SharedPreferencesWalkaHomeLayoutCache(),
+      remoteLoader: apiClient?.fetchHomeLayout,
     ),
   );
 
