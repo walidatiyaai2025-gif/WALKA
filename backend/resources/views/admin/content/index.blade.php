@@ -82,8 +82,8 @@
 
     <aside class="card">
         <p class="eyebrow">ADVANCED DRAFT</p>
-        <h2>Create structured content entry</h2>
-        <p class="muted">Use this foundation editor only for content families that do not yet have a typed owner UI. Stable content type cannot be changed after creation.</p>
+        <h2>Create content entry</h2>
+        <p class="muted">Use this structured foundation editor only for content families that do not yet have a typed owner UI. Stable content type cannot be changed after creation.</p>
         <form method="post" action="{{ route('admin.content.store') }}" class="stack section-space">
             @csrf
             <div class="field">
