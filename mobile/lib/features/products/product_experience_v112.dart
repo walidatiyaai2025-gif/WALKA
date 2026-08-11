@@ -19,7 +19,10 @@ String _liveCatalogFeatureCopy(
   required String productId,
   required String fallback,
 }) {
-  final WalkaCatalogSnapshot snapshot = WalkaCatalogScope.of(context).snapshot;
+  final WalkaCatalogController? controller = WalkaCatalogScope.maybeOf(context);
+  if (controller == null) return fallback;
+
+  final WalkaCatalogSnapshot snapshot = controller.snapshot;
   WalkaCatalogProduct? product;
   for (final WalkaCatalogProduct item in snapshot.products) {
     if (item.id == productId) {
