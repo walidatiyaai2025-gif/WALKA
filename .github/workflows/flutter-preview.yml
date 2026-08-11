@@ -71,7 +71,7 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          flutter test --reporter expanded 2>&1 | tee flutter-test.log
+          timeout --signal=TERM 150s flutter test --reporter expanded 2>&1 | tee flutter-test.log
 
       - name: Report production product asset readiness
         id: production_assets
