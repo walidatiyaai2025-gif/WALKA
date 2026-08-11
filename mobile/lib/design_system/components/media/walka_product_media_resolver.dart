@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../../walka_product_visual.dart';
 import 'walka_product_media.dart';
+import 'walka_product_media_admission.dart';
 
 enum WalkaProductMediaSurface {
   home,
@@ -65,12 +66,14 @@ class WalkaProductMediaPrefetchResult {
     required this.surface,
     required this.state,
     this.assetPath,
+    this.skipReason,
   });
 
   final String variantId;
   final String? assetPath;
   final WalkaProductMediaSurface surface;
   final WalkaProductMediaPrefetchState state;
+  final String? skipReason;
 
   bool get prefetched => state == WalkaProductMediaPrefetchState.prefetched;
   bool get skipped => state == WalkaProductMediaPrefetchState.skipped;
@@ -83,11 +86,13 @@ class WalkaProductMediaPrefetchResult {
             other.variantId == variantId &&
             other.assetPath == assetPath &&
             other.surface == surface &&
-            other.state == state;
+            other.state == state &&
+            other.skipReason == skipReason;
   }
 
   @override
-  int get hashCode => Object.hash(variantId, assetPath, surface, state);
+  int get hashCode =>
+      Object.hash(variantId, assetPath, surface, state, skipReason);
 }
 
 abstract final class WalkaProductMediaDecodeBudget {
@@ -134,8 +139,7 @@ class WalkaProductMediaAsset {
   }
 }
 
-/// Asset-backed product media that always falls back to deterministic WALKA
-/// painted media when the bundle cannot load the approved asset.
+/// Asset-backed product media used only after runtime admission.
 class WalkaAssetProductMedia implements WalkaProductMedia {
   const WalkaAssetProductMedia({
     required this.asset,
@@ -272,9 +276,7 @@ class _WalkaAssetProductMediaImageState
         int? frame,
         bool wasSynchronouslyLoaded,
       ) {
-        if (frame != null || wasSynchronouslyLoaded) {
-          _emitLoaded();
-        }
+        if (frame != null || wasSynchronouslyLoaded) _emitLoaded();
         return child;
       },
       errorBuilder: (
@@ -293,18 +295,22 @@ class _WalkaAssetProductMediaImageState
   }
 }
 
-/// Stable variant-id -> approved-asset resolver.
+/// Stable variant-id -> registered canonical-path resolver.
 ///
-/// The production registry intentionally owns the only asset naming contract
-/// used by feature widgets. Product files can therefore be admitted under the
-/// declared Flutter asset directories without teaching each screen a path.
+/// [productionAssets] is a naming registry, not an admission registry. The
+/// production constructor enforces [WalkaProductMediaAdmissionRegistry] so a
+/// provisional PNG cannot become owner-visible merely because it exists in the
+/// Flutter bundle. Dependency-injected resolvers keep their legacy behavior for
+/// tests and previews.
 class WalkaProductMediaResolver {
   const WalkaProductMediaResolver({
     this.assetsByVariant = const <String, WalkaProductMediaAsset>{},
+    this.enforceRuntimeAdmission = false,
   });
 
   const WalkaProductMediaResolver.production()
-      : assetsByVariant = productionAssets;
+      : assetsByVariant = productionAssets,
+        enforceRuntimeAdmission = true;
 
   static const int defaultCacheWidth =
       WalkaProductMediaDecodeBudget.defaultAsset;
@@ -369,6 +375,7 @@ class WalkaProductMediaResolver {
   };
 
   final Map<String, WalkaProductMediaAsset> assetsByVariant;
+  final bool enforceRuntimeAdmission;
 
   List<String> get releasedVariantIds => List<String>.unmodifiable(
         productionVariantIds.where(assetsByVariant.containsKey),
@@ -381,11 +388,35 @@ class WalkaProductMediaResolver {
             .whereType<WalkaProductMediaAsset>(),
       );
 
+  List<WalkaProductMediaAsset> get admittedAssets =>
+      List<WalkaProductMediaAsset>.unmodifiable(
+        releasedAssets.where(
+          (WalkaProductMediaAsset asset) => _isAssetEligible(asset),
+        ),
+      );
+
   WalkaProductMediaAsset? assetFor(String variantId) =>
       assetsByVariant[variantId];
 
   bool containsReleasedVariant(String variantId) =>
       productionVariantIds.contains(variantId);
+
+  bool hasRegisteredAsset(String variantId) =>
+      assetsByVariant.containsKey(variantId);
+
+  bool hasAdmittedAsset(String variantId) {
+    final WalkaProductMediaAsset? asset = assetFor(variantId);
+    return asset != null && _isAssetEligible(asset);
+  }
+
+  /// Compatibility name retained with corrected admission semantics.
+  bool hasApprovedAsset(String variantId) => hasAdmittedAsset(variantId);
+
+  String? quarantineReasonFor(String variantId) {
+    if (!enforceRuntimeAdmission) return null;
+    return WalkaProductMediaAdmissionRegistry.entryFor(variantId)
+        ?.quarantineReason;
+  }
 
   String? familyFor(String variantId) => _familiesByVariant[variantId];
 
@@ -395,6 +426,15 @@ class WalkaProductMediaResolver {
     if (drawerVariantIds.contains(variantId)) return drawerVariantIds;
     if (lunchVariantIds.contains(variantId)) return lunchVariantIds;
     return const <String>[];
+  }
+
+  bool _isAssetEligible(WalkaProductMediaAsset asset) {
+    if (!enforceRuntimeAdmission) return true;
+    final WalkaProductMediaAdmissionEntry? entry =
+        WalkaProductMediaAdmissionRegistry.entryFor(asset.variantId);
+    return entry != null &&
+        entry.canonicalPath == asset.assetPath &&
+        entry.eligibleForRuntime;
   }
 
   WalkaProductMedia resolve({
@@ -419,7 +459,7 @@ class WalkaProductMediaResolver {
     WalkaProductMediaLoadCallback? onLoadEvent,
   }) {
     final WalkaProductMediaAsset? asset = assetsByVariant[variantId];
-    if (asset == null) return fallback;
+    if (asset == null || !_isAssetEligible(asset)) return fallback;
 
     final WalkaProductMediaAsset effectiveAsset = asset.withCacheWidth(
       WalkaProductMediaDecodeBudget.forSurface(surface),
@@ -436,9 +476,6 @@ class WalkaProductMediaResolver {
     );
   }
 
-  bool hasApprovedAsset(String variantId) =>
-      assetsByVariant.containsKey(variantId);
-
   Future<WalkaProductMediaPrefetchResult> prefetchVariant(
     BuildContext context, {
     required String variantId,
@@ -450,6 +487,16 @@ class WalkaProductMediaResolver {
         variantId: variantId,
         surface: surface,
         state: WalkaProductMediaPrefetchState.skipped,
+        skipReason: 'asset-not-registered',
+      );
+    }
+    if (!_isAssetEligible(registered)) {
+      return WalkaProductMediaPrefetchResult(
+        variantId: variantId,
+        assetPath: registered.assetPath,
+        surface: surface,
+        state: WalkaProductMediaPrefetchState.skipped,
+        skipReason: quarantineReasonFor(variantId) ?? 'runtime-not-admitted',
       );
     }
 
@@ -512,9 +559,6 @@ class WalkaProductMediaResolver {
 }
 
 /// Owner-visible product media boundary used by Home, discovery and PDP.
-///
-/// It prefers the stable production asset path for the catalog variant and
-/// preserves the existing CustomPaint renderer as a deterministic fallback.
 class WalkaResolvedProductMedia extends StatelessWidget {
   const WalkaResolvedProductMedia({
     required this.variantId,
