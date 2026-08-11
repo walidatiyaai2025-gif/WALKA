@@ -1,191 +1,96 @@
 import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data';
 
-const int _hardFileBudgetBytes = 1258291; // 1.2 MiB review ceiling.
-const int _minimumHeaderBytes = 33;
-const List<int> _pngSignature = <int>[0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
-const List<int> _alphaCapableColorTypes = <int>[4, 6];
-
-const List<_RequiredAsset> _requiredAssets = <_RequiredAsset>[
-  _RequiredAsset('drawer-white', 'assets/products/drawer/white.png'),
-  _RequiredAsset('drawer-gray', 'assets/products/drawer/gray.png'),
-  _RequiredAsset('lunch-blue', 'assets/products/lunch/blue.png'),
-  _RequiredAsset('lunch-pink', 'assets/products/lunch/pink.png'),
-  _RequiredAsset('lunch-green', 'assets/products/lunch/green.png'),
-];
+import 'src/production_asset_validator.dart';
 
 Future<void> main(List<String> args) async {
-  final _Options options = _Options.parse(args);
-  final List<_AssetResult> results = <_AssetResult>[];
-  for (final _RequiredAsset asset in _requiredAssets) {
-    results.add(await _inspect(asset));
+  late final PavCliOptions options;
+  try {
+    options = PavCliOptions.parse(args);
+  } on PavCliUsageException catch (error) {
+    stderr.writeln(error.message);
+    stderr.writeln(PavCliOptions.usage);
+    exitCode = 2;
+    return;
   }
 
-  final bool ready = results.every((_AssetResult result) => result.ready);
-  final Map<String, Object?> report = <String, Object?>{
-    'schemaVersion': 1,
-    'mode': options.enforce ? 'enforce' : 'report',
-    'ready': ready,
-    'requiredCount': _requiredAssets.length,
-    'readyCount': results.where((_AssetResult result) => result.ready).length,
-    'hardFileBudgetBytes': _hardFileBudgetBytes,
-    'assets': results.map((_AssetResult result) => result.toJson()).toList(),
-  };
+  final ProductionAssetValidator validator = const ProductionAssetValidator();
+  final report = await validator.validate(
+    rootPath: options.rootPath,
+    manifestPath: options.manifestPath,
+    mode: options.enforce ? 'enforce' : 'report',
+    strictWarnings: options.strictWarnings,
+  );
 
-  final String encoded = const JsonEncoder.withIndent('  ').convert(report);
-  final File reportFile = File(options.jsonPath);
-  await reportFile.parent.create(recursive: true);
-  await reportFile.writeAsString('$encoded\n');
+  final String encoded = const JsonEncoder.withIndent('  ').convert(report.toJson());
+  await writeReportAtomically(options.jsonPath, '$encoded\n');
 
-  stdout.writeln('WALKA production product asset gate');
+  stdout.writeln('WALKA production product asset admission gate');
   stdout.writeln('Mode: ${options.enforce ? 'ENFORCE' : 'REPORT'}');
-  stdout.writeln('Ready: ${ready ? 'YES' : 'NO'}');
-  stdout.writeln('Valid: ${report['readyCount']}/${report['requiredCount']}');
+  stdout.writeln('State: ${report.state}');
+  stdout.writeln('Ready: ${report.ready ? 'YES' : 'NO'}');
+  stdout.writeln('Valid: ${report.readyCount}/${report.requiredCount}');
+  stdout.writeln('Blockers: ${report.blockerCount}');
+  stdout.writeln('Warnings: ${report.warningCount}');
+  stdout.writeln('Strict warnings: ${options.strictWarnings ? 'YES' : 'NO'}');
+  stdout.writeln('Manifest: ${options.manifestPath}');
   stdout.writeln('Report: ${options.jsonPath}');
-  for (final _AssetResult result in results) {
-    stdout.writeln(result.summary);
+  for (final asset in report.assets) {
+    stdout.writeln(asset.summary);
+  }
+  for (final diagnostic in report.crossDiagnostics) {
+    stdout.writeln(
+      '- cross/${diagnostic.severity.name}: ${diagnostic.code} — ${diagnostic.message}',
+    );
   }
 
-  if (options.enforce && !ready) {
+  if (options.enforce && !report.ready) {
     stderr.writeln(
       'FAIL: stable owner-visible APK publication is blocked until every '
-      'released product variant has a valid approved canonical production PNG.',
+      'released product variant has an APPROVED source, a confirmed canonical '
+      'export and a valid production PNG that passes admission checks.',
     );
     exitCode = 1;
   }
 }
 
-Future<_AssetResult> _inspect(_RequiredAsset asset) async {
-  final File file = File(asset.path);
-  if (!await file.exists()) {
-    return _AssetResult(asset: asset, issues: const <String>['missing']);
+Future<void> writeReportAtomically(String path, String content) async {
+  final File target = File(path);
+  await target.parent.create(recursive: true);
+  final File temporary = File('$path.tmp');
+  await temporary.writeAsString(content, flush: true);
+  if (await target.exists()) {
+    await target.delete();
   }
-
-  final int bytes = await file.length();
-  if (bytes == 0) {
-    return _AssetResult(asset: asset, bytes: 0, issues: const <String>['empty']);
-  }
-
-  final RandomAccessFile handle = await file.open();
-  late final Uint8List header;
-  try {
-    header = await handle.read(_minimumHeaderBytes);
-  } finally {
-    await handle.close();
-  }
-
-  final List<String> issues = <String>[];
-  if (header.length < _minimumHeaderBytes) {
-    issues.add('truncated-png-header');
-    return _AssetResult(asset: asset, bytes: bytes, issues: issues);
-  }
-
-  if (!_matchesSignature(header)) {
-    issues.add('invalid-png-signature');
-    return _AssetResult(asset: asset, bytes: bytes, issues: issues);
-  }
-
-  final String chunkType = ascii.decode(header.sublist(12, 16), allowInvalid: true);
-  if (chunkType != 'IHDR') {
-    issues.add('missing-ihdr');
-    return _AssetResult(asset: asset, bytes: bytes, issues: issues);
-  }
-
-  final ByteData data = ByteData.sublistView(header);
-  final int width = data.getUint32(16, Endian.big);
-  final int height = data.getUint32(20, Endian.big);
-  final int bitDepth = header[24];
-  final int colorType = header[25];
-
-  if (width <= 0 || height <= 0 || width > 8192 || height > 8192) {
-    issues.add('invalid-dimensions');
-  }
-  if (!_alphaCapableColorTypes.contains(colorType)) {
-    issues.add('alpha-required-color-type-$colorType');
-  }
-  if (bytes > _hardFileBudgetBytes) {
-    issues.add('over-1.2mb-production-budget');
-  }
-
-  return _AssetResult(
-    asset: asset,
-    bytes: bytes,
-    width: width,
-    height: height,
-    bitDepth: bitDepth,
-    colorType: colorType,
-    issues: issues,
-  );
+  await temporary.rename(target.path);
 }
 
-bool _matchesSignature(Uint8List bytes) {
-  for (int index = 0; index < _pngSignature.length; index += 1) {
-    if (bytes[index] != _pngSignature[index]) {
-      return false;
-    }
-  }
-  return true;
-}
-
-class _RequiredAsset {
-  const _RequiredAsset(this.variantId, this.path);
-
-  final String variantId;
-  final String path;
-}
-
-class _AssetResult {
-  const _AssetResult({
-    required this.asset,
-    required this.issues,
-    this.bytes,
-    this.width,
-    this.height,
-    this.bitDepth,
-    this.colorType,
+class PavCliOptions {
+  const PavCliOptions({
+    required this.enforce,
+    required this.jsonPath,
+    required this.rootPath,
+    required this.manifestPath,
+    required this.strictWarnings,
   });
-
-  final _RequiredAsset asset;
-  final List<String> issues;
-  final int? bytes;
-  final int? width;
-  final int? height;
-  final int? bitDepth;
-  final int? colorType;
-
-  bool get ready => issues.isEmpty;
-
-  String get summary {
-    final String details = width == null
-        ? ''
-        : ' ${width}x$height ${bytes ?? 0}B colorType=$colorType';
-    final String state = ready ? 'PASS' : 'BLOCKED(${issues.join(',')})';
-    return '- ${asset.variantId}: $state$details — ${asset.path}';
-  }
-
-  Map<String, Object?> toJson() => <String, Object?>{
-        'variantId': asset.variantId,
-        'path': asset.path,
-        'ready': ready,
-        'issues': issues,
-        if (bytes != null) 'bytes': bytes,
-        if (width != null) 'width': width,
-        if (height != null) 'height': height,
-        if (bitDepth != null) 'bitDepth': bitDepth,
-        if (colorType != null) 'colorType': colorType,
-      };
-}
-
-class _Options {
-  const _Options({required this.enforce, required this.jsonPath});
 
   final bool enforce;
   final String jsonPath;
+  final String rootPath;
+  final String manifestPath;
+  final bool strictWarnings;
 
-  static _Options parse(List<String> args) {
+  static const String usage =
+      'Usage: dart run tool/verify_production_assets.dart '
+      '[--report|--enforce] [--json <path>] [--root <path>] '
+      '[--manifest <path>] [--strict-warnings]';
+
+  static PavCliOptions parse(List<String> args) {
     bool enforce = false;
+    bool strictWarnings = false;
     String jsonPath = 'production-asset-readiness.json';
+    String rootPath = '.';
+    String manifestPath = '../docs/ui/PRODUCTION_SOURCE_ADMISSION.json';
 
     for (int index = 0; index < args.length; index += 1) {
       final String arg = args[index];
@@ -196,19 +101,48 @@ class _Options {
         case '--enforce':
           enforce = true;
           break;
-        case '--json':
-          if (index + 1 >= args.length) {
-            stderr.writeln('Missing path after --json.');
-            exit(2);
-          }
-          jsonPath = args[++index];
+        case '--strict-warnings':
+          strictWarnings = true;
           break;
+        case '--json':
+          jsonPath = _nextValue(args, ++index, '--json');
+          break;
+        case '--root':
+          rootPath = _nextValue(args, ++index, '--root');
+          break;
+        case '--manifest':
+          manifestPath = _nextValue(args, ++index, '--manifest');
+          break;
+        case '--help':
+        case '-h':
+          throw const PavCliUsageException(PavCliOptions.usage);
         default:
-          stderr.writeln('Unknown argument: $arg');
-          exit(2);
+          throw PavCliUsageException('Unknown argument: $arg');
       }
     }
 
-    return _Options(enforce: enforce, jsonPath: jsonPath);
+    return PavCliOptions(
+      enforce: enforce,
+      jsonPath: jsonPath,
+      rootPath: rootPath,
+      manifestPath: manifestPath,
+      strictWarnings: strictWarnings,
+    );
   }
+
+  static String _nextValue(List<String> args, int index, String option) {
+    if (index >= args.length || args[index].startsWith('--')) {
+      throw PavCliUsageException('Missing path after $option.');
+    }
+    return args[index];
+  }
+}
+
+class PavCliUsageException implements Exception {
+  const PavCliUsageException(this.message);
+
+  final String message;
+
+  @override
+  String toString() => message;
 }
