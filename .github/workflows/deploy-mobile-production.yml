@@ -32,6 +32,8 @@ jobs:
     steps:
       - name: Checkout production
         uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
 
       - name: Setup Flutter stable
         uses: subosito/flutter-action@v2
