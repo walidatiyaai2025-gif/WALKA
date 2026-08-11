@@ -4,11 +4,15 @@ class WalkaHomeHeroActions extends StatelessWidget {
   const WalkaHomeHeroActions({
     required this.onShopAll,
     required this.onSearch,
+    this.shopLabel = 'SHOP PRODUCTS',
+    this.searchLabel = 'SEARCH COLLECTION',
     super.key,
   });
 
   final VoidCallback onShopAll;
   final VoidCallback onSearch;
+  final String shopLabel;
+  final String searchLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -22,13 +26,13 @@ class WalkaHomeHeroActions extends StatelessWidget {
             onPressed: onShopAll,
             iconAlignment: IconAlignment.end,
             icon: const Icon(Icons.arrow_forward_rounded, size: 18),
-            label: const Text('SHOP PRODUCTS'),
+            label: Text(shopLabel),
           ),
           const SizedBox(height: 8),
           OutlinedButton(
             key: const ValueKey<String>('home-reference-search-cta'),
             onPressed: onSearch,
-            child: const Text('SEARCH COLLECTION'),
+            child: Text(searchLabel),
           ),
         ],
       ),

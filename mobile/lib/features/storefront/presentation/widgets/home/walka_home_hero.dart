@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:walka/design_system/components/media/walka_product_media_resolver.dart';
 import 'package:walka/design_system/walka_product_visual.dart';
 import 'package:walka/design_system/walka_theme.dart';
+import 'package:walka/features/content/domain/walka_mobile_content.dart';
 import 'package:walka/features/lunch/lunch_box_v6.dart';
 
 import 'walka_home_hero_actions.dart';
@@ -14,6 +15,7 @@ class WalkaHomeHero extends StatelessWidget {
     required this.onOpenLunch,
     required this.onShopAll,
     required this.onSearch,
+    this.content = WalkaHomeHeroContent.bundled,
     super.key,
   });
 
@@ -22,6 +24,7 @@ class WalkaHomeHero extends StatelessWidget {
   final VoidCallback onOpenLunch;
   final VoidCallback onShopAll;
   final VoidCallback onSearch;
+  final WalkaHomeHeroContent content;
 
   @override
   Widget build(BuildContext context) {
@@ -61,6 +64,7 @@ class WalkaHomeHero extends StatelessWidget {
                       children: <Widget>[
                         _HeroCopy(
                           compact: compact,
+                          content: content,
                           onShopAll: onShopAll,
                           onSearch: onSearch,
                         ),
@@ -81,6 +85,7 @@ class WalkaHomeHero extends StatelessWidget {
                           flex: 6,
                           child: _HeroCopy(
                             compact: false,
+                            content: content,
                             onShopAll: onShopAll,
                             onSearch: onSearch,
                           ),
@@ -113,11 +118,13 @@ class WalkaHomeHero extends StatelessWidget {
 class _HeroCopy extends StatelessWidget {
   const _HeroCopy({
     required this.compact,
+    required this.content,
     required this.onShopAll,
     required this.onSearch,
   });
 
   final bool compact;
+  final WalkaHomeHeroContent content;
   final VoidCallback onShopAll;
   final VoidCallback onSearch;
 
@@ -126,9 +133,9 @@ class _HeroCopy extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        const Text(
-          'PREMIUM ORGANIZATION\nELEVATED EVERYDAY.',
-          style: TextStyle(
+        Text(
+          content.eyebrow,
+          style: const TextStyle(
             color: WalkaColors.gold,
             fontSize: 10,
             height: 1.45,
@@ -138,7 +145,7 @@ class _HeroCopy extends StatelessWidget {
         ),
         const SizedBox(height: 14),
         Text(
-          'Organize Better.\nLive Better.',
+          content.title,
           style: TextStyle(
             color: WalkaColors.navy,
             fontFamily: 'serif',
@@ -149,9 +156,9 @@ class _HeroCopy extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 14),
-        const Text(
-          'Premium drawer organizers and stainless steel lunch boxes designed for calm, everyday order.',
-          style: TextStyle(
+        Text(
+          content.body,
+          style: const TextStyle(
             color: Color(0xFF59616A),
             fontSize: 12.5,
             height: 1.55,
@@ -159,7 +166,12 @@ class _HeroCopy extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 18),
-        WalkaHomeHeroActions(onShopAll: onShopAll, onSearch: onSearch),
+        WalkaHomeHeroActions(
+          shopLabel: content.shopLabel,
+          searchLabel: content.searchLabel,
+          onShopAll: onShopAll,
+          onSearch: onSearch,
+        ),
       ],
     );
   }
