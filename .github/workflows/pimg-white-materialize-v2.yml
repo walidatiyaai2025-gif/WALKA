@@ -65,8 +65,8 @@ jobs:
             --source /tmp/walka-white-source.jpg \
             --output mobile/assets/products/drawer/white.png
           test "$(sha256sum mobile/assets/products/drawer/white.png | awk '{print $1}')" = \
-            '56a02d82f8fb54b561be9c8c9b8d3f0b6ac4d1e8b4825fd093f05df2951bc09a'
-          test "$(stat -c%s mobile/assets/products/drawer/white.png)" = '189711'
+            'b2c6967b6ccb3283a90e26337f90fe15f2f707dbcf20531d760fb656c06d234f'
+          test "$(stat -c%s mobile/assets/products/drawer/white.png)" = '189339'
 
       - name: Commit binary and remove bootstrap tooling
         shell: bash
