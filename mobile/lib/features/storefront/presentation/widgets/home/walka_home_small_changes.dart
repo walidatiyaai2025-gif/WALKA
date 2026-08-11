@@ -81,6 +81,7 @@ class WalkaHomeSmallChanges extends StatelessWidget {
                 primaryColor: const Color(0xFFF7F4EC),
                 backgroundColor: const Color(0xFFEDE6DA),
                 compact: true,
+                mediaSurface: WalkaProductMediaSurface.home,
                 semanticLabel: drawerSemanticLabel,
               ),
             ),
