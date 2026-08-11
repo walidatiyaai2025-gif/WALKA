@@ -21,6 +21,7 @@ concurrency:
 
 env:
   SITE_URL: https://mobile.walkastore.com
+  WALKA_API_BASE_URL: https://api.walkastore.com
 
 jobs:
   validate-build-deploy:
@@ -59,6 +60,35 @@ jobs:
         working-directory: mobile
         run: flutter test
 
+      - name: Verify production API contract and CORS
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          curl --fail --silent --show-error --location \
+            --max-time 20 \
+            "$WALKA_API_BASE_URL/api/v1/health" \
+            --output /tmp/walka-health.json
+          grep -q '"status":"ok"' /tmp/walka-health.json
+          grep -q '"service":"walka-api"' /tmp/walka-health.json
+
+          curl --fail --silent --show-error --location \
+            --max-time 20 \
+            -H "Origin: $SITE_URL" \
+            -D /tmp/walka-cors.headers \
+            "$WALKA_API_BASE_URL/api/v1/catalog" \
+            --output /tmp/walka-catalog.json
+          grep -q '"drawer-organizer"' /tmp/walka-catalog.json
+          grep -q '"stainless-steel-bento-lunch-box"' /tmp/walka-catalog.json
+
+          if ! grep -Eiq '^access-control-allow-origin:[[:space:]]*(\*|https://mobile\.walkastore\.com)[[:space:]]*$' /tmp/walka-cors.headers; then
+            echo 'Production API did not return a CORS allow-origin header for mobile.walkastore.com.' >&2
+            sed -n '1,40p' /tmp/walka-cors.headers >&2
+            exit 1
+          fi
+
+          echo 'Production API health, catalog contract, and CORS checks passed.'
+
       - name: Report production product assets
         working-directory: mobile
         shell: bash
@@ -81,18 +111,11 @@ jobs:
       - name: Build Flutter web release
         working-directory: mobile
         shell: bash
-        env:
-          WALKA_API_BASE_URL: ${{ vars.WALKA_API_BASE_URL }}
         run: |
           set -euo pipefail
-          if [[ -n "${WALKA_API_BASE_URL:-}" ]]; then
-            echo 'Building production web with configured WALKA API base URL.'
-            flutter build web --release \
-              --dart-define="WALKA_API_BASE_URL=${WALKA_API_BASE_URL}"
-          else
-            echo 'WALKA_API_BASE_URL repository variable is not set; building with bundled catalog fallback.'
-            flutter build web --release
-          fi
+          echo "Building production web against $WALKA_API_BASE_URL"
+          flutter build web --release \
+            --dart-define="WALKA_API_BASE_URL=${WALKA_API_BASE_URL}"
 
       - name: Prepare GitHub Pages static hosting
         shell: bash
