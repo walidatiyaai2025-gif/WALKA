@@ -38,10 +38,6 @@ jobs:
           test -f "$src"
           test "$(identify -format '%w %h' "$src")" = '1024 1024'
           cp "$src" /tmp/pimg-white-owner-source.png
-
-          # Remove only the exterior near-white region connected to the canvas
-          # perimeter. This preserves the organizer's internal white surfaces,
-          # dividers and real expanded 8-compartment geometry.
           convert /tmp/pimg-white-owner-source.png \
             -bordercolor white -border 1 \
             -alpha set -channel RGBA -fuzz 2% -fill none \
@@ -52,8 +48,47 @@ jobs:
             -background none -gravity center -extent 1024x1024 \
             -channel RGBA -depth 8 -strip -colorspace sRGB -set colorspace sRGB \
             -define png:color-type=6 -define png:exclude-chunk=date,time \
-            -define png:include-chunk=sRGB \
             PNG32:"$src"
+
+      - name: Normalize PNG chunks without changing pixels
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import pathlib
+          import struct
+          import zlib
+
+          path = pathlib.Path('mobile/assets/products/drawer/white.png')
+          data = path.read_bytes()
+          assert data[:8] == b'\x89PNG\r\n\x1a\n'
+          offset = 8
+          chunks = []
+          while offset < len(data):
+            size = struct.unpack('>I', data[offset:offset + 4])[0]
+            kind = data[offset + 4:offset + 8]
+            payload = data[offset + 8:offset + 8 + size]
+            chunks.append((kind, payload))
+            offset += 12 + size
+
+          def chunk(kind: bytes, payload: bytes) -> bytes:
+            return (
+              struct.pack('>I', len(payload)) + kind + payload +
+              struct.pack('>I', zlib.crc32(kind + payload) & 0xffffffff)
+            )
+
+          out = bytearray(data[:8])
+          inserted_srgb = False
+          for kind, payload in chunks:
+            if kind in {b'tEXt', b'zTXt', b'iTXt', b'tIME', b'bKGD', b'sRGB', b'iCCP'}:
+              continue
+            out.extend(chunk(kind, payload))
+            if kind == b'IHDR':
+              out.extend(chunk(b'sRGB', b'\x00'))
+              inserted_srgb = True
+          assert inserted_srgb
+          path.write_bytes(bytes(out))
+          PY
 
       - name: Validate canonical White mechanical contract
         shell: bash
@@ -88,8 +123,8 @@ jobs:
               idat.extend(payload)
             offset += 12 + size
           assert (width, height, bit_depth, color_type) == (1024, 1024, 8, 6)
-          assert b'iCCP' in chunks or b'sRGB' in chunks, chunks
-          assert not any(kind in chunks for kind in (b'tEXt', b'zTXt', b'iTXt'))
+          assert b'sRGB' in chunks
+          assert not any(kind in chunks for kind in (b'tEXt', b'zTXt', b'iTXt', b'tIME', b'bKGD'))
 
           raw = zlib.decompress(bytes(idat))
           stride = width * 4
@@ -153,7 +188,7 @@ jobs:
             f"safe_margins={margins}\n"
             f"nearest_safe_margin={min(margins)}\n"
             f"partial_alpha_pixels={partial_alpha}\n"
-            f"profile={'iCCP' if b'iCCP' in chunks else 'sRGB'}\n"
+            f"profile=sRGB\n"
           )
           print(receipt.read_text())
           PY
