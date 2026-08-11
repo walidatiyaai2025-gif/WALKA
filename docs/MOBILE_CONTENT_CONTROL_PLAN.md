@@ -6,16 +6,16 @@ Tracking: #278
 
 ## 1. Target operating model
 
-WALKA is moving from a mostly code-authored Flutter storefront with a small remote catalog surface to a **backend-first mobile CMS/control plane**.
+WALKA is moving from a mostly code-authored Flutter storefront to a **backend-first mobile CMS/control plane**.
 
 ```text
 WALKA Admin Dashboard
         |
-        | draft / validate / preview / publish / rollback
+        | draft / validate / preview / publish / restore
         v
 Laravel CMS + Catalog + Media + Remote Config
         |
-        | versioned public API v1 (additive/backward compatible)
+        | versioned, allowlisted public API v1
         v
 Flutter Android / iOS / Web
         |
@@ -27,24 +27,26 @@ Flutter Android / iOS / Web
 Amazon official purchase destination
 ```
 
-The owner workflow is:
+Owner workflow:
 
 1. Open `/admin`.
-2. Change mobile content or presentation settings.
+2. Change supported mobile content or presentation settings.
 3. Save a private draft.
 4. Preview draft versus published state.
 5. Publish explicitly.
 6. Compatible Flutter clients receive the new content without an APK/App Store release where technically safe.
-7. If a bad change is published, restore a previous immutable revision into a new draft, review it, then publish again.
+7. Restore an immutable historical revision into a new draft when rollback is needed, review it, then publish again.
 
 ### Current implementation milestone
 
-The generic CMS foundation is now delivered through CMS-003:
+The backend-first foundation and first Home controls are now stable on `main`:
 
-- **CMS-001 completed** — stable content keys/types, draft/published snapshots, optimistic revisions, immutable history and restore primitives.
-- **CMS-002 completed** — protected `/admin/content` registry, draft editor, preview, explicit publish, history and restore controls.
-- **CMS-003 completed** — allowlisted published Home content API plus Flutter remote -> last-known-good cache -> bundled fallback and live Home Hero rendering.
-- **CMS-020 is code-complete and validating in #292 / PR #293** — first owner-friendly typed Home Hero editor, eliminating raw JSON for this surface.
+- **CMS-001 completed** — stable content keys/types, draft/published snapshots, optimistic revisions, immutable history and restore primitives. #284 / PR #286.
+- **CMS-002 completed** — protected `/admin/content` registry, draft editor, preview, explicit publish, history and restore controls. #287 / PR #288.
+- **CMS-003 completed** — allowlisted published Home Hero API plus Flutter remote -> last-known-good cache -> bundled fallback and live Home rendering. #289 / PR #290.
+- **CMS-020 completed** — typed owner-friendly Home Hero editor with safe first-use defaults and strict public field allowlisting. #292 / PR #293.
+- **CMS-021 completed** — typed Home section manifest: owner-controlled approved section order, optional visibility and safe Collection/Editorial copy; Flutter maps only known compiled section IDs and retains LKG/bundled fallback. #294 / PR #295.
+- **CMS-022 next** — backend-controlled featured Product/Variant membership and merchandising order using existing stable catalog IDs only. #296.
 
 ## 2. What must become backend-controlled
 
@@ -55,191 +57,175 @@ The generic CMS foundation is now delivered through CMS-003:
 - short descriptions and editorial copy
 - customer-facing color labels
 - display ordering of products and variants
-- visibility / enabled state where hiding an item is safe
+- visibility / enabled state where safe
 - featured / recommended state
-- badges such as `New`, `Featured`, or campaign labels when policy-safe
-- product image/media assignments
-- gallery ordering
+- policy-safe badges/campaign labels
+- product image/media assignments and gallery ordering
 - related-product relationships
-- optional CTA/supporting copy around the Amazon handoff
+- optional supporting copy around the Amazon handoff
 
 ### Home / Landing
 
-- hero title, eyebrow/subtitle and supporting copy
-- hero media
-- safe CTA labels; navigation behavior remains executable Flutter logic
-- featured collections
-- featured products / variants
-- editorial blocks
-- trust/benefit blocks
+- hero title, eyebrow/subtitle, supporting copy and safe CTA labels
+- approved Home section order and optional visibility
+- Collection and editorial section display copy
+- hero/editorial media
+- featured products / variants and merchandising order
+- trust/benefit display configuration where factual claims stay governed
 - promotional/announcement banners
-- section ordering
-- section visibility
 - campaign start/end scheduling
 
-### Categories / Search presentation
+### Categories / Search
 
-- category display names
-- category descriptions
-- category hero/media
-- category ordering
-- category visibility when compatible with stable identifiers
+- category display names/descriptions/media
+- category ordering and compatible visibility
 - filter display labels
-- empty-state/supporting copy
-- discovery/editorial blocks
+- empty/supporting copy
+- discovery/editorial merchandising blocks
 
 ### Product Detail Page
 
-- presentation copy that is not a protected verified fact
+- non-protected presentation copy
 - highlights/editorial copy
-- media/gallery assignments and ordering
+- media/gallery assignment and order
 - related items
-- approved usage guidance text where Product Master validation permits authoring
-- display labels and section visibility/order where layout contracts allow it
+- approved usage guidance where Product Master validation permits authoring
+- display labels and section visibility/order within compiled layout contracts
 
-### Information / support surfaces
+### Information / support
 
-- About / Story content
-- FAQ questions and answers
-- support email/phone/display information
-- support links
-- privacy/terms/legal document links and display copy
-- app informational messages
-- maintenance notices
-- generic customer-service notices
+- About / Story
+- FAQ
+- support contact display information and approved links
+- privacy/terms/legal links and informational copy
+- maintenance and customer-service notices
 
 ### Remote presentation/configuration
 
 - non-security feature flags
-- optional section enable/disable switches
+- safe section enable/disable switches
 - announcement/banner enable state
 - campaign scheduling
 - safe UI copy variants
-- content refresh TTL/version metadata
-- minimum-content-version gates where fallback behavior is defined
+- content refresh/version metadata
 
 ### Media library
 
 - upload approved mobile images
-- image metadata / alt text / semantics label
+- metadata / alt text / semantics labels
 - assign media to product/variant/screen/section
-- reorder gallery images
-- image validation and size/dimension limits
-- publication state
-- replacement without code change
-- immutable media audit history
+- reorder galleries
+- file/integrity/dimension validation
+- draft/published replacement and immutable history
 
-## 3. What remains protected / not freely editable
+## 3. Protected / not freely editable
 
 Backend-first does **not** mean every database field becomes an unrestricted text box.
 
-The following remain locked unless a dedicated governed workflow explicitly changes the policy:
+These remain locked unless a dedicated governed workflow explicitly changes policy:
 
 - stable Product/Variant IDs
-- database relationships that define released identity
-- verified Product Master facts and dimensions
+- released identity relationships
+- verified Product Master facts/dimensions
 - Pantone identities
 - ASIN identity
-- claims that require factual/compliance verification
+- factual/compliance-sensitive claims
 - purchase architecture (`amazon_redirect`)
-- executable Flutter business logic
-- API secrets, session secrets and credentials
-- authentication/security policy
+- executable Flutter business logic and arbitrary widget types
+- secrets, credentials, authentication/security policy
 - arbitrary external URLs
-- arbitrary code / HTML / JavaScript injection
-- app permissions
-- native capabilities that require a mobile release
+- arbitrary HTML/JavaScript/code injection
+- app permissions/native capabilities requiring a release
 
-Amazon destinations may later become dashboard-managed **only through a validated commerce-destination workflow** with Amazon-domain allowlisting, stable product mapping, audit history and rollback. They must not become unrestricted URL fields.
+Amazon destinations may become dashboard-managed only through a governed Amazon-domain allowlisted workflow with stable variant mapping, audit and rollback; they must never become unrestricted URL fields.
 
 ## 4. Mandatory CMS safety contract
 
 Every dynamic-content family must implement all applicable controls before it is production-ready:
 
-- stable record keys
-- explicit public allowlisting of content keys/types and fields
+- stable record keys/types
+- explicit public allowlisting of keys/types/fields
 - optimistic revision/concurrency protection
-- validation on write and again at public delivery boundaries
-- draft vs published state
+- validation on write and again at public delivery
+- private draft vs published state
 - preview before publish
 - immutable audit/history snapshots
-- previous-version history
-- rollback by restoring into a new draft, never silent history rewrite
+- restore-to-new-draft rather than silent history rewrite
 - safe defaults
-- last-known-good mobile cache
-- bundled fallback for critical screen availability
+- revision-aware last-known-good mobile cache
+- bundled fallback for critical availability
 - additive/backward-compatible API v1 evolution
 - schema/content versioning
 - deterministic ordering
 - explicit empty/null behavior
-- no secret/admin/draft fields in public API responses
+- no secret/admin/draft fields in public responses
 - server-side authorization
-- production tests for Dashboard -> DB -> API -> Flutter propagation
+- Dashboard -> DB -> API -> Flutter propagation tests
 
 ## 5. Delivery priority
 
-This program is a **P0 backend/mobile architecture priority**. New mobile presentation work must avoid hard-coding owner-changeable content when that content belongs to this plan; hard-coded values are acceptable only as explicit bundled fallbacks.
+This program is a **P0 backend/mobile architecture priority**. New owner-changeable copy, images, banners, ordering, visibility or merchandising must not be introduced as hard-coded Flutter values except as explicit bundled fallback.
 
 ### Phase A — CMS foundation and publication model
 
 | ID | Priority | Scope | Status |
 |---|---|---|---|
-| CMS-001 | P0 | Generic content revision model: draft/published state, optimistic revision, audit/history | ✅ COMPLETED · #284 / PR #286 |
-| CMS-002 | P0 | Protected Content workspace: preview/publish/history/restore controls | ✅ COMPLETED · #287 / PR #288 |
-| CMS-003 | P0 | Public content envelope + Flutter last-known-good/bundled fallback vertical slice | ✅ COMPLETED · #289 / PR #290 |
-| CMS-004 | P0 | Dashboard roles/navigation/permissions for Content, Media and App Config | TODO |
+| CMS-001 | P0 | Generic draft/published revision + immutable history foundation | ✅ COMPLETED · #284 / PR #286 |
+| CMS-002 | P0 | Protected Content workspace: preview/publish/history/restore | ✅ COMPLETED · #287 / PR #288 |
+| CMS-003 | P0 | Public content envelope + Flutter LKG/bundled fallback proof path | ✅ COMPLETED · #289 / PR #290 |
+| CMS-004 | P0 | Dashboard roles/navigation/permissions for Content, Media, App Config | TODO |
 
 ### Phase B — Product and PDP control
 
 | ID | Priority | Scope | Status |
 |---|---|---|---|
-| CMS-010 | P0 | Expand product authoring: descriptions, highlights, visibility, ordering, featured state | TODO |
-| CMS-011 | P0 | Variant display ordering/visibility + safe customer-facing metadata | TODO |
+| CMS-010 | P0 | Product descriptions/highlights/visibility/order/featured state | TODO |
+| CMS-011 | P0 | Variant display order/visibility + safe customer metadata | TODO |
 | CMS-012 | P0 | PDP section content/order/visibility model | TODO |
 | CMS-013 | P0 | Related-product authoring | TODO |
-| CMS-014 | P0 | End-to-end dashboard edit -> public API -> live PDP regression coverage | TODO |
+| CMS-014 | P0 | Dashboard -> API -> live PDP regression matrix | TODO |
 
 ### Phase C — Home / discovery control
 
 | ID | Priority | Scope | Status |
 |---|---|---|---|
-| CMS-020 | P0 | Typed Home Hero editor on CMS-001..003 foundation | 🟡 VALIDATING · #292 / PR #293 |
-| CMS-021 | P0 | Home section block model, ordering and visibility | TODO |
-| CMS-022 | P0 | Featured collections/products/variants | TODO |
+| CMS-020 | P0 | Typed Home Hero editor | ✅ COMPLETED · #292 / PR #293 |
+| CMS-021 | P0 | Typed Home section order/visibility + safe section copy | ✅ COMPLETED · #294 / PR #295 |
+| CMS-022 | P0 | Featured products/variants and merchandising order | 🔵 NEXT · #296 |
 | CMS-023 | P0 | Announcement/promo banners + scheduling | TODO |
 | CMS-024 | P0 | Categories display metadata/order/visibility | TODO |
-| CMS-025 | P0 | Search/discovery presentation copy and configurable merchandising | TODO |
+| CMS-025 | P0 | Search/discovery presentation + merchandising | TODO |
 
 ### Phase D — Media library
 
 | ID | Priority | Scope | Status |
 |---|---|---|---|
-| CMS-030 | P0 | Production media library storage model | TODO |
-| CMS-031 | P0 | Upload validation: type, dimensions, file size, integrity | TODO |
-| CMS-032 | P0 | Product/variant gallery assignment and ordering | TODO |
+| CMS-030 | P0 | Production media storage model | TODO |
+| CMS-031 | P0 | Upload validation: type/dimensions/size/integrity | TODO |
+| CMS-032 | P0 | Product/variant gallery assignment/order | TODO |
 | CMS-033 | P0 | Home/category/editorial media assignment | TODO |
-| CMS-034 | P0 | Media revision/audit/replacement/rollback | TODO |
-| CMS-035 | P0 | Flutter remote-media loading, caching, failure fallback and semantics | TODO |
+| CMS-034 | P0 | Media revision/audit/replacement/restore | TODO |
+| CMS-035 | P0 | Flutter remote media cache/failure fallback/semantics | TODO |
 
-### Phase E — Information, support and remote app configuration
+### Phase E — Information, support and remote config
 
 | ID | Priority | Scope | Status |
 |---|---|---|---|
 | CMS-040 | P1 | About / Story CMS | TODO |
 | CMS-041 | P1 | FAQ CMS | TODO |
 | CMS-042 | P1 | Support/contact configuration | TODO |
-| CMS-043 | P1 | Legal/privacy/terms links and informational copy | TODO |
+| CMS-043 | P1 | Legal/privacy/terms links and copy | TODO |
 | CMS-044 | P1 | Maintenance/announcement notices | TODO |
-| CMS-045 | P1 | Safe non-security feature flags and presentation switches | TODO |
+| CMS-045 | P1 | Safe non-security feature flags/presentation switches | TODO |
 
 ### Phase F — Operational quality
 
 | ID | Priority | Scope | Status |
 |---|---|---|---|
 | CMS-050 | P1 | Scheduled publish/unpublish | TODO |
-| CMS-051 | P1 | Rich content diff view before publish | TODO |
-| CMS-052 | P1 | Owner rollback shortcuts and rollback audit UX | TODO |
-| CMS-053 | P1 | API/content freshness, cache and publication observability | TODO |
+| CMS-051 | P1 | Rich content diff before publish | TODO |
+| CMS-052 | P1 | Owner rollback shortcuts/audit UX | TODO |
+| CMS-053 | P1 | API/content freshness/cache/publication observability | TODO |
 | CMS-054 | P1 | Backup/restore validation for CMS/catalog/media metadata | TODO |
 | CMS-055 | P1 | Full production smoke matrix across Admin/API/Flutter | TODO |
 
@@ -247,20 +233,20 @@ This program is a **P0 backend/mobile architecture priority**. New mobile presen
 
 | ID | Priority | Scope | Status |
 |---|---|---|---|
-| CMS-060 | P1 | Governed Amazon destination editor with allowlist and stable variant mapping | TODO |
-| CMS-061 | P1 | Destination verification + audit + rollback | TODO |
-| CMS-062 | P1 | Flutter dynamic Amazon destination consumption with bundled Product Master fallback | TODO |
+| CMS-060 | P1 | Governed Amazon destination editor | TODO |
+| CMS-061 | P1 | Destination verification/audit/rollback | TODO |
+| CMS-062 | P1 | Flutter dynamic Amazon destinations with bundled Product Master fallback | TODO |
 
-## 6. Mobile implementation rule from now on
+## 6. Mobile implementation rule
 
-When adding or polishing a Flutter screen, developers must classify every user-visible value as one of:
+Every user-visible value must be classified as:
 
 1. **Dynamic content** — backend/CMS controlled.
 2. **Protected product truth** — Product Master/governed data.
-3. **Design-system constant** — spacing, typography, component behavior.
+3. **Design-system constant** — visual primitives/component behavior.
 4. **Executable behavior** — code/release required.
 
-New owner-changeable copy, images, banners, ordering, visibility or merchandising must not be buried as new hard-coded Flutter constants unless it is explicitly a bundled fallback for a remote CMS field.
+Remote configuration may select/order/hide only **known compiled UI components**; it may not deliver executable widgets or arbitrary runtime code.
 
 ## 7. API strategy
 
@@ -268,10 +254,11 @@ Keep `/api/v1` backward compatible. Current and planned additive surfaces includ
 
 ```text
 GET /api/v1/catalog
-GET /api/v1/content/home        # delivered by CMS-003
-GET /api/v1/content/categories  # planned
-GET /api/v1/content/information # planned
-GET /api/v1/app-config          # planned
+GET /api/v1/content/home         # CMS-003: Home Hero
+GET /api/v1/content/home-layout  # CMS-021: typed Home manifest
+GET /api/v1/content/categories   # planned
+GET /api/v1/content/information  # planned
+GET /api/v1/app-config           # planned
 ```
 
 Every dynamic response must carry enough schema/revision metadata for deterministic validation, caching and rollback-safe mobile behavior.
@@ -280,11 +267,11 @@ Every dynamic response must carry enough schema/revision metadata for determinis
 
 A merged CMS slice is not considered **live** until both production halves are updated:
 
-1. Laravel code/migrations are deployed to `api.walkastore.com` and production readiness remains green.
-2. Any Flutter consumption change is deployed to the target client build/web channel with the production API base URL.
+1. Laravel code/migrations are deployed to `api.walkastore.com` and `walka:production-check` remains green.
+2. Any Flutter consumption change is deployed to the target client/web channel using the production API base URL.
 
-Never report a newly merged CMS control as live merely because CI passed.
+**Current warning:** CMS-001 through CMS-021 are stable in GitHub `main`, but the new CMS stack is not considered live on cPanel/mobile web until the production backend is redeployed/migrated and the Flutter production branch is reconciled/deployed.
 
 ## 9. Definition of done for this program
 
-The program is complete only when the owner can change all approved mutable mobile presentation/content surfaces from `/admin`, publish them, see them propagate to the live mobile/web client without a new app release where technically safe, and safely rollback while protected Product Master/security/runtime invariants remain enforced.
+The program is complete only when the owner can change all approved mutable mobile presentation/content surfaces from `/admin`, publish them, see them propagate to live clients without a new app release where technically safe, and safely restore prior revisions while Product Master/security/runtime invariants remain enforced.
