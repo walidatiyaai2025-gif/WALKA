@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import '../../features/catalog/domain/walka_catalog.dart';
+import '../../features/content/domain/walka_mobile_content.dart';
 
 class WalkaApiSettings {
   const WalkaApiSettings({required this.baseUrl});
@@ -165,6 +166,12 @@ class WalkaApiClient implements WalkaCatalogRemoteDataSource {
   @override
   Future<WalkaCatalogPayload> fetchCatalog() async {
     return WalkaCatalogPayload.fromJson(await _getJson('/api/v1/catalog'));
+  }
+
+  Future<WalkaHomeHeroPayload> fetchHomeHero() async {
+    return WalkaHomeHeroPayload.fromApiJson(
+      await _getJson('/api/v1/content/home'),
+    );
   }
 
   void close() {

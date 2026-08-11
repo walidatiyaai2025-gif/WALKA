@@ -4,6 +4,8 @@ import '../../design_system/components/layout/walka_content_width.dart';
 import '../../design_system/walka_reference_ui.dart';
 import '../../design_system/walka_shell.dart';
 import '../catalog/catalog_state.dart';
+import '../content/content_state.dart';
+import '../content/domain/walka_mobile_content.dart';
 import 'presentation/widgets/home/walka_home_benefit_band.dart';
 import 'presentation/widgets/home/walka_home_collection_section.dart';
 import 'presentation/widgets/home/walka_home_header.dart';
@@ -26,6 +28,9 @@ class WalkaHomePremiumV122 extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final WalkaCatalogController controller = WalkaCatalogScope.of(context);
+    final WalkaHomeHeroContent heroContent =
+        WalkaContentScope.maybeOf(context)?.home.content ??
+            WalkaHomeHeroContent.bundled;
     final List<WalkaCatalogViewItem> items = walkaCatalogViewItems(
       controller.snapshot,
     );
@@ -63,6 +68,7 @@ class WalkaHomePremiumV122 extends StatelessWidget {
                       ),
                       SliverToBoxAdapter(
                         child: WalkaHomeHero(
+                          content: heroContent,
                           lunchSemanticLabel: '$lunchLabel hero product',
                           drawerSemanticLabel: '$drawerLabel hero product',
                           onOpenLunch: () => openWalkaCatalogItem(context, lunch),
