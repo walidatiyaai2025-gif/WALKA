@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:walka/design_system/walka_product_visual.dart';
 import 'package:walka/design_system/walka_theme.dart';
 import 'package:walka/features/information/information_v102.dart';
 import 'package:walka/features/storefront/account_about_reference_v131.dart';
@@ -92,7 +93,8 @@ void main() {
       expect(find.byType(WalkaAboutReferenceV131), findsOneWidget);
       expect(find.text('OUR STORY'), findsOneWidget);
       expect(find.textContaining('Organized living.'), findsOneWidget);
-      expect(find.byType(Image), findsNWidgets(2));
+      expect(find.byType(WalkaProductVisual), findsNWidgets(2));
+      expect(find.byType(Image), findsNothing);
       expect(tester.takeException(), isNull);
 
       final Finder howWeDesign = find.text('HOW WE DESIGN');
