@@ -1,0 +1,82 @@
+name: PIMG White Frame Once
+
+on:
+  push:
+    branches:
+      - agent/pimg-031-070-white-canonical
+    paths:
+      - .github/workflows/pimg-white-frame-once.yml
+
+permissions:
+  contents: write
+
+jobs:
+  frame-white:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: agent/pimg-031-070-white-canonical
+          fetch-depth: 0
+      - name: Ensure ImageMagick
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! command -v convert >/dev/null 2>&1; then sudo apt-get update && sudo apt-get install -y imagemagick; fi
+      - name: Normalize product-only framing
+        shell: bash
+        run: |
+          set -euo pipefail
+          src='mobile/assets/products/drawer/white.png'
+          convert "$src" -trim +repage -resize '922x922' -background none -gravity center -extent 1024x1024 -channel RGBA -depth 8 -strip -colorspace sRGB -set colorspace sRGB -define png:color-type=6 PNG32:"$src"
+          python3 - <<'PY'
+          import pathlib,struct,zlib
+          p=pathlib.Path('mobile/assets/products/drawer/white.png'); d=p.read_bytes(); off=8; chunks=[]
+          while off<len(d):
+            n=struct.unpack('>I',d[off:off+4])[0]; k=d[off+4:off+8]; q=d[off+8:off+8+n]; chunks.append((k,q)); off+=12+n
+          def c(k,q): return struct.pack('>I',len(q))+k+q+struct.pack('>I',zlib.crc32(k+q)&0xffffffff)
+          out=bytearray(d[:8])
+          for k,q in chunks:
+            if k in {b'tEXt',b'zTXt',b'iTXt',b'tIME',b'bKGD',b'sRGB',b'iCCP'}: continue
+            out.extend(c(k,q))
+            if k==b'IHDR': out.extend(c(b'sRGB',b'\x00'))
+          p.write_bytes(bytes(out))
+          PY
+      - name: Validate and stage QA artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/review
+          cp mobile/assets/products/drawer/white.png /tmp/review/white.png
+          python3 - <<'PY'
+          from PIL import Image
+          import hashlib,pathlib
+          p=pathlib.Path('mobile/assets/products/drawer/white.png'); d=p.read_bytes(); im=Image.open(p).convert('RGBA')
+          alpha=im.getchannel('A'); bbox=alpha.getbbox(); assert bbox
+          left,top,right,bottom=bbox; margins=[left,1024-right,top,1024-bottom]
+          assert min(margins)>=51,margins
+          assert max(margins[:2])-min(margins[:2])<=1,margins
+          assert len(d)<=1200*1024,len(d)
+          text=f"bytes={len(d)}\nsha256={hashlib.sha256(d).hexdigest()}\nwidth=1024\nheight=1024\nalpha_bbox={[left,top,right-1,bottom-1]}\nsafe_margins={margins}\nnearest_safe_margin={min(margins)}\nprofile=sRGB\n"
+          print(text); pathlib.Path('/tmp/review/metadata.txt').write_text(text)
+          PY
+          convert -size 1024x1024 xc:white mobile/assets/products/drawer/white.png -gravity center -compose over -composite /tmp/review/white-on-white.jpg
+          convert -size 1024x1024 xc:'#F8F6F1' mobile/assets/products/drawer/white.png -gravity center -compose over -composite /tmp/review/white-on-ivory.jpg
+          convert -size 1024x1024 xc:'#003366' mobile/assets/products/drawer/white.png -gravity center -compose over -composite /tmp/review/white-on-navy.jpg
+          for s in 96 160 240 384; do convert mobile/assets/products/drawer/white.png -resize "${s}x${s}" "/tmp/review/white-${s}.png"; done
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pimg-white-framed-review-${{ github.sha }}
+          path: /tmp/review/
+          retention-days: 14
+      - name: Commit framed White and self-remove
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f .github/workflows/pimg-white-frame-once.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add mobile/assets/products/drawer/white.png .github/workflows/pimg-white-frame-once.yml
+          git commit -m 'PIMG-036..040: finalize Drawer White canonical framing'
+          git push origin HEAD:agent/pimg-031-070-white-canonical
