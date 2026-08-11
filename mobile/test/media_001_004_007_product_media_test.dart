@@ -15,12 +15,10 @@ void main() {
   test('MEDIA-004 empty resolver keeps painted fallback', () {
     const WalkaProductMediaResolver resolver = WalkaProductMediaResolver();
     final WalkaPaintedProductMedia painted = fallback();
-
     final WalkaProductMedia resolved = resolver.resolve(
       variantId: 'drawer-organizer:white',
       fallback: painted,
     );
-
     expect(identical(resolved, painted), isTrue);
     expect(resolver.hasApprovedAsset('drawer-organizer:white'), isFalse);
   });
@@ -28,7 +26,6 @@ void main() {
   test('MEDIA-002/003/004 production registry owns all five stable paths', () {
     const WalkaProductMediaResolver resolver =
         WalkaProductMediaResolver.production();
-
     expect(WalkaProductMediaResolver.productionAssets.keys, <String>[
       'drawer-organizer:white',
       'drawer-organizer:gray',
@@ -47,11 +44,12 @@ void main() {
     );
     for (final String variantId
         in WalkaProductMediaResolver.productionAssets.keys) {
-      expect(resolver.hasApprovedAsset(variantId), isTrue);
+      expect(resolver.hasRegisteredAsset(variantId), isTrue);
+      expect(resolver.hasApprovedAsset(variantId), isFalse);
     }
   });
 
-  test('MEDIA-004 resolves registered variant to asset-backed media', () {
+  test('MEDIA-004 injected registered variant resolves to asset-backed media', () {
     const WalkaProductMediaResolver resolver = WalkaProductMediaResolver(
       assetsByVariant: <String, WalkaProductMediaAsset>{
         'drawer-organizer:white': WalkaProductMediaAsset(
@@ -60,12 +58,10 @@ void main() {
         ),
       },
     );
-
     final WalkaProductMedia resolved = resolver.resolve(
       variantId: 'drawer-organizer:white',
       fallback: fallback(),
     );
-
     expect(resolved, isA<WalkaAssetProductMedia>());
     expect(resolver.hasApprovedAsset('drawer-organizer:white'), isTrue);
   });
@@ -83,20 +79,14 @@ void main() {
       (WidgetTester tester) async {
     await tester.pumpWidget(
       MaterialApp(
-        home: Scaffold(
-          body: WalkaProductMediaView(media: fallback()),
-        ),
+        home: Scaffold(body: WalkaProductMediaView(media: fallback())),
       ),
     );
-
     expect(find.byType(WalkaProductVisual), findsOneWidget);
-    expect(
-      find.bySemanticsLabel('WALKA Drawer Organizer White'),
-      findsOneWidget,
-    );
+    expect(find.bySemanticsLabel('WALKA Drawer Organizer White'), findsOneWidget);
   });
 
-  testWidgets('MEDIA-006 missing asset exposes fallback semantics',
+  testWidgets('MEDIA-006 missing injected asset exposes fallback semantics',
       (WidgetTester tester) async {
     const WalkaProductMediaResolver resolver = WalkaProductMediaResolver(
       assetsByVariant: <String, WalkaProductMediaAsset>{
@@ -110,14 +100,10 @@ void main() {
       variantId: 'drawer-organizer:white',
       fallback: fallback(),
     );
-
     await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(body: WalkaProductMediaView(media: media)),
-      ),
+      MaterialApp(home: Scaffold(body: WalkaProductMediaView(media: media))),
     );
     await tester.pumpAndSettle();
-
     expect(
       find.bySemanticsLabel(
         'WALKA Drawer Organizer White. Product visual fallback.',
@@ -126,7 +112,7 @@ void main() {
     );
   });
 
-  testWidgets('owner-visible resolved media loads the admitted product image',
+  testWidgets('owner-visible resolved media quarantines provisional product image',
       (WidgetTester tester) async {
     await tester.pumpWidget(
       const MaterialApp(
@@ -145,12 +131,9 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-
-    expect(
-      find.bySemanticsLabel('WALKA Drawer Organizer White'),
-      findsOneWidget,
-    );
-    expect(find.byType(Image), findsOneWidget);
+    expect(find.bySemanticsLabel('WALKA Drawer Organizer White'), findsOneWidget);
+    expect(find.byType(WalkaProductVisual), findsOneWidget);
+    expect(find.byType(Image), findsNothing);
     expect(tester.takeException(), isNull);
   });
 }
