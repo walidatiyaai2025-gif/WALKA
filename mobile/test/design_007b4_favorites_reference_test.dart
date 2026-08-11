@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:walka/design_system/walka_product_visual.dart';
 import 'package:walka/design_system/walka_theme.dart';
 import 'package:walka/features/favorites/favorites_state.dart';
 import 'package:walka/features/storefront/favorites_reference_v131.dart';
@@ -87,7 +88,8 @@ void main() {
         find.byKey(const ValueKey<String>('reference-favorite-gray')),
         findsOneWidget,
       );
-      expect(find.byType(Image), findsNWidgets(2));
+      expect(find.byType(WalkaProductVisual), findsNWidgets(2));
+      expect(find.byType(Image), findsNothing);
       expect(find.text('Lunch Boxes'), findsOneWidget);
       expect(find.text('Add to Cart'), findsNothing);
       expect(find.text('4.8'), findsNothing);
