@@ -18,30 +18,46 @@ Branch/PR APKs are engineering candidates only and never replace the stable root
 
 See `docs/DELIVERY_POLICY.md` for the full branch → PR → stable-main → verified-APK lifecycle.
 
-## Current scope — Phase 2
+## Current scope — Backend-first mobile control plane
 
-Phase 1 completed the premium Flutter UI/UX prototype. Phase 2 turns that approved experience into a functional storefront while keeping Amazon as the purchase destination.
+The current product direction is to make the Laravel Admin Dashboard the control plane for mobile content.
+
+**Any mobile-facing content, ordering, visibility, media assignment or safe presentation setting that can be changed without shipping a new app build should be controlled from the backend/dashboard and consumed dynamically by Flutter.**
 
 Current direction:
 
-- Flutter mobile app for Android and iOS.
-- Premium WALKA visual system and completed screen navigation.
+- Flutter mobile app for Android and iOS, plus the production web preview.
+- Premium WALKA visual system and released screen navigation.
+- Laravel backend and protected `/admin` dashboard.
+- Backend-controlled catalog presentation already connected to Flutter.
+- Expansion into Home, PDP, discovery, media, FAQ/support/legal content and safe remote presentation configuration.
+- Draft/preview/publish/revision/audit/rollback controls for mutable content.
+- Resilient last-known-good cache and bundled fallbacks in Flutter.
 - Functional outbound purchase handoff to official Amazon listings.
-- Customer state, search and remote catalog behavior delivered in small releases.
-- Laravel introduced behind versioned APIs and repository/service boundaries.
 - No in-app cart, checkout or payment flow; purchase completes on Amazon.
+- Protected Product Master facts, stable identity, security and executable behavior remain governed rather than freely editable.
 
 ## Repository layout
 
 - `Images/` — protected master visual references supplied by the brand owner.
 - `mobile/` — Flutter mobile application.
-- `backend/` — Laravel API application.
-- `docs/` — phase plans, delivery policy, release receipts and current development status.
+- `backend/` — Laravel API + Admin Dashboard application.
+- `docs/` — phase plans, CMS/control-plane plan, delivery policy, release receipts and current development status.
 - `Last verified APK/` — owner-facing stable Android APK and verification receipt.
 - `.github/workflows/` — Flutter/backend validation and build pipelines.
 
-## Release track
+## Current roadmap
 
-Released foundations now include the Flutter visual freeze, Laravel API foundation, resilient Flutter ↔ Laravel catalog integration and database-backed catalog persistence. Current product work continues in small independently validated slices while Amazon remains the purchase destination.
+The backend-first content program is defined in:
 
-See `docs/STATUS.md` for authoritative release receipts and `docs/UI_UX_PRIORITY_PLAN.md` for the current premium design queue.
+`docs/MOBILE_CONTENT_CONTROL_PLAN.md`
+
+The Admin Dashboard delivery strategy is defined in:
+
+`docs/ADMIN_DASHBOARD_PLAN.md`
+
+The program starts with CMS publication/version/rollback foundations, then expands product/PDP authoring, Home/discovery, media, information/support content, remote presentation configuration and governed Amazon destination management.
+
+Amazon remains the purchase destination throughout this program.
+
+See `docs/STATUS.md` for historical release receipts and `docs/UI_UX_PRIORITY_PLAN.md` for the premium design program.
