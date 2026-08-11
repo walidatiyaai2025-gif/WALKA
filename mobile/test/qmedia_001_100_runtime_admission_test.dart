@@ -15,51 +15,66 @@ void main() {
     semanticLabel: 'fallback',
   );
 
-  test('QMEDIA-001..020 current runtime-admission truth is fail closed', () {
+  test('QMEDIA-001..020 current runtime-admission truth stays fail closed', () {
     expect(WalkaProductMediaAdmissionRegistry.entries, hasLength(5));
-    expect(WalkaProductMediaAdmissionRegistry.admittedCount, 0);
-    expect(WalkaProductMediaAdmissionRegistry.pendingCount, 4);
+    expect(WalkaProductMediaAdmissionRegistry.admittedCount, 1);
+    expect(WalkaProductMediaAdmissionRegistry.pendingCount, 3);
     expect(WalkaProductMediaAdmissionRegistry.blockedCount, 1);
+    expect(
+      WalkaProductMediaAdmissionRegistry.entries['drawer-organizer:white']!.state,
+      WalkaProductMediaAdmissionState.admitted,
+    );
+    expect(
+      WalkaProductMediaAdmissionRegistry
+          .entries['drawer-organizer:white']!.canonicalExportPresent,
+      isTrue,
+    );
     expect(
       WalkaProductMediaAdmissionRegistry.entries['drawer-organizer:gray']!.state,
       WalkaProductMediaAdmissionState.blocked,
     );
-    expect(
-      WalkaProductMediaAdmissionRegistry.entries.values
-          .every((WalkaProductMediaAdmissionEntry item) =>
-              item.canonicalExportPresent == false),
-      isTrue,
-    );
   });
 
-  test('QMEDIA-021..040 production paths stay registered but decode-quarantined', () {
+  test('QMEDIA-021..040 production paths admit only evidence-backed White', () {
     const WalkaProductMediaResolver resolver =
         WalkaProductMediaResolver.production();
-    expect(resolver.releasedVariantIds, WalkaProductMediaResolver.productionVariantIds);
+    expect(resolver.releasedVariantIds,
+        WalkaProductMediaResolver.productionVariantIds);
     expect(resolver.releasedAssets, hasLength(5));
-    expect(resolver.admittedAssets, isEmpty);
+    expect(resolver.admittedAssets, hasLength(1));
+    expect(resolver.admittedAssets.single.variantId, 'drawer-organizer:white');
 
     for (final String id in WalkaProductMediaResolver.productionVariantIds) {
+      final bool expectedAdmitted = id == 'drawer-organizer:white';
       expect(resolver.hasRegisteredAsset(id), isTrue, reason: id);
-      expect(resolver.hasAdmittedAsset(id), isFalse, reason: id);
+      expect(resolver.hasAdmittedAsset(id), expectedAdmitted, reason: id);
       expect(resolver.hasApprovedAsset(id), isTrue, reason: id);
       final WalkaProductMedia resolved =
           resolver.resolveForSurface(variantId: id, fallback: fallback);
       expect(resolved, isA<WalkaAssetProductMedia>(), reason: id);
-      expect((resolved as WalkaAssetProductMedia).runtimeAdmitted, isFalse,
-          reason: id);
+      expect(
+        (resolved as WalkaAssetProductMedia).runtimeAdmitted,
+        expectedAdmitted,
+        reason: id,
+      );
     }
   });
 
-  test('QMEDIA-029/030 bundled PNG presence never equals runtime admission', () {
+  test('QMEDIA-029/030 binary presence never bypasses runtime admission', () {
     for (final WalkaProductMediaAdmissionEntry entry
         in WalkaProductMediaAdmissionRegistry.entries.values) {
-      expect(File(entry.canonicalPath).existsSync(), isTrue, reason: entry.variantId);
-      expect(entry.eligibleForRuntime, isFalse, reason: entry.variantId);
+      expect(File(entry.canonicalPath).existsSync(), isTrue,
+          reason: entry.variantId);
+      expect(
+        entry.eligibleForRuntime,
+        entry.variantId == 'drawer-organizer:white',
+        reason: entry.variantId,
+      );
     }
   });
 
-  test('QMEDIA-024/035..040 injected resolver preserves preview/test compatibility', () {
+  test('QMEDIA-024/035..040 injected resolver preserves preview/test compatibility',
+      () {
     const WalkaProductMediaResolver resolver = WalkaProductMediaResolver(
       assetsByVariant: <String, WalkaProductMediaAsset>{
         'preview:test': WalkaProductMediaAsset(
@@ -86,7 +101,7 @@ void main() {
     expect(media.filterQuality, FilterQuality.high);
   });
 
-  testWidgets('QMEDIA-031..040 production wrapper renders fallback without Image decode',
+  testWidgets('QMEDIA-031..040 admitted White renders asset instead of fallback',
       (WidgetTester tester) async {
     const WalkaProductMediaResolver resolver =
         WalkaProductMediaResolver.production();
@@ -97,11 +112,11 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(home: Scaffold(body: WalkaProductMediaView(media: media))),
     );
-    expect(find.byType(WalkaProductVisual), findsOneWidget);
-    expect(find.byType(Image), findsNothing);
+    expect(find.byType(Image), findsOneWidget);
+    expect(find.byType(WalkaProductVisual), findsNothing);
   });
 
-  testWidgets('QMEDIA-041..050 production prefetch skips every quarantined binary',
+  testWidgets('QMEDIA-041..050 prefetch admits White and skips quarantined media',
       (WidgetTester tester) async {
     const Key hostKey = ValueKey<String>('qmedia-host');
     await tester.pumpWidget(
@@ -122,16 +137,18 @@ void main() {
     );
 
     expect(results, hasLength(5));
-    expect(results.every((WalkaProductMediaPrefetchResult item) => item.skipped),
-        isTrue);
-    expect(results.every((WalkaProductMediaPrefetchResult item) =>
-        item.assetPath != null && item.skipReason != null), isTrue);
+    expect(results.first.variantId, 'drawer-organizer:white');
+    expect(results.first.prefetched, isTrue);
+    expect(results.first.assetPath, 'assets/products/drawer/white.png');
+    expect(results.skip(1).every(
+      (WalkaProductMediaPrefetchResult item) =>
+          item.skipped && item.assetPath != null && item.skipReason != null,
+    ), isTrue);
     expect(results.map((WalkaProductMediaPrefetchResult item) => item.variantId),
         WalkaProductMediaResolver.productionVariantIds);
   });
 
-  test('QMEDIA-051..070 consistency CLI detects five present quarantined binaries',
-      () async {
+  test('QMEDIA-051..070 consistency CLI detects one admitted binary', () async {
     final Directory temp = await Directory.systemTemp.createTemp('walka-qmedia-');
     addTearDown(() => temp.delete(recursive: true));
     final String reportPath = '${temp.path}/runtime-admission.json';
@@ -149,12 +166,12 @@ void main() {
         jsonDecode(await File(reportPath).readAsString()) as Map<String, dynamic>;
     expect(report['consistent'], isTrue);
     expect(report['registeredCount'], 5);
-    expect(report['admittedCount'], 0);
-    expect(report['pendingCount'], 4);
+    expect(report['admittedCount'], 1);
+    expect(report['pendingCount'], 3);
     expect(report['blockedCount'], 1);
     expect(report['binaryPresentCount'], 5);
-    expect(report['presentButQuarantinedCount'], 5);
-    expect(report['admittedBinaryPresentCount'], 0);
+    expect(report['presentButQuarantinedCount'], 4);
+    expect(report['admittedBinaryPresentCount'], 1);
     expect(report['issues'], isEmpty);
   });
 
