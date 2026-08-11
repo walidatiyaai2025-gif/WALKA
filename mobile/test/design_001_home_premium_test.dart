@@ -58,7 +58,7 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('Everything in Its Place'), findsOneWidget);
-    expect(find.byType(Image), findsWidgets);
+    expect(find.byType(WalkaProductVisual), findsWidgets);
     expect(tester.takeException(), isNull);
   });
 
