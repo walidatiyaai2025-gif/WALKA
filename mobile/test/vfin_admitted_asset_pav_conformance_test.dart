@@ -3,7 +3,7 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 
-import '../tool/src/pav_png_inspector.dart';
+import '../tool/src/png_asset_inspector.dart';
 
 List<Map<String, dynamic>> _rows() {
   final Map<String, dynamic> root = jsonDecode(
