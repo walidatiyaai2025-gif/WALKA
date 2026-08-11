@@ -462,13 +462,22 @@ class WalkaProductMediaResolver {
       AssetImage(asset.assetPath),
     );
 
+    Object? loadError;
     try {
-      await precacheImage(provider, context);
+      await precacheImage(
+        provider,
+        context,
+        onError: (Object error, StackTrace? stackTrace) {
+          loadError = error;
+        },
+      );
       return WalkaProductMediaPrefetchResult(
         variantId: variantId,
         assetPath: asset.assetPath,
         surface: surface,
-        state: WalkaProductMediaPrefetchState.prefetched,
+        state: loadError == null
+            ? WalkaProductMediaPrefetchState.prefetched
+            : WalkaProductMediaPrefetchState.failed,
       );
     } catch (_) {
       return WalkaProductMediaPrefetchResult(
