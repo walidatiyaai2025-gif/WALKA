@@ -1,0 +1,53 @@
+name: Diagnose cPanel API
+
+on:
+  push:
+    branches:
+      - production
+    paths:
+      - '.github/workflows/diagnose-cpanel-api.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Probe cPanel UAPI hosts
+        shell: bash
+        env:
+          CPANEL_API_TOKEN: ${{ secrets.CPANEL_API_TOKEN }}
+          CPANEL_USER: solscool
+        run: |
+          set -euo pipefail
+          [[ -n "${CPANEL_API_TOKEN:-}" ]] || { echo 'Missing CPANEL_API_TOKEN' >&2; exit 1; }
+
+          for host in 50sols.com server11.hhost.host; do
+            echo "--- ${host}:2083 ---"
+            headers="$(mktemp)"
+            body="$(mktemp)"
+            status="$(curl --silent --show-error \
+              --connect-timeout 15 \
+              --max-time 30 \
+              --header "Authorization: cpanel ${CPANEL_USER}:${CPANEL_API_TOKEN}" \
+              --get \
+              --data-urlencode 'dir=public_html/mobile.walkastore.com' \
+              --data-urlencode 'show_hidden=1' \
+              --dump-header "$headers" \
+              --output "$body" \
+              --write-out '%{http_code}' \
+              "https://${host}:2083/execute/Fileman/list_files" || true)"
+
+            echo "HTTP ${status}"
+            grep -i '^content-type:' "$headers" | tail -1 | tr -d '\r' || true
+            if jq -e . "$body" >/dev/null 2>&1; then
+              jq -c '{module,func,result:{status:.result.status,errors:.result.errors,messages:.result.messages}}' "$body"
+            else
+              echo 'Non-JSON response prefix:'
+              head -c 240 "$body" | tr '\n' ' '
+              echo
+            fi
+          done
