@@ -139,7 +139,9 @@ class WalkaProductMediaAsset {
   }
 }
 
-/// Asset-backed product media used only after runtime admission.
+/// Asset-backed media contract. Registered production assets remain represented
+/// by this type for API compatibility, while [runtimeAdmitted] determines
+/// whether the underlying PNG may actually be decoded and displayed.
 class WalkaAssetProductMedia implements WalkaProductMedia {
   const WalkaAssetProductMedia({
     required this.asset,
@@ -149,6 +151,7 @@ class WalkaAssetProductMedia implements WalkaProductMedia {
     this.fit = BoxFit.contain,
     this.alignment = Alignment.center,
     this.onLoadEvent,
+    this.runtimeAdmitted = true,
   });
 
   final WalkaProductMediaAsset asset;
@@ -157,6 +160,7 @@ class WalkaAssetProductMedia implements WalkaProductMedia {
   final BoxFit fit;
   final AlignmentGeometry alignment;
   final WalkaProductMediaLoadCallback? onLoadEvent;
+  final bool runtimeAdmitted;
 
   @override
   final String semanticLabel;
@@ -167,6 +171,7 @@ class WalkaAssetProductMedia implements WalkaProductMedia {
 
   @override
   Widget build(BuildContext context) {
+    if (!runtimeAdmitted) return fallback.build(context);
     return _WalkaAssetProductMediaImage(
       asset: asset,
       fallback: fallback,
@@ -409,8 +414,9 @@ class WalkaProductMediaResolver {
     return asset != null && _isAssetEligible(asset);
   }
 
-  /// Compatibility name retained with corrected admission semantics.
-  bool hasApprovedAsset(String variantId) => hasAdmittedAsset(variantId);
+  /// Legacy compatibility API. Historically "approved" meant registered in
+  /// the stable naming table. Use [hasAdmittedAsset] for production eligibility.
+  bool hasApprovedAsset(String variantId) => hasRegisteredAsset(variantId);
 
   String? quarantineReasonFor(String variantId) {
     if (!enforceRuntimeAdmission) return null;
@@ -459,8 +465,9 @@ class WalkaProductMediaResolver {
     WalkaProductMediaLoadCallback? onLoadEvent,
   }) {
     final WalkaProductMediaAsset? asset = assetsByVariant[variantId];
-    if (asset == null || !_isAssetEligible(asset)) return fallback;
+    if (asset == null) return fallback;
 
+    final bool admitted = _isAssetEligible(asset);
     final WalkaProductMediaAsset effectiveAsset = asset.withCacheWidth(
       WalkaProductMediaDecodeBudget.forSurface(surface),
     );
@@ -473,6 +480,7 @@ class WalkaProductMediaResolver {
       fit: fit,
       alignment: alignment,
       onLoadEvent: onLoadEvent,
+      runtimeAdmitted: admitted,
     );
   }
 
