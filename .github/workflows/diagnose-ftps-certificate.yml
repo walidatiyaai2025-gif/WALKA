@@ -1,0 +1,51 @@
+name: Diagnose FTPS Certificate
+
+on:
+  push:
+    branches:
+      - production
+    paths:
+      - '.github/workflows/diagnose-ftps-certificate.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  inspect-certificate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Inspect explicit FTPS certificate
+        shell: bash
+        env:
+          FTP_HOST: ftp.50sols.com
+          FTP_PORT: '21'
+        run: |
+          set -euo pipefail
+          cert_file="$(mktemp)"
+          log_file="$(mktemp)"
+
+          timeout 25 openssl s_client \
+            -starttls ftp \
+            -connect "${FTP_HOST}:${FTP_PORT}" \
+            -servername "${FTP_HOST}" \
+            -showcerts \
+            </dev/null >"${log_file}" 2>&1 || true
+
+          awk '/-----BEGIN CERTIFICATE-----/{capture=1} capture{print} /-----END CERTIFICATE-----/{exit}' \
+            "${log_file}" >"${cert_file}"
+
+          if [[ ! -s "${cert_file}" ]]; then
+            echo 'Unable to capture an FTPS certificate.' >&2
+            cat "${log_file}" >&2
+            exit 1
+          fi
+
+          echo 'FTPS certificate identity:'
+          openssl x509 -in "${cert_file}" -noout \
+            -subject \
+            -issuer \
+            -dates \
+            -fingerprint -sha256 \
+            -ext subjectAltName
