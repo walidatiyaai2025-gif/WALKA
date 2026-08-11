@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../catalog/catalog_state.dart';
+import '../catalog/domain/walka_catalog.dart';
 import '../commerce/amazon_purchase.dart';
 import '../favorites/favorites_state.dart';
 import '../lunch/lunch_box_v6.dart';
@@ -11,6 +13,27 @@ import 'presentation/widgets/walka_pdp_body.dart';
 import 'presentation/widgets/walka_pdp_fullscreen_gallery.dart';
 import 'presentation/widgets/walka_pdp_gallery.dart';
 import 'presentation/widgets/walka_pdp_variant_selector.dart';
+
+String _liveCatalogFeatureCopy(
+  BuildContext context, {
+  required String productId,
+  required String fallback,
+}) {
+  final WalkaCatalogSnapshot snapshot = WalkaCatalogScope.of(context).snapshot;
+  final WalkaCatalogProduct? product = snapshot.products
+      .where((WalkaCatalogProduct item) => item.id == productId)
+      .cast<WalkaCatalogProduct?>()
+      .firstOrNull;
+
+  if (product == null) return fallback;
+
+  final List<String> features = product.features
+      .map((String value) => value.trim())
+      .where((String value) => value.isNotEmpty)
+      .toList(growable: false);
+
+  return features.isEmpty ? fallback : features.join(' · ');
+}
 
 class WalkaDrawerProductDetailV112 extends StatefulWidget {
   const WalkaDrawerProductDetailV112({super.key, this.initialGray = false});
@@ -73,6 +96,12 @@ class _WalkaDrawerProductDetailV112State
     final WalkaFavoritesController favorites = WalkaFavoritesScope.of(context);
     final bool isFavorite = favorites.isDrawerFavorite(gray: _gray);
     final WalkaPdpPresentationModel model = _model;
+    final String liveFeatureCopy = _liveCatalogFeatureCopy(
+      context,
+      productId: 'drawer-organizer',
+      fallback:
+          'An expandable eight-compartment layout gives everyday utensils a defined place while keeping the visual language clean and minimal.',
+    );
 
     return Scaffold(
       backgroundColor: const Color(0xFFFFFEFC),
@@ -116,9 +145,8 @@ class _WalkaDrawerProductDetailV112State
           ],
           onChanged: (bool gray) => setState(() => _gray = gray),
         ),
-        editorialTitle: 'Organize the drawer. Keep the counter calm.',
-        editorialBody:
-            'An expandable eight-compartment layout gives everyday utensils a defined place while keeping the visual language clean and minimal.',
+        editorialTitle: 'Product highlights',
+        editorialBody: liveFeatureCopy,
       ),
     );
   }
@@ -185,6 +213,13 @@ class _WalkaLunchProductDetailV112State
   @override
   Widget build(BuildContext context) {
     final WalkaPdpPresentationModel model = _model;
+    final String liveFeatureCopy = _liveCatalogFeatureCopy(
+      context,
+      productId: 'stainless-steel-bento-lunch-box',
+      fallback:
+          'The food-grade stainless tray, PP outer box, sauce cup, utensils and carry bag form one coordinated adult lunch set.',
+    );
+
     return Scaffold(
       backgroundColor: const Color(0xFFFFFEFC),
       appBar: WalkaPdpAppBar(
@@ -224,9 +259,8 @@ class _WalkaLunchProductDetailV112State
           onChanged: (WalkaLunchVariant variant) =>
               setState(() => _variant = variant),
         ),
-        editorialTitle: 'A complete lunch system for the workday.',
-        editorialBody:
-            'The food-grade stainless tray, PP outer box, sauce cup, utensils and carry bag form one coordinated adult lunch set.',
+        editorialTitle: 'Product highlights',
+        editorialBody: liveFeatureCopy,
       ),
     );
   }
