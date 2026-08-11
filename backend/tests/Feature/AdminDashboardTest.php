@@ -14,6 +14,7 @@ final class AdminDashboardTest extends TestCase
     use RefreshDatabase;
 
     private const USERNAME = 'admin';
+
     private const PASSWORD = 'Walka-Admin-Test-Password-2026';
 
     protected function setUp(): void
