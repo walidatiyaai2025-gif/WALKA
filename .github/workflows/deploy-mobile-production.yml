@@ -1,0 +1,166 @@
+name: Deploy Mobile Web Production
+
+on:
+  push:
+    branches:
+      - production
+    paths:
+      - 'mobile/**'
+      - 'docs/ui/PRODUCTION_SOURCE_ADMISSION.json'
+      - '.github/workflows/deploy-mobile-production.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: walka-mobile-web-production
+  cancel-in-progress: false
+
+env:
+  FTP_HOST: ftp.50sols.com
+  FTP_PORT: '21'
+  FTP_USER: mobile@walkastore.com
+  SITE_URL: https://mobile.walkastore.com
+
+jobs:
+  validate-build-deploy:
+    name: Validate, build and deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+
+    steps:
+      - name: Checkout production
+        uses: actions/checkout@v5
+
+      - name: Setup Flutter stable
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Generate web runner
+        working-directory: mobile
+        run: flutter create --platforms=web --project-name walka .
+
+      - name: Get packages
+        working-directory: mobile
+        run: flutter pub get
+
+      - name: Analyze
+        working-directory: mobile
+        run: flutter analyze
+
+      - name: Test
+        working-directory: mobile
+        run: flutter test
+
+      - name: Enforce production product assets
+        working-directory: mobile
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash tool/verify_production_assets.sh \
+            --enforce \
+            --root . \
+            --manifest ../docs/ui/PRODUCTION_SOURCE_ADMISSION.json \
+            --json production-asset-readiness-production.json
+
+      - name: Build Flutter web release
+        working-directory: mobile
+        shell: bash
+        env:
+          WALKA_API_BASE_URL: ${{ vars.WALKA_API_BASE_URL }}
+        run: |
+          set -euo pipefail
+          if [[ -n "${WALKA_API_BASE_URL:-}" ]]; then
+            echo 'Building production web with configured WALKA API base URL.'
+            flutter build web --release \
+              --dart-define="WALKA_API_BASE_URL=${WALKA_API_BASE_URL}"
+          else
+            echo 'WALKA_API_BASE_URL repository variable is not set; building with bundled catalog fallback.'
+            flutter build web --release
+          fi
+
+      - name: Add Apache SPA routing
+        shell: bash
+        run: |
+          cat > mobile/build/web/.htaccess <<'HTACCESS'
+          <IfModule mod_rewrite.c>
+            RewriteEngine On
+            RewriteBase /
+            RewriteCond %{REQUEST_FILENAME} !-f
+            RewriteCond %{REQUEST_FILENAME} !-d
+            RewriteRule ^ index.html [L]
+          </IfModule>
+          HTACCESS
+
+      - name: Upload production web artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: walka-mobile-web-production-${{ github.sha }}
+          path: mobile/build/web
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Verify FTPS secret is configured
+        shell: bash
+        env:
+          FTP_PASSWORD: ${{ secrets.CPANEL_FTP_PASSWORD }}
+        run: |
+          set -euo pipefail
+          if [[ -z "${FTP_PASSWORD:-}" ]]; then
+            echo 'Missing repository secret: CPANEL_FTP_PASSWORD' >&2
+            echo 'Add it under Settings > Secrets and variables > Actions, then re-run this workflow.' >&2
+            exit 1
+          fi
+
+      - name: Install FTPS client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends lftp
+
+      - name: Deploy build to cPanel by explicit FTPS
+        shell: bash
+        env:
+          FTP_PASSWORD: ${{ secrets.CPANEL_FTP_PASSWORD }}
+        run: |
+          set -euo pipefail
+
+          lftp \
+            -u "$FTP_USER","$FTP_PASSWORD" \
+            -p "$FTP_PORT" \
+            "$FTP_HOST" \
+            -e "
+              set cmd:fail-exit yes;
+              set ftp:ssl-force true;
+              set ftp:ssl-protect-data true;
+              set ssl:verify-certificate yes;
+              set net:max-retries 2;
+              set net:timeout 20;
+              mirror --reverse --delete --verbose --parallel=4 \
+                --exclude-glob '.well-known' \
+                --exclude-glob '.well-known/**' \
+                --exclude-glob 'cgi-bin' \
+                --exclude-glob 'cgi-bin/**' \
+                mobile/build/web/ /;
+              bye;
+            "
+
+      - name: Production smoke test
+        shell: bash
+        run: |
+          set -euo pipefail
+          for attempt in 1 2 3 4 5; do
+            if curl --fail --silent --show-error --location \
+              --max-time 20 \
+              "$SITE_URL/" \
+              --output /tmp/walka-mobile-home.html; then
+              grep -qi '<html' /tmp/walka-mobile-home.html
+              echo "Production smoke test passed on attempt $attempt."
+              exit 0
+            fi
+            sleep 5
+          done
+          echo 'Production smoke test failed after deployment.' >&2
+          exit 1
