@@ -1,0 +1,50 @@
+name: Diagnose FTPS Session
+
+on:
+  push:
+    branches:
+      - production
+    paths:
+      - '.github/workflows/diagnose-ftps-session.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose-session:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Install lftp
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends lftp
+
+      - name: Test FTPS login and directory listing
+        shell: bash
+        env:
+          FTP_HOST: server11.hhost.host
+          FTP_PORT: '21'
+          FTP_USER: mobile@walkastore.com
+          FTP_PASSWORD: ${{ secrets.CPANEL_FTP_PASSWORD }}
+        run: |
+          set -euo pipefail
+          [[ -n "${FTP_PASSWORD:-}" ]] || { echo 'Missing CPANEL_FTP_PASSWORD' >&2; exit 1; }
+
+          lftp -d \
+            -u "$FTP_USER","$FTP_PASSWORD" \
+            -p "$FTP_PORT" \
+            "$FTP_HOST" \
+            -e "
+              set cmd:fail-exit yes;
+              set ftp:ssl-force true;
+              set ftp:ssl-protect-data true;
+              set ssl:verify-certificate yes;
+              set ftp:passive-mode true;
+              set net:max-retries 1;
+              set net:timeout 15;
+              pwd;
+              cls -la;
+              bye;
+            "
