@@ -20,10 +20,13 @@ String _liveCatalogFeatureCopy(
   required String fallback,
 }) {
   final WalkaCatalogSnapshot snapshot = WalkaCatalogScope.of(context).snapshot;
-  final WalkaCatalogProduct? product = snapshot.products
-      .where((WalkaCatalogProduct item) => item.id == productId)
-      .cast<WalkaCatalogProduct?>()
-      .firstOrNull;
+  WalkaCatalogProduct? product;
+  for (final WalkaCatalogProduct item in snapshot.products) {
+    if (item.id == productId) {
+      product = item;
+      break;
+    }
+  }
 
   if (product == null) return fallback;
 
