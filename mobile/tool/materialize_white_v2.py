@@ -1,31 +1,58 @@
 #!/usr/bin/env python3
 """Materialize the approved Drawer White canonical PNG from the exact source.
 
-This is intentionally fail-closed. The input bytes must match the owner-connected
-approved source fingerprint and the generated PNG must match the locally verified
-candidate fingerprint before it can be committed.
+Fail closed: input bytes must match the owner-connected approved source and the
+output must match deterministic geometry, alpha, PNG structure, bytes and SHA.
+No recolor, hidden-geometry reconstruction, or protected Images/ input is used.
 """
 from __future__ import annotations
 
 import argparse
 import hashlib
+import io
 from pathlib import Path
+import struct
+import zlib
 
 import cv2
 import numpy as np
-from PIL import Image, ImageCms
+from PIL import Image
 
 SOURCE_SHA256 = "89d7b586c45bd6121537db479139449eb3b8f637c9396d83790d4fd0e03263c2"
-OUTPUT_SHA256 = "56a02d82f8fb54b561be9c8c9b8d3f0b6ac4d1e8b4825fd093f05df2951bc09a"
-OUTPUT_BYTES = 189711
+OUTPUT_SHA256 = "b2c6967b6ccb3283a90e26337f90fe15f2f707dbcf20531d760fb656c06d234f"
+OUTPUT_BYTES = 189339
 CANVAS = 1024
 VISIBLE_WIDTH = 922
 BACKGROUND_DISTANCE_THRESHOLD = 18.0
 EXPECTED_BBOX = (51, 184, 973, 840)  # PIL exclusive right/bottom.
 
 
+def sha256_bytes(data: bytes) -> str:
+    return hashlib.sha256(data).hexdigest()
+
+
 def sha256(path: Path) -> str:
-    return hashlib.sha256(path.read_bytes()).hexdigest()
+    return sha256_bytes(path.read_bytes())
+
+
+def _insert_srgb_chunk(png_bytes: bytes) -> bytes:
+    signature = b"\x89PNG\r\n\x1a\n"
+    if not png_bytes.startswith(signature):
+        raise SystemExit("generated payload is not PNG")
+    ihdr_length = struct.unpack(">I", png_bytes[8:12])[0]
+    if png_bytes[12:16] != b"IHDR" or ihdr_length != 13:
+        raise SystemExit("generated PNG has invalid IHDR")
+    ihdr_end = 8 + 12 + ihdr_length
+    chunk_type = b"sRGB"
+    chunk_data = b"\x00"  # perceptual rendering intent.
+    crc = zlib.crc32(chunk_type + chunk_data) & 0xFFFFFFFF
+    srgb_chunk = (
+        struct.pack(">I", len(chunk_data))
+        + chunk_type
+        + chunk_data
+        + struct.pack(">I", crc)
+    )
+    return png_bytes[:ihdr_end] + srgb_chunk + png_bytes[ihdr_end:]
 
 
 def materialize(source_path: Path, output_path: Path) -> None:
@@ -85,12 +112,19 @@ def materialize(source_path: Path, output_path: Path) -> None:
             f"alpha bounding box changed: {canvas.getchannel('A').getbbox()}"
         )
 
-    profile = ImageCms.ImageCmsProfile(ImageCms.createProfile("sRGB")).tobytes()
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    canvas.save(output_path, "PNG", icc_profile=profile, optimize=True)
+    # Re-wrap pixel bytes into a fresh image so no dynamic ICC metadata survives.
+    # PAV explicitly accepts a standards-compliant sRGB PNG chunk, which is then
+    # inserted with deterministic bytes and CRC.
+    clean = Image.fromarray(np.array(canvas), "RGBA")
+    buffer = io.BytesIO()
+    clean.save(buffer, "PNG", optimize=True)
+    output_bytes = _insert_srgb_chunk(buffer.getvalue())
 
-    generated_hash = sha256(output_path)
-    generated_bytes = output_path.stat().st_size
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_bytes(output_bytes)
+
+    generated_hash = sha256_bytes(output_bytes)
+    generated_bytes = len(output_bytes)
     if generated_hash != OUTPUT_SHA256 or generated_bytes != OUTPUT_BYTES:
         raise SystemExit(
             "deterministic output mismatch: "
@@ -103,6 +137,7 @@ def materialize(source_path: Path, output_path: Path) -> None:
     print(f"output_bytes={generated_bytes}")
     print(f"alpha_bbox={EXPECTED_BBOX}")
     print("safe_margins=51,51,184,184")
+    print("color_profile=sRGB chunk")
 
 
 def main() -> None:
