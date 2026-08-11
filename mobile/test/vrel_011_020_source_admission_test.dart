@@ -23,9 +23,10 @@ void main() {
       admission['allowedSourceStates'],
       equals(<dynamic>['APPROVED', 'BLOCKED', 'REPLACE']),
     );
-    final Set<String> allowed = (admission['allowedSourceStates'] as List<dynamic>)
-        .cast<String>()
-        .toSet();
+    final Set<String> allowed =
+        (admission['allowedSourceStates'] as List<dynamic>)
+            .cast<String>()
+            .toSet();
     for (final dynamic row in variants) {
       expect(allowed, contains(row['sourceState']));
       expect((row['reason'] as String).trim(), isNotEmpty);
@@ -46,7 +47,8 @@ void main() {
     );
   });
 
-  test('protected Images references are never declared as runtime product sources', () {
+  test('protected Images references are never declared as runtime product sources',
+      () {
     for (final dynamic row in variants) {
       final String source = row['sourceFilename'] as String;
       final String target = row['canonicalPath'] as String;
@@ -56,14 +58,15 @@ void main() {
     }
   });
 
-  test('source admission IDs and canonical paths agree with production resolver', () {
+  test('source admission IDs and canonical paths agree with production resolver',
+      () {
     for (final dynamic row in variants) {
       expect(resolverSource, contains("'${row['variantId']}'"));
       expect(resolverSource, contains("'${row['canonicalPath']}'"));
     }
   });
 
-  test('Gray stays blocked while the other admitted primary sources stay approved', () {
+  test('Gray stays blocked while the other primary sources stay approved', () {
     final Map<String, dynamic> byId = <String, dynamic>{
       for (final dynamic row in variants) row['variantId'] as String: row,
     };
@@ -74,9 +77,18 @@ void main() {
     expect(byId['lunch-box:green']['sourceState'], 'APPROVED');
   });
 
-  test('admitted source never pretends the canonical export already exists', () {
-    for (final dynamic row in variants) {
-      expect(row['canonicalExportPresent'], isFalse);
+  test('only Drawer White confirms a canonical export at this stage', () {
+    final Map<String, dynamic> byId = <String, dynamic>{
+      for (final dynamic row in variants) row['variantId'] as String: row,
+    };
+    expect(byId['drawer-organizer:white']['canonicalExportPresent'], isTrue);
+    for (final String id in <String>[
+      'drawer-organizer:gray',
+      'lunch-box:blue',
+      'lunch-box:pink',
+      'lunch-box:green',
+    ]) {
+      expect(byId[id]['canonicalExportPresent'], isFalse, reason: id);
     }
   });
 }
