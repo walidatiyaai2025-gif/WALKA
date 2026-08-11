@@ -2,7 +2,6 @@
 
 namespace Tests\Feature\Api\V1;
 
-use App\Models\ContentEntry;
 use App\Services\ContentRevisionService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
