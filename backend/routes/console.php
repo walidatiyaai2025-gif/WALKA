@@ -4,7 +4,6 @@ use App\Models\Product;
 use App\Models\ProductVariant;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
-use Throwable;
 
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
@@ -64,7 +63,7 @@ Artisan::command('walka:production-check', function () {
         $variants = ProductVariant::query()->count();
         $check('Catalog products seeded', $products > 0, "products={$products}");
         $check('Catalog variants seeded', $variants > 0, "variants={$variants}");
-    } catch (Throwable $error) {
+    } catch (\Throwable $error) {
         $check('Database/catalog readiness', false, $error->getMessage());
     }
 
