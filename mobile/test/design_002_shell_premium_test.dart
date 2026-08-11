@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:walka/design_system/walka_adaptive.dart';
 import 'package:walka/design_system/walka_shell.dart';
 import 'package:walka/design_system/walka_theme.dart';
 import 'package:walka/features/storefront/storefront_v102.dart';
@@ -70,6 +71,43 @@ void main() {
       tester.widget<NavigationBar>(find.byType(NavigationBar)).selectedIndex,
       1,
     );
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('adaptive navigation frame does not cover scaffold body',
+      (WidgetTester tester) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildWalkaTheme(),
+        home: Scaffold(
+          body: const SizedBox.expand(
+            key: ValueKey<String>('visible-shell-body'),
+            child: ColoredBox(color: Colors.red),
+          ),
+          bottomNavigationBar: WalkaAdaptiveNavigationFrame(
+            child: WalkaPremiumNavigationBar(
+              selectedIndex: 0,
+              onDestinationSelected: (_) {},
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    final Size frameSize = tester.getSize(
+      find.byType(WalkaAdaptiveNavigationFrame),
+    );
+    final Size bodySize = tester.getSize(
+      find.byKey(const ValueKey<String>('visible-shell-body')),
+    );
+    expect(frameSize.height, 72);
+    expect(bodySize.height, 772);
     expect(tester.takeException(), isNull);
   });
 
