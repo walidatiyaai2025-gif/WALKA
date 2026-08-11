@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\AdminContentController;
 use App\Http\Controllers\Admin\AdminDashboardController;
+use App\Http\Controllers\Admin\AdminHomeHeroController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -28,6 +29,16 @@ Route::prefix('admin')
 
             Route::get('/content', [AdminContentController::class, 'index'])->name('content.index');
             Route::post('/content', [AdminContentController::class, 'store'])->name('content.store');
+
+            Route::get('/content/home/hero', [AdminHomeHeroController::class, 'edit'])
+                ->name('content.home.hero.edit');
+            Route::patch('/content/home/hero', [AdminHomeHeroController::class, 'update'])
+                ->name('content.home.hero.update');
+            Route::post('/content/home/hero/publish', [AdminHomeHeroController::class, 'publish'])
+                ->name('content.home.hero.publish');
+            Route::post('/content/home/hero/restore', [AdminHomeHeroController::class, 'restore'])
+                ->name('content.home.hero.restore');
+
             Route::get('/content/{content}', [AdminContentController::class, 'show'])->name('content.show');
             Route::patch('/content/{content}/draft', [AdminContentController::class, 'updateDraft'])
                 ->name('content.draft.update');
