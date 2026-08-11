@@ -100,7 +100,7 @@ Uint8List buildPavPng({
     height: height,
     filter: filter,
   );
-  final List<int> compressed = const ZLibEncoder().convert(filtered);
+  final List<int> compressed = ZLibEncoder().convert(filtered);
 
   final BytesBuilder output = BytesBuilder(copy: false)..add(pavPngSignature);
   output.add(_chunk('IHDR', ihdr));
