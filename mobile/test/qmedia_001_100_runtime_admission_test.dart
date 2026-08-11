@@ -32,7 +32,7 @@ void main() {
     );
   });
 
-  test('QMEDIA-021..040 production paths stay registered but quarantined', () {
+  test('QMEDIA-021..040 production paths stay registered but decode-quarantined', () {
     const WalkaProductMediaResolver resolver =
         WalkaProductMediaResolver.production();
     expect(resolver.releasedVariantIds, WalkaProductMediaResolver.productionVariantIds);
@@ -42,15 +42,12 @@ void main() {
     for (final String id in WalkaProductMediaResolver.productionVariantIds) {
       expect(resolver.hasRegisteredAsset(id), isTrue, reason: id);
       expect(resolver.hasAdmittedAsset(id), isFalse, reason: id);
-      expect(resolver.hasApprovedAsset(id), isFalse, reason: id);
-      expect(
-        identical(
-          resolver.resolveForSurface(variantId: id, fallback: fallback),
-          fallback,
-        ),
-        isTrue,
-        reason: id,
-      );
+      expect(resolver.hasApprovedAsset(id), isTrue, reason: id);
+      final WalkaProductMedia resolved =
+          resolver.resolveForSurface(variantId: id, fallback: fallback);
+      expect(resolved, isA<WalkaAssetProductMedia>(), reason: id);
+      expect((resolved as WalkaAssetProductMedia).runtimeAdmitted, isFalse,
+          reason: id);
     }
   });
 
@@ -82,10 +79,26 @@ void main() {
     );
     expect(resolved, isA<WalkaAssetProductMedia>());
     final WalkaAssetProductMedia media = resolved as WalkaAssetProductMedia;
+    expect(media.runtimeAdmitted, isTrue);
     expect(media.asset.cacheWidth, 1600);
     expect(media.fit, BoxFit.cover);
     expect(media.alignment, Alignment.topCenter);
     expect(media.filterQuality, FilterQuality.high);
+  });
+
+  testWidgets('QMEDIA-031..040 production wrapper renders fallback without Image decode',
+      (WidgetTester tester) async {
+    const WalkaProductMediaResolver resolver =
+        WalkaProductMediaResolver.production();
+    final WalkaProductMedia media = resolver.resolveForSurface(
+      variantId: 'drawer-organizer:white',
+      fallback: fallback,
+    );
+    await tester.pumpWidget(
+      MaterialApp(home: Scaffold(body: WalkaProductMediaView(media: media))),
+    );
+    expect(find.byType(WalkaProductVisual), findsOneWidget);
+    expect(find.byType(Image), findsNothing);
   });
 
   testWidgets('QMEDIA-041..050 production prefetch skips every quarantined binary',
