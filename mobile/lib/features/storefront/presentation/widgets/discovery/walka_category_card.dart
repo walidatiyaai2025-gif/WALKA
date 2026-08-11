@@ -42,6 +42,7 @@ class WalkaCategoryCard extends StatelessWidget {
             primaryColor: primaryColor,
             backgroundColor: surface,
             compact: true,
+            mediaSurface: WalkaProductMediaSurface.discovery,
             semanticLabel: '$title category visual',
           );
 
