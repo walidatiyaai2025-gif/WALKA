@@ -68,6 +68,7 @@ void main() {
       _expectReferenceWordmarkContract(tester);
       expect(tester.takeException(), isNull);
     },
+    timeout: const Timeout(Duration(seconds: 30)),
   );
 
   testWidgets(
@@ -175,6 +176,7 @@ void main() {
       expect(find.byType(Image), findsNothing);
       expect(tester.takeException(), isNull);
     },
+    timeout: const Timeout(Duration(seconds: 30)),
   );
 }
 
