@@ -53,8 +53,9 @@ void main() {
       );
       await tester.pump();
       _expectReferenceWordmarkContract(tester);
-      expect(find.byType(WalkaProductVisual), findsWidgets);
-      expect(find.byType(Image), findsNothing);
+      // This fixture contains only Drawer White, which is now admitted media.
+      expect(find.byType(Image), findsOneWidget);
+      expect(find.byType(WalkaProductVisual), findsNothing);
       expect(tester.takeException(), isNull);
 
       await tester.pumpWidget(
@@ -119,7 +120,7 @@ void main() {
   );
 
   testWidgets(
-    'reference product visuals remain present across Home Categories and Favorites',
+    'reference product media remains present across Home Categories and Favorites',
     (WidgetTester tester) async {
       _setViewport(tester, const Size(390, 844));
       final WalkaCatalogController catalog = WalkaCatalogController();
@@ -141,8 +142,10 @@ void main() {
         ),
       );
       await tester.pump();
+      // Home can now mix admitted White Image media with provisional painted
+      // fallbacks for the remaining variants.
+      expect(find.byType(Image), findsWidgets);
       expect(find.byType(WalkaProductVisual), findsWidgets);
-      expect(find.byType(Image), findsNothing);
       expect(tester.takeException(), isNull);
 
       await tester.pumpWidget(
@@ -154,8 +157,8 @@ void main() {
         ),
       );
       await tester.pump();
+      expect(find.byType(Image), findsWidgets);
       expect(find.byType(WalkaProductVisual), findsWidgets);
-      expect(find.byType(Image), findsNothing);
       expect(tester.takeException(), isNull);
 
       await tester.pumpWidget(
@@ -167,6 +170,7 @@ void main() {
         ),
       );
       await tester.pump();
+      // This Favorites fixture persists Gray only, so it remains quarantined.
       expect(find.byType(WalkaProductVisual), findsWidgets);
       expect(find.byType(Image), findsNothing);
       expect(tester.takeException(), isNull);
