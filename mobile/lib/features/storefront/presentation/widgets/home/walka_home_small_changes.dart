@@ -1,25 +1,31 @@
 import 'package:flutter/material.dart';
 
 import 'package:walka/design_system/components/media/walka_product_media_resolver.dart';
-import 'package:walka/design_system/walka_product_visual.dart';
 import 'package:walka/design_system/walka_theme.dart';
+
+import 'walka_home_featured_visual.dart';
 
 class WalkaHomeSmallChanges extends StatelessWidget {
   const WalkaHomeSmallChanges({
-    required this.drawerSemanticLabel,
+    required this.variantId,
+    required this.productSemanticLabel,
     required this.onTap,
     this.title = 'Small Changes,\nBetter Living',
     this.body = 'Simple solutions that bring order, beauty and peace of mind.',
     super.key,
   });
 
-  final String drawerSemanticLabel;
+  final String variantId;
+  final String productSemanticLabel;
   final VoidCallback onTap;
   final String title;
   final String body;
 
   @override
   Widget build(BuildContext context) {
+    final WalkaHomeFeaturedVisualSpec visualSpec =
+        walkaHomeFeaturedVisualFor(variantId);
+
     return LayoutBuilder(
       builder: (BuildContext context, BoxConstraints constraints) {
         final bool stack = constraints.maxWidth < 350 ||
@@ -40,8 +46,10 @@ class WalkaHomeSmallChanges extends StatelessWidget {
                       shape: BoxShape.circle,
                       color: WalkaColors.gold,
                     ),
-                    child: const Icon(
-                      Icons.grid_view_rounded,
+                    child: Icon(
+                      visualSpec.kind.name == 'lunchBox'
+                          ? Icons.lunch_dining_rounded
+                          : Icons.grid_view_rounded,
                       color: Colors.white,
                       size: 20,
                     ),
@@ -76,17 +84,17 @@ class WalkaHomeSmallChanges extends StatelessWidget {
         final Widget visual = SizedBox(
           height: stack ? 126 : 164,
           child: ColoredBox(
-            color: const Color(0xFFEDE6DA),
+            color: visualSpec.backgroundColor,
             child: Padding(
               padding: const EdgeInsets.all(8),
               child: WalkaResolvedProductMedia(
-                variantId: 'drawer-organizer:white',
-                kind: WalkaProductVisualKind.drawerOrganizer,
-                primaryColor: const Color(0xFFF7F4EC),
-                backgroundColor: const Color(0xFFEDE6DA),
+                variantId: visualSpec.variantId,
+                kind: visualSpec.kind,
+                primaryColor: visualSpec.primaryColor,
+                backgroundColor: visualSpec.backgroundColor,
                 compact: true,
                 mediaSurface: WalkaProductMediaSurface.home,
-                semanticLabel: drawerSemanticLabel,
+                semanticLabel: productSemanticLabel,
               ),
             ),
           ),
