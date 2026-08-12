@@ -12,21 +12,21 @@ Status: **IMPLEMENTED ON BRANCH / CI PENDING**
 - Source authority: `SRC-LUNCH-BLUE-001` / `APPROVED`
 - Protected `Images/` masters: **untouched**
 
-The canonical asset was derived only from the approved real source. The production operation is limited to background separation, alpha-edge cleanup, canvas normalization and source-derived scaling. No product recolor, accessory invention, hidden-geometry reconstruction, generated photography, marketplace chrome, price/rating UI or unsupported claim was introduced.
+The canonical asset was derived only from the approved real source. The production operation is limited to background separation, alpha-edge cleanup, canvas normalization and source-derived aspect-ratio-preserving scaling. No product recolor, accessory invention, hidden-geometry reconstruction, generated photography, marketplace chrome, price/rating UI or unsupported claim was introduced.
 
 ## Canonical runtime asset
 
 - Path: `mobile/assets/products/lunch/blue.png`
 - Runtime canonical path: `assets/products/lunch/blue.png`
-- SHA-256: `463206ecae22cd3e284a4fc2e33015b900e32ad79d2345ca1a9484d69be269e7`
-- Bytes: `645989`
+- SHA-256: `a36a0034fe8a8f807f8b1020c12dd85907807743b842aa71493e0f0ef04271f4`
+- Bytes: `743513`
 - Canvas: `1024 × 1024`
 - PNG: 8-bit RGBA / color type 6
 - Color profile: explicit `sRGB` chunk
 - Interlace: none
-- Alpha bounding box: `[62, 116, 961, 907]`
-- Transparent safe margins: left `62`, top `116`, right `62`, bottom `116`
-- Nearest transparent safe margin: `62 px` (> 5%)
+- Alpha bounding box: `[51, 108, 972, 914]`
+- Transparent safe margins: left `51`, top `108`, right `51`, bottom `109`
+- Nearest transparent safe margin: `51 px` (5% floor satisfied)
 - Hard file budget: PASS (< 1.2 MiB)
 
 ## Visual and downscale QA
