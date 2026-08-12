@@ -77,18 +77,24 @@ void main() {
     expect(byId['lunch-box:green']['sourceState'], 'APPROVED');
   });
 
-  test('only Drawer White confirms a canonical export at this stage', () {
+  test('canonical export flags stay source-approved, file-backed and migration-safe', () {
     final Map<String, dynamic> byId = <String, dynamic>{
       for (final dynamic row in variants) row['variantId'] as String: row,
     };
     expect(byId['drawer-organizer:white']['canonicalExportPresent'], isTrue);
-    for (final String id in <String>[
-      'drawer-organizer:gray',
-      'lunch-box:blue',
-      'lunch-box:pink',
-      'lunch-box:green',
-    ]) {
-      expect(byId[id]['canonicalExportPresent'], isFalse, reason: id);
+    expect(byId['lunch-box:blue']['canonicalExportPresent'], isTrue);
+    expect(byId['drawer-organizer:gray']['canonicalExportPresent'], isFalse);
+
+    for (final dynamic raw in variants) {
+      final Map<String, dynamic> row = raw as Map<String, dynamic>;
+      if (row['canonicalExportPresent'] == true) {
+        expect(row['sourceState'], 'APPROVED', reason: row['variantId'] as String);
+        expect(
+          File(row['canonicalPath'] as String).existsSync(),
+          isTrue,
+          reason: row['variantId'] as String,
+        );
+      }
     }
   });
 }

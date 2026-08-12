@@ -23,16 +23,33 @@ void main() {
       inspection.rows.map((PimgProvenanceRow row) => row.variantId).toList(),
       pimgReleasedVariantIds,
     );
-    expect(inspection.admittedCount, 1);
-    expect(inspection.pendingCount, 3);
-    expect(inspection.blockedCount, 1);
+    expect(
+      inspection.admittedCount,
+      inspection.rows.where((PimgProvenanceRow row) => row.lifecycleState == 'ADMITTED').length,
+    );
+    expect(
+      inspection.pendingCount,
+      inspection.rows.where((PimgProvenanceRow row) => row.lifecycleState == 'PENDING').length,
+    );
+    expect(
+      inspection.blockedCount,
+      inspection.rows.where((PimgProvenanceRow row) => row.lifecycleState == 'BLOCKED').length,
+    );
+    expect(
+      inspection.admittedCount + inspection.pendingCount + inspection.blockedCount,
+      5,
+    );
     expect(inspection.rows.first.variantId, 'drawer-organizer:white');
     expect(inspection.rows.first.lifecycleState, 'ADMITTED');
     expect(inspection.rows[1].variantId, 'drawer-organizer:gray');
     expect(inspection.rows[1].lifecycleState, 'BLOCKED');
+    expect(
+      inspection.rows.singleWhere((PimgProvenanceRow row) => row.variantId == 'lunch-box:blue').lifecycleState,
+      'ADMITTED',
+    );
   });
 
-  test('deterministic report exposes lifecycle counts and every mandatory QA state',
+  test('deterministic report exposes derived lifecycle counts and every mandatory QA state',
       () async {
     final PimgProvenanceInspection inspection = await reader.inspect(
       provenancePath: '../docs/ui/PRODUCTION_ASSET_PROVENANCE.json',
@@ -41,10 +58,11 @@ void main() {
     );
     final Map<String, dynamic> report =
         jsonDecode(pimgStableJson(inspection)) as Map<String, dynamic>;
+    final Map<String, dynamic> counts = report['counts'] as Map<String, dynamic>;
     expect(report['state'], 'READY');
-    expect((report['counts'] as Map<String, dynamic>)['admitted'], 1);
-    expect((report['counts'] as Map<String, dynamic>)['pending'], 3);
-    expect((report['counts'] as Map<String, dynamic>)['blocked'], 1);
+    expect(counts['admitted'], inspection.admittedCount);
+    expect(counts['pending'], inspection.pendingCount);
+    expect(counts['blocked'], inspection.blockedCount);
     final List<dynamic> rows = report['variants'] as List<dynamic>;
     for (final dynamic raw in rows) {
       final Map<String, dynamic> row = raw as Map<String, dynamic>;
@@ -119,12 +137,21 @@ void main() {
       await File('../docs/ui/PRODUCTION_ASSET_PROVENANCE.json').readAsString(),
     ) as Map<String, dynamic>;
     final List<dynamic> rows = provenance['variants'] as List<dynamic>;
-    final Map<String, dynamic> pendingApproved =
-        Map<String, dynamic>.from(rows[2] as Map<String, dynamic>);
-    expect(pendingApproved['variantId'], 'lunch-box:blue');
-    expect(pendingApproved['lifecycleState'], 'PENDING');
-    pendingApproved['lifecycleState'] = 'ADMITTED';
-    rows[2] = pendingApproved;
+    final int admittedIndex = rows.indexWhere(
+      (dynamic raw) => (raw as Map<String, dynamic>)['lifecycleState'] == 'ADMITTED',
+    );
+    expect(admittedIndex, isNonNegative);
+    final Map<String, dynamic> broken =
+        Map<String, dynamic>.from(rows[admittedIndex] as Map<String, dynamic>);
+    broken['sha256'] = null;
+    broken['byteSize'] = null;
+    final Map<String, dynamic> qa =
+        Map<String, dynamic>.from(broken['qa'] as Map<String, dynamic>);
+    for (final String key in pimgMandatoryQaChecks) {
+      qa[key] = 'PENDING';
+    }
+    broken['qa'] = qa;
+    rows[admittedIndex] = broken;
     final File provenanceFile = File('${temp.path}/provenance.json')
       ..writeAsStringSync(jsonEncode(provenance));
 

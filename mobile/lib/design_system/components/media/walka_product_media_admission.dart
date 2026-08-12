@@ -72,9 +72,9 @@ abstract final class WalkaProductMediaAdmissionRegistry {
     'lunch-box:blue': WalkaProductMediaAdmissionEntry(
       variantId: 'lunch-box:blue',
       canonicalPath: 'assets/products/lunch/blue.png',
-      state: WalkaProductMediaAdmissionState.pending,
+      state: WalkaProductMediaAdmissionState.admitted,
       sourceApproved: true,
-      canonicalExportPresent: false,
+      canonicalExportPresent: true,
     ),
     'lunch-box:pink': WalkaProductMediaAdmissionEntry(
       variantId: 'lunch-box:pink',
@@ -102,6 +102,10 @@ abstract final class WalkaProductMediaAdmissionRegistry {
       .where((WalkaProductMediaAdmissionEntry entry) => entry.eligibleForRuntime)
       .map((WalkaProductMediaAdmissionEntry entry) => entry.variantId);
 
+  static Iterable<String> get quarantinedVariantIds => entries.values
+      .where((WalkaProductMediaAdmissionEntry entry) => !entry.eligibleForRuntime)
+      .map((WalkaProductMediaAdmissionEntry entry) => entry.variantId);
+
   static Iterable<String> get pendingVariantIds => entries.values
       .where(
         (WalkaProductMediaAdmissionEntry entry) =>
@@ -116,7 +120,15 @@ abstract final class WalkaProductMediaAdmissionRegistry {
       )
       .map((WalkaProductMediaAdmissionEntry entry) => entry.variantId);
 
+  static int get registeredCount => entries.length;
   static int get admittedCount => admittedVariantIds.length;
   static int get pendingCount => pendingVariantIds.length;
   static int get blockedCount => blockedVariantIds.length;
+  static int get quarantinedCount => quarantinedVariantIds.length;
+
+  static bool get allReleasedMediaAdmitted =>
+      registeredCount == releasedVariantIds.length &&
+      admittedCount == releasedVariantIds.length &&
+      pendingCount == 0 &&
+      blockedCount == 0;
 }

@@ -1,7 +1,13 @@
 {
   "schemaVersion": 1,
-  "allowedSourceStates": ["APPROVED", "BLOCKED", "REPLACE"],
-  "protectedRuntimeSourcePrefixes": ["Images/"],
+  "allowedSourceStates": [
+    "APPROVED",
+    "BLOCKED",
+    "REPLACE"
+  ],
+  "protectedRuntimeSourcePrefixes": [
+    "Images/"
+  ],
   "variants": [
     {
       "variantId": "drawer-organizer:white",
@@ -35,9 +41,9 @@
       "sourceFilename": "main new(3).jpg",
       "sourceState": "APPROVED",
       "canonicalPath": "assets/products/lunch/blue.png",
-      "canonicalExportPresent": false,
-      "reason": "Manifest records a clean source with the four-compartment stainless tray, colored outer component and approved set visible.",
-      "unblockAction": "Produce the canonical transparent cutout from the admitted source and pass Product Master, alpha, material, framing and file-budget QA."
+      "canonicalExportPresent": true,
+      "reason": "Approved real Blue source has been materialized as a transparent canonical PNG without recoloring, geometry reconstruction or accessory invention; the four-compartment SUS304 tray, Blue components, bag, cutlery and stainless sauce cup remain source-derived.",
+      "unblockAction": "Keep the admitted Blue binary, source fingerprint, geometry, transparent framing and PAV metadata stable; any future replacement must repeat source admission and visual QA."
     },
     {
       "variantId": "lunch-box:pink",

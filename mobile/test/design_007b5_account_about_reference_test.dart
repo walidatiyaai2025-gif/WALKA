@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:walka/design_system/components/media/walka_product_media_admission.dart';
 import 'package:walka/design_system/walka_product_visual.dart';
 import 'package:walka/design_system/walka_theme.dart';
 import 'package:walka/features/information/information_v102.dart';
@@ -65,7 +66,7 @@ void main() {
   );
 
   testWidgets(
-    'Our Story opens Android-reference About and survives compact scaling',
+    'Our Story derives product rendering from runtime admission',
     (WidgetTester tester) async {
       _compactViewport(tester);
 
@@ -93,10 +94,19 @@ void main() {
       expect(find.byType(WalkaAboutReferenceV131), findsOneWidget);
       expect(find.text('OUR STORY'), findsOneWidget);
       expect(find.textContaining('Organized living.'), findsOneWidget);
-      // Drawer White is now admitted production media; the remaining product
-      // slot stays on its deterministic painted fallback until admitted.
-      expect(find.byType(Image), findsOneWidget);
-      expect(find.byType(WalkaProductVisual), findsOneWidget);
+
+      const List<String> storyVariantIds = <String>[
+        'drawer-organizer:white',
+        'lunch-box:blue',
+      ];
+      final int admittedStoryMedia = storyVariantIds
+          .where(WalkaProductMediaAdmissionRegistry.isRuntimeEligible)
+          .length;
+      expect(find.byType(Image), findsNWidgets(admittedStoryMedia));
+      expect(
+        find.byType(WalkaProductVisual),
+        findsNWidgets(storyVariantIds.length - admittedStoryMedia),
+      );
       expect(tester.takeException(), isNull);
 
       final Finder howWeDesign = find.text('HOW WE DESIGN');

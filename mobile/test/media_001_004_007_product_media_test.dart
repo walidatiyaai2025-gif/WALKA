@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:walka/design_system/components/media/walka_product_media.dart';
+import 'package:walka/design_system/components/media/walka_product_media_admission.dart';
 import 'package:walka/design_system/components/media/walka_product_media_resolver.dart';
 import 'package:walka/design_system/walka_product_visual.dart';
 
@@ -44,10 +45,15 @@ void main() {
     );
     for (final String variantId
         in WalkaProductMediaResolver.productionAssets.keys) {
-      final bool expectedAdmitted = variantId == 'drawer-organizer:white';
+      final bool expectedAdmitted =
+          WalkaProductMediaAdmissionRegistry.isRuntimeEligible(variantId);
       expect(resolver.hasRegisteredAsset(variantId), isTrue);
       expect(resolver.hasApprovedAsset(variantId), isTrue);
-      expect(resolver.hasAdmittedAsset(variantId), expectedAdmitted);
+      expect(
+        resolver.hasAdmittedAsset(variantId),
+        expectedAdmitted,
+        reason: variantId,
+      );
     }
   });
 
