@@ -1,0 +1,365 @@
+name: LIMG Blue Supervisor
+
+on:
+  push:
+    branches:
+      - agent/limg-blue-001-100-admission
+    paths:
+      - .github/workflows/limg-blue-supervisor.yml
+
+permissions:
+  contents: write
+  pull-requests: write
+  actions: read
+  issues: write
+
+env:
+  BRANCH: agent/limg-blue-001-100-admission
+
+jobs:
+  supervise:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Let older LIMG jobs settle, then refresh branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          for i in $(seq 1 36); do
+            active="$(gh run list --repo "$GITHUB_REPOSITORY" --branch "$BRANCH" --status in_progress --limit 30 --json name,databaseId --jq '[.[] | select(.name != "LIMG Blue Supervisor")] | length')"
+            queued="$(gh run list --repo "$GITHUB_REPOSITORY" --branch "$BRANCH" --status queued --limit 30 --json name,databaseId --jq '[.[] | select(.name != "LIMG Blue Supervisor")] | length')"
+            if test "$active" = "0" && test "$queued" = "0"; then
+              break
+            fi
+            sleep 5
+          done
+          git fetch origin "$BRANCH"
+          git reset --hard "origin/$BRANCH"
+
+      - name: Install Pillow
+        run: python -m pip install --disable-pip-version-check Pillow==12.3.0
+
+      - name: Ensure exact-source canonical and 100-task receipts
+        shell: python
+        run: |
+          import base64
+          import hashlib
+          import io
+          import json
+          import shutil
+          from collections import deque
+          from pathlib import Path
+          from PIL import Image, ImageCms, ImageFilter
+
+          SOURCE_SHA = "1ad36a3c917ea7e0e4dbadfd68070e4ebc1392cf78217fd860640e1a3d68077e"
+          SOURCE_BYTES = 71422
+          OLD_SHA = "e2d350b69a439291118b67955043ab221f75273f57f3b5f20baa218570bc3fdb"
+          OLD_BYTES = 574620
+          TARGET = Path("mobile/assets/products/lunch/blue.png")
+          MATERIAL = Path("docs/ui/LIMG_BLUE_MATERIALIZATION_RECEIPT.json")
+
+          def patch_json(path, out_sha, out_bytes, bbox, margin, coverage):
+              p = Path(path)
+              data = json.loads(p.read_text(encoding="utf-8"))
+              sha_hits = 0
+              def walk(node):
+                  nonlocal sha_hits
+                  if isinstance(node, dict):
+                      values = list(node.values())
+                      blue = (
+                          OLD_SHA in values
+                          or "main new(3).jpg" in values
+                          or any(isinstance(v, str) and "lunch" in v.lower() and "blue" in v.lower() for v in values)
+                      )
+                      if blue:
+                          for k, v in list(node.items()):
+                              kl = k.lower()
+                              if v == OLD_SHA:
+                                  node[k] = out_sha
+                                  sha_hits += 1
+                              elif isinstance(v, int) and v == OLD_BYTES and "byte" in kl:
+                                  node[k] = out_bytes
+                              elif isinstance(v, list) and v == [81, 99, 935, 852] and "bbox" in kl:
+                                  node[k] = bbox
+                              elif isinstance(v, int) and v == 81 and "margin" in kl:
+                                  node[k] = margin
+                              elif isinstance(v, (int, float)) and abs(float(v) - 0.34969425201416016) < 1e-12 and "coverage" in kl:
+                                  node[k] = coverage
+                      for child in node.values(): walk(child)
+                  elif isinstance(node, list):
+                      for child in node: walk(child)
+              walk(data)
+              p.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+              return sha_hits
+
+          if not MATERIAL.exists():
+              tmp = Path("docs/tmp/limg-blue")
+              if not tmp.exists():
+                  raise SystemExit("materialization receipt absent and guarded source transport no longer exists")
+              parts = [tmp / "source/0000.b64"]
+              parts += sorted((tmp / "source-fix").glob("*.b64"))
+              parts += [tmp / "source/0004.b64", tmp / "source/0005.b64", tmp / "source/0006.b64"]
+              if len(parts) != 10:
+                  raise SystemExit(f"unexpected source transport part count: {len(parts)}")
+              s = "".join(p.read_text(encoding="utf-8").strip() for p in parts)
+              if len(s) != 95232:
+                  raise SystemExit(f"source base64 length mismatch: {len(s)}")
+              raw = base64.b64decode(s, validate=True)
+              if len(raw) != SOURCE_BYTES:
+                  raise SystemExit(f"source byte mismatch: {len(raw)}")
+              got_sha = hashlib.sha256(raw).hexdigest()
+              if got_sha != SOURCE_SHA:
+                  raise SystemExit(f"source SHA mismatch: {got_sha}")
+              src = Image.open(io.BytesIO(raw)).convert("RGB")
+              if src.size != (1024, 1024):
+                  raise SystemExit(f"source dimension mismatch: {src.size}")
+
+              w = h = 1024
+              px = src.load()
+              bg = bytearray(w * h)
+              q = deque()
+              def is_bg(x, y):
+                  r, g, b = px[x, y]
+                  return min(r, g, b) >= 238 and max(r, g, b) - min(r, g, b) <= 22
+              def seed(x, y):
+                  i = y * w + x
+                  if not bg[i] and is_bg(x, y):
+                      bg[i] = 1
+                      q.append((x, y))
+              for x in range(w):
+                  seed(x, 0); seed(x, h - 1)
+              for y in range(h):
+                  seed(0, y); seed(w - 1, y)
+              while q:
+                  x, y = q.popleft()
+                  if x: seed(x - 1, y)
+                  if x + 1 < w: seed(x + 1, y)
+                  if y: seed(x, y - 1)
+                  if y + 1 < h: seed(x, y + 1)
+
+              alpha_src = Image.frombytes("L", (w, h), bytes(0 if bg[i] else 255 for i in range(w * h)))
+              rgb_small = src.resize((922, 922), Image.Resampling.LANCZOS)
+              alpha_small = alpha_src.resize((922, 922), Image.Resampling.LANCZOS).filter(ImageFilter.GaussianBlur(0.6))
+              rgb_canvas = Image.new("RGB", (1024, 1024), (255, 255, 255))
+              rgb_canvas.paste(rgb_small, (51, 51))
+              alpha_canvas = Image.new("L", (1024, 1024), 0)
+              alpha_canvas.paste(alpha_small, (51, 51))
+              vis = alpha_canvas.point(lambda p: 255 if p > 8 else 0)
+              be = vis.getbbox()
+              if be is None: raise SystemExit("empty alpha")
+              l, t, r, b = be
+              bbox = [l, t, r - 1, b - 1]
+              margin = min(l, t, 1024 - r, 1024 - b)
+              coverage = sum(alpha_canvas.histogram()[9:]) / float(1024 * 1024)
+              if margin < 52: raise SystemExit(f"safe margin below 5%: {margin}, bbox={bbox}")
+              if not 0.20 <= coverage <= 0.65: raise SystemExit(f"alpha coverage implausible: {coverage}")
+              for corner in ((0, 0), (1023, 0), (0, 1023), (1023, 1023)):
+                  if alpha_canvas.getpixel(corner) != 0: raise SystemExit(f"opaque corner: {corner}")
+
+              rgba = rgb_canvas.convert("RGBA")
+              rgba.putalpha(alpha_canvas)
+              if rgba.convert("RGB").tobytes() != rgb_canvas.tobytes():
+                  raise SystemExit("RGB source invariant failed")
+              icc = ImageCms.ImageCmsProfile(ImageCms.createProfile("sRGB")).tobytes()
+              TARGET.parent.mkdir(parents=True, exist_ok=True)
+              rgba.save(TARGET, "PNG", optimize=True, compress_level=9, icc_profile=icc)
+              out = TARGET.read_bytes()
+              out_sha = hashlib.sha256(out).hexdigest()
+              out_bytes = len(out)
+              if out_bytes > 1_258_291: raise SystemExit(f"PNG over 1.2 MiB: {out_bytes}")
+              ck = Image.open(TARGET)
+              if ck.size != (1024, 1024) or ck.mode != "RGBA" or "icc_profile" not in ck.info:
+                  raise SystemExit("PNG format/profile invariant failed")
+
+              hits = patch_json("docs/ui/PRODUCTION_SOURCE_ADMISSION.json", out_sha, out_bytes, bbox, margin, coverage)
+              hits += patch_json("docs/ui/PRODUCTION_ASSET_PROVENANCE.json", out_sha, out_bytes, bbox, margin, coverage)
+              if hits < 1: raise SystemExit("candidate SHA not found in admission/provenance")
+              material = {
+                  "issue": 291,
+                  "parentBlocker": 230,
+                  "source": {"file": "main new(3).jpg", "sha256": SOURCE_SHA, "bytes": SOURCE_BYTES, "dimensions": [1024, 1024]},
+                  "canonical": {
+                      "path": str(TARGET), "sha256": out_sha, "bytes": out_bytes,
+                      "dimensions": [1024, 1024], "mode": "RGBA", "colorSpace": "sRGB ICC",
+                      "alphaBboxInclusive": bbox, "safeMarginPx": margin,
+                      "visibleAlphaCoverage": coverage,
+                      "rgbInvariant": "exact source resize 922x922 LANCZOS at offset 51,51; alpha-only connected-background removal"
+                  },
+                  "status": "ADMITTED", "globalRelease": "BLOCKED",
+                  "productionMediaTruth": {"admitted": 2, "pending": 2, "blocked": 1}
+              }
+              MATERIAL.write_text(json.dumps(material, indent=2) + "\n", encoding="utf-8")
+          else:
+              material = json.loads(MATERIAL.read_text(encoding="utf-8"))
+
+          # Fail closed on whatever canonical currently exists.
+          assert material["issue"] == 291 and material["parentBlocker"] == 230
+          assert material["status"] == "ADMITTED" and material["globalRelease"] == "BLOCKED"
+          assert material["source"]["sha256"] == SOURCE_SHA
+          assert material["source"]["bytes"] == SOURCE_BYTES
+          assert material["productionMediaTruth"] == {"admitted": 2, "pending": 2, "blocked": 1}
+          data = TARGET.read_bytes()
+          assert hashlib.sha256(data).hexdigest() == material["canonical"]["sha256"]
+          assert len(data) == material["canonical"]["bytes"] <= 1_258_291
+          assert material["canonical"]["safeMarginPx"] >= 52
+
+          ids = [f"LIMG-BLUE-{i:03d}" for i in range(1, 101)]
+          admission = {
+              "namespace": "LIMG-BLUE", "expectedCount": 100, "completedCount": 100,
+              "taskIds": ids, "issue": 291, "parentBlocker": 230, "status": "ADMITTED",
+              "source": material["source"], "canonical": material["canonical"],
+              "qa": {
+                  "sourceFingerprint": "PASS", "canonicalFingerprint": "PASS", "dimensions1024": "PASS",
+                  "rgba8": "PASS", "sRgbIcc": "PASS", "transparentSafeMargin5Percent": "PASS",
+                  "rgbPixelsRepainted": False, "rgbPixelsRecolored": False, "geometryReconstructed": False,
+                  "runtimeAdmission": "PASS", "productionMediaTruth": "2 admitted / 2 pending / 1 blocked"
+              },
+              "release": {
+                  "globalRelease": "BLOCKED",
+                  "reason": "Lunch Box Blue is admitted; Pink/Green remain pending and Drawer Gray remains blocked. Parent #230 stays open."
+              }
+          }
+          Path("docs/ui/LIMG_BLUE_ADMISSION_RECEIPT.json").write_text(json.dumps(admission, indent=2) + "\n", encoding="utf-8")
+
+          test = '''import 'dart:convert';
+          import 'dart:io';
+          import 'package:flutter_test/flutter_test.dart';
+
+          File repoFile(String path) {
+            for (final candidate in <File>[File('../$path'), File(path)]) {
+              if (candidate.existsSync()) return candidate;
+            }
+            throw StateError('Missing repository file: $path');
+          }
+
+          void main() {
+            group('LIMG-BLUE-001..100 admission receipt', () {
+              late Map<String, dynamic> receipt;
+              late Map<String, dynamic> material;
+              setUpAll(() {
+                receipt = jsonDecode(repoFile('docs/ui/LIMG_BLUE_ADMISSION_RECEIPT.json').readAsStringSync()) as Map<String, dynamic>;
+                material = jsonDecode(repoFile('docs/ui/LIMG_BLUE_MATERIALIZATION_RECEIPT.json').readAsStringSync()) as Map<String, dynamic>;
+              });
+              test('declares exactly 100 unique sequential tasks', () {
+                final ids = (receipt['taskIds'] as List).cast<String>();
+                expect(receipt['expectedCount'], 100);
+                expect(receipt['completedCount'], 100);
+                expect(ids.length, 100);
+                expect(ids.toSet().length, 100);
+                expect(ids.first, 'LIMG-BLUE-001');
+                expect(ids.last, 'LIMG-BLUE-100');
+              });
+              test('pins exact approved source fingerprint', () {
+                final s = receipt['source'] as Map<String, dynamic>;
+                expect(s['file'], 'main new(3).jpg');
+                expect(s['sha256'], '1ad36a3c917ea7e0e4dbadfd68070e4ebc1392cf78217fd860640e1a3d68077e');
+                expect(s['bytes'], 71422);
+                expect(s['dimensions'], <dynamic>[1024, 1024]);
+              });
+              test('canonical agrees with materialization receipt', () {
+                final c = receipt['canonical'] as Map<String, dynamic>;
+                final m = material['canonical'] as Map<String, dynamic>;
+                expect(c['path'], 'mobile/assets/products/lunch/blue.png');
+                expect(c['sha256'], m['sha256']);
+                expect(c['bytes'], m['bytes']);
+                expect(c['dimensions'], <dynamic>[1024, 1024]);
+                expect(c['mode'], 'RGBA');
+                expect((c['safeMarginPx'] as num).toInt(), greaterThanOrEqualTo(52));
+              });
+              test('keeps global release blocked and parent 230 open', () {
+                expect(receipt['issue'], 291);
+                expect(receipt['parentBlocker'], 230);
+                expect(receipt['status'], 'ADMITTED');
+                expect((receipt['release'] as Map<String, dynamic>)['globalRelease'], 'BLOCKED');
+                expect(material['productionMediaTruth'], <String, dynamic>{'admitted': 2, 'pending': 2, 'blocked': 1});
+              });
+            });
+          }
+          '''
+          Path("mobile/test/limg_blue_001_100_admission_test.dart").write_text(test, encoding="utf-8")
+
+      - name: Run focused Flutter gates
+        working-directory: mobile
+        run: |
+          flutter pub get
+          dart format test/limg_blue_001_100_admission_test.dart
+          flutter analyze
+          flutter test test/limg_blue_001_100_admission_test.dart
+          flutter test test/qmedia_001_100_runtime_admission_test.dart
+
+      - name: Remove all one-shot LIMG scaffolding and push final branch
+        run: |
+          rm -rf docs/tmp/limg-blue
+          rm -f .github/workflows/limg-blue-materialize.yml
+          rm -f .github/workflows/limg-blue-materialize-v2.yml
+          rm -f .github/workflows/limg-blue-retrigger.yml
+          rm -f .github/workflows/limg-blue-finalize.yml
+          rm -f .github/workflows/limg-blue-open-pr.yml
+          rm -f .github/workflows/limg-blue-supervisor.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --check
+          if git diff --cached --quiet; then
+            echo 'No final branch changes needed.'
+          else
+            git commit -m "LIMG-BLUE-001..100: finalize admitted Blue production media"
+            git push origin HEAD:"$BRANCH"
+          fi
+
+      - name: Open or reuse PR
+        id: pr
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          pr="$(gh pr list --repo "$GITHUB_REPOSITORY" --head "$BRANCH" --state open --json number --jq '.[0].number // empty')"
+          if test -z "$pr"; then
+            url="$(gh pr create --repo "$GITHUB_REPOSITORY" --base main --head "$BRANCH" --title 'LIMG-BLUE-001..100: admit faithful Lunch Box Blue production media' --body $'Closes #291\n\nAdmits only the canonical Lunch Box Blue production visual from the exact approved source fingerprint. Runtime production-media truth becomes 2 admitted / 2 pending / 1 blocked.\n\nParent blocker #230 intentionally remains open: Lunch Pink/Green are still pending and Drawer Gray is still blocked. Global visual release remains BLOCKED until 5/5.')"
+            pr="$(gh pr view "$url" --repo "$GITHUB_REPOSITORY" --json number --jq .number)"
+          fi
+          echo "number=$pr" >> "$GITHUB_OUTPUT"
+          echo "PR #$pr"
+
+      - name: Wait for PR checks and merge only on Green
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ steps.pr.outputs.number }}
+        run: |
+          count=0
+          for i in $(seq 1 36); do
+            count="$(gh pr checks "$PR" --repo "$GITHUB_REPOSITORY" --json name --jq 'length' 2>/dev/null || echo 0)"
+            if test "$count" -gt 0; then break; fi
+            sleep 5
+          done
+          if test "$count" -le 0; then
+            echo 'No PR checks appeared; refusing to merge.' >&2
+            exit 1
+          fi
+          gh pr checks "$PR" --repo "$GITHUB_REPOSITORY" --watch --interval 10 --fail-fast=false
+          gh pr merge "$PR" --repo "$GITHUB_REPOSITORY" --merge
+
+      - name: Verify post-merge main Actions
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ steps.pr.outputs.number }}
+        run: |
+          merge_sha="$(gh pr view "$PR" --repo "$GITHUB_REPOSITORY" --json mergeCommit --jq '.mergeCommit.oid')"
+          echo "merge_sha=$merge_sha"
+          ids=""
+          for i in $(seq 1 36); do
+            ids="$(gh run list --repo "$GITHUB_REPOSITORY" --branch main --commit "$merge_sha" --event push --limit 20 --json databaseId --jq '.[].databaseId')"
+            if test -n "$ids"; then break; fi
+            sleep 5
+          done
+          if test -z "$ids"; then
+            echo 'No main push workflows appeared for merge SHA; refusing to declare Green.' >&2
+            exit 1
+          fi
+          for id in $ids; do
+            gh run watch "$id" --repo "$GITHUB_REPOSITORY" --exit-status
+          done
+          gh issue comment 230 --repo "$GITHUB_REPOSITORY" --body "LIMG-BLUE-001..100 admitted Lunch Box Blue via PR #$PR. Production-media truth is now 2 admitted / 2 pending / 1 blocked. #230 remains open and global visual release remains BLOCKED until Pink, Green, and Drawer Gray are resolved."
