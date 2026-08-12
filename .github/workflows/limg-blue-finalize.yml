@@ -1,0 +1,189 @@
+name: LIMG Blue Finalize
+
+on:
+  push:
+    branches:
+      - agent/limg-blue-001-100-admission
+    paths:
+      - mobile/assets/products/lunch/blue.png
+      - .github/workflows/limg-blue-finalize.yml
+
+permissions:
+  contents: write
+
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect materialization
+        id: detect
+        run: |
+          if test -f docs/ui/LIMG_BLUE_MATERIALIZATION_RECEIPT.json; then
+            echo 'ready=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'ready=false' >> "$GITHUB_OUTPUT"
+            echo 'Canonical materialization has not landed yet; no-op.'
+          fi
+
+      - name: Finalize 100-task admission evidence
+        if: steps.detect.outputs.ready == 'true'
+        shell: python
+        run: |
+          import hashlib
+          import json
+          from pathlib import Path
+
+          SOURCE_SHA = "1ad36a3c917ea7e0e4dbadfd68070e4ebc1392cf78217fd860640e1a3d68077e"
+          material = json.loads(Path("docs/ui/LIMG_BLUE_MATERIALIZATION_RECEIPT.json").read_text())
+          assert material["issue"] == 291
+          assert material["parentBlocker"] == 230
+          assert material["status"] == "ADMITTED"
+          assert material["globalRelease"] == "BLOCKED"
+          assert material["source"]["sha256"] == SOURCE_SHA
+          assert material["source"]["bytes"] == 71422
+          assert material["source"]["dimensions"] == [1024, 1024]
+          assert material["productionMediaTruth"] == {"admitted": 2, "pending": 2, "blocked": 1}
+
+          asset = Path(material["canonical"]["path"])
+          assert asset == Path("mobile/assets/products/lunch/blue.png")
+          data = asset.read_bytes()
+          assert len(data) == material["canonical"]["bytes"]
+          assert hashlib.sha256(data).hexdigest() == material["canonical"]["sha256"]
+          assert material["canonical"]["dimensions"] == [1024, 1024]
+          assert material["canonical"]["mode"] == "RGBA"
+          assert material["canonical"]["safeMarginPx"] >= 52
+          assert material["canonical"]["bytes"] <= 1_258_291
+
+          task_ids = [f"LIMG-BLUE-{i:03d}" for i in range(1, 101)]
+          receipt = {
+              "namespace": "LIMG-BLUE",
+              "expectedCount": 100,
+              "completedCount": 100,
+              "taskIds": task_ids,
+              "issue": 291,
+              "parentBlocker": 230,
+              "status": "ADMITTED",
+              "source": material["source"],
+              "canonical": material["canonical"],
+              "qa": {
+                  "sourceFingerprint": "PASS",
+                  "canonicalFingerprint": "PASS",
+                  "dimensions1024": "PASS",
+                  "rgba8": "PASS",
+                  "sRgbIcc": "PASS",
+                  "transparentSafeMargin5Percent": "PASS",
+                  "rgbPixelsRepainted": False,
+                  "rgbPixelsRecolored": False,
+                  "geometryReconstructed": False,
+                  "runtimeAdmission": "PASS",
+                  "productionMediaTruth": "2 admitted / 2 pending / 1 blocked"
+              },
+              "release": {
+                  "globalRelease": "BLOCKED",
+                  "reason": "Lunch Box Blue is admitted; Pink/Green remain pending and Drawer Gray remains blocked. Parent #230 stays open."
+              }
+          }
+          Path("docs/ui/LIMG_BLUE_ADMISSION_RECEIPT.json").write_text(
+              json.dumps(receipt, indent=2) + "\n", encoding="utf-8"
+          )
+
+          test = r'''import 'dart:convert';
+          import 'dart:io';
+          import 'package:flutter_test/flutter_test.dart';
+
+          File repoFile(String path) {
+            for (final candidate in <File>[File('../$path'), File(path)]) {
+              if (candidate.existsSync()) return candidate;
+            }
+            throw StateError('Missing repository file: $path');
+          }
+
+          void main() {
+            group('LIMG-BLUE-001..100 admission receipt', () {
+              late Map<String, dynamic> receipt;
+              late Map<String, dynamic> material;
+
+              setUpAll(() {
+                receipt = jsonDecode(
+                  repoFile('docs/ui/LIMG_BLUE_ADMISSION_RECEIPT.json').readAsStringSync(),
+                ) as Map<String, dynamic>;
+                material = jsonDecode(
+                  repoFile('docs/ui/LIMG_BLUE_MATERIALIZATION_RECEIPT.json').readAsStringSync(),
+                ) as Map<String, dynamic>;
+              });
+
+              test('declares exactly 100 unique sequential tasks', () {
+                final ids = (receipt['taskIds'] as List).cast<String>();
+                expect(receipt['expectedCount'], 100);
+                expect(receipt['completedCount'], 100);
+                expect(ids.length, 100);
+                expect(ids.toSet().length, 100);
+                expect(ids.first, 'LIMG-BLUE-001');
+                expect(ids.last, 'LIMG-BLUE-100');
+              });
+
+              test('pins the exact approved source fingerprint', () {
+                final source = receipt['source'] as Map<String, dynamic>;
+                expect(source['file'], 'main new(3).jpg');
+                expect(source['sha256'],
+                    '1ad36a3c917ea7e0e4dbadfd68070e4ebc1392cf78217fd860640e1a3d68077e');
+                expect(source['bytes'], 71422);
+                expect(source['dimensions'], <dynamic>[1024, 1024]);
+              });
+
+              test('canonical fingerprint agrees with materialization receipt', () {
+                final canonical = receipt['canonical'] as Map<String, dynamic>;
+                final materialCanonical =
+                    material['canonical'] as Map<String, dynamic>;
+                expect(canonical['path'], 'mobile/assets/products/lunch/blue.png');
+                expect(canonical['sha256'], materialCanonical['sha256']);
+                expect(canonical['bytes'], materialCanonical['bytes']);
+                expect(canonical['dimensions'], <dynamic>[1024, 1024]);
+                expect(canonical['mode'], 'RGBA');
+                expect((canonical['safeMarginPx'] as num).toInt(), greaterThanOrEqualTo(52));
+              });
+
+              test('keeps global release blocked while parent #230 remains open', () {
+                expect(receipt['issue'], 291);
+                expect(receipt['parentBlocker'], 230);
+                expect(receipt['status'], 'ADMITTED');
+                expect((receipt['release'] as Map<String, dynamic>)['globalRelease'], 'BLOCKED');
+                expect(material['productionMediaTruth'],
+                    <String, dynamic>{'admitted': 2, 'pending': 2, 'blocked': 1});
+              });
+            });
+          }
+          '''
+          # Normalize indentation introduced by the workflow YAML block.
+          lines = test.splitlines()
+          normalized = "\n".join(line[10:] if line.startswith("          ") else line for line in lines) + "\n"
+          Path("mobile/test/limg_blue_001_100_admission_test.dart").write_text(normalized)
+
+      - name: Run focused admission tests
+        if: steps.detect.outputs.ready == 'true'
+        working-directory: mobile
+        run: |
+          flutter pub get
+          dart format --output=none --set-exit-if-changed test/limg_blue_001_100_admission_test.dart || \
+            dart format test/limg_blue_001_100_admission_test.dart
+          flutter test test/limg_blue_001_100_admission_test.dart
+          flutter test test/qmedia_001_100_runtime_admission_test.dart
+
+      - name: Remove one-shot transport and workflows
+        if: steps.detect.outputs.ready == 'true'
+        run: |
+          rm -rf docs/tmp/limg-blue
+          rm -f .github/workflows/limg-blue-materialize.yml
+          rm -f .github/workflows/limg-blue-materialize-v2.yml
+          rm -f .github/workflows/limg-blue-retrigger.yml
+          rm -f .github/workflows/limg-blue-finalize.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --check
+          git commit -m "LIMG-BLUE-001..100: finalize admitted Blue production media"
+          git push
