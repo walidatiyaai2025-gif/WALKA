@@ -9,6 +9,7 @@ on:
       - 'agent/design-*'
       - 'agent/ops-*'
       - 'agent/pav-*'
+      - 'agent/vsurf-*'
     paths-ignore:
       - 'Last verified APK/**'
   pull_request:
@@ -73,6 +74,43 @@ jobs:
           set -o pipefail
           timeout --signal=TERM 150s flutter test --reporter expanded 2>&1 | tee flutter-test.log
 
+      - name: Audit owner-visible product media surfaces
+        id: vsurf
+        working-directory: mobile
+        shell: bash
+        run: |
+          set -euo pipefail
+          report='owner-visible-media-surface-report.json'
+          dart run tool/verify_owner_visible_media_surfaces.dart --root . --json "$report" --report --enforce
+          state="$(python3 -c "import json; print(json.load(open('$report'))['state'])")"
+          global_state="$(python3 -c "import json; print(json.load(open('$report'))['globalReleaseState'])")"
+          admitted_count="$(python3 -c "import json; print(json.load(open('$report'))['admittedCount'])")"
+          blocker_count="$(python3 -c "import json; print(json.load(open('$report'))['blockerCount'])")"
+          warning_count="$(python3 -c "import json; print(json.load(open('$report'))['warningCount'])")"
+          report_sha="$(sha256sum "$report" | awk '{print $1}')"
+          echo "state=$state" >> "$GITHUB_OUTPUT"
+          echo "global_state=$global_state" >> "$GITHUB_OUTPUT"
+          echo "admitted_count=$admitted_count" >> "$GITHUB_OUTPUT"
+          echo "report_sha=$report_sha" >> "$GITHUB_OUTPUT"
+          {
+            echo '### Owner-visible product media surface audit'
+            echo
+            echo "- Integration state: **$state**"
+            echo "- Global visual-release state: **$global_state**"
+            echo "- Runtime-admitted variants: **${admitted_count}/5**"
+            echo "- Integration blockers: **$blocker_count**"
+            echo "- Warnings: **$warning_count**"
+            echo "- Report SHA-256: \`$report_sha\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload owner-visible media surface report
+        uses: actions/upload-artifact@v4
+        with:
+          name: owner-visible-media-surface-${{ github.sha }}
+          path: mobile/owner-visible-media-surface-report.json
+          if-no-files-found: error
+          retention-days: 14
+
       - name: Report production product asset readiness
         id: production_assets
         working-directory: mobile
@@ -132,6 +170,7 @@ jobs:
           path: |
             mobile/flutter-analyze.log
             mobile/flutter-test.log
+            mobile/owner-visible-media-surface-report.json
             mobile/production-asset-readiness.json
           if-no-files-found: warn
           retention-days: 7
