@@ -261,18 +261,22 @@ void main() {
       );
       final BuildContext context = tester.element(find.byKey(hostKey));
       const WalkaProductMediaResolver resolver = WalkaProductMediaResolver.production();
-      final List<WalkaProductMediaPrefetchResult> results =
-          await resolver.prefetchVariants(
-        context,
-        variantIds: const <String>[
-          'drawer-organizer:gray',
-          'drawer-organizer:gray',
-          'lunch-box:pink',
-          'lunch-box:pink',
-          'unknown:variant',
-        ],
-        surface: WalkaProductMediaSurface.favorites,
+      final List<WalkaProductMediaPrefetchResult>? asyncResults =
+          await tester.runAsync(
+        () => resolver.prefetchVariants(
+          context,
+          variantIds: const <String>[
+            'drawer-organizer:gray',
+            'drawer-organizer:gray',
+            'lunch-box:pink',
+            'lunch-box:pink',
+            'unknown:variant',
+          ],
+          surface: WalkaProductMediaSurface.favorites,
+        ),
       );
+      expect(asyncResults, isNotNull);
+      final List<WalkaProductMediaPrefetchResult> results = asyncResults!;
       expect(
         results.map((WalkaProductMediaPrefetchResult result) => result.variantId),
         <String>['drawer-organizer:gray', 'lunch-box:pink', 'unknown:variant'],
