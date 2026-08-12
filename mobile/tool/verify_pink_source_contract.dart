@@ -80,12 +80,12 @@ Never _usage(String message) {
 
 void _help() {
   stdout.writeln(
-    'Validate the fail-closed WALKA Pink source/extraction contract.\n'
+    'Validate the WALKA Pink source/extraction and admission-consistency contract.\n'
     '--root <path>   Mobile project root (default: .)\n'
     '--json <path>   Write deterministic JSON report atomically\n'
     '--report        Print human-readable summary\n'
-    '--enforce       Exit 1 on contract drift or premature Pink admission.\n'
-    'A successful audit means the source boundary is locked, not that Pink '
-    'production media has passed visual QA.',
+    '--enforce       Exit 1 on source, provenance, QA or runtime-admission drift.\n'
+    'A successful audit reports LOCKED_PENDING_VISUAL_QA before admission or '
+    'LOCKED_ADMITTED only when the complete evidence chain agrees.',
   );
 }
