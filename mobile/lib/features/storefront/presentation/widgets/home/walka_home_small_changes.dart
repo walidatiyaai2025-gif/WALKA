@@ -7,13 +7,16 @@ import 'walka_home_featured_visual.dart';
 
 class WalkaHomeSmallChanges extends StatelessWidget {
   const WalkaHomeSmallChanges({
-    required this.variantId,
-    required this.productSemanticLabel,
     required this.onTap,
+    this.variantId = 'drawer-organizer:white',
+    String? productSemanticLabel,
+    String? drawerSemanticLabel,
     this.title = 'Small Changes,\nBetter Living',
     this.body = 'Simple solutions that bring order, beauty and peace of mind.',
     super.key,
-  });
+  }) : productSemanticLabel = productSemanticLabel ??
+            drawerSemanticLabel ??
+            'WALKA featured product lifestyle visual';
 
   final String variantId;
   final String productSemanticLabel;
