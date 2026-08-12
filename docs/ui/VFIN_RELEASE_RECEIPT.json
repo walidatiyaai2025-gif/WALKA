@@ -52,13 +52,13 @@
     "enforcementBlockArtifactDigest": "sha256:e86b3f26ec241a44061230283ad7eeb5894b82b17a6b0b5f1d1bd9d58b48fbf3"
   },
   "productionMedia": {
-    "admitted": 2,
-    "pending": 2,
+    "admitted": 3,
+    "pending": 1,
     "blocked": 1,
     "mechanicalReady": false,
     "stablePublication": false,
     "ownerVisualAcceptance": "REQUIRES_OWNER_REVIEW",
     "finalVisualStatus": "BLOCKED",
-    "reason": "Drawer White and Lunch Blue are admitted. Pink is source-approved but returned to PENDING after Navy-surface edge/halo QA failed; Green remains PENDING until its canonical branch completes full CI; Drawer Gray remains source-blocked."
+    "reason": "Drawer White and Lunch Blue/Green are admitted from approved source-derived media. Pink remains PENDING after Navy-surface edge/halo QA failed, and Drawer Gray remains source-blocked."
   }
 }
