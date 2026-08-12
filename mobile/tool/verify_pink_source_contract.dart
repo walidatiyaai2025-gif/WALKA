@@ -33,12 +33,14 @@ void main(List<String> args) {
     }
   }
 
-  final Directory mobileRoot = Directory(root).absolute;
-  if (!mobileRoot.existsSync()) {
-    stderr.writeln('PINKSRC invalid root: ${mobileRoot.path}');
+  final Directory requestedRoot = Directory(root).absolute;
+  if (!requestedRoot.existsSync()) {
+    stderr.writeln('PINKSRC invalid root: ${requestedRoot.path}');
     exitCode = 64;
     return;
   }
+  final Directory mobileRoot =
+      Directory(requestedRoot.resolveSymbolicLinksSync());
 
   final PinkSourceContractReport result =
       PinkSourceContractAuditor(mobileRoot: mobileRoot).audit();
