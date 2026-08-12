@@ -8,8 +8,7 @@ import '../tool/src/pink_source_contract.dart';
 Map<String, dynamic> _json(String path) =>
     jsonDecode(File(path).readAsStringSync()) as Map<String, dynamic>;
 
-Map<String, dynamic> _map(Object? value) =>
-    value as Map<String, dynamic>;
+Map<String, dynamic> _map(Object? value) => value as Map<String, dynamic>;
 
 Map<String, dynamic> _row(Map<String, dynamic> document, String id) =>
     (document['variants'] as List<dynamic>)
@@ -32,6 +31,7 @@ void main() {
     final Map<String, dynamic> source = _map(contract['source']);
     final Map<String, dynamic> panel = _map(contract['approvedProductPanel']);
 
+    expect(contract['schemaVersion'], 2);
     expect(contract['variantId'], variantId);
     expect(source['sourceId'], 'SRC-LUNCH-PINK-001');
     expect(source['filename'], '1000389975.jpg');
@@ -52,7 +52,7 @@ void main() {
     expect(panel['marketplacePixelsOutsidePanelMustBeExcluded'], isTrue);
   });
 
-  test('PINKSRC-006..010 locks canonical path, pixel contract, margin and budget', () {
+  test('PINKSRC-006..010 locks canonical output and admitted fingerprint', () {
     final Map<String, dynamic> output = _map(contract['canonicalOutput']);
 
     expect(output['path'], 'assets/products/lunch/pink.png');
@@ -63,9 +63,15 @@ void main() {
     expect(output['colorProfile'], 'sRGB');
     expect(output['minimumTransparentSafeMarginPx'], greaterThanOrEqualTo(51));
     expect(output['maximumByteSize'], 1258291);
+    expect(
+      output['admittedSha256'],
+      '84b1c5b44980c29bf22ff88cafc747454d4caf8612209daa84edfc2e3f3a11ae',
+    );
+    expect(output['admittedByteSize'], 748350);
+    expect(output['admittedAlphaBoundingBox'], <int>[51, 161, 972, 862]);
   });
 
-  test('PINKSRC-011..013 requires the complete visual QA set before admission', () {
+  test('PINKSRC-011..013 requires all nine visual QA checks before admission', () {
     final List<String> qa =
         (contract['requiredVisualQa'] as List<dynamic>).cast<String>();
     expect(qa, <String>[
@@ -80,10 +86,16 @@ void main() {
       'bakedUiExcluded',
     ]);
     expect(qa.toSet(), hasLength(9));
-    expect(_map(contract['admissionGuard'])['currentVisualQaState'], 'PENDING');
+
+    final Map<String, dynamic> provenanceRow = _row(provenance, variantId);
+    final Map<String, dynamic> qaStates = _map(provenanceRow['qa']);
+    for (final String check in qa) {
+      expect(qaStates[check], 'PASS', reason: check);
+    }
+    expect(_map(contract['admissionGuard'])['currentVisualQaState'], 'PASS');
   });
 
-  test('PINKSRC-014..016 keeps source approved but provenance/runtime fail closed', () {
+  test('PINKSRC-014..016 accepts admission only when source/provenance/runtime agree', () {
     final Map<String, dynamic> sourceRow = _row(sourceAdmission, variantId);
     final Map<String, dynamic> provenanceRow = _row(provenance, variantId);
     final Map<String, dynamic> guard = _map(contract['admissionGuard']);
@@ -91,27 +103,34 @@ void main() {
     expect(sourceRow['sourceId'], 'SRC-LUNCH-PINK-001');
     expect(sourceRow['sourceFilename'], '1000389975.jpg');
     expect(sourceRow['sourceState'], 'APPROVED');
-    expect(sourceRow['canonicalExportPresent'], isFalse);
-    expect(provenanceRow['lifecycleState'], 'PENDING');
-    expect(provenanceRow['sha256'], isNull);
-    expect(provenanceRow['byteSize'], isNull);
+    expect(sourceRow['canonicalExportPresent'], isTrue);
+    expect(provenanceRow['lifecycleState'], 'ADMITTED');
     expect(
-      (_map(provenanceRow['qa'])).values.every((dynamic value) => value == 'PENDING'),
-      isTrue,
+      provenanceRow['sha256'],
+      '84b1c5b44980c29bf22ff88cafc747454d4caf8612209daa84edfc2e3f3a11ae',
     );
-    expect(guard['requiredCurrentRuntimeState'], 'pending');
-    expect(guard['requiredRuntimeEligible'], isFalse);
+    expect(provenanceRow['byteSize'], 748350);
+    expect(provenanceRow['width'], 1024);
+    expect(provenanceRow['height'], 1024);
+    expect(provenanceRow['nearestTransparentSafeMargin'], greaterThanOrEqualTo(51));
+    expect(guard['requiredCurrentProvenanceState'], 'ADMITTED');
+    expect(guard['requiredCurrentRuntimeState'], 'admitted');
+    expect(guard['requiredCanonicalExportPresent'], isTrue);
+    expect(guard['requiredRuntimeEligible'], isTrue);
     expect(guard['stablePublicationMustRemainFailClosed'], isTrue);
 
     final PinkSourceContractReport report =
         PinkSourceContractAuditor(mobileRoot: Directory.current).audit();
     expect(report.contractReady, isTrue, reason: report.prettyJson());
-    expect(report.provenanceState, 'PENDING');
-    expect(report.runtimeState, 'pending');
-    expect(report.canonicalExportPresent, isFalse);
+    expect(report.productionAdmitted, isTrue, reason: report.prettyJson());
+    expect(report.state, 'LOCKED_ADMITTED');
+    expect(report.visualQaState, 'PASS');
+    expect(report.provenanceState, 'ADMITTED');
+    expect(report.runtimeState, 'admitted');
+    expect(report.canonicalExportPresent, isTrue);
   });
 
-  test('PINKSRC-017..020 auditor, CLI, Flutter Preview enforcement, artifact and receipt are executable', () async {
+  test('PINKSRC-017..020 auditor, CLI, CI artifact and receipt remain executable', () async {
     final Map<String, dynamic> namespace = _map(contract['taskNamespace']);
     final List<String> ids = List<String>.generate(
       20,
@@ -142,9 +161,9 @@ void main() {
     );
     expect(result.exitCode, 0, reason: '${result.stdout}\n${result.stderr}');
     final Map<String, dynamic> cliReport = _json(reportFile.path);
-    expect(cliReport['state'], 'LOCKED_PENDING_VISUAL_QA');
+    expect(cliReport['state'], 'LOCKED_ADMITTED');
     expect(cliReport['contractReady'], isTrue);
-    expect(cliReport['productionAdmitted'], isFalse);
+    expect(cliReport['productionAdmitted'], isTrue);
     expect(cliReport['blockerCount'], 0);
 
     final String flutterPreview =
@@ -166,7 +185,7 @@ void main() {
     for (final String id in ids) {
       expect(receiptText, contains(id), reason: id);
     }
-    expect(receiptText, contains('PENDING'));
-    expect(receiptText, contains('not admitted'));
+    expect(receiptText, contains('ADMITTED'));
+    expect(receiptText, contains('PR #303'));
   });
 }
