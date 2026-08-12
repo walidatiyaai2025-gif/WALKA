@@ -1,0 +1,64 @@
+name: LIMG Blue Open PR
+
+on:
+  push:
+    branches:
+      - agent/limg-blue-001-100-admission
+    paths:
+      - docs/ui/LIMG_BLUE_ADMISSION_RECEIPT.json
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  open-pr:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify final admission receipt
+        shell: python
+        run: |
+          import json
+          from pathlib import Path
+          r = json.loads(Path('docs/ui/LIMG_BLUE_ADMISSION_RECEIPT.json').read_text())
+          assert r['namespace'] == 'LIMG-BLUE'
+          assert r['expectedCount'] == 100
+          assert r['completedCount'] == 100
+          assert len(r['taskIds']) == 100
+          assert len(set(r['taskIds'])) == 100
+          assert r['taskIds'][0] == 'LIMG-BLUE-001'
+          assert r['taskIds'][-1] == 'LIMG-BLUE-100'
+          assert r['issue'] == 291
+          assert r['parentBlocker'] == 230
+          assert r['status'] == 'ADMITTED'
+          assert r['release']['globalRelease'] == 'BLOCKED'
+
+      - name: Remove PR opener before publication
+        run: |
+          rm -f .github/workflows/limg-blue-open-pr.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --check
+          git commit -m "LIMG-BLUE: remove one-shot PR opener"
+          git push
+
+      - name: Open pull request
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          existing="$(gh pr list --repo "$GITHUB_REPOSITORY" --head agent/limg-blue-001-100-admission --state open --json number --jq '.[0].number // empty')"
+          if test -n "$existing"; then
+            echo "PR #$existing already open"
+            exit 0
+          fi
+          gh pr create \
+            --repo "$GITHUB_REPOSITORY" \
+            --base main \
+            --head agent/limg-blue-001-100-admission \
+            --title "LIMG-BLUE-001..100: admit faithful Lunch Box Blue production media" \
+            --body $'Closes #291\n\nAdmits only the canonical Lunch Box Blue production visual from the exact approved source fingerprint. Runtime production-media truth becomes 2 admitted / 2 pending / 1 blocked.\n\nParent blocker #230 intentionally remains open: Lunch Pink/Green are still pending and Drawer Gray is still blocked. Global visual release remains BLOCKED until 5/5.'
