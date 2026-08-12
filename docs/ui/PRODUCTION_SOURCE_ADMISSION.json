@@ -34,10 +34,16 @@
       "sourceId": "SRC-LUNCH-BLUE-001",
       "sourceFilename": "main new(3).jpg",
       "sourceState": "APPROVED",
+      "sourceSha256": "1ad36a3c917ea7e0e4dbadfd68070e4ebc1392cf78217fd860640e1a3d68077e",
+      "sourceByteSize": 71422,
+      "sourceWidth": 1024,
+      "sourceHeight": 1024,
       "canonicalPath": "assets/products/lunch/blue.png",
-      "canonicalExportPresent": false,
-      "reason": "Manifest records a clean source with the four-compartment stainless tray, colored outer component and approved set visible.",
-      "unblockAction": "Produce the canonical transparent cutout from the admitted source and pass Product Master, alpha, material, framing and file-budget QA."
+      "canonicalExportPresent": true,
+      "canonicalSha256": "e2d350b69a439291118b67955043ab221f75273f57f3b5f20baa218570bc3fdb",
+      "canonicalByteSize": 574620,
+      "reason": "The exact approved real source was converted to a transparent canonical cutout without generation, recolor, geometry reconstruction or accessory invention. The four-compartment SUS304 tray, Blue outer component, bag, spoon, fork and stainless sauce cup set are preserved.",
+      "unblockAction": "Keep this admitted Blue source/export fingerprint stable. Any future replacement must repeat source admission, PAV, surface QA and downscale QA before runtime promotion."
     },
     {
       "variantId": "lunch-box:pink",
