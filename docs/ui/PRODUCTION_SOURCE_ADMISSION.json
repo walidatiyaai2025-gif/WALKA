@@ -53,9 +53,9 @@
       "sourceFilename": "1000389975.jpg",
       "sourceState": "APPROVED",
       "canonicalPath": "assets/products/lunch/pink.png",
-      "canonicalExportPresent": false,
-      "reason": "Manifest approves only the clean embedded product panel; marketplace UI, title, rating and navigation pixels are excluded.",
-      "unblockAction": "Crop/extract only the approved product region, remove marketplace chrome, then export and validate the canonical transparent PNG."
+      "canonicalExportPresent": true,
+      "reason": "Approved clean product panel from the owner listing screenshot has been extracted without marketplace UI/title/rating/navigation pixels; the Pink bag, outer components, four-compartment SUS304 tray, cutlery and stainless sauce cup remain source-derived with no recoloring, geometry reconstruction or accessory invention.",
+      "unblockAction": "Keep the admitted Pink binary, clean-panel extraction boundary, source fingerprint, geometry, transparent framing and PAV metadata stable; any future replacement must repeat source admission and visual QA."
     },
     {
       "variantId": "lunch-box:green",

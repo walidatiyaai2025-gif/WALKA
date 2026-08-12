@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:walka/design_system/components/media/walka_product_media_admission.dart';
+import 'package:walka/design_system/components/media/walka_product_media_resolver.dart';
 import 'package:walka/design_system/walka_product_visual.dart';
 import 'package:walka/design_system/walka_theme.dart';
 import 'package:walka/features/catalog/catalog_state.dart';
@@ -159,8 +161,17 @@ void main() {
         find.byKey(const ValueKey<String>('discovery-search-lunch-box:blue')),
         findsNothing,
       );
-      expect(find.byType(WalkaProductVisual), findsOneWidget);
-      expect(find.byType(Image), findsNothing);
+      expect(find.byType(WalkaResolvedProductMedia), findsOneWidget);
+      final bool pinkAdmitted =
+          WalkaProductMediaAdmissionRegistry.isRuntimeEligible('lunch-box:pink');
+      expect(
+        find.byType(WalkaProductVisual),
+        pinkAdmitted ? findsNothing : findsOneWidget,
+      );
+      expect(
+        find.byType(Image),
+        pinkAdmitted ? findsOneWidget : findsNothing,
+      );
       expect(tester.takeException(), isNull);
     },
   );
