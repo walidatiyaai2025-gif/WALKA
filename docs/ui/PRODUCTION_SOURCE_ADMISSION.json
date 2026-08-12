@@ -53,9 +53,9 @@
       "sourceFilename": "1000389975.jpg",
       "sourceState": "APPROVED",
       "canonicalPath": "assets/products/lunch/pink.png",
-      "canonicalExportPresent": true,
-      "reason": "Approved clean product panel from the owner listing screenshot has been extracted without marketplace UI/title/rating/navigation pixels; the Pink bag, outer components, four-compartment SUS304 tray, cutlery and stainless sauce cup remain source-derived with no recoloring, geometry reconstruction or accessory invention.",
-      "unblockAction": "Keep the admitted Pink binary, clean-panel extraction boundary, source fingerprint, geometry, transparent framing and PAV metadata stable; any future replacement must repeat source admission and visual QA."
+      "canonicalExportPresent": false,
+      "reason": "The exact approved product panel is locked. Direct visual proof of the current-main candidate on WALKA Navy shows unacceptable white halo/background contamination, so the existing PNG remains quarantined and is not a confirmed canonical export.",
+      "unblockAction": "Produce a cleaner source-derived cutout from the approved panel, exclude all marketplace pixels, and pass White/Ivory/Navy plus 96/160/240/384 edge QA before confirming or admitting the canonical export."
     },
     {
       "variantId": "lunch-box:green",
