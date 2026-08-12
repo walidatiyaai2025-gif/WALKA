@@ -1,0 +1,65 @@
+{
+  "schemaVersion": 1,
+  "taskNamespace": {
+    "prefix": "PINKSRC",
+    "first": 1,
+    "last": 20,
+    "expectedCount": 20
+  },
+  "variantId": "lunch-box:pink",
+  "source": {
+    "sourceId": "SRC-LUNCH-PINK-001",
+    "filename": "1000389975.jpg",
+    "state": "APPROVED",
+    "sha256": "11a6020417067a8a1869eff1df90d0843f1e068a6cdc06d25e5c92abb1d2e3f5",
+    "byteSize": 189515,
+    "width": 695,
+    "height": 1536,
+    "type": "marketplace-screenshot-with-approved-product-panel"
+  },
+  "approvedProductPanel": {
+    "x": 28,
+    "y": 760,
+    "width": 647,
+    "height": 575,
+    "marketplacePixelsOutsidePanelMustBeExcluded": true
+  },
+  "canonicalOutput": {
+    "path": "assets/products/lunch/pink.png",
+    "width": 1024,
+    "height": 1024,
+    "pixelFormat": "8-bit RGBA",
+    "colorProfile": "sRGB",
+    "minimumTransparentSafeMarginPx": 51,
+    "maximumByteSize": 1258291
+  },
+  "requiredVisualQa": [
+    "surfaceWhite",
+    "surfaceIvory",
+    "surfaceNavy",
+    "downscale96",
+    "downscale160",
+    "downscale240",
+    "downscale384",
+    "geometryPreserved",
+    "bakedUiExcluded"
+  ],
+  "admissionGuard": {
+    "currentVisualQaState": "PENDING",
+    "requiredSourceAdmissionState": "APPROVED",
+    "requiredCurrentProvenanceState": "PENDING",
+    "requiredCurrentRuntimeState": "pending",
+    "requiredCanonicalExportPresent": false,
+    "requiredRuntimeEligible": false,
+    "stablePublicationMustRemainFailClosed": true,
+    "reason": "The exact source and product-panel extraction boundary are approved, but no Pink canonical cutout may be admitted until clean transparency and material/edge fidelity pass every mandatory visual QA check."
+  },
+  "prohibitions": [
+    "protected Images/ masters as runtime source",
+    "marketplace title, rating, offer or navigation pixels",
+    "product recoloring used as a substitute for the approved Pink source",
+    "geometry reconstruction or invented accessories",
+    "generative fill for missing product structure",
+    "premature runtime admission before complete visual QA"
+  ]
+}
