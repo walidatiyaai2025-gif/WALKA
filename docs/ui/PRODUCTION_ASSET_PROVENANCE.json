@@ -1,6 +1,10 @@
 {
   "schemaVersion": 1,
-  "allowedLifecycleStates": ["PENDING", "ADMITTED", "BLOCKED"],
+  "allowedLifecycleStates": [
+    "PENDING",
+    "ADMITTED",
+    "BLOCKED"
+  ],
   "mandatoryQaChecks": [
     "surfaceWhite",
     "surfaceIvory",
@@ -71,24 +75,24 @@
       "sourceFilename": "main new(3).jpg",
       "sourceState": "APPROVED",
       "canonicalPath": "assets/products/lunch/blue.png",
-      "lifecycleState": "PENDING",
-      "sha256": null,
-      "byteSize": null,
-      "width": null,
-      "height": null,
-      "alphaBoundingBox": null,
-      "nearestTransparentSafeMargin": null,
+      "lifecycleState": "ADMITTED",
+      "sha256": "40fb126165777d80cb879ded86c5ebe3ffec28140d254767ffd5f795f8b883f7",
+      "byteSize": 636661,
+      "width": 1024,
+      "height": 1024,
+      "alphaBoundingBox": [51, 107, 972, 915],
+      "nearestTransparentSafeMargin": 51,
       "colorProfileExpectation": "sRGB",
       "qa": {
-        "surfaceWhite": "PENDING",
-        "surfaceIvory": "PENDING",
-        "surfaceNavy": "PENDING",
-        "downscale96": "PENDING",
-        "downscale160": "PENDING",
-        "downscale240": "PENDING",
-        "downscale384": "PENDING",
-        "geometryPreserved": "PENDING",
-        "bakedUiExcluded": "PENDING"
+        "surfaceWhite": "PASS",
+        "surfaceIvory": "PASS",
+        "surfaceNavy": "PASS",
+        "downscale96": "PASS",
+        "downscale160": "PASS",
+        "downscale240": "PASS",
+        "downscale384": "PASS",
+        "geometryPreserved": "PASS",
+        "bakedUiExcluded": "PASS"
       }
     },
     {
