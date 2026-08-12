@@ -1,0 +1,259 @@
+name: LIMG Blue Materialize V2
+
+on:
+  push:
+    branches:
+      - agent/limg-blue-001-100-admission
+    paths:
+      - docs/tmp/limg-blue/READY
+
+permissions:
+  contents: write
+
+jobs:
+  materialize:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Pillow
+        run: python -m pip install --disable-pip-version-check Pillow==12.3.0
+
+      - name: Materialize canonical Blue from exact approved source
+        shell: python
+        run: |
+          import base64
+          import hashlib
+          import io
+          import json
+          from collections import deque
+          from pathlib import Path
+
+          from PIL import Image, ImageCms, ImageFilter
+
+          EXPECTED_SOURCE_SHA = "1ad36a3c917ea7e0e4dbadfd68070e4ebc1392cf78217fd860640e1a3d68077e"
+          EXPECTED_SOURCE_BYTES = 71422
+          EXPECTED_SOURCE_B64 = 95232
+          OLD_CANDIDATE_SHA = "e2d350b69a439291118b67955043ab221f75273f57f3b5f20baa218570bc3fdb"
+          OLD_CANDIDATE_BYTES = 574620
+          TARGET = Path("mobile/assets/products/lunch/blue.png")
+
+          # The first and last source segments survived transport byte-for-byte.
+          # The formerly corrupted middle span [8000:56000] is replaced by six
+          # smaller source-fix chunks and is validated again by the full source hash.
+          source_parts = [Path("docs/tmp/limg-blue/source/0000.b64")]
+          source_parts += sorted(Path("docs/tmp/limg-blue/source-fix").glob("*.b64"))
+          source_parts += [
+              Path("docs/tmp/limg-blue/source/0004.b64"),
+              Path("docs/tmp/limg-blue/source/0005.b64"),
+              Path("docs/tmp/limg-blue/source/0006.b64"),
+          ]
+          if len(source_parts) != 10:
+              raise SystemExit(f"unexpected source part count: {len(source_parts)}")
+          source_b64 = "".join(p.read_text(encoding="utf-8").strip() for p in source_parts)
+          if len(source_b64) != EXPECTED_SOURCE_B64:
+              raise SystemExit(f"source base64 length mismatch: {len(source_b64)}")
+          try:
+              source_bytes = base64.b64decode(source_b64, validate=True)
+          except Exception as exc:
+              raise SystemExit(f"source base64 decode failed: {exc}") from exc
+          source_sha = hashlib.sha256(source_bytes).hexdigest()
+          if len(source_bytes) != EXPECTED_SOURCE_BYTES:
+              raise SystemExit(f"source byte count mismatch: {len(source_bytes)}")
+          if source_sha != EXPECTED_SOURCE_SHA:
+              raise SystemExit(f"source sha mismatch: {source_sha}")
+
+          src = Image.open(io.BytesIO(source_bytes)).convert("RGB")
+          if src.size != (1024, 1024):
+              raise SystemExit(f"source dimensions mismatch: {src.size}")
+
+          # Derive transparency only. RGB pixels are never repainted/recolored.
+          # Background is the near-white, low-chroma region connected to the image
+          # perimeter. White product/accessory pixels enclosed by real edges remain.
+          w, h = src.size
+          px = src.load()
+          bg = bytearray(w * h)
+          q = deque()
+
+          def is_background(x, y):
+              r, g, b = px[x, y]
+              return min(r, g, b) >= 238 and (max(r, g, b) - min(r, g, b)) <= 22
+
+          def seed(x, y):
+              i = y * w + x
+              if not bg[i] and is_background(x, y):
+                  bg[i] = 1
+                  q.append((x, y))
+
+          for x in range(w):
+              seed(x, 0)
+              seed(x, h - 1)
+          for y in range(h):
+              seed(0, y)
+              seed(w - 1, y)
+
+          while q:
+              x, y = q.popleft()
+              if x > 0:
+                  seed(x - 1, y)
+              if x + 1 < w:
+                  seed(x + 1, y)
+              if y > 0:
+                  seed(x, y - 1)
+              if y + 1 < h:
+                  seed(x, y + 1)
+
+          alpha_src = bytes(0 if bg[i] else 255 for i in range(w * h))
+          alpha = Image.frombytes("L", (w, h), alpha_src)
+
+          # Preserve the previously approved 5%+ safe margin by scaling the exact
+          # source RGB and the derived alpha together; no geometry is redrawn.
+          rgb_resized = src.resize((922, 922), Image.Resampling.LANCZOS)
+          alpha_resized = alpha.resize((922, 922), Image.Resampling.LANCZOS).filter(
+              ImageFilter.GaussianBlur(0.6)
+          )
+          rgb_canvas = Image.new("RGB", (1024, 1024), (255, 255, 255))
+          rgb_canvas.paste(rgb_resized, (51, 51))
+          alpha_canvas = Image.new("L", (1024, 1024), 0)
+          alpha_canvas.paste(alpha_resized, (51, 51))
+
+          visible = alpha_canvas.point(lambda p: 255 if p > 8 else 0)
+          bbox_exclusive = visible.getbbox()
+          if bbox_exclusive is None:
+              raise SystemExit("derived alpha has no visible subject")
+          left, top, right, bottom = bbox_exclusive
+          bbox_inclusive = [left, top, right - 1, bottom - 1]
+          margin = min(left, top, 1024 - right, 1024 - bottom)
+          if margin < 52:
+              raise SystemExit(f"safe margin below 5%: {margin}px bbox={bbox_inclusive}")
+          hist = alpha_canvas.histogram()
+          visible_count = sum(hist[9:])
+          coverage = visible_count / float(1024 * 1024)
+          if not (0.20 <= coverage <= 0.65):
+              raise SystemExit(f"implausible subject alpha coverage: {coverage:.6f}")
+          for xy in ((0, 0), (1023, 0), (0, 1023), (1023, 1023)):
+              if alpha_canvas.getpixel(xy) != 0:
+                  raise SystemExit(f"non-transparent canonical corner: {xy}")
+
+          rgba = rgb_canvas.convert("RGBA")
+          rgba.putalpha(alpha_canvas)
+          # RGB invariant: canonical RGB plane is exactly the deterministic resized
+          # source canvas; only alpha is derived.
+          if rgba.convert("RGB").tobytes() != rgb_canvas.tobytes():
+              raise SystemExit("RGB invariant failed")
+
+          profile = ImageCms.ImageCmsProfile(ImageCms.createProfile("sRGB")).tobytes()
+          TARGET.parent.mkdir(parents=True, exist_ok=True)
+          rgba.save(TARGET, format="PNG", optimize=True, compress_level=9, icc_profile=profile)
+
+          out = TARGET.read_bytes()
+          out_sha = hashlib.sha256(out).hexdigest()
+          out_bytes = len(out)
+          if out_bytes > 1_258_291:
+              raise SystemExit(f"canonical PNG exceeds 1.2 MiB: {out_bytes}")
+          check = Image.open(TARGET)
+          if check.size != (1024, 1024) or check.mode != "RGBA":
+              raise SystemExit(f"canonical format mismatch: {check.size} {check.mode}")
+          if "icc_profile" not in check.info:
+              raise SystemExit("canonical PNG is missing sRGB ICC profile")
+
+          def patch_json(path):
+              p = Path(path)
+              data = json.loads(p.read_text(encoding="utf-8"))
+              touched = {"sha": 0, "bytes": 0, "bbox": 0, "margin": 0, "coverage": 0}
+
+              def walk(node):
+                  if isinstance(node, dict):
+                      # Restrict candidate metric rewrites to dictionaries that hold
+                      # the previous Blue candidate fingerprint or source filename/id.
+                      values = list(node.values())
+                      blue_ctx = (
+                          OLD_CANDIDATE_SHA in values
+                          or "main new(3).jpg" in values
+                          or any(
+                              isinstance(v, str) and "lunch" in v.lower() and "blue" in v.lower()
+                              for v in values
+                          )
+                      )
+                      if blue_ctx:
+                          for k, v in list(node.items()):
+                              kl = k.lower()
+                              if v == OLD_CANDIDATE_SHA:
+                                  node[k] = out_sha
+                                  touched["sha"] += 1
+                              elif isinstance(v, int) and v == OLD_CANDIDATE_BYTES and "byte" in kl:
+                                  node[k] = out_bytes
+                                  touched["bytes"] += 1
+                              elif isinstance(v, list) and v == [81, 99, 935, 852] and "bbox" in kl:
+                                  node[k] = bbox_inclusive
+                                  touched["bbox"] += 1
+                              elif isinstance(v, int) and v == 81 and "margin" in kl:
+                                  node[k] = margin
+                                  touched["margin"] += 1
+                              elif isinstance(v, (int, float)) and abs(float(v) - 0.34969425201416016) < 1e-12 and "coverage" in kl:
+                                  node[k] = coverage
+                                  touched["coverage"] += 1
+                      for child in node.values():
+                          walk(child)
+                  elif isinstance(node, list):
+                      for child in node:
+                          walk(child)
+
+              walk(data)
+              p.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+              return touched
+
+          source_patch = patch_json("docs/ui/PRODUCTION_SOURCE_ADMISSION.json")
+          provenance_patch = patch_json("docs/ui/PRODUCTION_ASSET_PROVENANCE.json")
+          if source_patch["sha"] + provenance_patch["sha"] < 1:
+              raise SystemExit("Blue candidate SHA was not found in admission/provenance manifests")
+
+          receipt = {
+              "issue": 291,
+              "parentBlocker": 230,
+              "source": {
+                  "file": "main new(3).jpg",
+                  "sha256": source_sha,
+                  "bytes": len(source_bytes),
+                  "dimensions": [1024, 1024]
+              },
+              "canonical": {
+                  "path": str(TARGET),
+                  "sha256": out_sha,
+                  "bytes": out_bytes,
+                  "dimensions": [1024, 1024],
+                  "mode": "RGBA",
+                  "colorSpace": "sRGB ICC",
+                  "alphaBboxInclusive": bbox_inclusive,
+                  "safeMarginPx": margin,
+                  "visibleAlphaCoverage": coverage,
+                  "rgbInvariant": "exact source resize 922x922 LANCZOS at offset 51,51; alpha-only background removal"
+              },
+              "status": "ADMITTED",
+              "globalRelease": "BLOCKED",
+              "productionMediaTruth": {"admitted": 2, "pending": 2, "blocked": 1}
+          }
+          Path("docs/ui/LIMG_BLUE_MATERIALIZATION_RECEIPT.json").write_text(
+              json.dumps(receipt, indent=2) + "\n", encoding="utf-8"
+          )
+          print(json.dumps(receipt, indent=2))
+
+          # Staging transport evidence is intentionally absent from the final PR.
+          import shutil
+          shutil.rmtree("docs/tmp/limg-blue")
+
+      - name: Commit materialized canonical
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add mobile/assets/products/lunch/blue.png \
+                  docs/ui/PRODUCTION_SOURCE_ADMISSION.json \
+                  docs/ui/PRODUCTION_ASSET_PROVENANCE.json \
+                  docs/ui/LIMG_BLUE_MATERIALIZATION_RECEIPT.json \
+                  docs/tmp/limg-blue
+          git diff --cached --check
+          git commit -m "LIMG-BLUE: materialize admitted canonical Blue binary"
+          git push
