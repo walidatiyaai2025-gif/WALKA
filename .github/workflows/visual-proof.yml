@@ -1,0 +1,113 @@
+name: Flutter Preview · Visual Proof
+
+on:
+  push:
+    branches:
+      - main
+      - 'agent/vproof-*'
+    paths:
+      - 'mobile/assets/products/**'
+      - 'mobile/tool/src/visual_proof.dart'
+      - 'mobile/tool/verify_visual_proof.dart'
+      - 'mobile/test/vproof_001_100_visual_proof_test.dart'
+      - 'docs/ui/PRODUCTION_ASSET_PROVENANCE.json'
+      - 'docs/ui/VISUAL_PROOF_REJECTIONS.json'
+      - '.github/workflows/visual-proof.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'mobile/assets/products/**'
+      - 'mobile/tool/src/visual_proof.dart'
+      - 'mobile/tool/verify_visual_proof.dart'
+      - 'mobile/test/vproof_001_100_visual_proof_test.dart'
+      - 'docs/ui/PRODUCTION_ASSET_PROVENANCE.json'
+      - 'docs/ui/VISUAL_PROOF_REJECTIONS.json'
+      - '.github/workflows/visual-proof.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: visual-proof-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  visual-proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Guard protected reference masters
+        shell: bash
+        env:
+          BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+        run: bash mobile/tool/guard_protected_reference_masters.sh "$BASE_SHA"
+
+      - name: Setup Flutter stable
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Get packages
+        working-directory: mobile
+        run: flutter pub get
+
+      - name: Run VPROOF regression suite
+        working-directory: mobile
+        run: flutter test test/vproof_001_100_visual_proof_test.dart --reporter expanded
+
+      - name: Enforce direct visual-proof diagnostics
+        id: vproof
+        working-directory: mobile
+        shell: bash
+        run: |
+          set -euo pipefail
+          report='visual-proof-report.json'
+          dart run tool/verify_visual_proof.dart \
+            --root . \
+            --provenance ../docs/ui/PRODUCTION_ASSET_PROVENANCE.json \
+            --rejections ../docs/ui/VISUAL_PROOF_REJECTIONS.json \
+            --json "$report" \
+            --enforce
+          state="$(python3 -c "import json; print(json.load(open('$report'))['state'])")"
+          blockers="$(python3 -c "import json; print(json.load(open('$report'))['blockerCount'])")"
+          warnings="$(python3 -c "import json; print(json.load(open('$report'))['warningCount'])")"
+          admitted="$(python3 -c "import json; print(json.load(open('$report'))['admittedCount'])")"
+          report_sha="$(sha256sum "$report" | awk '{print $1}')"
+          echo "state=$state" >> "$GITHUB_OUTPUT"
+          echo "report_sha=$report_sha" >> "$GITHUB_OUTPUT"
+          {
+            echo '### WALKA direct visual proof'
+            echo
+            echo "- Diagnostic state: **$state**"
+            echo "- Admitted variants inspected: **$admitted**"
+            echo "- Admission blockers: **$blockers**"
+            echo "- Diagnostic warnings: **$warnings**"
+            echo '- Automated metrics can approve final visual fidelity: **NO**'
+            echo '- Owner visual acceptance: **REQUIRED**'
+            echo "- Report SHA-256: \`$report_sha\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload visual-proof report
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-proof-${{ github.sha }}
+          path: mobile/visual-proof-report.json
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload diagnostics on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-proof-failure-${{ github.sha }}
+          path: mobile/visual-proof-report.json
+          if-no-files-found: warn
+          retention-days: 14
