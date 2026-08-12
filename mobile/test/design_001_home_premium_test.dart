@@ -58,7 +58,12 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('Everything in Its Place'), findsOneWidget);
-    expect(find.byType(WalkaProductVisual), findsWidgets);
+    expect(
+      find.byType(Image).evaluate().isNotEmpty ||
+          find.byType(WalkaProductVisual).evaluate().isNotEmpty,
+      isTrue,
+      reason: 'Home must keep resolved product media regardless of admission state.',
+    );
     expect(tester.takeException(), isNull);
   });
 

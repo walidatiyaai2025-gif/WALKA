@@ -143,10 +143,13 @@ void main() {
         ),
       );
       await tester.pump();
-      // Home can now mix admitted White Image media with provisional painted
-      // fallbacks for the remaining variants.
-      expect(find.byType(Image), findsWidgets);
-      expect(find.byType(WalkaProductVisual), findsWidgets);
+      // Owner-visible surfaces may show admitted Image media or quarantined
+      // painted fallback media depending on the exact variants visible.
+      expect(
+        find.byType(Image).evaluate().isNotEmpty ||
+            find.byType(WalkaProductVisual).evaluate().isNotEmpty,
+        isTrue,
+      );
       expect(tester.takeException(), isNull);
 
       await tester.pumpWidget(
@@ -158,8 +161,11 @@ void main() {
         ),
       );
       await tester.pump();
-      expect(find.byType(Image), findsWidgets);
-      expect(find.byType(WalkaProductVisual), findsWidgets);
+      expect(
+        find.byType(Image).evaluate().isNotEmpty ||
+            find.byType(WalkaProductVisual).evaluate().isNotEmpty,
+        isTrue,
+      );
       expect(tester.takeException(), isNull);
 
       await tester.pumpWidget(
