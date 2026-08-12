@@ -13,13 +13,17 @@ void main(List<String> args) {
       case '--root':
         if (i + 1 >= args.length) _usage('Missing value after --root');
         root = args[++i];
+        break;
       case '--json':
         if (i + 1 >= args.length) _usage('Missing value after --json');
         jsonPath = args[++i];
+        break;
       case '--report':
         report = true;
+        break;
       case '--enforce':
         enforce = true;
+        break;
       case '--help':
       case '-h':
         _printHelp();
@@ -42,6 +46,7 @@ void main(List<String> args) {
     output.parent.createSync(recursive: true);
     final File temporary = File('${output.path}.tmp');
     temporary.writeAsStringSync('${result.prettyJson()}\n');
+    if (output.existsSync()) output.deleteSync();
     temporary.renameSync(output.path);
   }
 
@@ -79,7 +84,7 @@ void _printHelp() {
     '--root <path>   Mobile project root (default: .)\n'
     '--json <path>   Write deterministic JSON report atomically\n'
     '--report        Print human-readable summary\n'
-    '--enforce       Exit 1 only for integration blockers; global 5/5 media '\
+    '--enforce       Exit 1 only for integration blockers; global 5/5 media '
     'readiness remains governed by verify_production_assets.',
   );
 }
