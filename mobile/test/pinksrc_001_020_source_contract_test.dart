@@ -111,7 +111,7 @@ void main() {
     expect(report.canonicalExportPresent, isFalse);
   });
 
-  test('PINKSRC-017..020 auditor, CLI, CI wiring and receipt remain executable', () async {
+  test('PINKSRC-017..020 auditor, CLI, Flutter Preview enforcement, artifact and receipt are executable', () async {
     final Map<String, dynamic> namespace = _map(contract['taskNamespace']);
     final List<String> ids = List<String>.generate(
       20,
@@ -147,11 +147,18 @@ void main() {
     expect(cliReport['productionAdmitted'], isFalse);
     expect(cliReport['blockerCount'], 0);
 
-    final String workflow =
+    final String flutterPreview =
         File('../.github/workflows/flutter-preview.yml').readAsStringSync();
-    expect(workflow, contains('Verify Pink source extraction contract'));
-    expect(workflow, contains('verify_pink_source_contract.dart'));
-    expect(workflow, contains('pink-source-contract-report.json'));
+    expect(flutterPreview, contains('flutter test'));
+    expect(flutterPreview, contains('Flutter Preview'));
+
+    final String pinkWorkflow =
+        File('../.github/workflows/pink-source-contract.yml').readAsStringSync();
+    expect(pinkWorkflow, contains('Flutter Preview · Pink Source Contract'));
+    expect(pinkWorkflow, contains('Verify Pink source extraction contract'));
+    expect(pinkWorkflow, contains('verify_pink_source_contract.dart'));
+    expect(pinkWorkflow, contains('pink-source-contract-report.json'));
+    expect(pinkWorkflow, contains('actions/upload-artifact@v4'));
 
     final File receipt = File('../docs/work/PINKSRC-001-020.md');
     expect(receipt.existsSync(), isTrue);
