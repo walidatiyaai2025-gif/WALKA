@@ -1,0 +1,35 @@
+name: LIMG Green Canonical Ingest
+
+on:
+  push:
+    branches:
+      - agent/limg-green-admission
+    paths:
+      - .github/workflows/limg-green-ingest.yml
+
+permissions:
+  contents: write
+
+jobs:
+  materialize-green:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/limg-green-admission
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install --disable-pip-version-check pillow==12.3.0 numpy
+      - run: python .github/scripts/limg_green_ingest.py
+      - name: Commit canonical Green media
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm .github/workflows/limg-green-ingest.yml .github/scripts/limg_green_ingest.py
+          git add mobile/assets/products/lunch/green.png docs/ui/PRODUCTION_SOURCE_ADMISSION.json docs/ui/PRODUCTION_ASSET_PROVENANCE.json mobile/lib/design_system/components/media/walka_product_media_admission.dart docs/ui/VFIN_RELEASE_RECEIPT.json docs/ui/LIMG_GREEN_RECEIPT.json
+          git commit -m 'LIMG-GREEN: materialize faithful canonical Green media'
+          git push origin HEAD:agent/limg-green-admission
