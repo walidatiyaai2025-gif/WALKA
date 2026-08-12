@@ -62,7 +62,7 @@ class PinkSourceContractReport {
         'blockerCount': blockerCount,
         'violations': violations
             .map((PinkSourceContractViolation violation) => violation.toJson())
-            .toList(),
+            .toList(growable: false),
       };
 
   String prettyJson() => const JsonEncoder.withIndent('  ').convert(toJson());
@@ -84,10 +84,6 @@ class PinkSourceContractAuditor {
   static const String sourceSha256 =
       '11a6020417067a8a1869eff1df90d0843f1e068a6cdc06d25e5c92abb1d2e3f5';
   static const String canonicalPath = 'assets/products/lunch/pink.png';
-  static const String admittedCanonicalSha256 =
-      '84b1c5b44980c29bf22ff88cafc747454d4caf8612209daa84edfc2e3f3a11ae';
-  static const int admittedCanonicalBytes = 748350;
-  static const List<int> admittedAlphaBoundingBox = <int>[51, 161, 972, 862];
   static const List<String> mandatoryQa = <String>[
     'surfaceWhite',
     'surfaceIvory',
@@ -127,7 +123,7 @@ class PinkSourceContractAuditor {
     final Map<String, dynamic> guard = _map(contract['admissionGuard']);
 
     _expect(contract['schemaVersion'] == 2, 'SCHEMA',
-        'schemaVersion must be 2 after admission reconciliation.', violations);
+        'schemaVersion must remain 2.', violations);
     _expect(contract['variantId'] == variantId, 'VARIANT',
         'Variant must be $variantId.', violations);
     _expect(namespace['prefix'] == 'PINKSRC', 'NAMESPACE',
@@ -180,31 +176,59 @@ class PinkSourceContractAuditor {
         'Safe margin must be at least 51 px.', violations);
     _expect(_int(output['maximumByteSize']) == 1258291, 'BYTE-BUDGET',
         'Hard budget must remain 1.2 MiB.', violations);
-    _expect(output['admittedSha256'] == admittedCanonicalSha256,
-        'ADMITTED-SHA-CONTRACT', 'Admitted canonical SHA drifted.', violations);
-    _expect(output['admittedByteSize'] == admittedCanonicalBytes,
-        'ADMITTED-BYTES-CONTRACT', 'Admitted canonical byte size drifted.',
-        violations);
-    _expect(_ints(output['admittedAlphaBoundingBox'])
-        .equals(admittedAlphaBoundingBox), 'ADMITTED-BBOX-CONTRACT',
-        'Admitted alpha bounding box drifted.', violations);
 
     final List<String> qa = _strings(contract['requiredVisualQa']);
     _expect(qa.length == mandatoryQa.length && qa.toSet().containsAll(mandatoryQa),
         'QA-SET', 'Mandatory visual QA set is incomplete.', violations);
-    _expect(guard['currentVisualQaState'] == 'PASS', 'QA-STATE-CONTRACT',
-        'Current Pink visual QA contract must be PASS.', violations);
-    _expect(guard['requiredCurrentProvenanceState'] == 'ADMITTED',
-        'GUARD-PROVENANCE', 'Contract must require admitted provenance.',
-        violations);
-    _expect(guard['requiredCurrentRuntimeState'] == 'admitted', 'GUARD-RUNTIME',
-        'Contract must require admitted runtime state.', violations);
-    _expect(guard['requiredCanonicalExportPresent'] == true, 'GUARD-EXPORT',
-        'Contract must require confirmed canonical export.', violations);
-    _expect(guard['requiredRuntimeEligible'] == true, 'GUARD-ELIGIBLE',
-        'Contract must require runtime eligibility.', violations);
+
+    final String requestedVisualState = '${guard['currentVisualQaState']}';
+    final bool pendingMode = requestedVisualState == 'PENDING';
+    final bool admittedMode = requestedVisualState == 'PASS';
+    _expect(pendingMode || admittedMode, 'QA-STATE-CONTRACT',
+        'currentVisualQaState must be PENDING or PASS.', violations);
     _expect(guard['stablePublicationMustRemainFailClosed'] == true, 'STABLE-GATE',
         'Global stable publication must remain fail closed.', violations);
+
+    if (pendingMode) {
+      _expect(guard['requiredCurrentProvenanceState'] == 'PENDING',
+          'GUARD-PROVENANCE', 'Pending contract must require PENDING provenance.',
+          violations);
+      _expect(guard['requiredCurrentRuntimeState'] == 'pending', 'GUARD-RUNTIME',
+          'Pending contract must require pending runtime state.', violations);
+      _expect(guard['requiredCanonicalExportPresent'] == false, 'GUARD-EXPORT',
+          'Pending contract must keep canonical export unconfirmed.', violations);
+      _expect(guard['requiredRuntimeEligible'] == false, 'GUARD-ELIGIBLE',
+          'Pending contract must keep runtime eligibility false.', violations);
+      _expect(_sha(output['candidateSha256']), 'CANDIDATE-SHA',
+          'Rejected candidate SHA must remain explicit.', violations);
+      _expect(_int(output['candidateByteSize']) > 0, 'CANDIDATE-BYTES',
+          'Rejected candidate byte size must remain explicit.', violations);
+      _expect(_ints(output['candidateAlphaBoundingBox']).values.length == 4,
+          'CANDIDATE-BBOX', 'Rejected candidate alpha bbox must be recorded.',
+          violations);
+      _expect(output['candidateDisposition'] == 'REJECTED_NAVY_HALO',
+          'CANDIDATE-DISPOSITION', 'Pending candidate must remain rejected.',
+          violations);
+    }
+
+    if (admittedMode) {
+      _expect(guard['requiredCurrentProvenanceState'] == 'ADMITTED',
+          'GUARD-PROVENANCE', 'PASS contract must require ADMITTED provenance.',
+          violations);
+      _expect(guard['requiredCurrentRuntimeState'] == 'admitted', 'GUARD-RUNTIME',
+          'PASS contract must require admitted runtime state.', violations);
+      _expect(guard['requiredCanonicalExportPresent'] == true, 'GUARD-EXPORT',
+          'PASS contract must require confirmed canonical export.', violations);
+      _expect(guard['requiredRuntimeEligible'] == true, 'GUARD-ELIGIBLE',
+          'PASS contract must require runtime eligibility.', violations);
+      _expect(_sha(output['admittedSha256']), 'ADMITTED-SHA-CONTRACT',
+          'Admitted mode requires a canonical SHA.', violations);
+      _expect(_int(output['admittedByteSize']) > 0, 'ADMITTED-BYTES-CONTRACT',
+          'Admitted mode requires canonical bytes.', violations);
+      _expect(_ints(output['admittedAlphaBoundingBox']).values.length == 4,
+          'ADMITTED-BBOX-CONTRACT', 'Admitted mode requires alpha bbox.',
+          violations);
+    }
 
     final Map<String, dynamic>? admissionRow = _row(admission, variantId);
     _expect(admissionRow != null, 'SOURCE-ROW',
@@ -218,9 +242,10 @@ class PinkSourceContractAuditor {
           'Source-admission must remain APPROVED.', violations);
       _expect(admissionRow['canonicalPath'] == canonicalPath, 'SOURCE-ROW-PATH',
           'Source-admission canonical path drifted.', violations);
-      _expect(admissionRow['canonicalExportPresent'] == true,
+      _expect(admissionRow['canonicalExportPresent'] == admittedMode,
           'SOURCE-ROW-EXPORT',
-          'Admitted Pink must have canonicalExportPresent true.', violations);
+          'Source-admission export presence must follow visual-QA mode.',
+          violations);
     }
 
     String provenanceState = 'UNKNOWN';
@@ -231,35 +256,51 @@ class PinkSourceContractAuditor {
         'Pink provenance row is missing.', violations);
     if (provenanceRow != null) {
       provenanceState = '${provenanceRow['lifecycleState']}';
-      _expect(provenanceState == 'ADMITTED', 'PROVENANCE-STATE',
-          'Pink provenance must be ADMITTED after evidence-backed promotion.',
-          violations);
-      canonicalSha256 = provenanceRow['sha256'] as String?;
-      _expect(canonicalSha256 == admittedCanonicalSha256, 'PROVENANCE-SHA',
-          'Pink canonical SHA does not match the admitted contract.', violations);
-      _expect(provenanceRow['byteSize'] == admittedCanonicalBytes,
-          'PROVENANCE-BYTES',
-          'Pink canonical byte size does not match the admitted contract.',
-          violations);
-      _expect(provenanceRow['width'] == 1024 && provenanceRow['height'] == 1024,
-          'PROVENANCE-DIMENSIONS', 'Pink canonical dimensions must be 1024x1024.',
-          violations);
-      _expect(_ints(provenanceRow['alphaBoundingBox'])
-          .equals(admittedAlphaBoundingBox), 'PROVENANCE-BBOX',
-          'Pink alpha bounding box does not match the admitted contract.',
-          violations);
-      _expect(_int(provenanceRow['nearestTransparentSafeMargin']) >= 51,
-          'PROVENANCE-MARGIN', 'Pink safe margin must remain at least 51 px.',
-          violations);
-      _expect(provenanceRow['colorProfileExpectation'] == 'sRGB',
-          'PROVENANCE-COLOR', 'Pink provenance must require sRGB.', violations);
       final Map<String, dynamic> qaStates = _map(provenanceRow['qa']);
-      visualQaState = mandatoryQa.every((String check) => qaStates[check] == 'PASS')
-          ? 'PASS'
-          : 'INCOMPLETE';
-      for (final String check in mandatoryQa) {
-        _expect(qaStates[check] == 'PASS', 'QA-$check',
-            '$check must be PASS for admitted Pink media.', violations);
+      if (pendingMode) {
+        _expect(provenanceState == 'PENDING', 'PROVENANCE-STATE',
+            'Rejected/incomplete Pink visual QA must keep provenance PENDING.',
+            violations);
+        _expect(provenanceRow['sha256'] == null, 'PREMATURE-FINGERPRINT',
+            'Pending Pink must not claim an admitted fingerprint.', violations);
+        _expect(provenanceRow['byteSize'] == null &&
+            provenanceRow['width'] == null &&
+            provenanceRow['height'] == null &&
+            provenanceRow['alphaBoundingBox'] == null &&
+            provenanceRow['nearestTransparentSafeMargin'] == null,
+            'PREMATURE-METADATA',
+            'Pending Pink must not claim admitted binary metadata.', violations);
+        for (final String check in mandatoryQa) {
+          _expect(qaStates[check] == 'PENDING', 'QA-$check',
+              '$check must remain PENDING until visual acceptance passes.',
+              violations);
+        }
+        visualQaState = 'PENDING';
+      }
+      if (admittedMode) {
+        _expect(provenanceState == 'ADMITTED', 'PROVENANCE-STATE',
+            'PASS Pink visual QA requires ADMITTED provenance.', violations);
+        canonicalSha256 = provenanceRow['sha256'] as String?;
+        _expect(canonicalSha256 == output['admittedSha256'], 'PROVENANCE-SHA',
+            'Pink provenance SHA must match the admitted contract.', violations);
+        _expect(provenanceRow['byteSize'] == output['admittedByteSize'],
+            'PROVENANCE-BYTES', 'Pink byte size must match the contract.',
+            violations);
+        _expect(provenanceRow['width'] == 1024 && provenanceRow['height'] == 1024,
+            'PROVENANCE-DIMENSIONS', 'Pink dimensions must remain 1024x1024.',
+            violations);
+        _expect(_ints(provenanceRow['alphaBoundingBox'])
+            .equals(_ints(output['admittedAlphaBoundingBox']).values),
+            'PROVENANCE-BBOX', 'Pink alpha bbox must match the contract.',
+            violations);
+        _expect(_int(provenanceRow['nearestTransparentSafeMargin']) >= 51,
+            'PROVENANCE-MARGIN', 'Pink safe margin must remain at least 51 px.',
+            violations);
+        for (final String check in mandatoryQa) {
+          _expect(qaStates[check] == 'PASS', 'QA-$check',
+              '$check must be PASS for admitted Pink media.', violations);
+        }
+        visualQaState = 'PASS';
       }
     }
 
@@ -290,11 +331,13 @@ class PinkSourceContractAuditor {
             'Runtime canonical path drifted.', violations);
         _expect(block.contains('sourceApproved: true'), 'RUNTIME-SOURCE',
             'Runtime sourceApproved must remain true.', violations);
-        _expect(runtimeState == 'admitted', 'RUNTIME-STATE',
-            'Runtime Pink must be admitted only after complete evidence.',
+        _expect(runtimeState == (admittedMode ? 'admitted' : 'pending'),
+            'RUNTIME-STATE',
+            'Runtime Pink state must follow the visual-QA contract mode.',
             violations);
-        _expect(exportPresent, 'RUNTIME-EXPORT',
-            'Runtime Pink must confirm canonical export presence.', violations);
+        _expect(exportPresent == admittedMode, 'RUNTIME-EXPORT',
+            'Runtime export presence must follow the visual-QA contract mode.',
+            violations);
       }
     }
 
@@ -356,6 +399,9 @@ class PinkSourceContractAuditor {
   _IntList _ints(Object? value) => _IntList(value is List<dynamic>
       ? value.whereType<int>().toList(growable: false)
       : <int>[]);
+
+  bool _sha(Object? value) =>
+      value is String && RegExp(r'^[0-9a-f]{64}$').hasMatch(value);
 
   int _int(Object? value) => value is int ? value : -1;
 
