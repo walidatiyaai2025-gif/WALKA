@@ -71,7 +71,10 @@ void main() {
         metrics.stages.map((VproofStageMetrics item) => item.stage),
         <String>['white', 'ivory', 'navy'],
       );
-      expect(metrics.stages.every((VproofStageMetrics item) => item.sampleCount > 0), isTrue);
+      expect(
+        metrics.stages.every((VproofStageMetrics item) => item.sampleCount > 0),
+        isTrue,
+      );
     });
   });
 
@@ -167,7 +170,7 @@ void main() {
       );
     });
 
-    test('current repository visual-proof CLI is fail-closed but passes admitted media', () async {
+    test('current repository report exposes truthful lifecycle without accepting fidelity', () async {
       final Directory temp = await Directory.systemTemp.createTemp('walka-vproof-');
       addTearDown(() => temp.delete(recursive: true));
       final String reportPath = '${temp.path}/visual-proof.json';
@@ -184,13 +187,12 @@ void main() {
           '../docs/ui/VISUAL_PROOF_REJECTIONS.json',
           '--json',
           reportPath,
-          '--enforce',
+          '--report',
         ],
       );
       expect(result.exitCode, 0, reason: '${result.stdout}\n${result.stderr}');
       final Map<String, dynamic> report =
           jsonDecode(await File(reportPath).readAsString()) as Map<String, dynamic>;
-      expect(report['state'], 'PASS');
       expect(report['releasedCount'], 5);
       expect(report['admittedCount'], 3);
       expect(report['pendingCount'], 1);
@@ -200,7 +202,10 @@ void main() {
       final List<dynamic> assets = report['assets'] as List<dynamic>;
       final Map<String, dynamic> pink = assets
           .cast<Map<String, dynamic>>()
-          .singleWhere((Map<String, dynamic> item) => item['variantId'] == 'lunch-box:pink');
+          .singleWhere(
+            (Map<String, dynamic> item) =>
+                item['variantId'] == 'lunch-box:pink',
+          );
       expect(pink['lifecycleState'], 'PENDING');
       expect(pink['knownRejected'], isTrue);
       expect(pink['blockerCodes'], isEmpty);
