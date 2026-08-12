@@ -239,15 +239,16 @@ void main() {
       );
       final BuildContext context = tester.element(find.byKey(hostKey));
       const WalkaProductMediaResolver resolver = WalkaProductMediaResolver.production();
-      final WalkaProductMediaPrefetchResult result = await tester.runAsync(
+      final WalkaProductMediaPrefetchResult? asyncResult = await tester.runAsync(
         () => resolver.prefetchVariant(
           context,
           variantId: 'drawer-organizer:white',
           surface: WalkaProductMediaSurface.home,
         ),
       );
-      expect(result, isNotNull);
-      expect(result!.failed, isFalse);
+      expect(asyncResult, isNotNull);
+      final WalkaProductMediaPrefetchResult result = asyncResult!;
+      expect(result.failed, isFalse);
       expect(result.prefetched, isTrue);
       expect(result.surface, WalkaProductMediaSurface.home);
     });
@@ -337,7 +338,7 @@ void main() {
           File('../.github/workflows/flutter-preview.yml').readAsStringSync();
       expect(workflow, contains('verify_owner_visible_media_surfaces.dart'));
       expect(workflow, contains('owner-visible-media-surface-report.json'));
-      expect(workflow, contains('owner-visible-media-surface-${{ github.sha }}'));
+      expect(workflow, contains(r'owner-visible-media-surface-${{ github.sha }}'));
     });
 
     test('batch namespace contains exactly 100 unique task IDs', () {
