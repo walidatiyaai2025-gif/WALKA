@@ -1,0 +1,53 @@
+name: LIMG Blue Materialize
+
+on:
+  push:
+    branches:
+      - agent/limg-blue-291
+
+permissions:
+  contents: write
+
+jobs:
+  materialize:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Blue admission branch
+        uses: actions/checkout@v4
+        with:
+          ref: agent/limg-blue-291
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Rehydrate approved source inputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat .limg-blue/input.part* > /tmp/limg-blue-inputs.b64
+          base64 --decode /tmp/limg-blue-inputs.b64 > /tmp/limg-blue-inputs.tar.gz
+          echo "0fb76502c20132b4395a062a2e13ff8a5b68c4260bdab623d8ae4828cfe3e90d  /tmp/limg-blue-inputs.tar.gz" | sha256sum --check --strict
+          tar -xzf /tmp/limg-blue-inputs.tar.gz
+          echo "1ad36a3c917ea7e0e4dbadfd68070e4ebc1392cf78217fd860640e1a3d68077e  main new(3).jpg" | sha256sum --check --strict
+
+      - name: Materialize canonical Blue PNG
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --disable-pip-version-check Pillow==12.3.0 numpy==2.3.5 zopfli==0.4.2
+          python .limg-blue/materialize.py
+          echo "6ae7a29c62a691b5b55239d10a984df2aa16c04bcc0e42670a4d68b322c3a194  mobile/assets/products/lunch/blue.png" | sha256sum --check --strict
+
+      - name: Commit canonical binary
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f "main new(3).jpg" finalmask_alpha.png
+          git add mobile/assets/products/lunch/blue.png
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "LIMG-BLUE: materialize admitted Blue canonical binary (#291)"
+          git push origin HEAD:agent/limg-blue-291
