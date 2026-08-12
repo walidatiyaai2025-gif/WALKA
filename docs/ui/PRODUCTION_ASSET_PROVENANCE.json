@@ -28,12 +28,7 @@
       "byteSize": 189339,
       "width": 1024,
       "height": 1024,
-      "alphaBoundingBox": [
-        51,
-        184,
-        972,
-        839
-      ],
+      "alphaBoundingBox": [51, 184, 972, 839],
       "nearestTransparentSafeMargin": 51,
       "colorProfileExpectation": "sRGB",
       "qa": {
@@ -85,12 +80,7 @@
       "byteSize": 743513,
       "width": 1024,
       "height": 1024,
-      "alphaBoundingBox": [
-        51,
-        108,
-        972,
-        914
-      ],
+      "alphaBoundingBox": [51, 108, 972, 914],
       "nearestTransparentSafeMargin": 51,
       "colorProfileExpectation": "sRGB",
       "qa": {
@@ -111,24 +101,24 @@
       "sourceFilename": "1000389975.jpg",
       "sourceState": "APPROVED",
       "canonicalPath": "assets/products/lunch/pink.png",
-      "lifecycleState": "PENDING",
-      "sha256": null,
-      "byteSize": null,
-      "width": null,
-      "height": null,
-      "alphaBoundingBox": null,
-      "nearestTransparentSafeMargin": null,
+      "lifecycleState": "ADMITTED",
+      "sha256": "606d603b53001a2934719c4c0fdfa7eb131af0ac85f293f429f12ab9a7178264",
+      "byteSize": 686121,
+      "width": 1024,
+      "height": 1024,
+      "alphaBoundingBox": [51, 112, 972, 902],
+      "nearestTransparentSafeMargin": 51,
       "colorProfileExpectation": "sRGB",
       "qa": {
-        "surfaceWhite": "PENDING",
-        "surfaceIvory": "PENDING",
-        "surfaceNavy": "PENDING",
-        "downscale96": "PENDING",
-        "downscale160": "PENDING",
-        "downscale240": "PENDING",
-        "downscale384": "PENDING",
-        "geometryPreserved": "PENDING",
-        "bakedUiExcluded": "PENDING"
+        "surfaceWhite": "PASS",
+        "surfaceIvory": "PASS",
+        "surfaceNavy": "PASS",
+        "downscale96": "PASS",
+        "downscale160": "PASS",
+        "downscale240": "PASS",
+        "downscale384": "PASS",
+        "geometryPreserved": "PASS",
+        "bakedUiExcluded": "PASS"
       }
     },
     {
