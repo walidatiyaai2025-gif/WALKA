@@ -32,9 +32,10 @@
     "colorProfile": "sRGB",
     "minimumTransparentSafeMarginPx": 51,
     "maximumByteSize": 1258291,
-    "admittedSha256": "84b1c5b44980c29bf22ff88cafc747454d4caf8612209daa84edfc2e3f3a11ae",
-    "admittedByteSize": 748350,
-    "admittedAlphaBoundingBox": [51, 161, 972, 862]
+    "candidateSha256": "84b1c5b44980c29bf22ff88cafc747454d4caf8612209daa84edfc2e3f3a11ae",
+    "candidateByteSize": 748350,
+    "candidateAlphaBoundingBox": [51, 161, 972, 862],
+    "candidateDisposition": "REJECTED_NAVY_HALO"
   },
   "requiredVisualQa": [
     "surfaceWhite",
@@ -48,15 +49,22 @@
     "bakedUiExcluded"
   ],
   "admissionGuard": {
-    "currentVisualQaState": "PASS",
+    "currentVisualQaState": "PENDING",
     "requiredSourceAdmissionState": "APPROVED",
-    "requiredCurrentProvenanceState": "ADMITTED",
-    "requiredCurrentRuntimeState": "admitted",
-    "requiredCanonicalExportPresent": true,
-    "requiredRuntimeEligible": true,
+    "requiredCurrentProvenanceState": "PENDING",
+    "requiredCurrentRuntimeState": "pending",
+    "requiredCanonicalExportPresent": false,
+    "requiredRuntimeEligible": false,
     "stablePublicationMustRemainFailClosed": true,
-    "globalReadinessReason": "Pink is independently admitted, but stable owner-visible publication remains blocked until all five released variants are admitted and final owner visual acceptance is complete.",
-    "migrationRule": "PENDING is valid only while mandatory visual QA is incomplete; ADMITTED is valid only when source approval, canonical fingerprint, export presence, all nine QA states, provenance and runtime admission agree."
+    "globalReadinessReason": "The current candidate was rendered from the actual current-main binary on White/Ivory/Navy. Navy proof shows unacceptable white halo/background contamination, so Pink remains quarantined until a cleaner approved-panel cutout passes all nine visual QA checks.",
+    "migrationRule": "PENDING is valid while mandatory visual QA is incomplete or rejected; ADMITTED is valid only when source approval, a confirmed canonical fingerprint, export presence, all nine QA states, provenance and runtime admission agree."
+  },
+  "lastVisualProof": {
+    "sourceMainCommit": "cd6bb64c1b37af97e274f42ce5752ac110ecdc77",
+    "workflowRun": 31625699344,
+    "artifactId": 9153009337,
+    "candidateSha256": "84b1c5b44980c29bf22ff88cafc747454d4caf8612209daa84edfc2e3f3a11ae",
+    "navyResult": "REJECTED_WHITE_HALO_AND_BACKGROUND_CONTAMINATION"
   },
   "prohibitions": [
     "protected Images/ masters as runtime source",
