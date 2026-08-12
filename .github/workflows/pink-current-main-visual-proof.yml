@@ -1,0 +1,63 @@
+name: Pink Current Main Visual Proof
+
+on:
+  push:
+    branches:
+      - agent/pink-current-main-visual-proof
+    paths:
+      - .github/workflows/pink-current-main-visual-proof.yml
+
+jobs:
+  render-proof:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install --disable-pip-version-check pillow==12.3.0
+      - name: Render current admitted Pink on QA surfaces
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p pink-proof
+          python - <<'PY'
+          from pathlib import Path
+          from PIL import Image, ImageDraw
+          import hashlib, json
+
+          path = Path('mobile/assets/products/lunch/pink.png')
+          image = Image.open(path).convert('RGBA')
+          data = path.read_bytes()
+          alpha = image.getchannel('A')
+          bbox = alpha.getbbox()
+          evidence = {
+              'sha256': hashlib.sha256(data).hexdigest(),
+              'bytes': len(data),
+              'size': list(image.size),
+              'alphaBoundingBoxPillow': list(bbox) if bbox else None,
+          }
+          Path('pink-proof/evidence.json').write_text(json.dumps(evidence, indent=2) + '\n')
+          for name, color in [('white', '#FFFFFF'), ('ivory', '#F8F6F1'), ('navy', '#003366')]:
+              surface = Image.new('RGB', (1024, 1024), color)
+              surface.paste(image, mask=alpha)
+              surface.save(f'pink-proof/pink-{name}.png')
+          sizes = [96, 160, 240, 384]
+          tile_w, tile_h = 420, 460
+          matrix = Image.new('RGB', (tile_w * 2, tile_h * 2), '#003366')
+          for index, size in enumerate(sizes):
+              down = image.resize((size, size), Image.Resampling.LANCZOS)
+              tile = Image.new('RGBA', (tile_w, tile_h), (0, 51, 102, 255))
+              tile.alpha_composite(down, ((tile_w - size) // 2, (tile_h - size) // 2 + 20))
+              draw = ImageDraw.Draw(tile)
+              draw.text((15, 15), f'{size}px', fill='white')
+              matrix.paste(tile.convert('RGB'), ((index % 2) * tile_w, (index // 2) * tile_h))
+          matrix.save('pink-proof/pink-downscales-navy.png')
+          print(json.dumps(evidence))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pink-current-main-visual-proof
+          path: pink-proof/
+          if-no-files-found: error
+          retention-days: 7
