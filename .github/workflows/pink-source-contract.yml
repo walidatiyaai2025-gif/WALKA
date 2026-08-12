@@ -47,8 +47,7 @@ jobs:
           dart run tool/verify_pink_source_contract.dart \
             --root . \
             --json "$report" \
-            --report \
-            --enforce
+            --report
           state="$(python3 -c "import json; print(json.load(open('$report'))['state'])")"
           blocker_count="$(python3 -c "import json; print(json.load(open('$report'))['blockerCount'])")"
           report_sha="$(sha256sum "$report" | awk '{print $1}')"
@@ -63,9 +62,25 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload Pink source contract report
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: pink-source-contract-${{ github.sha }}
           path: mobile/pink-source-contract-report.json
           if-no-files-found: error
           retention-days: 14
+
+      - name: Enforce Pink source extraction contract
+        working-directory: mobile
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          report = json.load(open('pink-source-contract-report.json'))
+          if not report['contractReady']:
+              for violation in report['violations']:
+                  print(f"BLOCKER {violation['code']}: {violation['message']}")
+              raise SystemExit(1)
+          print('Pink source contract is locked and remains fail-closed pending visual QA.')
+          PY
