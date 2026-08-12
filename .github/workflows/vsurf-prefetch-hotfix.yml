@@ -1,0 +1,76 @@
+name: VSURF Real Async Prefetch Test Hotfix
+
+on:
+  push:
+    branches:
+      - agent/limg-pink-admission
+    paths:
+      - .github/workflows/vsurf-prefetch-hotfix.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Pink admission branch
+        uses: actions/checkout@v4
+        with:
+          ref: agent/limg-pink-admission
+          fetch-depth: 0
+
+      - name: Make multi-prefetch test use real async boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('mobile/test/vsurf_001_100_owner_visible_media_test.dart')
+          source = path.read_text()
+          old = """      final List<WalkaProductMediaPrefetchResult> results =
+          await resolver.prefetchVariants(
+        context,
+        variantIds: const <String>[
+          'drawer-organizer:gray',
+          'drawer-organizer:gray',
+          'lunch-box:pink',
+          'lunch-box:pink',
+          'unknown:variant',
+        ],
+        surface: WalkaProductMediaSurface.favorites,
+      );
+"""
+          new = """      final List<WalkaProductMediaPrefetchResult>? asyncResults =
+          await tester.runAsync(
+        () => resolver.prefetchVariants(
+          context,
+          variantIds: const <String>[
+            'drawer-organizer:gray',
+            'drawer-organizer:gray',
+            'lunch-box:pink',
+            'lunch-box:pink',
+            'unknown:variant',
+          ],
+          surface: WalkaProductMediaSurface.favorites,
+        ),
+      );
+      expect(asyncResults, isNotNull);
+      final List<WalkaProductMediaPrefetchResult> results = asyncResults!;
+"""
+          if old not in source:
+              raise SystemExit('expected VSURF multi-prefetch block not found')
+          path.write_text(source.replace(old, new, 1))
+          PY
+
+      - name: Commit focused test hotfix and remove one-shot workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm .github/workflows/vsurf-prefetch-hotfix.yml
+          git add mobile/test/vsurf_001_100_owner_visible_media_test.dart
+          git commit -m 'VSURF: run admitted multi-prefetch in real async boundary'
+          git push origin HEAD:agent/limg-pink-admission
