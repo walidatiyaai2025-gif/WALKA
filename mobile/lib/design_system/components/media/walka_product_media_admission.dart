@@ -86,9 +86,9 @@ abstract final class WalkaProductMediaAdmissionRegistry {
     'lunch-box:green': WalkaProductMediaAdmissionEntry(
       variantId: 'lunch-box:green',
       canonicalPath: 'assets/products/lunch/green.png',
-      state: WalkaProductMediaAdmissionState.pending,
+      state: WalkaProductMediaAdmissionState.admitted,
       sourceApproved: true,
-      canonicalExportPresent: false,
+      canonicalExportPresent: true,
     ),
   };
 
