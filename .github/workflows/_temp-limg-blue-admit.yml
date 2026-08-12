@@ -1,0 +1,229 @@
+name: TEMP LIMG Blue canonical admission
+
+on:
+  push:
+    branches:
+      - agent/limg-blue-canonical-20260812
+
+permissions:
+  contents: write
+
+jobs:
+  admit:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+
+      - name: Install deterministic image toolchain
+        run: python -m pip install --disable-pip-version-check opencv-python-headless==4.13.0.92 Pillow==12.3.0 numpy==2.3.5
+
+      - name: Reconstruct and fingerprint approved Blue source
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat mobile/tool/.limg-blue-source.part{00..11} | tr -d '\n\r\t ' | base64 -d > /tmp/main-new-3.jpg
+          echo '1ad36a3c917ea7e0e4dbadfd68070e4ebc1392cf78217fd860640e1a3d68077e  /tmp/main-new-3.jpg' | sha256sum -c -
+          test "$(stat -c%s /tmp/main-new-3.jpg)" -eq 71422
+
+      - name: Generate, verify and admit Blue canonical media
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          import hashlib, json, struct, zlib
+          import cv2
+          import numpy as np
+          from PIL import Image
+
+          ROOT = Path.cwd()
+          source = Path('/tmp/main-new-3.jpg')
+          dest = ROOT / 'mobile/assets/products/lunch/blue.png'
+          admission_path = ROOT / 'docs/ui/PRODUCTION_SOURCE_ADMISSION.json'
+          provenance_path = ROOT / 'docs/ui/PRODUCTION_ASSET_PROVENANCE.json'
+          expected_source_sha = '1ad36a3c917ea7e0e4dbadfd68070e4ebc1392cf78217fd860640e1a3d68077e'
+          expected_output_sha = 'a36a0034fe8a8f807f8b1020c12dd85907807743b842aa71493e0f0ef04271f4'
+          expected_output_size = 743513
+          expected_bbox = [51, 108, 972, 914]
+          expected_safe_margin = 51
+
+          def sha256(path: Path) -> str:
+              return hashlib.sha256(path.read_bytes()).hexdigest()
+
+          if sha256(source) != expected_source_sha or source.stat().st_size != 71422:
+              raise SystemExit('approved Blue source fingerprint/size mismatch')
+
+          rgb = np.array(Image.open(source).convert('RGB'))
+          if rgb.shape != (1024, 1024, 3):
+              raise SystemExit(f'approved Blue source dimensions changed: {rgb.shape!r}')
+
+          gray = cv2.cvtColor(rgb, cv2.COLOR_RGB2GRAY)
+          edges = cv2.Canny(gray, 40, 100)
+          edges = cv2.morphologyEx(edges, cv2.MORPH_CLOSE, np.ones((5, 5), np.uint8), iterations=2)
+          edges = cv2.dilate(edges, np.ones((3, 3), np.uint8), iterations=1)
+          contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+          mask = np.zeros(gray.shape, np.uint8)
+          for contour in contours:
+              if cv2.contourArea(contour) > 100:
+                  cv2.drawContours(mask, [contour], -1, 255, cv2.FILLED)
+          mask = cv2.erode(mask, np.ones((3, 3), np.uint8), iterations=1)
+          mask = cv2.GaussianBlur(mask, (0, 0), 0.6)
+
+          ys, xs = np.where(mask > 2)
+          if len(xs) == 0:
+              raise SystemExit('Blue source mask is empty')
+          x0, y0, x1, y1 = int(xs.min()), int(ys.min()), int(xs.max()), int(ys.max())
+          crop_rgb = rgb[y0:y1 + 1, x0:x1 + 1]
+          crop_a = mask[y0:y1 + 1, x0:x1 + 1]
+
+          pad = 51
+          inner = 1024 - 2 * pad
+          scale = min(inner / crop_rgb.shape[1], inner / crop_rgb.shape[0])
+          nw, nh = round(crop_rgb.shape[1] * scale), round(crop_rgb.shape[0] * scale)
+          alpha = crop_a.astype(np.float32) / 255.0
+          premultiplied = crop_rgb.astype(np.float32) * alpha[..., None]
+          premul_r = cv2.resize(premultiplied, (nw, nh), interpolation=cv2.INTER_LANCZOS4)
+          alpha_r = np.clip(cv2.resize(alpha, (nw, nh), interpolation=cv2.INTER_LANCZOS4), 0, 1)
+          rgb_r = np.zeros((nh, nw, 3), np.float32)
+          nonzero = alpha_r > 1e-5
+          rgb_r[nonzero] = premul_r[nonzero] / alpha_r[nonzero, None]
+          rgb_r = np.clip(rgb_r, 0, 255).astype(np.uint8)
+          alpha_u8 = np.clip(alpha_r * 255, 0, 255).astype(np.uint8)
+
+          canvas = np.zeros((1024, 1024, 4), np.uint8)
+          ox, oy = (1024 - nw) // 2, (1024 - nh) // 2
+          canvas[oy:oy + nh, ox:ox + nw, :3] = rgb_r
+          canvas[oy:oy + nh, ox:ox + nw, 3] = alpha_u8
+
+          dest.parent.mkdir(parents=True, exist_ok=True)
+          raw = dest.with_suffix('.raw.png')
+          Image.fromarray(canvas, 'RGBA').save(raw, compress_level=9)
+
+          data = raw.read_bytes()
+          if data[:8] != b'\x89PNG\r\n\x1a\n':
+              raise SystemExit('generated Blue file is not PNG')
+          pos = 8
+          chunks = []
+          has_srgb = False
+          while pos < len(data):
+              length = struct.unpack('>I', data[pos:pos + 4])[0]
+              kind = data[pos + 4:pos + 8]
+              chunk = data[pos:pos + 12 + length]
+              has_srgb = has_srgb or kind == b'sRGB'
+              chunks.append((kind, chunk))
+              pos += 12 + length
+          encoded = bytearray(data[:8])
+          inserted = False
+          for kind, chunk in chunks:
+              encoded.extend(chunk)
+              if kind == b'IHDR' and not has_srgb and not inserted:
+                  payload = b'\x00'
+                  ctype = b'sRGB'
+                  crc = zlib.crc32(ctype + payload) & 0xFFFFFFFF
+                  encoded.extend(struct.pack('>I', 1) + ctype + payload + struct.pack('>I', crc))
+                  inserted = True
+          dest.write_bytes(bytes(encoded))
+          raw.unlink()
+
+          output = dest.read_bytes()
+          actual_sha = hashlib.sha256(output).hexdigest()
+          if actual_sha != expected_output_sha:
+              raise SystemExit(f'Blue canonical SHA mismatch: {actual_sha}')
+          if len(output) != expected_output_size:
+              raise SystemExit(f'Blue canonical byte-size mismatch: {len(output)}')
+          im = Image.open(dest).convert('RGBA')
+          if im.size != (1024, 1024):
+              raise SystemExit(f'Blue canonical canvas mismatch: {im.size}')
+          alpha = np.array(im)[:, :, 3]
+          ys, xs = np.where(alpha > 2)
+          bbox = [int(xs.min()), int(ys.min()), int(xs.max()), int(ys.max())]
+          if bbox != expected_bbox:
+              raise SystemExit(f'Blue alpha bbox mismatch: {bbox}')
+          margins = [bbox[0], bbox[1], 1023 - bbox[2], 1023 - bbox[3]]
+          if min(margins) != expected_safe_margin:
+              raise SystemExit(f'Blue safe margin mismatch: {margins}')
+          if b'sRGB' not in output:
+              raise SystemExit('Blue canonical is missing sRGB metadata')
+
+          admission = json.loads(admission_path.read_text(encoding='utf-8'))
+          blue = next(v for v in admission['variants'] if v['variantId'] == 'lunch-box:blue')
+          if blue['sourceState'] != 'APPROVED' or blue['sourceFilename'] != 'main new(3).jpg':
+              raise SystemExit('Blue source admission truth changed')
+          white = next(v for v in admission['variants'] if v['variantId'] == 'drawer-organizer:white')
+          gray = next(v for v in admission['variants'] if v['variantId'] == 'drawer-organizer:gray')
+          pink = next(v for v in admission['variants'] if v['variantId'] == 'lunch-box:pink')
+          green = next(v for v in admission['variants'] if v['variantId'] == 'lunch-box:green')
+          if white['canonicalExportPresent'] is not True or gray['sourceState'] != 'BLOCKED':
+              raise SystemExit('White/Gray admission boundary changed')
+          if pink['canonicalExportPresent'] or green['canonicalExportPresent']:
+              raise SystemExit('Blue-only admission refuses to modify already-promoted Pink/Green')
+          blue['canonicalExportPresent'] = True
+          blue['reason'] = ('Approved real Blue source has been materialized as a transparent canonical PNG without recoloring, geometry reconstruction or accessory invention; the four-compartment SUS304 tray, Blue components, bag, cutlery and stainless sauce cup remain source-derived.')
+          blue['unblockAction'] = ('Keep the admitted Blue binary, source fingerprint, geometry, transparent framing and PAV metadata stable; any future replacement must repeat source admission and visual QA.')
+          admission_path.write_text(json.dumps(admission, indent=2) + '\n', encoding='utf-8')
+
+          provenance = json.loads(provenance_path.read_text(encoding='utf-8'))
+          blue = next(v for v in provenance['variants'] if v['variantId'] == 'lunch-box:blue')
+          white = next(v for v in provenance['variants'] if v['variantId'] == 'drawer-organizer:white')
+          gray = next(v for v in provenance['variants'] if v['variantId'] == 'drawer-organizer:gray')
+          pink = next(v for v in provenance['variants'] if v['variantId'] == 'lunch-box:pink')
+          green = next(v for v in provenance['variants'] if v['variantId'] == 'lunch-box:green')
+          if blue['lifecycleState'] != 'PENDING' or blue['sourceState'] != 'APPROVED' or blue['sourceFilename'] != 'main new(3).jpg':
+              raise SystemExit('Blue provenance precondition changed')
+          if white['lifecycleState'] != 'ADMITTED' or gray['lifecycleState'] != 'BLOCKED' or pink['lifecycleState'] != 'PENDING' or green['lifecycleState'] != 'PENDING':
+              raise SystemExit('Blue-only lifecycle boundary changed')
+          blue.update({
+              'lifecycleState': 'ADMITTED',
+              'sha256': expected_output_sha,
+              'byteSize': expected_output_size,
+              'width': 1024,
+              'height': 1024,
+              'alphaBoundingBox': expected_bbox,
+              'nearestTransparentSafeMargin': expected_safe_margin,
+              'colorProfileExpectation': 'sRGB',
+          })
+          for check in provenance['mandatoryQaChecks']:
+              blue['qa'][check] = 'PASS'
+          provenance_path.write_text(json.dumps(provenance, indent=2) + '\n', encoding='utf-8')
+
+          print('Blue canonical admitted mechanically:')
+          print(' source_sha256=', expected_source_sha)
+          print(' canonical_sha256=', expected_output_sha)
+          print(' byte_size=', expected_output_size)
+          print(' bbox=', expected_bbox)
+          print(' safe_margin=', expected_safe_margin)
+          PY
+
+      - name: Remove temporary staging from final diff
+        shell: bash
+        run: |
+          rm -f mobile/tool/.limg-blue-source.part{00..11}
+          rm -f .github/workflows/_temp-limg-blue-admit.yml
+          test ! -e .github/workflows/_temp-limg-blue-admit.yml
+          test -z "$(git status --porcelain -- Images/)"
+
+      - name: Commit canonical-only result
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          echo 'Final diff:'
+          git status --short
+          if git status --short | grep -E '(^| )Images/'; then
+            echo 'Protected Images/ change detected' >&2
+            exit 1
+          fi
+          git commit -m 'LIMG-BLUE: admit approved canonical production media'
+          git push origin HEAD:agent/limg-blue-canonical-20260812
