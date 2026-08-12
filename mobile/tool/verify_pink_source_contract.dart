@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'src/pink_source_contract_audit.dart';
+import 'src/pink_source_contract.dart';
 
 void main(List<String> args) {
   String root = '.';
