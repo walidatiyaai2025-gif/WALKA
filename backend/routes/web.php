@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\AdminContentController;
 use App\Http\Controllers\Admin\AdminDashboardController;
+use App\Http\Controllers\Admin\AdminHomeFeaturedController;
 use App\Http\Controllers\Admin\AdminHomeHeroController;
 use App\Http\Controllers\Admin\AdminHomeLayoutController;
 use Illuminate\Support\Facades\Route;
@@ -48,6 +49,15 @@ Route::prefix('admin')
                 ->name('content.home.layout.publish');
             Route::post('/content/home/layout/restore', [AdminHomeLayoutController::class, 'restore'])
                 ->name('content.home.layout.restore');
+
+            Route::get('/content/home/featured', [AdminHomeFeaturedController::class, 'edit'])
+                ->name('content.home.featured.edit');
+            Route::patch('/content/home/featured', [AdminHomeFeaturedController::class, 'update'])
+                ->name('content.home.featured.update');
+            Route::post('/content/home/featured/publish', [AdminHomeFeaturedController::class, 'publish'])
+                ->name('content.home.featured.publish');
+            Route::post('/content/home/featured/restore', [AdminHomeFeaturedController::class, 'restore'])
+                ->name('content.home.featured.restore');
 
             Route::get('/content/{content}', [AdminContentController::class, 'show'])->name('content.show');
             Route::patch('/content/{content}/draft', [AdminContentController::class, 'updateDraft'])
