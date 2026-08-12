@@ -52,13 +52,13 @@
     "enforcementBlockArtifactDigest": "sha256:e86b3f26ec241a44061230283ad7eeb5894b82b17a6b0b5f1d1bd9d58b48fbf3"
   },
   "productionMedia": {
-    "admitted": 2,
-    "pending": 2,
+    "admitted": 3,
+    "pending": 1,
     "blocked": 1,
     "mechanicalReady": false,
     "stablePublication": false,
     "ownerVisualAcceptance": "REQUIRES_OWNER_REVIEW",
     "finalVisualStatus": "BLOCKED",
-    "reason": "Drawer White and Lunch Blue are admitted. Direct current-main visual proof rejected the Pink candidate for white halo/background contamination on WALKA Navy, so Pink is PENDING; Green remains PENDING until its faithful canonical branch passes full CI; Drawer Gray remains source-blocked."
+    "reason": "Drawer White and Lunch Blue/Green are admitted from approved source-derived media. Pink remains PENDING after direct Navy-surface visual rejection, and Drawer Gray remains source-blocked."
   }
 }
