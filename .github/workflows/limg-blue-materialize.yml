@@ -27,7 +27,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          cat .limg-blue/input.part* > /tmp/limg-blue-inputs.b64
+          cat .limg-blue/input.part* | tr -cd 'A-Za-z0-9+/=' > /tmp/limg-blue-inputs.b64
           base64 --decode /tmp/limg-blue-inputs.b64 > /tmp/limg-blue-inputs.tar.gz
           echo "0fb76502c20132b4395a062a2e13ff8a5b68c4260bdab623d8ae4828cfe3e90d  /tmp/limg-blue-inputs.tar.gz" | sha256sum --check --strict
           tar -xzf /tmp/limg-blue-inputs.tar.gz
