@@ -65,9 +65,9 @@
       "sourceFilename": "WhatsApp Image 2026-02-24 at 11.22.34 PM.jpeg",
       "sourceState": "APPROVED",
       "canonicalPath": "assets/products/lunch/green.png",
-      "canonicalExportPresent": false,
-      "reason": "Manifest records a clear real Green set; its camera/layout differs from sibling colors and must be normalized without geometry reconstruction.",
-      "unblockAction": "Normalize canvas, scale and optical center from the approved real source without altering product geometry; export and pass canonical QA."
+      "canonicalExportPresent": true,
+      "reason": "Approved real Green owner source has been normalized to the canonical transparent canvas using source-derived pixels only; camera/orientation and visible product geometry remain unchanged, with no recoloring, reconstruction or accessory invention.",
+      "unblockAction": "Keep the admitted Green binary, source fingerprint, camera/orientation truth, transparent framing and PAV metadata stable; any future replacement must repeat source admission and visual QA."
     }
   ]
 }

@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "variantId": "lunch-box:green",
+  "sourceFilename": "WhatsApp Image 2026-02-24 at 11.22.34 PM.jpeg",
+  "sourceState": "APPROVED",
+  "canonicalPath": "assets/products/lunch/green.png",
+  "sourceCanvas": [
+    500,
+    500
+  ],
+  "sourceForegroundBounds": [
+    32,
+    13,
+    487,
+    486
+  ],
+  "sourceBackgroundRatio": 0.483092,
+  "canonicalCanvas": [
+    1024,
+    1024
+  ],
+  "canonicalSha256": "477925e0694a987a4e82fd104eb98a78a50877ac7f78ea902252fbcca4ee6127",
+  "canonicalBytes": 752436,
+  "alphaBoundingBox": [
+    68,
+    51,
+    954,
+    972
+  ],
+  "nearestTransparentSafeMargin": 51,
+  "alphaCoverageRatio": 0.479007,
+  "geometryAspectDelta": 1.4e-05,
+  "qa": "PASS",
+  "guardrails": {
+    "protectedImagesModified": false,
+    "recolored": false,
+    "geometryReconstructed": false,
+    "accessoryInvented": false
+  }
+}
