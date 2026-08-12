@@ -23,13 +23,15 @@ void main() {
       inspection.rows.map((PimgProvenanceRow row) => row.variantId).toList(),
       pimgReleasedVariantIds,
     );
-    expect(inspection.admittedCount, 1);
-    expect(inspection.pendingCount, 3);
+    expect(inspection.admittedCount, 2);
+    expect(inspection.pendingCount, 2);
     expect(inspection.blockedCount, 1);
     expect(inspection.rows.first.variantId, 'drawer-organizer:white');
     expect(inspection.rows.first.lifecycleState, 'ADMITTED');
     expect(inspection.rows[1].variantId, 'drawer-organizer:gray');
     expect(inspection.rows[1].lifecycleState, 'BLOCKED');
+    expect(inspection.rows[2].variantId, 'lunch-box:blue');
+    expect(inspection.rows[2].lifecycleState, 'ADMITTED');
   });
 
   test('deterministic report exposes lifecycle counts and every mandatory QA state',
@@ -42,8 +44,8 @@ void main() {
     final Map<String, dynamic> report =
         jsonDecode(pimgStableJson(inspection)) as Map<String, dynamic>;
     expect(report['state'], 'READY');
-    expect((report['counts'] as Map<String, dynamic>)['admitted'], 1);
-    expect((report['counts'] as Map<String, dynamic>)['pending'], 3);
+    expect((report['counts'] as Map<String, dynamic>)['admitted'], 2);
+    expect((report['counts'] as Map<String, dynamic>)['pending'], 2);
     expect((report['counts'] as Map<String, dynamic>)['blocked'], 1);
     final List<dynamic> rows = report['variants'] as List<dynamic>;
     for (final dynamic raw in rows) {
@@ -120,11 +122,11 @@ void main() {
     ) as Map<String, dynamic>;
     final List<dynamic> rows = provenance['variants'] as List<dynamic>;
     final Map<String, dynamic> pendingApproved =
-        Map<String, dynamic>.from(rows[2] as Map<String, dynamic>);
-    expect(pendingApproved['variantId'], 'lunch-box:blue');
+        Map<String, dynamic>.from(rows[3] as Map<String, dynamic>);
+    expect(pendingApproved['variantId'], 'lunch-box:pink');
     expect(pendingApproved['lifecycleState'], 'PENDING');
     pendingApproved['lifecycleState'] = 'ADMITTED';
-    rows[2] = pendingApproved;
+    rows[3] = pendingApproved;
     final File provenanceFile = File('${temp.path}/provenance.json')
       ..writeAsStringSync(jsonEncode(provenance));
 
