@@ -5,6 +5,7 @@ import '../../design_system/walka_reference_ui.dart';
 import '../../design_system/walka_shell.dart';
 import '../catalog/catalog_state.dart';
 import '../content/content_state.dart';
+import '../content/domain/walka_home_featured_content.dart';
 import '../content/domain/walka_home_layout_content.dart';
 import '../content/domain/walka_mobile_content.dart';
 import 'presentation/widgets/home/walka_home_benefit_band.dart';
@@ -35,6 +36,8 @@ class WalkaHomePremiumV122 extends StatelessWidget {
         contentController?.home.content ?? WalkaHomeHeroContent.bundled;
     final WalkaHomeLayoutContent layout =
         contentController?.homeLayout.content ?? WalkaHomeLayoutContent.bundled;
+    final WalkaHomeFeaturedContent requestedFeatured =
+        contentController?.homeFeatured.content ?? WalkaHomeFeaturedContent.bundled;
     final List<WalkaCatalogViewItem> items = walkaCatalogViewItems(
       controller.snapshot,
     );
@@ -44,8 +47,12 @@ class WalkaHomePremiumV122 extends StatelessWidget {
     final WalkaCatalogViewItem lunch = items.firstWhere(
       (WalkaCatalogViewItem item) => item.variantId == 'lunch-box:blue',
     );
-    final String lunchLabel = '${lunch.title} ${lunch.variant}';
-    final String drawerLabel = '${drawer.title} ${drawer.variant}';
+    final _ResolvedHomeFeatured featured = _resolveFeatured(
+      items,
+      requestedFeatured,
+    );
+    final String lunchLabel = _semanticLabel(lunch);
+    final String drawerLabel = _semanticLabel(drawer);
 
     return WalkaReferenceViewport(
       child: LayoutBuilder(
@@ -78,6 +85,9 @@ class WalkaHomePremiumV122 extends StatelessWidget {
                         drawer: drawer,
                         lunchLabel: lunchLabel,
                         drawerLabel: drawerLabel,
+                        collectionFirst: featured.collectionFirst,
+                        collectionSecond: featured.collectionSecond,
+                        editorial: featured.editorial,
                         itemCount: items.length,
                         release: controller.snapshot.config.release,
                       ),
@@ -111,6 +121,9 @@ class WalkaHomePremiumV122 extends StatelessWidget {
     required WalkaCatalogViewItem drawer,
     required String lunchLabel,
     required String drawerLabel,
+    required WalkaCatalogViewItem collectionFirst,
+    required WalkaCatalogViewItem collectionSecond,
+    required WalkaCatalogViewItem editorial,
     required int itemCount,
     required String release,
   }) sync* {
@@ -140,10 +153,12 @@ class WalkaHomePremiumV122 extends StatelessWidget {
             child: WalkaHomeCollectionSection(
               eyebrow: section.eyebrow!,
               title: section.title!,
-              lunchSemanticLabel: lunchLabel,
-              drawerSemanticLabel: drawerLabel,
-              onLunch: () => openWalkaCatalogItem(context, lunch),
-              onDrawer: () => openWalkaCatalogItem(context, drawer),
+              firstVariantId: collectionFirst.variantId,
+              secondVariantId: collectionSecond.variantId,
+              firstSemanticLabel: _semanticLabel(collectionFirst),
+              secondSemanticLabel: _semanticLabel(collectionSecond),
+              onFirst: () => openWalkaCatalogItem(context, collectionFirst),
+              onSecond: () => openWalkaCatalogItem(context, collectionSecond),
             ),
           ),
         );
@@ -155,8 +170,10 @@ class WalkaHomePremiumV122 extends StatelessWidget {
             child: WalkaHomeSmallChanges(
               title: section.title!,
               body: section.body!,
-              drawerSemanticLabel: '$drawerLabel lifestyle visual',
-              onTap: () => openWalkaCatalogItem(context, drawer),
+              variantId: editorial.variantId,
+              productSemanticLabel:
+                  '${_semanticLabel(editorial)} lifestyle visual',
+              onTap: () => openWalkaCatalogItem(context, editorial),
             ),
           ),
         );
@@ -174,4 +191,56 @@ class WalkaHomePremiumV122 extends StatelessWidget {
         break;
     }
   }
+}
+
+String _semanticLabel(WalkaCatalogViewItem item) {
+  return '${item.title} ${item.variant}';
+}
+
+_ResolvedHomeFeatured _resolveFeatured(
+  List<WalkaCatalogViewItem> items,
+  WalkaHomeFeaturedContent requested,
+) {
+  final Map<String, WalkaCatalogViewItem> byId = <String, WalkaCatalogViewItem>{
+    for (final WalkaCatalogViewItem item in items) item.variantId: item,
+  };
+
+  _ResolvedHomeFeatured? resolve(WalkaHomeFeaturedContent content) {
+    final WalkaCatalogViewItem? first =
+        byId[content.collectionVariantIds.first];
+    final WalkaCatalogViewItem? second =
+        byId[content.collectionVariantIds.last];
+    final WalkaCatalogViewItem? editorial = byId[content.editorialVariantId];
+    if (first == null || second == null || editorial == null) {
+      return null;
+    }
+    if (first.productId == second.productId) {
+      return null;
+    }
+    return _ResolvedHomeFeatured(
+      collectionFirst: first,
+      collectionSecond: second,
+      editorial: editorial,
+    );
+  }
+
+  return resolve(requested) ??
+      resolve(WalkaHomeFeaturedContent.bundled) ??
+      _ResolvedHomeFeatured(
+        collectionFirst: items.first,
+        collectionSecond: items.length > 1 ? items[1] : items.first,
+        editorial: items.first,
+      );
+}
+
+class _ResolvedHomeFeatured {
+  const _ResolvedHomeFeatured({
+    required this.collectionFirst,
+    required this.collectionSecond,
+    required this.editorial,
+  });
+
+  final WalkaCatalogViewItem collectionFirst;
+  final WalkaCatalogViewItem collectionSecond;
+  final WalkaCatalogViewItem editorial;
 }
