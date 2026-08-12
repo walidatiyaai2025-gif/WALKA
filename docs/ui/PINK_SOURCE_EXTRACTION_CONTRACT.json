@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "taskNamespace": {
     "prefix": "PINKSRC",
     "first": 1,
@@ -31,7 +31,10 @@
     "pixelFormat": "8-bit RGBA",
     "colorProfile": "sRGB",
     "minimumTransparentSafeMarginPx": 51,
-    "maximumByteSize": 1258291
+    "maximumByteSize": 1258291,
+    "admittedSha256": "84b1c5b44980c29bf22ff88cafc747454d4caf8612209daa84edfc2e3f3a11ae",
+    "admittedByteSize": 748350,
+    "admittedAlphaBoundingBox": [51, 161, 972, 862]
   },
   "requiredVisualQa": [
     "surfaceWhite",
@@ -45,14 +48,15 @@
     "bakedUiExcluded"
   ],
   "admissionGuard": {
-    "currentVisualQaState": "PENDING",
+    "currentVisualQaState": "PASS",
     "requiredSourceAdmissionState": "APPROVED",
-    "requiredCurrentProvenanceState": "PENDING",
-    "requiredCurrentRuntimeState": "pending",
-    "requiredCanonicalExportPresent": false,
-    "requiredRuntimeEligible": false,
+    "requiredCurrentProvenanceState": "ADMITTED",
+    "requiredCurrentRuntimeState": "admitted",
+    "requiredCanonicalExportPresent": true,
+    "requiredRuntimeEligible": true,
     "stablePublicationMustRemainFailClosed": true,
-    "reason": "The exact source and product-panel extraction boundary are approved, but no Pink canonical cutout may be admitted until clean transparency and material/edge fidelity pass every mandatory visual QA check."
+    "globalReadinessReason": "Pink is independently admitted, but stable owner-visible publication remains blocked until all five released variants are admitted and final owner visual acceptance is complete.",
+    "migrationRule": "PENDING is valid only while mandatory visual QA is incomplete; ADMITTED is valid only when source approval, canonical fingerprint, export presence, all nine QA states, provenance and runtime admission agree."
   },
   "prohibitions": [
     "protected Images/ masters as runtime source",
@@ -60,6 +64,6 @@
     "product recoloring used as a substitute for the approved Pink source",
     "geometry reconstruction or invented accessories",
     "generative fill for missing product structure",
-    "premature runtime admission before complete visual QA"
+    "runtime admission without complete provenance and visual QA"
   ]
 }
