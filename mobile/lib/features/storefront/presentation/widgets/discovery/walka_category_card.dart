@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:walka/design_system/components/media/walka_product_media_resolver.dart';
 import 'package:walka/design_system/walka_product_visual.dart';
 import 'package:walka/design_system/walka_theme.dart';
+import 'package:walka/features/media/presentation/walka_resolved_product_remote_media.dart';
+import 'package:walka/features/media/presentation/walka_resolved_surface_media.dart';
 
 class WalkaCategoryCard extends StatelessWidget {
   const WalkaCategoryCard({
@@ -15,9 +17,11 @@ class WalkaCategoryCard extends StatelessWidget {
     required this.onTap,
     super.key,
     this.variantId,
+    this.remoteSlotKey,
   });
 
   final String? variantId;
+  final String? remoteSlotKey;
   final String title;
   final String subtitle;
   final WalkaProductVisualKind kind;
@@ -28,7 +32,7 @@ class WalkaCategoryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Widget visual = variantId == null
+    final Widget localVisual = variantId == null
         ? WalkaProductVisual(
             kind: kind,
             primaryColor: primaryColor,
@@ -44,6 +48,22 @@ class WalkaCategoryCard extends StatelessWidget {
             compact: true,
             mediaSurface: WalkaProductMediaSurface.discovery,
             semanticLabel: '$title category visual',
+          );
+    final Widget productAwareVisual = variantId == null
+        ? localVisual
+        : WalkaResolvedProductRemoteMedia(
+            variantId: variantId!,
+            fallback: localVisual,
+            semanticContext: '$title category product media',
+            cacheWidth: 1200,
+          );
+    final Widget visual = remoteSlotKey == null
+        ? productAwareVisual
+        : WalkaResolvedSurfaceMedia(
+            slotKey: remoteSlotKey!,
+            fallback: productAwareVisual,
+            semanticContext: '$title category media',
+            cacheWidth: 1200,
           );
 
     return Material(
