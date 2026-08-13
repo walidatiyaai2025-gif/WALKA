@@ -13,14 +13,17 @@ final class EloquentCatalogRepository implements CatalogRepository
 {
     public function all(): array
     {
-        $products = Product::query()
-            ->with('variants')
-            ->orderBy('sort_order')
-            ->get();
-
-        if ($products->isEmpty()) {
+        $catalogSeeded = Product::query()->exists();
+        if (! $catalogSeeded) {
             throw new CatalogUnavailableException('WALKA catalog is not seeded.');
         }
+
+        $products = Product::query()
+            ->with('variants')
+            ->where('is_visible', true)
+            ->orderBy('presentation_order')
+            ->orderBy('id')
+            ->get();
 
         return $products->map(
             static fn (Product $product): ProductData => new ProductData(
@@ -37,6 +40,10 @@ final class EloquentCatalogRepository implements CatalogRepository
                         pantone: $variant->pantone,
                     ),
                 )->values()->all(),
+                shortDescription: $product->short_description,
+                highlights: $product->highlights ?? [],
+                featured: $product->is_featured,
+                presentationOrder: $product->presentation_order,
             ),
         )->values()->all();
     }
