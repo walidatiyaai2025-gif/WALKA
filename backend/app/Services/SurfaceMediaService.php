@@ -123,6 +123,15 @@ final class SurfaceMediaService
             ->get()
             ->groupBy('slot_key');
 
+        $unknownSlots = $itemsBySlot->keys()->diff(array_keys($definitions));
+        if ($unknownSlots->isNotEmpty()) {
+            throw ValidationException::withMessages([
+                'slot_key' => [
+                    'Stored surface media references unknown slot(s): '.$unknownSlots->implode(', '),
+                ],
+            ]);
+        }
+
         $payload = [];
         foreach ($definitions as $slotKey => $definition) {
             $this->assertCategoryIdentity($definition);
