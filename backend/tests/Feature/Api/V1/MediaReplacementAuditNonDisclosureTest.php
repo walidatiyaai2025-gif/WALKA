@@ -44,6 +44,8 @@ final class MediaReplacementAuditNonDisclosureTest extends TestCase
         $productReplacement = $this->admittedAsset('public-product-replacement', MediaAssetPurpose::Product);
         $homeSource = $this->admittedAsset('public-home-source', MediaAssetPurpose::Home);
         $homeReplacement = $this->admittedAsset('public-home-replacement', MediaAssetPurpose::Home);
+        $productReason = 'Private owner product replacement reason';
+        $homeReason = 'Private owner Home replacement reason';
 
         $this->galleries->replaceProductGallery(
             'drawer-organizer',
@@ -63,14 +65,18 @@ final class MediaReplacementAuditNonDisclosureTest extends TestCase
             $productReplacement,
             $this->replacements->assignmentFingerprint($productSource),
             $this->actor,
+            $productReason,
         );
         $homeEvent = $this->replacements->replace(
             $homeSource,
             $homeReplacement,
             $this->replacements->assignmentFingerprint($homeSource),
             $this->actor,
+            $homeReason,
         );
 
+        $this->assertNotNull($productEvent);
+        $this->assertNotNull($homeEvent);
         $productResponse = $this->getJson('/api/v1/media/product-galleries')->assertOk();
         $surfaceResponse = $this->getJson('/api/v1/media/surfaces')->assertOk();
         $productRaw = $productResponse->getContent();
@@ -89,12 +95,15 @@ final class MediaReplacementAuditNonDisclosureTest extends TestCase
             $productEvent->after_fingerprint,
             $homeEvent->before_fingerprint,
             $homeEvent->after_fingerprint,
+            $productReason,
+            $homeReason,
             $this->actor,
             'media_replacement_events',
             'rollback_of_event_id',
             'actor_fingerprint',
             'before_assignments',
             'after_assignments',
+            'reason',
         ] as $privateValue) {
             $this->assertStringNotContainsString($privateValue, $combined);
         }
