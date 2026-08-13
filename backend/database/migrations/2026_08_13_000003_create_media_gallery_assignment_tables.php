@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('product_media_gallery_items', function (Blueprint $table): void {
             $table->ulid('id')->primary();
-            $table->string('product_id', 120);
+            $table->string('product_id');
             $table->ulid('media_asset_id');
             $table->unsignedTinyInteger('position');
             $table->char('created_by_fingerprint', 64);
@@ -25,7 +25,7 @@ return new class extends Migration
 
         Schema::create('variant_media_gallery_items', function (Blueprint $table): void {
             $table->ulid('id')->primary();
-            $table->string('product_variant_id', 160);
+            $table->string('product_variant_id');
             $table->ulid('media_asset_id');
             $table->unsignedTinyInteger('position');
             $table->char('created_by_fingerprint', 64);
