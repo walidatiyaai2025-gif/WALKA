@@ -8,8 +8,9 @@
     <div>
         <p class="eyebrow">GOVERNED MEDIA INGEST</p>
         <h1>Media library</h1>
-        <p class="lead">Validate production-image bytes before they enter WALKA media workflows. Uploads are stored in private quarantine and registered as Draft only; this page cannot admit, publish or assign media.</p>
+        <p class="lead">Validate production-image bytes before they enter WALKA media workflows. Uploads are stored in private quarantine and registered as Draft only; admission and product-gallery assignment remain explicit governed steps.</p>
     </div>
+    <a class="btn secondary" href="{{ route('admin.media.galleries.index') }}">Product galleries →</a>
 </div>
 
 <div class="grid metrics">

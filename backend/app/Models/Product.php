@@ -35,4 +35,9 @@ final class Product extends Model
     {
         return $this->hasMany(ProductVariant::class)->orderBy('sort_order');
     }
+
+    public function mediaGalleryItems(): HasMany
+    {
+        return $this->hasMany(ProductMediaGalleryItem::class)->orderBy('position');
+    }
 }
