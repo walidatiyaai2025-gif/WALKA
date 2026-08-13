@@ -9,7 +9,7 @@ return [
     |
     | Here you may specify the default filesystem disk that should be used
     | by the framework. The "local" disk, as well as a variety of cloud
-    | based disks are available to your application for file storage.
+    | based disks are available to your application.
     |
     */
 
@@ -20,9 +20,9 @@ return [
     | Filesystem Disks
     |--------------------------------------------------------------------------
     |
-    | Below you may configure as many filesystem disks as necessary, and you
+    | Below you may configure as many filesystem "disks" as you wish, and you
     | may even configure multiple disks for the same driver. Examples for
-    | most supported storage drivers are configured here for reference.
+    | most supported drivers are configured here for reference.
     |
     | Supported drivers: "local", "ftp", "sftp", "s3"
     |
@@ -36,6 +36,14 @@ return [
             'serve' => true,
             'throw' => false,
             'report' => false,
+        ],
+
+        'media_quarantine' => [
+            'driver' => 'local',
+            'root' => storage_path('app/private/media-quarantine'),
+            'serve' => false,
+            'throw' => true,
+            'report' => true,
         ],
 
         'public' => [
