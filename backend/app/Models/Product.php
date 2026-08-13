@@ -16,7 +16,12 @@ final class Product extends Model
         'name',
         'category',
         'features',
+        'short_description',
+        'highlights',
         'facts',
+        'is_visible',
+        'is_featured',
+        'presentation_order',
         'sort_order',
         'revision',
     ];
@@ -25,7 +30,11 @@ final class Product extends Model
     {
         return [
             'features' => 'array',
+            'highlights' => 'array',
             'facts' => 'array',
+            'is_visible' => 'boolean',
+            'is_featured' => 'boolean',
+            'presentation_order' => 'integer',
             'sort_order' => 'integer',
             'revision' => 'integer',
         ];
