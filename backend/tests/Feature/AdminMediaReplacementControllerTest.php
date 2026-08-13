@@ -71,15 +71,19 @@ final class AdminMediaReplacementControllerTest extends TestCase
             ->assertSeeText('Replacement & rollback')
             ->assertSee($source->semantic_label)
             ->assertSee($candidate->semantic_label)
-            ->assertDontSee($home->semantic_label);
+            ->assertSee($unassigned->semantic_label)
+            ->assertDontSee($home->semantic_label)
+            ->assertSeeText('Replace all current references');
 
-        $this->assertStringNotContainsString(
-            'Replace all current references</button>',
-            str_replace('disabled', '', $response->getContent()),
+        $html = $response->getContent();
+        $this->assertSame(1, substr_count($html, 'name="source_media_asset_id"'));
+        $this->assertStringContainsString(
+            'name="source_media_asset_id" value="'.$source->id.'"',
+            $html,
         );
         $this->assertStringNotContainsString(
-            'value="'.$unassigned->id.'" name="source_media_asset_id"',
-            $response->getContent(),
+            'name="source_media_asset_id" value="'.$unassigned->id.'"',
+            $html,
         );
     }
 
