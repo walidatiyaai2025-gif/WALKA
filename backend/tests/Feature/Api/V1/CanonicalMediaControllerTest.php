@@ -47,7 +47,10 @@ final class CanonicalMediaControllerTest extends TestCase
 
         $this->assertSame($bytes, $response->getContent());
         $this->assertStringContainsString('max-age=300', (string) $response->headers->get('Cache-Control'));
-        $this->assertStringNotContainsString(self::DISK, implode('\n', $response->headers->allPreserveCase()));
+        $this->assertStringNotContainsString(
+            self::DISK,
+            json_encode($response->headers->allPreserveCase(), JSON_THROW_ON_ERROR),
+        );
         $this->assertStringNotContainsString('private-source-good.png', $response->getContent());
 
         $this->withHeader('If-None-Match', '"sha256-'.$sha.'"')
