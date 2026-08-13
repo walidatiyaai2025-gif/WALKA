@@ -32,10 +32,11 @@
     "colorProfile": "sRGB",
     "minimumTransparentSafeMarginPx": 51,
     "maximumByteSize": 1258291,
-    "candidateSha256": "84b1c5b44980c29bf22ff88cafc747454d4caf8612209daa84edfc2e3f3a11ae",
-    "candidateByteSize": 748350,
-    "candidateAlphaBoundingBox": [51, 161, 972, 862],
-    "candidateDisposition": "REJECTED_NAVY_HALO"
+    "admittedSha256": "1667519c9a1931f16c8d26acefbed65e1f39ae7820ac58551de71a61a580d7fb",
+    "admittedByteSize": 749558,
+    "admittedAlphaBoundingBox": [51, 125, 972, 898],
+    "admittedDisposition": "SOURCE_PANEL_REEXTRACTED_NO_OBVIOUS_HALO",
+    "supersedesRejectedSha256": "84b1c5b44980c29bf22ff88cafc747454d4caf8612209daa84edfc2e3f3a11ae"
   },
   "requiredVisualQa": [
     "surfaceWhite",
@@ -49,22 +50,44 @@
     "bakedUiExcluded"
   ],
   "admissionGuard": {
-    "currentVisualQaState": "PENDING",
+    "currentVisualQaState": "PASS",
     "requiredSourceAdmissionState": "APPROVED",
-    "requiredCurrentProvenanceState": "PENDING",
-    "requiredCurrentRuntimeState": "pending",
-    "requiredCanonicalExportPresent": false,
-    "requiredRuntimeEligible": false,
+    "requiredCurrentProvenanceState": "ADMITTED",
+    "requiredCurrentRuntimeState": "admitted",
+    "requiredCanonicalExportPresent": true,
+    "requiredRuntimeEligible": true,
     "stablePublicationMustRemainFailClosed": true,
-    "globalReadinessReason": "The current candidate was rendered from the actual current-main binary on White/Ivory/Navy. Navy proof shows unacceptable white halo/background contamination, so Pink remains quarantined until a cleaner approved-panel cutout passes all nine visual QA checks.",
+    "globalReadinessReason": "Pink now passes source-panel re-extraction and direct White/Ivory/Navy plus 96/160/240/384 proof. Global stable publication remains blocked because Drawer Gray is still source-blocked.",
     "migrationRule": "PENDING is valid while mandatory visual QA is incomplete or rejected; ADMITTED is valid only when source approval, a confirmed canonical fingerprint, export presence, all nine QA states, provenance and runtime admission agree."
   },
-  "lastVisualProof": {
+  "lastRejectedVisualProof": {
     "sourceMainCommit": "cd6bb64c1b37af97e274f42ce5752ac110ecdc77",
     "workflowRun": 31625699344,
     "artifactId": 9153009337,
     "candidateSha256": "84b1c5b44980c29bf22ff88cafc747454d4caf8612209daa84edfc2e3f3a11ae",
     "navyResult": "REJECTED_WHITE_HALO_AND_BACKGROUND_CONTAMINATION"
+  },
+  "currentCanonicalProof": {
+    "candidateSha256": "1667519c9a1931f16c8d26acefbed65e1f39ae7820ac58551de71a61a580d7fb",
+    "candidateByteSize": 749558,
+    "alphaBoundingBox": [51, 125, 972, 898],
+    "minimumTransparentSafeMarginPx": 51,
+    "vproofAlgorithm": "edge-interior-mismatch-v2",
+    "vproofMismatchNearWhitePartialEdgeCount": 3,
+    "vproofPartialAlphaEdgeCount": 16170,
+    "vproofMismatchPartialEdgeRatio": 0.00018552875695732838,
+    "vproofMismatchNearWhiteEdgeRatio": 0.002840909090909091,
+    "vproofNavyBrightDeltaRatio": 0.0,
+    "vproofDisposition": "NO_OBVIOUS_HALO",
+    "whiteStage": "PASS",
+    "ivoryStage": "PASS",
+    "navyStage": "PASS",
+    "downscale96": "PASS",
+    "downscale160": "PASS",
+    "downscale240": "PASS",
+    "downscale384": "PASS",
+    "automationCanAcceptFinalVisualFidelity": false,
+    "finalOwnerVisualAcceptanceStillRequired": true
   },
   "prohibitions": [
     "protected Images/ masters as runtime source",
