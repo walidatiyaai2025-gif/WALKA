@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\AdminHomeFeaturedController;
 use App\Http\Controllers\Admin\AdminHomeHeroController;
 use App\Http\Controllers\Admin\AdminHomeLayoutController;
 use App\Http\Controllers\Admin\AdminMediaController;
+use App\Http\Controllers\Admin\AdminMediaGalleryController;
 use App\Http\Controllers\Admin\AdminSearchPresentationController;
 use Illuminate\Support\Facades\Route;
 
@@ -35,6 +36,13 @@ Route::prefix('admin')
 
             Route::get('/media', [AdminMediaController::class, 'index'])->name('media.index');
             Route::post('/media/uploads', [AdminMediaController::class, 'store'])->name('media.store');
+            Route::get('/media/galleries', [AdminMediaGalleryController::class, 'index'])
+                ->name('media.galleries.index');
+            Route::put('/media/galleries/products/{product}', [AdminMediaGalleryController::class, 'updateProduct'])
+                ->name('media.galleries.products.update');
+            Route::put('/media/galleries/variants/{variant}', [AdminMediaGalleryController::class, 'updateVariant'])
+                ->where('variant', '.*')
+                ->name('media.galleries.variants.update');
 
             Route::get('/content', [AdminContentController::class, 'index'])->name('content.index');
             Route::post('/content', [AdminContentController::class, 'store'])->name('content.store');
