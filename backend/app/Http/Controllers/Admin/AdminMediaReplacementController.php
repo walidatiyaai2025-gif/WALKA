@@ -38,8 +38,7 @@ final class AdminMediaReplacementController extends Controller
                     'assignments' => $assignments,
                     'fingerprint' => MediaReplacementService::fingerprint($assignments),
                     'candidates' => $eligibleAssets
-                        ->filter(fn (MediaAsset $candidate): bool => ! $candidate->is($asset)
-                            && $candidate->purpose === $asset->purpose)
+                        ->filter(fn (MediaAsset $candidate): bool => $candidate->purpose === $asset->purpose)
                         ->values(),
                 ];
             })
@@ -60,8 +59,9 @@ final class AdminMediaReplacementController extends Controller
     {
         $validated = $request->validate([
             'source_media_asset_id' => ['required', 'string', 'exists:media_assets,id'],
-            'replacement_media_asset_id' => ['required', 'string', 'different:source_media_asset_id', 'exists:media_assets,id'],
+            'replacement_media_asset_id' => ['required', 'string', 'exists:media_assets,id'],
             'expected_fingerprint' => ['required', 'string', 'size:64', 'regex:/^[a-f0-9]+$/i'],
+            'reason' => ['nullable', 'string', 'min:3', 'max:500'],
         ]);
 
         $source = MediaAsset::query()->findOrFail($validated['source_media_asset_id']);
@@ -71,7 +71,14 @@ final class AdminMediaReplacementController extends Controller
             replacement: $replacement,
             expectedFingerprint: strtolower($validated['expected_fingerprint']),
             actorFingerprint: $this->actorFingerprint($request),
+            reason: $validated['reason'] ?? null,
         );
+
+        if ($event === null) {
+            return redirect()
+                ->route('admin.media.replacements.index')
+                ->with('status', 'Selected media is already current. No assignment or audit event was changed.');
+        }
 
         return redirect()
             ->route('admin.media.replacements.index')
@@ -88,12 +95,14 @@ final class AdminMediaReplacementController extends Controller
     ): RedirectResponse {
         $validated = $request->validate([
             'expected_after_fingerprint' => ['required', 'string', 'size:64', 'regex:/^[a-f0-9]+$/i'],
+            'reason' => ['required', 'string', 'min:3', 'max:500'],
         ]);
 
         $rollback = $this->replacements->rollback(
             replacementEvent: $event,
             expectedAfterFingerprint: strtolower($validated['expected_after_fingerprint']),
             actorFingerprint: $this->actorFingerprint($request),
+            reason: $validated['reason'],
         );
 
         return redirect()
