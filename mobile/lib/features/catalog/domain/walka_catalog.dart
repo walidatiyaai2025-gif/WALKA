@@ -16,12 +16,20 @@ class WalkaStorefrontConfig {
 }
 
 class WalkaCatalogVariant {
-  const WalkaCatalogVariant({required this.id, required this.color, required this.asin, required this.purchaseUrl, this.pantone});
+  const WalkaCatalogVariant({
+    required this.id,
+    required this.color,
+    required this.asin,
+    required this.purchaseUrl,
+    this.pantone,
+    this.presentationOrder = 0,
+  });
   final String id;
   final String color;
   final String asin;
   final String? pantone;
   final String purchaseUrl;
+  final int presentationOrder;
   Uri get purchaseUri {
     final Uri? uri = Uri.tryParse(purchaseUrl);
     if (uri == null || !uri.hasScheme || uri.host.isEmpty) throw FormatException('Invalid WALKA purchase URL for $id.');
@@ -30,14 +38,27 @@ class WalkaCatalogVariant {
   factory WalkaCatalogVariant.fromJson(Map<String, dynamic> json) {
     final Object? pantoneValue = json['pantone'];
     if (pantoneValue != null && pantoneValue is! String) throw const FormatException('Variant pantone must be a string or null.');
+    final Object? rawOrder = json['presentation_order'];
+    if (rawOrder != null && (rawOrder is! int || rawOrder < 0)) throw const FormatException('Variant presentation_order must be a non-negative integer.');
     final WalkaCatalogVariant variant = WalkaCatalogVariant(
-      id: _requiredString(json, 'id'), color: _requiredString(json, 'color'), asin: _requiredString(json, 'asin'),
-      pantone: pantoneValue as String?, purchaseUrl: _requiredString(json, 'purchase_url'),
+      id: _requiredString(json, 'id'),
+      color: _requiredString(json, 'color'),
+      asin: _requiredString(json, 'asin'),
+      pantone: pantoneValue as String?,
+      purchaseUrl: _requiredString(json, 'purchase_url'),
+      presentationOrder: rawOrder as int? ?? 0,
     );
     variant.purchaseUri;
     return variant;
   }
-  Map<String, dynamic> toJson() => <String, dynamic>{'id': id, 'color': color, 'asin': asin, 'pantone': pantone, 'purchase_url': purchaseUrl};
+  Map<String, dynamic> toJson() => <String, dynamic>{
+        'id': id,
+        'color': color,
+        'asin': asin,
+        'pantone': pantone,
+        'presentation_order': presentationOrder,
+        'purchase_url': purchaseUrl,
+      };
 }
 
 class WalkaCatalogProduct {
@@ -155,23 +176,31 @@ abstract final class WalkaCatalogContract {
     if (snapshot.config.apiVersion != 'v1') throw const FormatException('Unsupported WALKA API version.');
     if (snapshot.config.purchaseMode != 'amazon_redirect') throw const FormatException('Unsupported WALKA purchase mode.');
     final Set<String> seenProducts = <String>{};
-    int previousOrder = -1;
-    String previousId = '';
+    int previousProductOrder = -1;
+    String previousProductId = '';
     for (final WalkaCatalogProduct product in snapshot.products) {
       if (!requiredProductIds.contains(product.id) || !seenProducts.add(product.id)) throw const FormatException('Catalog contains an unknown or duplicate product ID.');
-      if (product.presentationOrder < previousOrder || (product.presentationOrder == previousOrder && previousId.isNotEmpty && product.id.compareTo(previousId) < 0)) {
+      if (product.presentationOrder < previousProductOrder || (product.presentationOrder == previousProductOrder && previousProductId.isNotEmpty && product.id.compareTo(previousProductId) < 0)) {
         throw const FormatException('Catalog product presentation order is not deterministic.');
       }
-      previousOrder = product.presentationOrder;
-      previousId = product.id;
-      final Set<String> expectedVariants = allowedVariantIdsByProduct[product.id] ?? const <String>{};
+      previousProductOrder = product.presentationOrder;
+      previousProductId = product.id;
+
+      final Set<String> allowedVariants = allowedVariantIdsByProduct[product.id] ?? const <String>{};
       final Set<String> seenVariants = <String>{};
+      int previousVariantOrder = -1;
+      String previousVariantId = '';
       for (final WalkaCatalogVariant variant in product.variants) {
-        if (!expectedVariants.contains(variant.id) || !seenVariants.add(variant.id)) throw const FormatException('Catalog contains an invalid product variant identity.');
+        if (!allowedVariants.contains(variant.id) || !seenVariants.add(variant.id)) throw const FormatException('Catalog contains an invalid product variant identity.');
+        if (variant.presentationOrder < previousVariantOrder || (variant.presentationOrder == previousVariantOrder && previousVariantId.isNotEmpty && variant.id.compareTo(previousVariantId) < 0)) {
+          throw const FormatException('Catalog variant presentation order is not deterministic.');
+        }
+        previousVariantOrder = variant.presentationOrder;
+        previousVariantId = variant.id;
         variant.purchaseUri;
       }
-      if (seenVariants.length != expectedVariants.length || !seenVariants.containsAll(expectedVariants)) {
-        throw const FormatException('A visible product is missing a stable WALKA variant.');
+      if (product.variants.isEmpty) {
+        throw const FormatException('A visible product must retain at least one visible stable variant.');
       }
     }
   }
