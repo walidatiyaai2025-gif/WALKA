@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\AdminCategoryPresentationController;
 use App\Http\Controllers\Admin\AdminContentController;
 use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\AdminHomeBannerController;
@@ -68,6 +69,15 @@ Route::prefix('admin')
                 ->name('content.home.banner.publish');
             Route::post('/content/home/banner/restore', [AdminHomeBannerController::class, 'restore'])
                 ->name('content.home.banner.restore');
+
+            Route::get('/content/categories', [AdminCategoryPresentationController::class, 'edit'])
+                ->name('content.categories.edit');
+            Route::patch('/content/categories', [AdminCategoryPresentationController::class, 'update'])
+                ->name('content.categories.update');
+            Route::post('/content/categories/publish', [AdminCategoryPresentationController::class, 'publish'])
+                ->name('content.categories.publish');
+            Route::post('/content/categories/restore', [AdminCategoryPresentationController::class, 'restore'])
+                ->name('content.categories.restore');
 
             Route::get('/content/{content}', [AdminContentController::class, 'show'])->name('content.show');
             Route::patch('/content/{content}/draft', [AdminContentController::class, 'updateDraft'])
