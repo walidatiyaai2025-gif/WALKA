@@ -8,7 +8,7 @@
     <div>
         <p class="eyebrow">Authoring surface</p>
         <h1>Products & variants</h1>
-        <p class="lead">Edit only customer-facing copy that the existing API contract permits. Product identity, verified facts, ASINs, Pantones and deterministic ordering remain locked by design.</p>
+        <p class="lead">Edit customer-facing presentation while Product Master identity, facts, ASINs, Pantones and internal ordering remain locked by design.</p>
     </div>
     <span class="badge lock">REVISION PROTECTED</span>
 </div>
@@ -28,7 +28,7 @@
                     <h2 style="margin-bottom:5px">{{ $product->name }}</h2>
                     <div class="muted" style="font-size:12px"><code>{{ $product->id }}</code> · revision {{ $product->revision }}</div>
                 </div>
-                <span class="badge good">{{ $product->variants->count() }} VARIANT{{ $product->variants->count() === 1 ? '' : 'S' }}</span>
+                <span class="badge {{ $product->is_visible ? 'good' : 'warn' }}">{{ $product->is_visible ? 'VISIBLE' : 'HIDDEN' }}</span>
             </div>
 
             <form method="post" action="{{ route('admin.catalog.products.update', ['product' => $product->id]) }}" class="stack">
@@ -45,7 +45,8 @@
                             <label for="features-{{ $product->id }}">Features · one per line</label>
                             <textarea id="features-{{ $product->id }}" name="features_text" maxlength="5000">{{ implode("\n", $product->features ?? []) }}</textarea>
                         </div>
-                        <div><button class="btn navy" type="submit">Save product copy</button></div>
+                        @include('admin.partials.product-presentation-fields', ['product' => $product])
+                        <div><button class="btn navy" type="submit">Save product presentation</button></div>
                     </div>
                     <div class="stack">
                         <div class="locked">
@@ -53,13 +54,13 @@
                             <div class="locked-grid" style="margin-top:10px">
                                 <div><small>ID</small><strong>{{ $product->id }}</strong></div>
                                 <div><small>Category</small><strong>{{ $product->category }}</strong></div>
-                                <div><small>Sort order</small><strong>{{ $product->sort_order }}</strong></div>
+                                <div><small>Internal sort order</small><strong>{{ $product->sort_order }}</strong></div>
                             </div>
                         </div>
                         <div class="locked">
                             <small>Verified facts · read only</small>
                             <strong>{{ count($product->facts ?? []) }} typed Product Master field{{ count($product->facts ?? []) === 1 ? '' : 's' }}</strong>
-                            <div class="muted" style="font-size:11px;line-height:1.55;margin-top:6px">Change verified dimensions, material/care rules or other facts in <code>docs/PRODUCT_MASTER.md</code> first; they are intentionally not editable here.</div>
+                            <div class="muted" style="font-size:11px;line-height:1.55;margin-top:6px">Verified dimensions, material/care rules and protected claims are intentionally not editable here.</div>
                         </div>
                     </div>
                 </div>
@@ -101,6 +102,6 @@
 <section class="card section-space">
     <p class="eyebrow">Safety boundary</p>
     <h2>Fields intentionally locked</h2>
-    <p class="lead">{{ implode(', ', $lockedFields) }}. The dashboard cannot create/delete stable catalog identities in ADMIN-001.</p>
+    <p class="lead">{{ implode(', ', $lockedFields) }}. Stable identities and Product Master truth cannot be changed by this presentation editor.</p>
 </section>
 @endsection
