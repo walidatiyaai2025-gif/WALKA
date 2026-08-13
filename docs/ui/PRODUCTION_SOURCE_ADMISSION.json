@@ -1,13 +1,7 @@
 {
   "schemaVersion": 1,
-  "allowedSourceStates": [
-    "APPROVED",
-    "BLOCKED",
-    "REPLACE"
-  ],
-  "protectedRuntimeSourcePrefixes": [
-    "Images/"
-  ],
+  "allowedSourceStates": ["APPROVED", "BLOCKED", "REPLACE"],
+  "protectedRuntimeSourcePrefixes": ["Images/"],
   "variants": [
     {
       "variantId": "drawer-organizer:white",
@@ -53,9 +47,9 @@
       "sourceFilename": "1000389975.jpg",
       "sourceState": "APPROVED",
       "canonicalPath": "assets/products/lunch/pink.png",
-      "canonicalExportPresent": false,
-      "reason": "The exact approved product panel is locked. Direct visual proof of the current-main candidate on WALKA Navy shows unacceptable white halo/background contamination, so the existing PNG remains quarantined and is not a confirmed canonical export.",
-      "unblockAction": "Produce a cleaner source-derived cutout from the approved panel, exclude all marketplace pixels, and pass White/Ivory/Navy plus 96/160/240/384 edge QA before confirming or admitting the canonical export."
+      "canonicalExportPresent": true,
+      "reason": "The exact approved embedded product panel has been re-extracted with deterministic source-derived segmentation. Marketplace pixels outside the approved panel are excluded; the four-compartment SUS304 tray, Pink components, bag, cutlery and sauce cup remain source-derived with no recoloring, geometry reconstruction or accessory invention.",
+      "unblockAction": "Keep the admitted Pink source fingerprint, approved panel rectangle, canonical binary and visual-proof receipt stable; any replacement must repeat PINKSRC/PINKFIX visual QA and owner review."
     },
     {
       "variantId": "lunch-box:green",
