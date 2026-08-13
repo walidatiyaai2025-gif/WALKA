@@ -4,6 +4,8 @@ import '../../design_system/walka_product_visual.dart';
 import '../../design_system/walka_shell.dart';
 import '../../design_system/walka_theme.dart';
 import '../catalog/catalog_state.dart';
+import '../content/content_state.dart';
+import '../content/domain/walka_search_presentation_content.dart';
 import '../lunch/lunch_box_v6.dart';
 import 'presentation/widgets/discovery/walka_categories_benefits.dart';
 import 'presentation/widgets/discovery/walka_category_card.dart';
@@ -157,7 +159,9 @@ class WalkaCategoriesPremiumV123 extends StatelessWidget {
   }
 }
 
-/// Search preserves released query/family/reset behavior with extracted visuals.
+/// CMS-025 Search keeps query matching and complete catalog truth compiled,
+/// while typed CMS content controls safe copy, filter labels and default
+/// Featured ordering only.
 class WalkaSearchPremiumV123 extends StatefulWidget {
   const WalkaSearchPremiumV123({super.key});
 
@@ -192,19 +196,36 @@ class _WalkaSearchPremiumV123State extends State<WalkaSearchPremiumV123> {
   @override
   Widget build(BuildContext context) {
     final WalkaCatalogController catalog = WalkaCatalogScope.of(context);
+    final WalkaSearchPresentationContent presentation =
+        WalkaContentScope.maybeOf(context)?.search.content ??
+            WalkaSearchPresentationContent.bundled;
     final String query = _query.trim().toLowerCase();
-    final List<WalkaCatalogViewItem> results = walkaCatalogViewItems(catalog.snapshot)
+
+    final Map<String, int> featuredPosition = <String, int>{
+      for (int index = 0; index < presentation.featuredVariantIds.length; index++)
+        presentation.featuredVariantIds[index]: index,
+    };
+    final List<WalkaCatalogViewItem> ordered =
+        walkaCatalogViewItems(catalog.snapshot).toList(growable: true)
+          ..sort((WalkaCatalogViewItem a, WalkaCatalogViewItem b) {
+            final int aPosition = featuredPosition[a.variantId] ?? 1 << 20;
+            final int bPosition = featuredPosition[b.variantId] ?? 1 << 20;
+            return aPosition.compareTo(bPosition);
+          });
+
+    final List<WalkaCatalogViewItem> results = ordered
         .where((WalkaCatalogViewItem item) {
-      if (_family != null && item.family != _family) return false;
-      if (query.isEmpty) return true;
-      final String haystack = <String>[
-        item.title,
-        item.variant,
-        item.family.name,
-        item.searchTerms,
-      ].join(' ').toLowerCase();
-      return query.split(RegExp(r'\s+')).every(haystack.contains);
-    }).toList(growable: false);
+          if (_family != null && item.family != _family) return false;
+          if (query.isEmpty) return true;
+          final String haystack = <String>[
+            item.title,
+            item.variant,
+            item.family.name,
+            item.searchTerms,
+          ].join(' ').toLowerCase();
+          return query.split(RegExp(r'\s+')).every(haystack.contains);
+        })
+        .toList(growable: false);
     final double gutter = WalkaShellMetrics.horizontalGutter(context);
 
     return SafeArea(
@@ -222,9 +243,10 @@ class _WalkaSearchPremiumV123State extends State<WalkaSearchPremiumV123> {
             padding: EdgeInsets.fromLTRB(gutter, 24, gutter, 42),
             sliver: SliverList(
               delegate: SliverChildListDelegate(<Widget>[
-                const Text(
-                  'Search WALKA',
-                  style: TextStyle(
+                Text(
+                  presentation.heading,
+                  key: const ValueKey<String>('cms-search-heading'),
+                  style: const TextStyle(
                     color: WalkaColors.navy,
                     fontFamily: 'serif',
                     fontSize: 32,
@@ -234,20 +256,30 @@ class _WalkaSearchPremiumV123State extends State<WalkaSearchPremiumV123> {
                   ),
                 ),
                 const SizedBox(height: 8),
-                const Text(
-                  'Find by collection, finish, color or verified product detail.',
-                  style: TextStyle(color: WalkaColors.muted, fontSize: 13, height: 1.45),
+                Text(
+                  presentation.supportingCopy,
+                  key: const ValueKey<String>('cms-search-supporting-copy'),
+                  style: const TextStyle(
+                    color: WalkaColors.muted,
+                    fontSize: 13,
+                    height: 1.45,
+                  ),
                 ),
                 const SizedBox(height: 18),
                 WalkaSearchField(
                   controller: _controller,
                   query: _query,
+                  placeholder: presentation.placeholder,
                   onChanged: (String value) => setState(() => _query = value),
                   onClear: _clearQuery,
                 ),
                 const SizedBox(height: 14),
                 WalkaSearchFilters(
                   selectedFamily: _family,
+                  allLabel: presentation.filterLabel('all', 'All'),
+                  drawerLabel:
+                      presentation.filterLabel('drawer-organization', 'Drawer'),
+                  lunchLabel: presentation.filterLabel('lunch', 'Lunch'),
                   onChanged: (WalkaCatalogFamily? family) =>
                       setState(() => _family = family),
                 ),
@@ -274,7 +306,11 @@ class _WalkaSearchPremiumV123State extends State<WalkaSearchPremiumV123> {
                 ),
                 const SizedBox(height: 12),
                 if (results.isEmpty)
-                  WalkaSearchEmptyState(onReset: _reset)
+                  WalkaSearchEmptyState(
+                    title: presentation.emptyTitle,
+                    body: presentation.emptyBody,
+                    onReset: _reset,
+                  )
                 else
                   WalkaSearchResults(
                     results: results,
