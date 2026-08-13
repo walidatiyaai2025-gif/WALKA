@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import 'package:walka/design_system/components/media/walka_product_media_resolver.dart';
 import 'package:walka/design_system/walka_theme.dart';
+import 'package:walka/features/media/presentation/walka_resolved_product_remote_media.dart';
+import 'package:walka/features/media/presentation/walka_resolved_surface_media.dart';
 
 import 'walka_home_featured_visual.dart';
 
@@ -84,20 +86,32 @@ class WalkaHomeSmallChanges extends StatelessWidget {
           ),
         );
 
+        final Widget localVisual = WalkaResolvedProductMedia(
+          variantId: visualSpec.variantId,
+          kind: visualSpec.kind,
+          primaryColor: visualSpec.primaryColor,
+          backgroundColor: visualSpec.backgroundColor,
+          compact: true,
+          mediaSurface: WalkaProductMediaSurface.home,
+          semanticLabel: productSemanticLabel,
+        );
+        final Widget productRemote = WalkaResolvedProductRemoteMedia(
+          variantId: visualSpec.variantId,
+          fallback: localVisual,
+          semanticContext: 'WALKA Small Changes featured product',
+          cacheWidth: 1200,
+        );
         final Widget visual = SizedBox(
           height: stack ? 126 : 164,
           child: ColoredBox(
             color: visualSpec.backgroundColor,
             child: Padding(
               padding: const EdgeInsets.all(8),
-              child: WalkaResolvedProductMedia(
-                variantId: visualSpec.variantId,
-                kind: visualSpec.kind,
-                primaryColor: visualSpec.primaryColor,
-                backgroundColor: visualSpec.backgroundColor,
-                compact: true,
-                mediaSurface: WalkaProductMediaSurface.home,
-                semanticLabel: productSemanticLabel,
+              child: WalkaResolvedSurfaceMedia(
+                slotKey: 'home.editorial.small_changes',
+                fallback: productRemote,
+                semanticContext: 'WALKA Small Changes editorial media',
+                cacheWidth: 1200,
               ),
             ),
           ),
