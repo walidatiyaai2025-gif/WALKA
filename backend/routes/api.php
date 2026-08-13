@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\V1\Admin\CatalogAuditController;
 use App\Http\Controllers\Api\V1\CatalogController;
 use App\Http\Controllers\Api\V1\ConfigController;
 use App\Http\Controllers\Api\V1\HealthController;
+use App\Http\Controllers\Api\V1\MediaGalleryController;
 use App\Http\Controllers\Api\V1\PublishedContentController;
 use Illuminate\Support\Facades\Route;
 
@@ -23,6 +24,7 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
         ->name('content.categories');
     Route::get('/content/search', [PublishedContentController::class, 'search'])
         ->name('content.search');
+    Route::get('/media/galleries', MediaGalleryController::class)->name('media.galleries');
 
     Route::prefix('admin/catalog')
         ->middleware('catalog.admin')
