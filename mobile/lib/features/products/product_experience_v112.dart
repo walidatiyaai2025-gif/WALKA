@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../catalog/catalog_state.dart';
 import '../commerce/amazon_purchase.dart';
 import '../favorites/favorites_state.dart';
 import '../lunch/lunch_box_v6.dart';
@@ -25,6 +26,32 @@ class WalkaDrawerProductDetailV112 extends StatefulWidget {
 class _WalkaDrawerProductDetailV112State
     extends State<WalkaDrawerProductDetailV112> {
   late bool _gray = widget.initialGray;
+
+  List<bool> _visibleOptions(BuildContext context) {
+    final WalkaCatalogController? catalog = WalkaCatalogScope.maybeOf(context);
+    if (catalog == null) return const <bool>[false, true];
+
+    final product = catalog.snapshot.productById('drawer-organizer');
+    if (product == null) return const <bool>[];
+
+    return product.variants
+        .map((variant) => switch (variant.id) {
+              'drawer-organizer:white' => false,
+              'drawer-organizer:gray' => true,
+              _ => null,
+            })
+        .whereType<bool>()
+        .toList(growable: false);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final List<bool> available = _visibleOptions(context);
+    if (available.isNotEmpty && !available.contains(_gray)) {
+      _gray = available.first;
+    }
+  }
 
   WalkaPdpPresentationModel get _model =>
       WalkaPdpPresentationModel.drawer(gray: _gray);
@@ -70,6 +97,11 @@ class _WalkaDrawerProductDetailV112State
 
   @override
   Widget build(BuildContext context) {
+    final List<bool> available = _visibleOptions(context);
+    if (available.isEmpty) {
+      return const _UnavailableCatalogProduct(label: 'Drawer Organizer');
+    }
+
     final WalkaFavoritesController favorites = WalkaFavoritesScope.of(context);
     final bool isFavorite = favorites.isDrawerFavorite(gray: _gray);
     final WalkaPdpPresentationModel model = _model;
@@ -100,20 +132,20 @@ class _WalkaDrawerProductDetailV112State
         variantSelector: WalkaPdpVariantSelector<bool>(
           selected: _gray,
           selectedLabel: model.selectedLabel,
-          options: const <WalkaPdpVariantOption<bool>>[
-            WalkaPdpVariantOption<bool>(
-              value: false,
-              label: 'White',
-              color: Color(0xFFF7F4EC),
-              key: ValueKey<String>('premium-drawer-white'),
-            ),
-            WalkaPdpVariantOption<bool>(
-              value: true,
-              label: 'Gray',
-              color: Color(0xFFD3D7D9),
-              key: ValueKey<String>('premium-drawer-gray'),
-            ),
-          ],
+          options: available
+              .map(
+                (bool gray) => WalkaPdpVariantOption<bool>(
+                  value: gray,
+                  label: gray ? 'Gray' : 'White',
+                  color: gray
+                      ? const Color(0xFFD3D7D9)
+                      : const Color(0xFFF7F4EC),
+                  key: ValueKey<String>(
+                    gray ? 'premium-drawer-gray' : 'premium-drawer-white',
+                  ),
+                ),
+              )
+              .toList(growable: false),
           onChanged: (bool gray) => setState(() => _gray = gray),
         ),
         editorialTitle: 'Organize the drawer. Keep the counter calm.',
@@ -141,6 +173,33 @@ class _WalkaLunchProductDetailV112State
     extends State<WalkaLunchProductDetailV112> {
   late WalkaLunchVariant _variant = widget.initialVariant;
   bool _favorite = false;
+
+  List<WalkaLunchVariant> _visibleOptions(BuildContext context) {
+    final WalkaCatalogController? catalog = WalkaCatalogScope.maybeOf(context);
+    if (catalog == null) return WalkaLunchVariant.values;
+
+    final product = catalog.snapshot.productById('stainless-steel-bento-lunch-box');
+    if (product == null) return const <WalkaLunchVariant>[];
+
+    return product.variants
+        .map((variant) => switch (variant.id) {
+              'lunch-box:blue' => WalkaLunchVariant.blue,
+              'lunch-box:pink' => WalkaLunchVariant.pink,
+              'lunch-box:green' => WalkaLunchVariant.green,
+              _ => null,
+            })
+        .whereType<WalkaLunchVariant>()
+        .toList(growable: false);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final List<WalkaLunchVariant> available = _visibleOptions(context);
+    if (available.isNotEmpty && !available.contains(_variant)) {
+      _variant = available.first;
+    }
+  }
 
   WalkaPdpPresentationModel get _model =>
       WalkaPdpPresentationModel.lunch(_variant);
@@ -184,6 +243,11 @@ class _WalkaLunchProductDetailV112State
 
   @override
   Widget build(BuildContext context) {
+    final List<WalkaLunchVariant> available = _visibleOptions(context);
+    if (available.isEmpty) {
+      return const _UnavailableCatalogProduct(label: 'Lunch Box');
+    }
+
     final WalkaPdpPresentationModel model = _model;
     return Scaffold(
       backgroundColor: const Color(0xFFFFFEFC),
@@ -211,9 +275,10 @@ class _WalkaLunchProductDetailV112State
         variantSelector: WalkaPdpVariantSelector<WalkaLunchVariant>(
           selected: _variant,
           selectedLabel: model.selectedLabel,
-          options: WalkaLunchVariant.values
+          options: available
               .map(
-                (WalkaLunchVariant variant) => WalkaPdpVariantOption<WalkaLunchVariant>(
+                (WalkaLunchVariant variant) =>
+                    WalkaPdpVariantOption<WalkaLunchVariant>(
                   value: variant,
                   label: variant.label,
                   color: variant.color,
@@ -227,6 +292,47 @@ class _WalkaLunchProductDetailV112State
         editorialTitle: 'A complete lunch system for the workday.',
         editorialBody:
             'The food-grade stainless tray, PP outer box, sauce cup, utensils and carry bag form one coordinated adult lunch set.',
+      ),
+    );
+  }
+}
+
+class _UnavailableCatalogProduct extends StatelessWidget {
+  const _UnavailableCatalogProduct({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFFFFEFC),
+      appBar: AppBar(title: const Text('WALKA')),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(28),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              const Icon(Icons.inventory_2_outlined, size: 42),
+              const SizedBox(height: 14),
+              Text(
+                '$label is currently unavailable.',
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Return to the catalog to choose a currently available WALKA item.',
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 18),
+              OutlinedButton(
+                onPressed: () => Navigator.of(context).maybePop(),
+                child: const Text('BACK TO CATALOG'),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
