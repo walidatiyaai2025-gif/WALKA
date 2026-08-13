@@ -4,9 +4,6 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Product;
-use App\Models\ProductMediaGalleryItem;
-use App\Models\ProductVariant;
-use App\Models\VariantMediaGalleryItem;
 use App\Services\ProductMediaGalleryService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
