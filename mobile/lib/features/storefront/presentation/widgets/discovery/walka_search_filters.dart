@@ -26,19 +26,19 @@ class WalkaSearchFilters extends StatelessWidget {
       runSpacing: 8,
       children: <Widget>[
         _FamilyChip(
-          key: const ValueKey<String>('premium-family-all'),
+          key: const ValueKey<String>('premium-family-All'),
           label: allLabel,
           selected: selectedFamily == null,
           onSelected: () => onChanged(null),
         ),
         _FamilyChip(
-          key: const ValueKey<String>('premium-family-drawer'),
+          key: const ValueKey<String>('premium-family-Drawer'),
           label: drawerLabel,
           selected: selectedFamily == WalkaCatalogFamily.drawer,
           onSelected: () => onChanged(WalkaCatalogFamily.drawer),
         ),
         _FamilyChip(
-          key: const ValueKey<String>('premium-family-lunch'),
+          key: const ValueKey<String>('premium-family-Lunch'),
           label: lunchLabel,
           selected: selectedFamily == WalkaCatalogFamily.lunch,
           onSelected: () => onChanged(WalkaCatalogFamily.lunch),
