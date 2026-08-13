@@ -54,7 +54,7 @@ final class AdminMediaGalleryControllerTest extends TestCase
         $this->withSession($this->session)
             ->get(route('admin.media.galleries.index'))
             ->assertOk()
-            ->assertSee('Product & variant galleries')
+            ->assertSee('Product & variant galleries', false)
             ->assertSee($eligible->id)
             ->assertSee('Eligible Drawer White image')
             ->assertDontSee($draft->id)
