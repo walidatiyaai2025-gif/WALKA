@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Exceptions\CatalogRevisionConflictException;
+use App\Exceptions\LastVisibleVariantException;
 use App\Http\Controllers\Controller;
 use App\Services\CatalogAuthoringService;
 use Illuminate\Http\RedirectResponse;
@@ -53,15 +54,12 @@ final class ProductPresentationController extends Controller
             $attributes['is_featured'] = $request->boolean('is_featured');
         }
 
-        $sessionActor = trim((string) $request->session()->get('walka_admin_dashboard_actor', ''));
-        $author = $sessionActor !== '' ? $sessionActor : hash('sha256', 'dashboard|'.$request->session()->getId());
-
         try {
             $this->authoring->updateProduct(
                 productId: $product,
                 attributes: $attributes,
                 expectedRevision: (int) $validated['revision'],
-                actorFingerprint: $author,
+                actorFingerprint: $this->actorFingerprint($request),
             );
         } catch (CatalogRevisionConflictException) {
             return redirect()->route('admin.catalog')->withErrors([
@@ -70,6 +68,54 @@ final class ProductPresentationController extends Controller
         }
 
         return redirect()->route('admin.catalog')->with('status', 'Product presentation saved and published to the catalog API.');
+    }
+
+    public function updateVariant(Request $request, string $variant): RedirectResponse
+    {
+        $validated = $request->validate([
+            'revision' => ['required', 'integer', 'min:1'],
+            'color' => ['required', 'filled', 'string', 'max:80'],
+            'presentation_order' => ['sometimes', 'integer', 'min:0', 'max:65535'],
+            'presentation_controls' => ['sometimes', 'boolean'],
+        ]);
+
+        $attributes = [
+            'color' => trim((string) $validated['color']),
+        ];
+        if (array_key_exists('presentation_order', $validated)) {
+            $attributes['presentation_order'] = (int) $validated['presentation_order'];
+        }
+        if ($request->boolean('presentation_controls')) {
+            $attributes['is_visible'] = $request->boolean('is_visible');
+        }
+
+        try {
+            $this->authoring->updateVariant(
+                variantId: $variant,
+                attributes: $attributes,
+                expectedRevision: (int) $validated['revision'],
+                actorFingerprint: $this->actorFingerprint($request),
+            );
+        } catch (CatalogRevisionConflictException) {
+            return redirect()->route('admin.catalog')->withErrors([
+                'revision' => 'This variant changed in another session. Reloaded current values; review and save again.',
+            ]);
+        } catch (LastVisibleVariantException) {
+            return redirect()->route('admin.catalog')->withErrors([
+                'is_visible' => 'Each product must retain at least one visible variant.',
+            ]);
+        }
+
+        return redirect()->route('admin.catalog')->with('status', 'Variant presentation saved and published to the catalog API.');
+    }
+
+    private function actorFingerprint(Request $request): string
+    {
+        $sessionActor = trim((string) $request->session()->get('walka_admin_dashboard_actor', ''));
+
+        return $sessionActor !== ''
+            ? $sessionActor
+            : hash('sha256', 'dashboard|'.$request->session()->getId());
     }
 
     /** @return list<string> */
