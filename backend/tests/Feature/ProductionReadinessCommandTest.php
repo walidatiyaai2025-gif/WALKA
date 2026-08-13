@@ -26,6 +26,7 @@ final class ProductionReadinessCommandTest extends TestCase
         config()->set('app.key', 'base64:walka-production-readiness-test-key');
         config()->set('walka.dashboard_username', 'admin');
         config()->set('walka.dashboard_password', 'Walka-Strong-Production-Password');
+        config()->set('walka_dashboard.role', 'owner');
         config()->set('walka.admin_token', '0123456789abcdef0123456789abcdef');
         config()->set('session.secure', true);
         config()->set('session.encrypt', true);
@@ -37,6 +38,7 @@ final class ProductionReadinessCommandTest extends TestCase
 
         $this->assertSame(0, $exitCode);
         $this->assertStringContainsString('WALKA production readiness: PASS', Artisan::output());
+        $this->assertStringContainsString('Dashboard role', Artisan::output());
     }
 
     public function test_production_check_fails_closed_for_insecure_or_missing_configuration(): void
@@ -46,6 +48,7 @@ final class ProductionReadinessCommandTest extends TestCase
         config()->set('app.url', 'http://localhost');
         config()->set('app.key', '');
         config()->set('walka.dashboard_password', 'short');
+        config()->set('walka_dashboard.role', 'unknown_role');
         config()->set('walka.admin_token', 'short');
         config()->set('session.secure', false);
         config()->set('session.encrypt', false);
@@ -57,5 +60,6 @@ final class ProductionReadinessCommandTest extends TestCase
 
         $this->assertSame(1, $exitCode);
         $this->assertStringContainsString('production readiness failed', Artisan::output());
+        $this->assertStringContainsString('unknown_role', Artisan::output());
     }
 }
