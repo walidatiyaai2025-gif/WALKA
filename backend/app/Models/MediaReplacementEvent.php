@@ -27,6 +27,7 @@ final class MediaReplacementEvent extends Model
         'after_assignments',
         'before_fingerprint',
         'after_fingerprint',
+        'reason',
         'actor_fingerprint',
     ];
 
