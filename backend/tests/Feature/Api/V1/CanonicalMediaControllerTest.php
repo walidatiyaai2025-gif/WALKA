@@ -133,6 +133,34 @@ final class CanonicalMediaControllerTest extends TestCase
             ->assertJsonPath('error.code', 'canonical_media_integrity_failed');
     }
 
+    public function test_unsafe_canonical_storage_path_metadata_fails_closed_before_filesystem_access(): void
+    {
+        $asset = $this->draftAsset('unsafe-path');
+        $bytes = $this->pngBytes();
+        $sha = hash('sha256', $bytes);
+        $unsafePath = '../private/secret.png';
+        $this->media->attachDerivative($asset, [
+            'kind' => MediaDerivativeKind::Canonical->value,
+            'storage_disk' => self::DISK,
+            'storage_path' => $unsafePath,
+            'mime' => 'image/png',
+            'bytes' => strlen($bytes),
+            'width' => 1,
+            'height' => 1,
+            'sha256' => $sha,
+        ], $this->actor);
+        $this->media->admit($asset, $this->actor);
+
+        $response = $this->getJson('/api/v1/media/assets/'.$asset->id.'/canonical')
+            ->assertStatus(503)
+            ->assertJsonPath('error.code', 'canonical_media_integrity_failed');
+
+        $raw = $response->getContent();
+        $this->assertStringNotContainsString($unsafePath, $raw);
+        $this->assertStringNotContainsString(self::DISK, $raw);
+        $this->assertStringNotContainsString($sha, $raw);
+    }
+
     /**
      * @return array{MediaAsset,string,string,string}
      */
