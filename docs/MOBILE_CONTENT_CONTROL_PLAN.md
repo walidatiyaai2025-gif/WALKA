@@ -39,7 +39,7 @@ The owner workflow is:
 
 ### Current implementation milestone
 
-The generic CMS foundation plus governed Home, Categories and Search control planes are delivered through CMS-025. The production-media control plane now includes CMS-030 storage/lifecycle, CMS-031 byte-validated private upload quarantine, CMS-032 governed product/variant gallery assignment and ordering, and CMS-033 governed Home/category/editorial media assignment. CMS-034 media revision/audit/replacement/rollback is the next media-control slice. These controls do not bypass #230 production-asset admission truth:
+The generic CMS foundation plus governed Home, Categories and Search control planes are delivered through CMS-025. The production-media control plane now includes CMS-030 storage/lifecycle, CMS-031 byte-validated private upload quarantine, CMS-032 governed product/variant gallery assignment and ordering, CMS-033 governed Home/category/editorial media assignment, and CMS-034 immutable media replacement/audit/rollback. CMS-035 verified remote binary delivery, Flutter integrity verification, caching and bundled fallback is now the active next media-control slice under #341. These controls do not bypass #230 production-asset admission truth:
 
 - **CMS-001 completed** — stable content keys/types, draft/published snapshots, optimistic revisions, immutable history and restore primitives.
 - **CMS-002 completed** — protected `/admin/content` registry, draft editor, preview, explicit publish, history and restore controls.
@@ -54,6 +54,8 @@ The generic CMS foundation plus governed Home, Categories and Search control pla
 - **CMS-031 completed** — protected byte-validated PNG/JPEG/WebP upload quarantine with server-derived integrity metadata and Draft-only registration (#322 / PR #325).
 - **CMS-032 completed** — admitted Product media assignment and deterministic ordering for stable product/variant galleries (#329 / PR #330).
 - **CMS-033 completed** — governed allowlisted Home, category and editorial media assignments with purpose/lifecycle/canonical validation and fail-closed public metadata (#333 / PR #335).
+- **CMS-034 completed** — immutable reasoned media replacement/rollback across governed assignments with safe same-current no-op, stale-write protection and private audit history (#336 / PR #340).
+- **CMS-035 implementing** — verified canonical binary delivery plus Flutter metadata/binary integrity verification, cache and deterministic bundled fallback (#341).
 
 ## 2. What must become backend-controlled
 
@@ -227,8 +229,8 @@ This program is a **P0 backend/mobile architecture priority**. New mobile presen
 | CMS-031 | P0 | Upload validation: type, dimensions, file size, integrity | ✅ COMPLETED · #322 / PR #325 |
 | CMS-032 | P0 | Product/variant gallery assignment and ordering | ✅ COMPLETED · #329 / PR #330 |
 | CMS-033 | P0 | Home/category/editorial media assignment | ✅ COMPLETED · #333 / PR #335 |
-| CMS-034 | P0 | Media revision/audit/replacement/rollback | TODO |
-| CMS-035 | P0 | Flutter remote-media loading, caching, failure fallback and semantics | TODO |
+| CMS-034 | P0 | Media revision/audit/replacement/rollback | ✅ COMPLETED · #336 / PR #340 |
+| CMS-035 | P0 | Flutter remote-media loading, caching, failure fallback and semantics | 🔄 IMPLEMENTING · #341 |
 
 ### Phase E — Information, support and remote app configuration
 
@@ -258,48 +260,3 @@ This program is a **P0 backend/mobile architecture priority**. New mobile presen
 |---|---|---|---|
 | CMS-060 | P1 | Governed Amazon destination editor with allowlist and stable variant mapping | TODO |
 | CMS-061 | P1 | Destination verification + audit + rollback | TODO |
-| CMS-062 | P1 | Flutter dynamic Amazon destination consumption with bundled Product Master fallback | TODO |
-
-## 6. Mobile implementation rule from now on
-
-When adding or polishing a Flutter screen, developers must classify every user-visible value as one of:
-
-1. **Dynamic content** — backend/CMS controlled.
-2. **Protected product truth** — Product Master/governed data.
-3. **Design-system constant** — spacing, typography, component behavior.
-4. **Executable behavior** — code/release required.
-
-New owner-changeable copy, images, banners, ordering, visibility or merchandising must not be buried as new hard-coded Flutter constants unless it is explicitly a bundled fallback for a remote CMS field.
-
-## 7. API strategy
-
-Keep `/api/v1` backward compatible. Current and planned additive surfaces include:
-
-```text
-GET /api/v1/catalog
-GET /api/v1/media/product-galleries # CMS-032 metadata only; binary delivery remains CMS-035
-GET /api/v1/media/surfaces          # CMS-033 metadata only; binary delivery remains CMS-035
-GET /api/v1/content/home           # CMS-003 / CMS-020
-GET /api/v1/content/home-layout    # CMS-021
-GET /api/v1/content/home-featured  # CMS-022
-GET /api/v1/content/home-banner    # CMS-023
-GET /api/v1/content/categories     # CMS-024
-GET /api/v1/content/search         # CMS-025
-GET /api/v1/content/information    # planned
-GET /api/v1/app-config             # planned
-```
-
-Every dynamic response must carry enough schema/revision metadata for deterministic validation, caching and rollback-safe mobile behavior.
-
-## 8. Production deployment rule
-
-A merged CMS slice is not considered **live** until both production halves are updated:
-
-1. Laravel code/migrations are deployed to `api.walkastore.com` and production readiness remains green.
-2. Any Flutter consumption change is deployed to the target client build/web channel with the production API base URL.
-
-Never report a newly merged CMS control as live merely because CI passed.
-
-## 9. Definition of done for this program
-
-The program is complete only when the owner can change all approved mutable mobile presentation/content surfaces from `/admin`, publish them, see them propagate to the live mobile/web client without a new app release where technically safe, and safely rollback while protected Product Master/security/runtime invariants remain enforced.
