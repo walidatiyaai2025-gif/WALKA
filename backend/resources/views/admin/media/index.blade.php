@@ -8,9 +8,12 @@
     <div>
         <p class="eyebrow">GOVERNED MEDIA INGEST</p>
         <h1>Media library</h1>
-        <p class="lead">Validate production-image bytes before they enter WALKA media workflows. Uploads are stored in private quarantine and registered as Draft only; admission and product-gallery assignment remain explicit governed steps.</p>
+        <p class="lead">Validate production-image bytes before they enter WALKA media workflows. Uploads are stored in private quarantine and registered as Draft only; admission and assignment remain explicit governed steps.</p>
     </div>
-    <a class="btn secondary" href="{{ route('admin.media.galleries.index') }}">Product galleries →</a>
+    <div class="actions">
+        <a class="btn secondary" href="{{ route('admin.media.galleries.index') }}">Product galleries →</a>
+        <a class="btn primary" href="{{ route('admin.media.surfaces.index') }}">Home & category media →</a>
+    </div>
 </div>
 
 <div class="grid metrics">
@@ -73,6 +76,7 @@
         <h2>What upload does not do</h2>
         <div class="stack section-space">
             <div class="locked"><small>Lifecycle</small><strong>Every successful upload remains Draft. Admission still requires a validated canonical derivative and an explicit governed action.</strong></div>
+            <div class="locked"><small>Assignments</small><strong>Product galleries accept admitted Product media; Home/category/editorial slots accept only their compiled purpose-specific media.</strong></div>
             <div class="locked"><small>Runtime</small><strong>No file is copied to <code>mobile/assets/products/**</code>, no protected <code>Images/</code> file is changed, and no public media URL is created here.</strong></div>
             <div class="locked"><small>Product truth</small><strong>Product Master IDs, ASINs, Pantones, variant geometry and Amazon destinations remain outside this editor.</strong></div>
         </div>
