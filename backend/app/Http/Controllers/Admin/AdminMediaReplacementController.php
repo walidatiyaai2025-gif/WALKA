@@ -91,15 +91,16 @@ final class AdminMediaReplacementController extends Controller
 
     public function rollback(
         Request $request,
-        MediaReplacementEvent $event,
+        string $event,
     ): RedirectResponse {
         $validated = $request->validate([
             'expected_after_fingerprint' => ['required', 'string', 'size:64', 'regex:/^[a-f0-9]+$/i'],
             'reason' => ['required', 'string', 'min:3', 'max:500'],
         ]);
+        $replacementEvent = MediaReplacementEvent::query()->findOrFail($event);
 
         $rollback = $this->replacements->rollback(
-            replacementEvent: $event,
+            replacementEvent: $replacementEvent,
             expectedAfterFingerprint: strtolower($validated['expected_after_fingerprint']),
             actorFingerprint: $this->actorFingerprint($request),
             reason: $validated['reason'],
@@ -109,7 +110,7 @@ final class AdminMediaReplacementController extends Controller
             ->route('admin.media.replacements.index')
             ->with('status', sprintf(
                 'Replacement %s rolled back by immutable event %s.',
-                $event->id,
+                $replacementEvent->id,
                 $rollback->id,
             ));
     }
