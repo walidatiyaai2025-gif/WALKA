@@ -39,7 +39,7 @@ The owner workflow is:
 
 ### Current implementation milestone
 
-The generic CMS foundation plus governed Home, Categories and Search control planes are delivered through CMS-025. CMS-030 is now implementing the production-media library storage foundation that will support upload validation and assignments without bypassing #230 admission truth:
+The generic CMS foundation plus governed Home, Categories and Search control planes are delivered through CMS-025. The production-media control plane now includes the CMS-030 storage/lifecycle foundation and CMS-031 byte-validated private upload quarantine; CMS-032 product/variant gallery assignment is the next planned media slice. These controls do not bypass #230 production-asset admission truth:
 
 - **CMS-001 completed** — stable content keys/types, draft/published snapshots, optimistic revisions, immutable history and restore primitives.
 - **CMS-002 completed** — protected `/admin/content` registry, draft editor, preview, explicit publish, history and restore controls.
@@ -50,7 +50,8 @@ The generic CMS foundation plus governed Home, Categories and Search control pla
 - **CMS-023 completed** — one governed Home announcement/promo banner with enabled state, UTC start/end schedule, compiled CTA routing and offline schedule enforcement (#313 / PR #314).
 - **CMS-024 completed** — governed category display metadata, ordering and visibility while protected catalog membership remains immutable (#315 / PR #316).
 - **CMS-025 completed** — governed Search/discovery copy, filter labels and complete-catalog Featured ordering (#317 / PR #318).
-- **CMS-030 implementing** — governed production-media source/derivative storage and lifecycle model (#319 / PR #320).
+- **CMS-030 completed** — governed production-media source/derivative storage and lifecycle model (#319 / PR #320).
+- **CMS-031 completed** — protected byte-validated PNG/JPEG/WebP upload quarantine with server-derived integrity metadata and Draft-only registration (#322 / PR #325).
 
 ## 2. What must become backend-controlled
 
@@ -220,8 +221,8 @@ This program is a **P0 backend/mobile architecture priority**. New mobile presen
 
 | ID | Priority | Scope | Status |
 |---|---|---|---|
-| CMS-030 | P0 | Production media library storage model | 🟡 IMPLEMENTING · #319 / PR #320 |
-| CMS-031 | P0 | Upload validation: type, dimensions, file size, integrity | TODO |
+| CMS-030 | P0 | Production media library storage model | ✅ COMPLETED · #319 / PR #320 |
+| CMS-031 | P0 | Upload validation: type, dimensions, file size, integrity | ✅ COMPLETED · #322 / PR #325 |
 | CMS-032 | P0 | Product/variant gallery assignment and ordering | TODO |
 | CMS-033 | P0 | Home/category/editorial media assignment | TODO |
 | CMS-034 | P0 | Media revision/audit/replacement/rollback | TODO |
