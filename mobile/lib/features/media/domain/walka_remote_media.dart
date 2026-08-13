@@ -69,7 +69,10 @@ class WalkaRemoteMediaItem {
 
   factory WalkaRemoteMediaItem.fromJson(Map<String, dynamic> json) {
     final String mediaId = _requiredString(json, 'media_id', maxLength: 64);
-    if (!RegExp(r'^[0-9A-HJKMNP-TV-Z]{26}$').hasMatch(mediaId)) {
+    if (!RegExp(
+      r'^[0-9A-HJKMNP-TV-Z]{26}$',
+      caseSensitive: false,
+    ).hasMatch(mediaId)) {
       throw const FormatException('Remote media ID must be a canonical ULID.');
     }
     final int position = _requiredInt(
