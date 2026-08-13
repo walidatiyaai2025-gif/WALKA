@@ -68,26 +68,41 @@
 
             <div class="section-space">
                 <p class="eyebrow">Variants</p>
-                <h3>Customer-facing color names</h3>
+                <h3>Customer-facing variant presentation</h3>
+                <p class="muted" style="font-size:12px">Visibility and presentation order are owner-controlled. Stable variant ID, Pantone, ASIN and internal sort order remain read-only.</p>
                 <div class="table-wrap">
                     <table>
-                        <thead><tr><th>Variant</th><th>Display color</th><th>Locked Pantone</th><th>Locked ASIN</th><th>Revision</th><th>Action</th></tr></thead>
+                        <thead><tr><th>Variant</th><th>Display color</th><th>Visible</th><th>Presentation order</th><th>Locked Pantone</th><th>Locked ASIN</th><th>Internal order</th><th>Revision</th><th>Action</th></tr></thead>
                         <tbody>
                         @foreach ($product->variants as $variant)
+                            @php($variantFormId = 'variant-form-'.md5($variant->id))
                             <tr>
                                 <td><code>{{ $variant->id }}</code></td>
                                 <td>
-                                    <form id="variant-form-{{ md5($variant->id) }}" method="post" action="{{ route('admin.catalog.variants.update', ['variant' => $variant->id]) }}">
+                                    <form id="{{ $variantFormId }}" method="post" action="{{ route('admin.catalog.variants.update', ['variant' => $variant->id]) }}">
                                         @csrf
                                         @method('PATCH')
                                         <input type="hidden" name="revision" value="{{ $variant->revision }}">
+                                        <input type="hidden" name="presentation_controls" value="1">
                                         <div class="field"><input name="color" value="{{ $variant->color }}" maxlength="80" required aria-label="Display color for {{ $variant->id }}"></div>
                                     </form>
                                 </td>
+                                <td>
+                                    <label style="display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:700">
+                                        <input form="{{ $variantFormId }}" type="checkbox" name="is_visible" value="1" {{ (bool) $variant->getAttribute('is_visible') ? 'checked' : '' }}>
+                                        {{ (bool) $variant->getAttribute('is_visible') ? 'Visible' : 'Hidden' }}
+                                    </label>
+                                </td>
+                                <td>
+                                    <div class="field" style="min-width:105px">
+                                        <input form="{{ $variantFormId }}" name="presentation_order" type="number" min="0" max="65535" value="{{ (int) $variant->getAttribute('presentation_order') }}" required aria-label="Presentation order for {{ $variant->id }}">
+                                    </div>
+                                </td>
                                 <td>{{ $variant->pantone ?: '—' }}</td>
                                 <td><code>{{ $variant->asin }}</code></td>
+                                <td>{{ $variant->sort_order }}</td>
                                 <td>{{ $variant->revision }}</td>
-                                <td><button class="btn secondary" type="submit" form="variant-form-{{ md5($variant->id) }}">Save color</button></td>
+                                <td><button class="btn secondary" type="submit" form="{{ $variantFormId }}">Save presentation</button></td>
                             </tr>
                         @endforeach
                         </tbody>
