@@ -58,46 +58,62 @@ jobs:
           def sha256(path: Path) -> str:
               return hashlib.sha256(path.read_bytes()).hexdigest()
 
+          def require(label, actual, expected):
+              print(f'{label}: actual={actual!r} expected={expected!r}')
+              if actual != expected:
+                  raise SystemExit(f'{label} mismatch: expected={expected!r} actual={actual!r}')
+
           src = receipt['source']
-          assert src['sha256'] == expected_source_sha
-          assert src['byteSize'] == 189515
-          assert src['dimensions'] == [695, 1536]
-          assert src['approvedPanel'] == [28, 760, 647, 575]
+          require('receipt.source.sha256', src['sha256'], expected_source_sha)
+          require('receipt.source.byteSize', src['byteSize'], 189515)
+          require('receipt.source.dimensions', src['dimensions'], [695, 1536])
+          require('receipt.source.approvedPanel', src['approvedPanel'], [28, 760, 647, 575])
 
           spec = importlib.util.spec_from_file_location(
               'pinkfix_source_reextract', root / 'mobile/tool/pinkfix_source_reextract.py'
           )
           module = importlib.util.module_from_spec(spec)
           spec.loader.exec_module(module)
-          assert module.SOURCE_SHA256 == expected_source_sha
-          assert module.SOURCE_BYTES == 189515
-          assert tuple(module.SOURCE_SIZE) == (695, 1536)
-          assert tuple(module.PANEL) == (28, 760, 647, 575)
-          assert module.EXPECTED_SHA256 == expected_canonical_sha
-          assert module.EXPECTED_BYTES == 749558
-          assert module.EXPECTED_BBOX == [51, 125, 972, 898]
-          assert module.SAFE_MARGIN == 51
+          require('tool.SOURCE_SHA256', module.SOURCE_SHA256, expected_source_sha)
+          require('tool.SOURCE_BYTES', module.SOURCE_BYTES, 189515)
+          require('tool.SOURCE_SIZE', list(module.SOURCE_SIZE), [695, 1536])
+          require('tool.PANEL', list(module.PANEL), [28, 760, 647, 575])
+          require('tool.EXPECTED_SHA256', module.EXPECTED_SHA256, expected_canonical_sha)
+          require('tool.EXPECTED_BYTES', module.EXPECTED_BYTES, 749558)
+          require('tool.EXPECTED_BBOX', module.EXPECTED_BBOX, [51, 125, 972, 898])
+          require('tool.SAFE_MARGIN', module.SAFE_MARGIN, 51)
 
-          assert canonical.stat().st_size == 749558
-          assert sha256(canonical) == expected_canonical_sha
+          actual_size = canonical.stat().st_size
+          actual_sha = sha256(canonical)
+          print(f'canonical path={canonical}')
+          print(f'canonical size={actual_size}')
+          print(f'canonical sha256={actual_sha}')
+          require('canonical.byteSize', actual_size, 749558)
+          require('canonical.sha256', actual_sha, expected_canonical_sha)
+
           image = Image.open(canonical).convert('RGBA')
-          assert image.size == (1024, 1024)
+          require('canonical.dimensions', list(image.size), [1024, 1024])
           alpha = np.asarray(image)[:, :, 3]
           ys, xs = np.where(alpha > 2)
+          if len(xs) == 0:
+              raise SystemExit('canonical alpha mask is empty')
           bbox = [int(xs.min()), int(ys.min()), int(xs.max()), int(ys.max())]
-          assert bbox == [51, 125, 972, 898]
           margins = [bbox[0], bbox[1], 1023 - bbox[2], 1023 - bbox[3]]
-          assert min(margins) >= 51
-          assert b'sRGB' in canonical.read_bytes()
+          print(f'canonical bbox={bbox} margins={margins}')
+          require('canonical.alphaBoundingBox', bbox, [51, 125, 972, 898])
+          if min(margins) < 51:
+              raise SystemExit(f'canonical safe-margin mismatch: expected>=51 actual={min(margins)} margins={margins}')
+          srgb_present = b'sRGB' in canonical.read_bytes()
+          require('canonical.sRGB', srgb_present, True)
 
           if source.exists():
-              assert source.stat().st_size == 189515
-              assert sha256(source) == expected_source_sha
-              assert Image.open(source).size == (695, 1536)
+              require('repositorySource.byteSize', source.stat().st_size, 189515)
+              require('repositorySource.sha256', sha256(source), expected_source_sha)
+              require('repositorySource.dimensions', list(Image.open(source).size), [695, 1536])
               mode = 'REPOSITORY_SOURCE_BYTE_FOR_BYTE'
           else:
-              assert receipt['source'].get('custody') == 'OWNER_FILE_LIBRARY_EXTERNAL'
-              assert receipt['source'].get('repositorySourcePresent') is False
+              require('receipt.source.custody', receipt['source'].get('custody'), 'OWNER_FILE_LIBRARY_EXTERNAL')
+              require('receipt.source.repositorySourcePresent', receipt['source'].get('repositorySourcePresent'), False)
               mode = 'EXTERNAL_SOURCE_CUSTODY_CANONICAL_LOCK'
 
           proof = {
@@ -106,12 +122,12 @@ jobs:
               'sourceBytes': 189515,
               'sourceDimensions': [695, 1536],
               'approvedPanel': [28, 760, 647, 575],
-              'canonicalSha256': expected_canonical_sha,
-              'canonicalBytes': 749558,
-              'canonicalDimensions': [1024, 1024],
+              'canonicalSha256': actual_sha,
+              'canonicalBytes': actual_size,
+              'canonicalDimensions': list(image.size),
               'alphaBoundingBox': bbox,
               'minimumTransparentSafeMargin': min(margins),
-              'sRGB': True,
+              'sRGB': srgb_present,
               'repositorySourcePresent': source.exists(),
               'canonicalLockVerified': True,
               'toolContractVerified': True,
