@@ -20,18 +20,7 @@ final class ProductionReadinessCommandTest extends TestCase
 
     public function test_production_check_passes_when_required_runtime_controls_are_configured(): void
     {
-        config()->set('app.env', 'production');
-        config()->set('app.debug', false);
-        config()->set('app.url', 'https://api.walka.example');
-        config()->set('app.key', 'base64:walka-production-readiness-test-key');
-        config()->set('walka.dashboard_username', 'admin');
-        config()->set('walka.dashboard_password', 'Walka-Strong-Production-Password');
-        config()->set('walka.admin_token', '0123456789abcdef0123456789abcdef');
-        config()->set('session.secure', true);
-        config()->set('session.encrypt', true);
-        config()->set('session.http_only', true);
-        config()->set('session.same_site', 'lax');
-        config()->set('session.driver', 'database');
+        $this->configureSecureProductionRuntime('owner');
 
         $exitCode = Artisan::call('walka:production-check');
 
@@ -46,6 +35,7 @@ final class ProductionReadinessCommandTest extends TestCase
         config()->set('app.url', 'http://localhost');
         config()->set('app.key', '');
         config()->set('walka.dashboard_password', 'short');
+        config()->set('walka_dashboard.role', 'unknown_role');
         config()->set('walka.admin_token', 'short');
         config()->set('session.secure', false);
         config()->set('session.encrypt', false);
@@ -57,5 +47,32 @@ final class ProductionReadinessCommandTest extends TestCase
 
         $this->assertSame(1, $exitCode);
         $this->assertStringContainsString('production readiness failed', Artisan::output());
+    }
+
+    public function test_production_check_rejects_unknown_dashboard_role_when_other_controls_pass(): void
+    {
+        $this->configureSecureProductionRuntime('unknown_role');
+
+        $exitCode = Artisan::call('walka:production-check');
+
+        $this->assertSame(1, $exitCode);
+        $this->assertStringContainsString('production readiness failed', Artisan::output());
+    }
+
+    private function configureSecureProductionRuntime(string $dashboardRole): void
+    {
+        config()->set('app.env', 'production');
+        config()->set('app.debug', false);
+        config()->set('app.url', 'https://api.walka.example');
+        config()->set('app.key', 'base64:walka-production-readiness-test-key');
+        config()->set('walka.dashboard_username', 'admin');
+        config()->set('walka.dashboard_password', 'Walka-Strong-Production-Password');
+        config()->set('walka_dashboard.role', $dashboardRole);
+        config()->set('walka.admin_token', '0123456789abcdef0123456789abcdef');
+        config()->set('session.secure', true);
+        config()->set('session.encrypt', true);
+        config()->set('session.http_only', true);
+        config()->set('session.same_site', 'lax');
+        config()->set('session.driver', 'database');
     }
 }

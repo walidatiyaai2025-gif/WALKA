@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\RequireCatalogAdminToken;
+use App\Http\Middleware\RequireDashboardCapability;
 use App\Http\Middleware\RequireDashboardSession;
 use App\Http\Middleware\SecureDashboardHeaders;
 use Illuminate\Foundation\Application;
@@ -19,6 +20,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'catalog.admin' => RequireCatalogAdminToken::class,
             'walka.dashboard' => RequireDashboardSession::class,
+            'walka.dashboard.can' => RequireDashboardCapability::class,
             'walka.dashboard.headers' => SecureDashboardHeaders::class,
         ]);
     })
