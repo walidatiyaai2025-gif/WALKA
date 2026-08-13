@@ -20,7 +20,7 @@ final class AdminProductPresentationTest extends TestCase
     }
 
     /** @return array<string, mixed> */
-    private function session(): array
+    private function dashboardSession(): array
     {
         return [
             'walka_admin_dashboard_authenticated' => true,
@@ -31,7 +31,7 @@ final class AdminProductPresentationTest extends TestCase
 
     public function test_catalog_page_exposes_governed_presentation_inputs_and_locked_truth(): void
     {
-        $this->withSession($this->session())
+        $this->withSession($this->dashboardSession())
             ->get('/admin/catalog')
             ->assertOk()
             ->assertSee('Short description')
@@ -49,7 +49,7 @@ final class AdminProductPresentationTest extends TestCase
         $protectedFacts = $product->facts;
         $protectedSort = $product->sort_order;
 
-        $this->withSession($this->session())
+        $this->withSession($this->dashboardSession())
             ->patch('/admin/catalog/products/drawer-organizer', [
                 'revision' => $product->revision,
                 'name' => 'WALKA Drawer Organizer Premium',
@@ -87,7 +87,7 @@ final class AdminProductPresentationTest extends TestCase
     {
         $product = Product::query()->findOrFail('drawer-organizer');
 
-        $this->withSession($this->session())
+        $this->withSession($this->dashboardSession())
             ->patch('/admin/catalog/products/drawer-organizer', [
                 'revision' => $product->revision,
                 'name' => $product->name,
