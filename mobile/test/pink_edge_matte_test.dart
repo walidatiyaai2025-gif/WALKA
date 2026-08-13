@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 
+import '../tool/src/pav_models.dart';
 import '../tool/src/pink_edge_matte.dart';
 import '../tool/src/png_asset_inspector.dart';
 import '../tool/src/png_rgba_encoder.dart';
@@ -59,7 +60,7 @@ void main() {
 
     expect(result.changedPixelCount, 0);
     expect(result.skippedLightInteriorCount, greaterThan(0));
-    expect(result.rgba, source);
+    expect(result.rgba, orderedEquals(source));
   });
 
   test('fully transparent and fully opaque pixels are never modified', () {
@@ -75,9 +76,9 @@ void main() {
       height: 2,
     );
 
-    expect(result.rgba.sublist(0, 4), source.sublist(0, 4));
-    expect(result.rgba.sublist(4, 8), source.sublist(4, 8));
-    expect(result.rgba.sublist(12, 16), source.sublist(12, 16));
+    expect(result.rgba.sublist(0, 4), orderedEquals(source.sublist(0, 4)));
+    expect(result.rgba.sublist(4, 8), orderedEquals(source.sublist(4, 8)));
+    expect(result.rgba.sublist(12, 16), orderedEquals(source.sublist(12, 16)));
     expect(_alphaPlane(result.rgba), _alphaPlane(source));
   });
 
@@ -100,7 +101,8 @@ void main() {
     expect(inspection.bitDepth, 8);
     expect(inspection.colorType, 6);
     expect(inspection.hasColorProfile, isTrue);
-    expect(inspection.rgba, rgba);
+    expect(inspection.rgba, isNotNull);
+    expect(inspection.rgba!, orderedEquals(rgba));
   });
 
   test('remediation preserves visible alpha bounds through PNG round-trip', () {
