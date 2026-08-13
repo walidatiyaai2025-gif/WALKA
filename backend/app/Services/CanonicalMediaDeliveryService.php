@@ -103,7 +103,19 @@ final class CanonicalMediaDeliveryService
             && $derivative->height > 0
             && preg_match('/^[a-f0-9]{64}$/', $derivative->sha256) === 1
             && trim($derivative->storage_disk) !== ''
-            && trim($derivative->storage_path) !== '';
+            && $this->storagePathIsDeliverable($derivative->storage_path);
+    }
+
+    private function storagePathIsDeliverable(string $storagePath): bool
+    {
+        $path = trim($storagePath);
+
+        return $path !== ''
+            && ! str_contains($path, "\0")
+            && ! str_contains($path, '\\')
+            && ! str_contains($path, '://')
+            && ! str_starts_with($path, '/')
+            && preg_match('#(?:^|/)\.\.?(?:/|$)#', $path) !== 1;
     }
 
     private function assertStoredSize(Filesystem $disk, MediaDerivative $derivative): void
