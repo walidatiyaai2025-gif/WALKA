@@ -23,6 +23,11 @@ final class CanonicalMediaControllerTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        config()->set('filesystems.disks.'.self::DISK, [
+            'driver' => 'local',
+            'root' => storage_path('framework/testing/disks/'.self::DISK),
+            'throw' => true,
+        ]);
         Storage::fake(self::DISK);
         $this->media = app(MediaLibraryService::class);
         $this->actor = hash('sha256', 'cms-035-canonical-api-test');
@@ -107,7 +112,7 @@ final class CanonicalMediaControllerTest extends TestCase
         [$asset, , , $path] = $this->storedCanonicalAsset('tampered');
         $this->media->admit($asset, $this->actor);
 
-        Storage::disk(self::DISK)->put($path, $this->pngBytes().'tamper');
+        Storage::disk(self::DISK)->put($path, $this->pngBytes('tampered').'tamper');
         $this->getJson('/api/v1/media/assets/'.$asset->id.'/canonical')
             ->assertStatus(503)
             ->assertJsonPath('error.code', 'canonical_media_integrity_failed');
@@ -136,7 +141,7 @@ final class CanonicalMediaControllerTest extends TestCase
     public function test_unsafe_canonical_storage_path_metadata_fails_closed_before_filesystem_access(): void
     {
         $asset = $this->draftAsset('unsafe-path');
-        $bytes = $this->pngBytes();
+        $bytes = $this->pngBytes('unsafe-path');
         $sha = hash('sha256', $bytes);
         $unsafePath = '../private/secret.png';
         $this->media->attachDerivative($asset, [
@@ -167,7 +172,7 @@ final class CanonicalMediaControllerTest extends TestCase
     private function storedCanonicalAsset(string $suffix): array
     {
         $asset = $this->draftAsset($suffix);
-        $bytes = $this->pngBytes();
+        $bytes = $this->pngBytes($suffix);
         $sha = hash('sha256', $bytes);
         $path = 'canonical/'.$asset->id.'/'.$sha.'.png';
         Storage::disk(self::DISK)->put($path, $bytes);
@@ -192,7 +197,7 @@ final class CanonicalMediaControllerTest extends TestCase
             'source_reference' => 'cms035-private-source-'.$suffix,
             'original_filename' => 'private-source-'.$suffix.'.png',
             'original_mime' => 'image/png',
-            'original_bytes' => strlen($this->pngBytes()),
+            'original_bytes' => strlen($this->pngBytes('source-'.$suffix)),
             'original_width' => 1,
             'original_height' => 1,
             'original_sha256' => hash('sha256', 'cms035-source-'.$suffix),
@@ -200,11 +205,19 @@ final class CanonicalMediaControllerTest extends TestCase
         ], $this->actor);
     }
 
-    private function pngBytes(): string
+    private function pngBytes(string $suffix): string
     {
-        return base64_decode(
+        $base = base64_decode(
             'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
             true,
         ) ?: throw new \RuntimeException('Test PNG fixture is invalid.');
+        $type = 'tEXt';
+        $data = 'Comment'."\0".'cms035-'.$suffix;
+        $chunk = pack('N', strlen($data))
+            .$type
+            .$data
+            .hash('crc32b', $type.$data, true);
+
+        return substr($base, 0, -12).$chunk.substr($base, -12);
     }
 }
