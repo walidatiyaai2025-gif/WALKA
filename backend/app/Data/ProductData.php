@@ -4,11 +4,6 @@ namespace App\Data;
 
 final readonly class ProductData
 {
-    /**
-     * @param  list<string>  $features
-     * @param  array<string, mixed>  $facts
-     * @param  list<ProductVariantData>  $variants
-     */
     public function __construct(
         public string $id,
         public string $name,
@@ -16,18 +11,12 @@ final readonly class ProductData
         public array $features,
         public array $facts,
         public array $variants,
+        public ?string $shortDescription = null,
+        public array $highlights = [],
+        public bool $featured = false,
+        public int $presentationOrder = 0,
     ) {}
 
-    /**
-     * @param array{
-     *   id: string,
-     *   name: string,
-     *   category: string,
-     *   features: list<string>,
-     *   facts: array<string, mixed>,
-     *   variants: list<array{id: string, color: string, asin: string, pantone?: string|null}>
-     * } $data
-     */
     public static function fromArray(array $data): self
     {
         return new self(
@@ -45,19 +34,13 @@ final readonly class ProductData
                 ),
                 $data['variants'],
             ),
+            shortDescription: $data['short_description'] ?? null,
+            highlights: $data['highlights'] ?? [],
+            featured: (bool) ($data['featured'] ?? false),
+            presentationOrder: (int) ($data['presentation_order'] ?? 0),
         );
     }
 
-    /**
-     * @return array{
-     *   id: string,
-     *   name: string,
-     *   category: string,
-     *   features: list<string>,
-     *   facts: array<string, mixed>,
-     *   variants: list<array{id: string, color: string, asin: string, pantone: string|null, purchase_url: string}>
-     * }
-     */
     public function toArray(): array
     {
         return [
@@ -65,6 +48,10 @@ final readonly class ProductData
             'name' => $this->name,
             'category' => $this->category,
             'features' => $this->features,
+            'short_description' => $this->shortDescription,
+            'highlights' => $this->highlights,
+            'featured' => $this->featured,
+            'presentation_order' => $this->presentationOrder,
             'facts' => $this->facts,
             'variants' => array_map(
                 static fn (ProductVariantData $variant): array => $variant->toArray(),
