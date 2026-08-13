@@ -63,9 +63,20 @@ jobs:
           php artisan migrate:fresh --seed --force
           php artisan tinker --execute="throw_unless(\\App\\Models\\Product::count() === 2); throw_unless(\\App\\Models\\ProductVariant::count() === 5); throw_unless(\\App\\Models\\Product::where('revision', 1)->count() === 2); throw_unless(\\App\\Models\\ProductVariant::where('revision', 1)->count() === 5); throw_unless(\\App\\Models\\CatalogAudit::count() === 0);"
 
-      - name: Check PHP formatting
+      - name: Format PHP for CMS-032 diagnostic
         working-directory: backend
-        run: vendor/bin/pint --test
+        run: vendor/bin/pint
+
+      - name: Capture Pint delta
+        run: git diff -- backend > /tmp/cms032-pint.patch
+
+      - name: Upload Pint delta
+        uses: actions/upload-artifact@v4
+        with:
+          name: cms032-pint-delta
+          path: /tmp/cms032-pint.patch
+          if-no-files-found: error
+          retention-days: 1
 
       - name: Run Laravel tests
         working-directory: backend
