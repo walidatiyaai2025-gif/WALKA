@@ -1,7 +1,7 @@
 import 'dart:typed_data';
 
 import 'pav_models.dart';
-import 'visual_proof.dart' show VproofStage, VproofStageMetrics, vproofDownscaleTargets;
+import 'visual_proof.dart' show VproofStage, vproofDownscaleTargets;
 
 const int vproofV2AlphaVisible = 8;
 const int vproofV2AlphaOpaque = 245;
@@ -377,8 +377,10 @@ class VproofAnalyzerV2 {
       _minimum(r, g, b) >= vproofV2InteriorLightFloor &&
       _maximum(r, g, b) - _minimum(r, g, b) <= vproofV2InteriorLightChroma;
 
-  int _minimum(int r, int g, int b) => r < g ? (r < b ? r : b) : (g < b ? g : b);
-  int _maximum(int r, int g, int b) => r > g ? (r > b ? r : b) : (g > b ? g : b);
+  int _minimum(int r, int g, int b) =>
+      r < g ? (r < b ? r : b) : (g < b ? g : b);
+  int _maximum(int r, int g, int b) =>
+      r > g ? (r > b ? r : b) : (g > b ? g : b);
 }
 
 enum _InteriorClass { none, lightNeutral, coloredOrDark }
