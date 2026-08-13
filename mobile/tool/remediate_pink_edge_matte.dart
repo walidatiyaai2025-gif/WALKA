@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'src/pav_models.dart';
 import 'src/pink_edge_matte.dart';
 import 'src/png_asset_inspector.dart';
 import 'src/png_rgba_encoder.dart';
@@ -140,7 +141,8 @@ void _assertBoundsIdentical(
 ) {
   final PavBounds? a = before.alphaMetrics?.bounds;
   final PavBounds? b = after.alphaMetrics?.bounds;
-  if (a == null || b == null ||
+  if (a == null ||
+      b == null ||
       a.left != b.left ||
       a.top != b.top ||
       a.right != b.right ||
@@ -177,10 +179,13 @@ class _Args {
       switch (arg) {
         case '--input':
           input = takeValue();
+          break;
         case '--output':
           output = takeValue();
+          break;
         case '--receipt':
           receipt = takeValue();
+          break;
         default:
           throw FormatException('Unknown argument: $arg');
       }
