@@ -18,6 +18,8 @@ import 'features/content/data/walka_home_hero_cache.dart';
 import 'features/content/data/walka_home_hero_repository.dart';
 import 'features/content/data/walka_home_layout_cache.dart';
 import 'features/content/data/walka_home_layout_repository.dart';
+import 'features/content/data/walka_search_presentation_cache.dart';
+import 'features/content/data/walka_search_presentation_repository.dart';
 import 'features/favorites/favorites_state.dart';
 import 'features/storefront/storefront_v102.dart';
 
@@ -61,6 +63,10 @@ Future<void> main() async {
     categoryPresentationRepository: WalkaCategoryPresentationRepository(
       cache: SharedPreferencesWalkaCategoryPresentationCache(),
       remoteLoader: apiClient?.fetchCategoriesPresentation,
+    ),
+    searchPresentationRepository: WalkaSearchPresentationRepository(
+      cache: SharedPreferencesWalkaSearchPresentationCache(),
+      remoteLoader: apiClient?.fetchSearchPresentation,
     ),
   );
 
