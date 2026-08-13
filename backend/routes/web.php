@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\AdminContentController;
 use App\Http\Controllers\Admin\AdminDashboardController;
+use App\Http\Controllers\Admin\AdminHomeBannerController;
 use App\Http\Controllers\Admin\AdminHomeFeaturedController;
 use App\Http\Controllers\Admin\AdminHomeHeroController;
 use App\Http\Controllers\Admin\AdminHomeLayoutController;
@@ -58,6 +59,15 @@ Route::prefix('admin')
                 ->name('content.home.featured.publish');
             Route::post('/content/home/featured/restore', [AdminHomeFeaturedController::class, 'restore'])
                 ->name('content.home.featured.restore');
+
+            Route::get('/content/home/banner', [AdminHomeBannerController::class, 'edit'])
+                ->name('content.home.banner.edit');
+            Route::patch('/content/home/banner', [AdminHomeBannerController::class, 'update'])
+                ->name('content.home.banner.update');
+            Route::post('/content/home/banner/publish', [AdminHomeBannerController::class, 'publish'])
+                ->name('content.home.banner.publish');
+            Route::post('/content/home/banner/restore', [AdminHomeBannerController::class, 'restore'])
+                ->name('content.home.banner.restore');
 
             Route::get('/content/{content}', [AdminContentController::class, 'show'])->name('content.show');
             Route::patch('/content/{content}/draft', [AdminContentController::class, 'updateDraft'])
