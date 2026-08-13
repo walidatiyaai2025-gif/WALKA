@@ -1,1 +1,0 @@
-Gallery writes validate the complete requested item set before mutation, then replace items and increment the target revision inside one database transaction. Stale revisions or ineligible media leave the previously persisted gallery unchanged.

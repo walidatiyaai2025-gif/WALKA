@@ -1,1 +1,0 @@
-CMS-032 must not advance stable owner-visible publication or close #230 by assertion. It only governs gallery metadata assignment; binary production-media admission and final visual acceptance remain separate evidence gates.
