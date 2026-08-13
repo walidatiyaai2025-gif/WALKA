@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\DashboardRole;
 use App\Exceptions\CatalogRevisionConflictException;
 use App\Http\Controllers\Controller;
 use App\Models\CatalogAudit;
@@ -43,6 +44,7 @@ final class AdminDashboardController extends Controller
 
         $configuredUsername = (string) config('walka.dashboard_username', 'admin');
         $configuredPassword = (string) config('walka.dashboard_password', '');
+        $configuredRole = DashboardRole::from(trim((string) config('walka_dashboard.role', 'owner')));
 
         $usernameMatches = hash_equals($configuredUsername, (string) $validated['username']);
         $passwordMatches = hash_equals($configuredPassword, (string) $validated['password']);
@@ -56,6 +58,7 @@ final class AdminDashboardController extends Controller
         $request->session()->regenerate();
         $request->session()->put('walka_admin_dashboard_authenticated', true);
         $request->session()->put('walka_admin_dashboard_username', $configuredUsername);
+        $request->session()->put('walka_admin_dashboard_role', $configuredRole->value);
         $request->session()->put(
             'walka_admin_dashboard_actor',
             hash('sha256', 'dashboard|'.$configuredUsername.'|'.$request->session()->getId()),
@@ -184,8 +187,9 @@ final class AdminDashboardController extends Controller
     {
         $username = trim((string) config('walka.dashboard_username', ''));
         $password = (string) config('walka.dashboard_password', '');
+        $role = DashboardRole::tryFrom(trim((string) config('walka_dashboard.role', '')));
 
-        return $username !== '' && strlen($password) >= 12;
+        return $username !== '' && strlen($password) >= 12 && $role !== null;
     }
 
     private function actorFingerprint(Request $request): string
