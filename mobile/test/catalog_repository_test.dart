@@ -126,11 +126,11 @@ void main() {
     expect(cache.writeCount, 0);
   });
 
-  test('remote catalog missing a stable variant is rejected', () async {
+  test('remote catalog may omit a governed stable variant as hidden', () async {
     final WalkaCatalogSnapshot bundled = WalkaBundledCatalog.snapshot(
       fetchedAt: now,
     );
-    final List<WalkaCatalogProduct> brokenProducts = bundled.products.map(
+    final List<WalkaCatalogProduct> governedProducts = bundled.products.map(
       (WalkaCatalogProduct product) {
         if (product.id != 'stainless-steel-bento-lunch-box') return product;
         return WalkaCatalogProduct(
@@ -142,29 +142,36 @@ void main() {
           variants: product.variants
               .where((WalkaCatalogVariant variant) => variant.id != 'lunch-box:green')
               .toList(growable: false),
+          shortDescription: product.shortDescription,
+          highlights: product.highlights,
+          featured: product.featured,
+          presentationOrder: product.presentationOrder,
         );
       },
     ).toList(growable: false);
 
+    final _MemoryCache cache = _MemoryCache();
     final _FakeRemote remote = _FakeRemote(
       config: bundled.config,
       payload: WalkaCatalogPayload(
-        products: brokenProducts,
+        products: governedProducts,
         release: bundled.config.release,
         apiVersion: bundled.config.apiVersion,
         purchaseMode: bundled.config.purchaseMode,
       ),
     );
     final WalkaCatalogRepository repository = WalkaCatalogRepository(
-      cache: _MemoryCache(),
+      cache: cache,
       remote: remote,
       clock: () => now,
     );
 
     final WalkaCatalogSnapshot result = await repository.load();
 
-    expect(result.source, WalkaCatalogSource.bundled);
-    expect(result.variantById('lunch-box:green'), isNotNull);
+    expect(result.source, WalkaCatalogSource.remote);
+    expect(result.variantById('lunch-box:green'), isNull);
+    expect(result.variantById('lunch-box:blue'), isNotNull);
+    expect(cache.writeCount, 1);
   });
 }
 
