@@ -27,7 +27,7 @@ Route::prefix('admin')->name('admin.')->middleware('walka.dashboard.headers')->g
         Route::get('/', [AdminDashboardController::class, 'dashboard'])->middleware('walka.dashboard.can:dashboard.view')->name('dashboard');
         Route::get('/catalog', [AdminDashboardController::class, 'catalog'])->middleware('walka.dashboard.can:catalog.view')->name('catalog');
         Route::patch('/catalog/products/{product}', [ProductPresentationController::class, 'update'])->middleware('walka.dashboard.can:catalog.write')->name('catalog.products.update');
-        Route::patch('/catalog/variants/{variant}', [AdminDashboardController::class, 'updateVariant'])->middleware('walka.dashboard.can:catalog.write')->where('variant', '.*')->name('catalog.variants.update');
+        Route::patch('/catalog/variants/{variant}', [ProductPresentationController::class, 'updateVariant'])->middleware('walka.dashboard.can:catalog.write')->where('variant', '.*')->name('catalog.variants.update');
 
         Route::get('/media', [AdminMediaController::class, 'index'])->middleware('walka.dashboard.can:media.view')->name('media.index');
         Route::post('/media/uploads', [AdminMediaController::class, 'store'])->middleware('walka.dashboard.can:media.upload')->name('media.store');
