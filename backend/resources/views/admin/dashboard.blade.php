@@ -12,6 +12,7 @@
     </div>
     <div class="actions">
         <a class="btn secondary" href="{{ route('admin.media.index') }}">Media library</a>
+        <a class="btn secondary" href="{{ route('admin.media.galleries.index') }}">Media galleries</a>
         <a class="btn primary" href="{{ route('admin.catalog') }}">Manage catalog →</a>
     </div>
 </div>
