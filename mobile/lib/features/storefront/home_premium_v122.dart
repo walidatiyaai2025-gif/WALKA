@@ -46,10 +46,10 @@ class WalkaHomePremiumV122 extends StatelessWidget {
       controller.snapshot,
     );
     final WalkaCatalogViewItem drawer = items.firstWhere(
-      (WalkaCatalogViewItem item) => item.variantId == 'drawer-organizer:white',
+      (WalkaCatalogViewItem item) => item.family == WalkaCatalogFamily.drawer,
     );
     final WalkaCatalogViewItem lunch = items.firstWhere(
-      (WalkaCatalogViewItem item) => item.variantId == 'lunch-box:blue',
+      (WalkaCatalogViewItem item) => item.family == WalkaCatalogFamily.lunch,
     );
     final _ResolvedHomeFeatured featured = _resolveFeatured(
       items,
