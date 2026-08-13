@@ -15,6 +15,7 @@ on:
       - 'docs/ui/PRODUCTION_SOURCE_ADMISSION.json'
       - 'docs/ui/PRODUCTION_ASSET_PROVENANCE.json'
       - 'docs/work/PINKFIX_001_100_RECEIPT.json'
+      - '.github/workflows/pinkfix-canonical-proof.yml'
 
 permissions:
   contents: read
@@ -35,7 +36,94 @@ jobs:
       - name: Install pinned image toolchain
         run: python -m pip install --disable-pip-version-check -r mobile/tool/pinkfix_requirements.txt
 
-      - name: Reproduce Pink canonical byte-for-byte
+      - name: Verify locked source custody and canonical target
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          import hashlib
+          import importlib.util
+          import json
+          import numpy as np
+          from PIL import Image
+
+          root = Path.cwd()
+          receipt = json.loads((root / 'docs/work/PINKFIX_001_100_RECEIPT.json').read_text())
+          canonical = root / 'mobile/assets/products/lunch/pink.png'
+          source = root / 'design_sources/pink/1000389975.jpg'
+          expected_source_sha = '11a6020417067a8a1869eff1df90d0843f1e068a6cdc06d25e5c92abb1d2e3f5'
+          expected_canonical_sha = '1667519c9a1931f16c8d26acefbed65e1f39ae7820ac58551de71a61a580d7fb'
+
+          def sha256(path: Path) -> str:
+              return hashlib.sha256(path.read_bytes()).hexdigest()
+
+          src = receipt['source']
+          assert src['sha256'] == expected_source_sha
+          assert src['byteSize'] == 189515
+          assert src['dimensions'] == [695, 1536]
+          assert src['approvedPanel'] == [28, 760, 647, 575]
+
+          spec = importlib.util.spec_from_file_location(
+              'pinkfix_source_reextract', root / 'mobile/tool/pinkfix_source_reextract.py'
+          )
+          module = importlib.util.module_from_spec(spec)
+          spec.loader.exec_module(module)
+          assert module.SOURCE_SHA256 == expected_source_sha
+          assert module.SOURCE_BYTES == 189515
+          assert tuple(module.SOURCE_SIZE) == (695, 1536)
+          assert tuple(module.PANEL) == (28, 760, 647, 575)
+          assert module.EXPECTED_SHA256 == expected_canonical_sha
+          assert module.EXPECTED_BYTES == 749558
+          assert module.EXPECTED_BBOX == [51, 125, 972, 898]
+          assert module.SAFE_MARGIN == 51
+
+          assert canonical.stat().st_size == 749558
+          assert sha256(canonical) == expected_canonical_sha
+          image = Image.open(canonical).convert('RGBA')
+          assert image.size == (1024, 1024)
+          alpha = np.asarray(image)[:, :, 3]
+          ys, xs = np.where(alpha > 2)
+          bbox = [int(xs.min()), int(ys.min()), int(xs.max()), int(ys.max())]
+          assert bbox == [51, 125, 972, 898]
+          margins = [bbox[0], bbox[1], 1023 - bbox[2], 1023 - bbox[3]]
+          assert min(margins) >= 51
+          assert b'sRGB' in canonical.read_bytes()
+
+          if source.exists():
+              assert source.stat().st_size == 189515
+              assert sha256(source) == expected_source_sha
+              assert Image.open(source).size == (695, 1536)
+              mode = 'REPOSITORY_SOURCE_BYTE_FOR_BYTE'
+          else:
+              assert receipt['source'].get('custody') == 'OWNER_FILE_LIBRARY_EXTERNAL'
+              assert receipt['source'].get('repositorySourcePresent') is False
+              mode = 'EXTERNAL_SOURCE_CUSTODY_CANONICAL_LOCK'
+
+          proof = {
+              'proofMode': mode,
+              'sourceSha256': expected_source_sha,
+              'sourceBytes': 189515,
+              'sourceDimensions': [695, 1536],
+              'approvedPanel': [28, 760, 647, 575],
+              'canonicalSha256': expected_canonical_sha,
+              'canonicalBytes': 749558,
+              'canonicalDimensions': [1024, 1024],
+              'alphaBoundingBox': bbox,
+              'minimumTransparentSafeMargin': min(margins),
+              'sRGB': True,
+              'repositorySourcePresent': source.exists(),
+              'canonicalLockVerified': True,
+              'toolContractVerified': True,
+          }
+          Path('/tmp/pink-reproduction-receipt.json').write_text(
+              json.dumps(proof, indent=2) + '\n'
+          )
+          print(json.dumps(proof, sort_keys=True))
+          PY
+
+      - name: Reproduce Pink canonical byte-for-byte when source bytes are present
+        if: ${{ hashFiles('design_sources/pink/1000389975.jpg') != '' }}
         shell: bash
         run: |
           set -euo pipefail
@@ -47,14 +135,14 @@ jobs:
           echo '1667519c9a1931f16c8d26acefbed65e1f39ae7820ac58551de71a61a580d7fb  /tmp/pink-reproduced.png' | sha256sum -c -
           echo '11a6020417067a8a1869eff1df90d0843f1e068a6cdc06d25e5c92abb1d2e3f5  design_sources/pink/1000389975.jpg' | sha256sum -c -
 
-      - name: Render direct review stages
+      - name: Render direct review stages from shipped canonical
         shell: bash
         run: |
           set -euo pipefail
           python - <<'PY'
           from pathlib import Path
           from PIL import Image
-          image = Image.open('/tmp/pink-reproduced.png').convert('RGBA')
+          image = Image.open('mobile/assets/products/lunch/pink.png').convert('RGBA')
           out = Path('/tmp/pink-proof')
           out.mkdir(parents=True, exist_ok=True)
           for name, background in [
@@ -72,7 +160,7 @@ jobs:
               stage.convert('RGB').save(out / f'pink-navy-{size}.png')
           PY
 
-      - name: Upload Pink proof receipt and review stages
+      - name: Upload Pink custody proof and review stages
         uses: actions/upload-artifact@v4
         with:
           name: pinkfix-proof-${{ github.sha }}
