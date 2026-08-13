@@ -97,9 +97,12 @@ class WalkaCategoryCard extends StatelessWidget {
                     const SizedBox(height: 5),
                     Text(
                       subtitle,
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
                         color: WalkaColors.muted,
                         fontSize: 10,
+                        height: 1.3,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
