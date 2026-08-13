@@ -61,6 +61,7 @@ class WalkaCatalogProduct {
     final Map<String, dynamic> facts = _requiredMap(json, 'facts');
     final Object? rawDescription = json['short_description'];
     if (rawDescription != null && rawDescription is! String) throw const FormatException('short_description must be a string or null.');
+    final String? parsedDescription = rawDescription == null ? null : (rawDescription as String).trim();
     final Object? rawHighlights = json['highlights'];
     if (rawHighlights != null && rawHighlights is! List) throw const FormatException('highlights must be a list when present.');
     final Object? rawFeatured = json['featured'];
@@ -77,7 +78,7 @@ class WalkaCatalogProduct {
         if (value is! String || value.trim().isEmpty) throw const FormatException('Product features must be strings.');
         return value;
       }).toList(growable: false),
-      shortDescription: rawDescription == null || rawDescription.trim().isEmpty ? null : rawDescription.trim(),
+      shortDescription: parsedDescription == null || parsedDescription.isEmpty ? null : parsedDescription,
       highlights: parsedHighlights, featured: rawFeatured as bool? ?? false, presentationOrder: rawOrder as int? ?? 0,
       facts: Map<String, dynamic>.unmodifiable(facts),
       variants: rawVariants.map((dynamic value) {
