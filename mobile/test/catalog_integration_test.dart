@@ -62,8 +62,13 @@ void main() {
               color: variant.color,
               asin: variant.asin,
               purchaseUrl: 'https://www.amazon.com/dp/REMOTE-WHITE',
+              presentationOrder: variant.presentationOrder,
             );
           }).toList(growable: false),
+          shortDescription: product.shortDescription,
+          highlights: product.highlights,
+          featured: product.featured,
+          presentationOrder: product.presentationOrder,
         );
       },
     ).toList(growable: false);
@@ -95,6 +100,9 @@ void main() {
 
     final WalkaCatalogController controller = WalkaCatalogController();
     await controller.load();
+    final String lunchTitle = controller.snapshot
+        .productById('stainless-steel-bento-lunch-box')!
+        .name;
 
     await tester.pumpWidget(
       WalkaCatalogScope(
@@ -112,9 +120,9 @@ void main() {
 
     expect(find.text('1 result'), findsOneWidget);
     expect(find.text('Green'), findsOneWidget);
-    expect(find.text('Large Stainless Steel Bento Lunch Box'), findsOneWidget);
+    expect(find.text(lunchTitle), findsOneWidget);
 
-    await tester.tap(find.text('Large Stainless Steel Bento Lunch Box'));
+    await tester.tap(find.text(lunchTitle));
     await tester.pumpAndSettle();
 
     expect(find.byType(WalkaLunchProductDetailV100), findsOneWidget);
@@ -149,8 +157,16 @@ void main() {
       items.map((WalkaCatalogViewItem item) => item.variant).toSet(),
       <String>{'White', 'Gray', 'Blue', 'Pink', 'Green'},
     );
-    expect(items.first.title, 'Expandable Drawer Organizer');
-    expect(items.last.title, 'Large Stainless Steel Bento Lunch Box');
+    expect(
+      items.first.title,
+      controller.snapshot.productById('drawer-organizer')!.name,
+    );
+    expect(
+      items.last.title,
+      controller.snapshot
+          .productById('stainless-steel-bento-lunch-box')!
+          .name,
+    );
 
     await tester.pumpWidget(
       WalkaCatalogScope(
