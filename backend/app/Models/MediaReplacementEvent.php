@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use LogicException;
 
 final class MediaReplacementEvent extends Model
 {
@@ -28,6 +29,16 @@ final class MediaReplacementEvent extends Model
         'after_fingerprint',
         'actor_fingerprint',
     ];
+
+    protected static function booted(): void
+    {
+        static::updating(function (): never {
+            throw new LogicException('Media replacement audit events are immutable.');
+        });
+        static::deleting(function (): never {
+            throw new LogicException('Media replacement audit events cannot be deleted.');
+        });
+    }
 
     protected function casts(): array
     {
