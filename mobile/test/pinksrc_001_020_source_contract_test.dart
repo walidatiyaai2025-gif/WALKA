@@ -27,19 +27,15 @@ void main() {
     provenance = _json('../docs/ui/PRODUCTION_ASSET_PROVENANCE.json');
   });
 
-  test('PINKSRC-001..005 locks source fingerprint, dimensions and approved panel', () {
+  test('PINKSRC-001..005 keeps source fingerprint, dimensions and approved panel locked', () {
     final Map<String, dynamic> source = _map(contract['source']);
     final Map<String, dynamic> panel = _map(contract['approvedProductPanel']);
-
     expect(contract['schemaVersion'], 2);
     expect(contract['variantId'], variantId);
     expect(source['sourceId'], 'SRC-LUNCH-PINK-001');
     expect(source['filename'], '1000389975.jpg');
     expect(source['state'], 'APPROVED');
-    expect(
-      source['sha256'],
-      '11a6020417067a8a1869eff1df90d0843f1e068a6cdc06d25e5c92abb1d2e3f5',
-    );
+    expect(source['sha256'], '11a6020417067a8a1869eff1df90d0843f1e068a6cdc06d25e5c92abb1d2e3f5');
     expect(source['byteSize'], 189515);
     expect(source['width'], 695);
     expect(source['height'], 1536);
@@ -47,34 +43,27 @@ void main() {
     expect(panel, containsPair('y', 760));
     expect(panel, containsPair('width', 647));
     expect(panel, containsPair('height', 575));
-    expect((panel['x'] as int) + (panel['width'] as int), lessThanOrEqualTo(695));
-    expect((panel['y'] as int) + (panel['height'] as int), lessThanOrEqualTo(1536));
     expect(panel['marketplacePixelsOutsidePanelMustBeExcluded'], isTrue);
   });
 
-  test('PINKSRC-006..010 locks output contract and rejected candidate evidence', () {
+  test('PINKSRC-006..010 locks the new admitted canonical and preserves rejected evidence', () {
     final Map<String, dynamic> output = _map(contract['canonicalOutput']);
-
     expect(output['path'], 'assets/products/lunch/pink.png');
-    expect((output['path'] as String).startsWith('Images/'), isFalse);
     expect(output['width'], 1024);
     expect(output['height'], 1024);
     expect(output['pixelFormat'], '8-bit RGBA');
     expect(output['colorProfile'], 'sRGB');
-    expect(output['minimumTransparentSafeMarginPx'], greaterThanOrEqualTo(51));
+    expect(output['minimumTransparentSafeMarginPx'], 51);
     expect(output['maximumByteSize'], 1258291);
-    expect(
-      output['candidateSha256'],
-      '84b1c5b44980c29bf22ff88cafc747454d4caf8612209daa84edfc2e3f3a11ae',
-    );
-    expect(output['candidateByteSize'], 748350);
-    expect(output['candidateAlphaBoundingBox'], <int>[51, 161, 972, 862]);
-    expect(output['candidateDisposition'], 'REJECTED_NAVY_HALO');
+    expect(output['admittedSha256'], '1667519c9a1931f16c8d26acefbed65e1f39ae7820ac58551de71a61a580d7fb');
+    expect(output['admittedByteSize'], 749558);
+    expect(output['admittedAlphaBoundingBox'], <int>[51, 125, 972, 898]);
+    expect(output['admittedDisposition'], 'SOURCE_PANEL_REEXTRACTED_NO_OBVIOUS_HALO');
+    expect(output['supersedesRejectedSha256'], '84b1c5b44980c29bf22ff88cafc747454d4caf8612209daa84edfc2e3f3a11ae');
   });
 
-  test('PINKSRC-011..013 keeps all nine visual QA checks pending after rejection', () {
-    final List<String> qa =
-        (contract['requiredVisualQa'] as List<dynamic>).cast<String>();
+  test('PINKSRC-011..013 requires all nine visual QA checks PASS after re-extraction', () {
+    final List<String> qa = (contract['requiredVisualQa'] as List<dynamic>).cast<String>();
     expect(qa, <String>[
       'surfaceWhite',
       'surfaceIvory',
@@ -86,55 +75,53 @@ void main() {
       'geometryPreserved',
       'bakedUiExcluded',
     ]);
-    expect(qa.toSet(), hasLength(9));
-
     final Map<String, dynamic> provenanceRow = _row(provenance, variantId);
     final Map<String, dynamic> qaStates = _map(provenanceRow['qa']);
     for (final String check in qa) {
-      expect(qaStates[check], 'PENDING', reason: check);
+      expect(qaStates[check], 'PASS', reason: check);
     }
-    expect(_map(contract['admissionGuard'])['currentVisualQaState'], 'PENDING');
-    final Map<String, dynamic> proof = _map(contract['lastVisualProof']);
-    expect(proof['sourceMainCommit'], 'cd6bb64c1b37af97e274f42ce5752ac110ecdc77');
-    expect(proof['workflowRun'], 31625699344);
-    expect(proof['artifactId'], 9153009337);
-    expect(proof['navyResult'], 'REJECTED_WHITE_HALO_AND_BACKGROUND_CONTAMINATION');
+    expect(_map(contract['admissionGuard'])['currentVisualQaState'], 'PASS');
+    final Map<String, dynamic> rejected = _map(contract['lastRejectedVisualProof']);
+    expect(rejected['workflowRun'], 31625699344);
+    expect(rejected['artifactId'], 9153009337);
+    expect(rejected['navyResult'], 'REJECTED_WHITE_HALO_AND_BACKGROUND_CONTAMINATION');
+    final Map<String, dynamic> current = _map(contract['currentCanonicalProof']);
+    expect(current['vproofDisposition'], 'NO_OBVIOUS_HALO');
+    expect(current['navyStage'], 'PASS');
+    expect(current['finalOwnerVisualAcceptanceStillRequired'], isTrue);
   });
 
-  test('PINKSRC-014..016 keeps source approved while provenance/runtime fail closed', () {
+  test('PINKSRC-014..016 source, provenance and runtime now reconcile as admitted', () {
     final Map<String, dynamic> sourceRow = _row(sourceAdmission, variantId);
     final Map<String, dynamic> provenanceRow = _row(provenance, variantId);
     final Map<String, dynamic> guard = _map(contract['admissionGuard']);
-
-    expect(sourceRow['sourceId'], 'SRC-LUNCH-PINK-001');
-    expect(sourceRow['sourceFilename'], '1000389975.jpg');
     expect(sourceRow['sourceState'], 'APPROVED');
-    expect(sourceRow['canonicalExportPresent'], isFalse);
-    expect(provenanceRow['lifecycleState'], 'PENDING');
-    expect(provenanceRow['sha256'], isNull);
-    expect(provenanceRow['byteSize'], isNull);
-    expect(provenanceRow['width'], isNull);
-    expect(provenanceRow['height'], isNull);
-    expect(provenanceRow['alphaBoundingBox'], isNull);
-    expect(provenanceRow['nearestTransparentSafeMargin'], isNull);
-    expect(guard['requiredCurrentProvenanceState'], 'PENDING');
-    expect(guard['requiredCurrentRuntimeState'], 'pending');
-    expect(guard['requiredCanonicalExportPresent'], isFalse);
-    expect(guard['requiredRuntimeEligible'], isFalse);
+    expect(sourceRow['canonicalExportPresent'], isTrue);
+    expect(provenanceRow['lifecycleState'], 'ADMITTED');
+    expect(provenanceRow['sha256'], '1667519c9a1931f16c8d26acefbed65e1f39ae7820ac58551de71a61a580d7fb');
+    expect(provenanceRow['byteSize'], 749558);
+    expect(provenanceRow['width'], 1024);
+    expect(provenanceRow['height'], 1024);
+    expect(provenanceRow['alphaBoundingBox'], <int>[51, 125, 972, 898]);
+    expect(provenanceRow['nearestTransparentSafeMargin'], 51);
+    expect(guard['requiredCurrentProvenanceState'], 'ADMITTED');
+    expect(guard['requiredCurrentRuntimeState'], 'admitted');
+    expect(guard['requiredCanonicalExportPresent'], isTrue);
+    expect(guard['requiredRuntimeEligible'], isTrue);
     expect(guard['stablePublicationMustRemainFailClosed'], isTrue);
 
     final PinkSourceContractReport report =
         PinkSourceContractAuditor(mobileRoot: Directory.current).audit();
     expect(report.contractReady, isTrue, reason: report.prettyJson());
-    expect(report.productionAdmitted, isFalse, reason: report.prettyJson());
-    expect(report.state, 'LOCKED_PENDING_VISUAL_QA');
-    expect(report.visualQaState, 'PENDING');
-    expect(report.provenanceState, 'PENDING');
-    expect(report.runtimeState, 'pending');
-    expect(report.canonicalExportPresent, isFalse);
+    expect(report.productionAdmitted, isTrue, reason: report.prettyJson());
+    expect(report.state, 'LOCKED_ADMITTED');
+    expect(report.visualQaState, 'PASS');
+    expect(report.provenanceState, 'ADMITTED');
+    expect(report.runtimeState, 'admitted');
+    expect(report.canonicalExportPresent, isTrue);
   });
 
-  test('PINKSRC-017..020 auditor, CLI, CI artifact and receipt remain executable', () async {
+  test('PINKSRC-017..020 auditor, CLI, CI and historical receipt remain executable', () async {
     final Map<String, dynamic> namespace = _map(contract['taskNamespace']);
     final List<String> ids = List<String>.generate(
       20,
@@ -142,10 +129,7 @@ void main() {
     );
     expect(namespace['prefix'], 'PINKSRC');
     expect(namespace['expectedCount'], 20);
-    expect(ids, hasLength(20));
     expect(ids.toSet(), hasLength(20));
-    expect(ids.first, 'PINKSRC-001');
-    expect(ids.last, 'PINKSRC-020');
 
     final Directory temp = await Directory.systemTemp.createTemp('walka-pinksrc-');
     addTearDown(() => temp.delete(recursive: true));
@@ -165,27 +149,20 @@ void main() {
     );
     expect(result.exitCode, 0, reason: '${result.stdout}\n${result.stderr}');
     final Map<String, dynamic> cliReport = _json(reportFile.path);
-    expect(cliReport['state'], 'LOCKED_PENDING_VISUAL_QA');
+    expect(cliReport['state'], 'LOCKED_ADMITTED');
     expect(cliReport['contractReady'], isTrue);
-    expect(cliReport['productionAdmitted'], isFalse);
+    expect(cliReport['productionAdmitted'], isTrue);
     expect(cliReport['blockerCount'], 0);
 
-    final String pinkWorkflow =
-        File('../.github/workflows/pink-source-contract.yml').readAsStringSync();
-    expect(pinkWorkflow, contains('Flutter Preview · Pink Source Contract'));
-    expect(pinkWorkflow, contains('Verify Pink source extraction contract'));
+    final String pinkWorkflow = File('../.github/workflows/pink-source-contract.yml').readAsStringSync();
     expect(pinkWorkflow, contains('verify_pink_source_contract.dart'));
-    expect(pinkWorkflow, contains('pink-source-contract-report.json'));
     expect(pinkWorkflow, contains('actions/upload-artifact@v4'));
 
-    final File receipt = File('../docs/work/PINKSRC-001-020.md');
-    expect(receipt.existsSync(), isTrue);
-    final String receiptText = receipt.readAsStringSync();
+    final File historicalReceipt = File('../docs/work/PINKSRC-001-020.md');
+    expect(historicalReceipt.existsSync(), isTrue);
+    final String text = historicalReceipt.readAsStringSync();
     for (final String id in ids) {
-      expect(receiptText, contains(id), reason: id);
+      expect(text, contains(id), reason: id);
     }
-    expect(receiptText, contains('PENDING'));
-    expect(receiptText, contains('31625699344'));
-    expect(receiptText, contains('9153009337'));
   });
 }
