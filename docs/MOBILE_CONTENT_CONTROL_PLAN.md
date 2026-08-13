@@ -39,7 +39,7 @@ The owner workflow is:
 
 ### Current implementation milestone
 
-The generic CMS foundation plus the governed Home and Categories control planes are delivered through CMS-024, with CMS-025 implementing Search/discovery presentation and merchandising:
+The generic CMS foundation plus governed Home, Categories and Search control planes are delivered through CMS-025. CMS-030 is now implementing the production-media library storage foundation that will support upload validation and assignments without bypassing #230 admission truth:
 
 - **CMS-001 completed** — stable content keys/types, draft/published snapshots, optimistic revisions, immutable history and restore primitives.
 - **CMS-002 completed** — protected `/admin/content` registry, draft editor, preview, explicit publish, history and restore controls.
@@ -49,7 +49,8 @@ The generic CMS foundation plus the governed Home and Categories control planes 
 - **CMS-022 completed** — owner-controlled featured product/variant membership and ordering using stable catalog IDs with runtime catalog validation (#296 / PR #311).
 - **CMS-023 completed** — one governed Home announcement/promo banner with enabled state, UTC start/end schedule, compiled CTA routing and offline schedule enforcement (#313 / PR #314).
 - **CMS-024 completed** — governed category display metadata, ordering and visibility while protected catalog membership remains immutable (#315 / PR #316).
-- **CMS-025 implementing** — governed Search/discovery copy, filter labels and complete-catalog Featured ordering (#317 / PR #318).
+- **CMS-025 completed** — governed Search/discovery copy, filter labels and complete-catalog Featured ordering (#317 / PR #318).
+- **CMS-030 implementing** — governed production-media source/derivative storage and lifecycle model (#319 / PR #320).
 
 ## 2. What must become backend-controlled
 
@@ -213,13 +214,13 @@ This program is a **P0 backend/mobile architecture priority**. New mobile presen
 | CMS-022 | P0 | Featured collections/products/variants | ✅ COMPLETED · #296 / PR #311 |
 | CMS-023 | P0 | Announcement/promo banners + scheduling | ✅ COMPLETED · #313 / PR #314 |
 | CMS-024 | P0 | Categories display metadata/order/visibility | ✅ COMPLETED · #315 / PR #316 |
-| CMS-025 | P0 | Search/discovery presentation copy and configurable merchandising | 🟡 IMPLEMENTING · #317 / PR #318 |
+| CMS-025 | P0 | Search/discovery presentation copy and configurable merchandising | ✅ COMPLETED · #317 / PR #318 |
 
 ### Phase D — Media library
 
 | ID | Priority | Scope | Status |
 |---|---|---|---|
-| CMS-030 | P0 | Production media library storage model | TODO |
+| CMS-030 | P0 | Production media library storage model | 🟡 IMPLEMENTING · #319 / PR #320 |
 | CMS-031 | P0 | Upload validation: type, dimensions, file size, integrity | TODO |
 | CMS-032 | P0 | Product/variant gallery assignment and ordering | TODO |
 | CMS-033 | P0 | Home/category/editorial media assignment | TODO |
