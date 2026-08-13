@@ -5,11 +5,13 @@ import 'data/walka_home_banner_repository.dart';
 import 'data/walka_home_featured_repository.dart';
 import 'data/walka_home_hero_repository.dart';
 import 'data/walka_home_layout_repository.dart';
+import 'data/walka_search_presentation_repository.dart';
 import 'domain/walka_category_presentation_content.dart';
 import 'domain/walka_home_banner_content.dart';
 import 'domain/walka_home_featured_content.dart';
 import 'domain/walka_home_layout_content.dart';
 import 'domain/walka_mobile_content.dart';
+import 'domain/walka_search_presentation_content.dart';
 
 class WalkaContentController extends ChangeNotifier {
   WalkaContentController({
@@ -18,32 +20,38 @@ class WalkaContentController extends ChangeNotifier {
     WalkaHomeFeaturedRepository? homeFeaturedRepository,
     WalkaHomeBannerRepository? homeBannerRepository,
     WalkaCategoryPresentationRepository? categoryPresentationRepository,
+    WalkaSearchPresentationRepository? searchPresentationRepository,
   })  : _homeRepository = homeRepository,
         _homeLayoutRepository = homeLayoutRepository,
         _homeFeaturedRepository = homeFeaturedRepository,
         _homeBannerRepository = homeBannerRepository,
         _categoryPresentationRepository = categoryPresentationRepository,
+        _searchPresentationRepository = searchPresentationRepository,
         _home = WalkaHomeHeroSnapshot.bundled(),
         _homeLayout = WalkaHomeLayoutSnapshot.bundled(),
         _homeFeatured = WalkaHomeFeaturedSnapshot.bundled(),
         _homeBanner = WalkaHomeBannerSnapshot.bundled(),
         _categories = WalkaCategoryPresentationSnapshot.bundled(),
+        _search = WalkaSearchPresentationSnapshot.bundled(),
         _isLoading = homeRepository != null ||
             homeLayoutRepository != null ||
             homeFeaturedRepository != null ||
             homeBannerRepository != null ||
-            categoryPresentationRepository != null;
+            categoryPresentationRepository != null ||
+            searchPresentationRepository != null;
 
   final WalkaHomeHeroRepository? _homeRepository;
   final WalkaHomeLayoutRepository? _homeLayoutRepository;
   final WalkaHomeFeaturedRepository? _homeFeaturedRepository;
   final WalkaHomeBannerRepository? _homeBannerRepository;
   final WalkaCategoryPresentationRepository? _categoryPresentationRepository;
+  final WalkaSearchPresentationRepository? _searchPresentationRepository;
   WalkaHomeHeroSnapshot _home;
   WalkaHomeLayoutSnapshot _homeLayout;
   WalkaHomeFeaturedSnapshot _homeFeatured;
   WalkaHomeBannerSnapshot _homeBanner;
   WalkaCategoryPresentationSnapshot _categories;
+  WalkaSearchPresentationSnapshot _search;
   bool _isLoading;
 
   WalkaHomeHeroSnapshot get home => _home;
@@ -51,19 +59,22 @@ class WalkaContentController extends ChangeNotifier {
   WalkaHomeFeaturedSnapshot get homeFeatured => _homeFeatured;
   WalkaHomeBannerSnapshot get homeBanner => _homeBanner;
   WalkaCategoryPresentationSnapshot get categories => _categories;
+  WalkaSearchPresentationSnapshot get search => _search;
   bool get isLoading => _isLoading;
   bool get canRefresh =>
       _homeRepository != null ||
       _homeLayoutRepository != null ||
       _homeFeaturedRepository != null ||
       _homeBannerRepository != null ||
-      _categoryPresentationRepository != null;
+      _categoryPresentationRepository != null ||
+      _searchPresentationRepository != null;
   bool get isOffline =>
       _home.source != WalkaContentSource.remote ||
       _homeLayout.source != WalkaContentSource.remote ||
       _homeFeatured.source != WalkaContentSource.remote ||
       _homeBanner.source != WalkaContentSource.remote ||
-      _categories.source != WalkaContentSource.remote;
+      _categories.source != WalkaContentSource.remote ||
+      _search.source != WalkaContentSource.remote;
 
   Future<void> load() async {
     final WalkaHomeHeroRepository? homeRepository = _homeRepository;
@@ -73,11 +84,14 @@ class WalkaContentController extends ChangeNotifier {
     final WalkaHomeBannerRepository? bannerRepository = _homeBannerRepository;
     final WalkaCategoryPresentationRepository? categoryRepository =
         _categoryPresentationRepository;
+    final WalkaSearchPresentationRepository? searchRepository =
+        _searchPresentationRepository;
     if (homeRepository == null &&
         layoutRepository == null &&
         featuredRepository == null &&
         bannerRepository == null &&
-        categoryRepository == null) {
+        categoryRepository == null &&
+        searchRepository == null) {
       if (_isLoading) {
         _isLoading = false;
         notifyListeners();
@@ -102,6 +116,9 @@ class WalkaContentController extends ChangeNotifier {
     }
     if (categoryRepository != null) {
       _categories = await categoryRepository.load();
+    }
+    if (searchRepository != null) {
+      _search = await searchRepository.load();
     }
 
     _isLoading = false;
