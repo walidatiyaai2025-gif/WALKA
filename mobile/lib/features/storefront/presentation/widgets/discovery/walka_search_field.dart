@@ -8,6 +8,7 @@ class WalkaSearchField extends StatelessWidget {
     required this.query,
     required this.onChanged,
     required this.onClear,
+    this.placeholder = 'Search WALKA…',
     super.key,
   });
 
@@ -15,6 +16,7 @@ class WalkaSearchField extends StatelessWidget {
   final String query;
   final ValueChanged<String> onChanged;
   final VoidCallback onClear;
+  final String placeholder;
 
   @override
   Widget build(BuildContext context) {
@@ -24,7 +26,7 @@ class WalkaSearchField extends StatelessWidget {
       onChanged: onChanged,
       textInputAction: TextInputAction.search,
       decoration: InputDecoration(
-        hintText: 'Search WALKA…',
+        hintText: placeholder,
         prefixIcon: const Icon(Icons.search_rounded, color: WalkaColors.navy),
         suffixIcon: query.isEmpty
             ? null
