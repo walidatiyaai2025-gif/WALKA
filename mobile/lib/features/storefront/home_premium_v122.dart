@@ -5,9 +5,11 @@ import '../../design_system/walka_reference_ui.dart';
 import '../../design_system/walka_shell.dart';
 import '../catalog/catalog_state.dart';
 import '../content/content_state.dart';
+import '../content/domain/walka_home_banner_content.dart';
 import '../content/domain/walka_home_featured_content.dart';
 import '../content/domain/walka_home_layout_content.dart';
 import '../content/domain/walka_mobile_content.dart';
+import 'presentation/widgets/home/walka_home_banner.dart';
 import 'presentation/widgets/home/walka_home_benefit_band.dart';
 import 'presentation/widgets/home/walka_home_collection_section.dart';
 import 'presentation/widgets/home/walka_home_header.dart';
@@ -38,6 +40,8 @@ class WalkaHomePremiumV122 extends StatelessWidget {
         contentController?.homeLayout.content ?? WalkaHomeLayoutContent.bundled;
     final WalkaHomeFeaturedContent requestedFeatured =
         contentController?.homeFeatured.content ?? WalkaHomeFeaturedContent.bundled;
+    final WalkaHomeBannerContent banner =
+        contentController?.homeBanner.content ?? WalkaHomeBannerContent.bundled;
     final List<WalkaCatalogViewItem> items = walkaCatalogViewItems(
       controller.snapshot,
     );
@@ -73,6 +77,14 @@ class WalkaHomePremiumV122 extends StatelessWidget {
                       child: WalkaHomeHeader(
                         onBrowse: onShopAll,
                         onSearch: onSearch,
+                      ),
+                    ),
+                    SliverToBoxAdapter(
+                      child: WalkaScheduledHomeBanner(
+                        content: banner,
+                        onBrowse: onShopAll,
+                        onSearch: onSearch,
+                        horizontalPadding: gutter,
                       ),
                     ),
                     ...layout.visibleSections.expand(
