@@ -51,21 +51,49 @@ final class MediaReplacementService
         MediaAsset $replacement,
         string $expectedFingerprint,
         string $actorFingerprint,
-    ): MediaReplacementEvent {
+        ?string $reason = null,
+    ): ?MediaReplacementEvent {
         $actor = $this->validateActorFingerprint($actorFingerprint);
         $expected = $this->validateFingerprint($expectedFingerprint);
 
         if ($source->is($replacement)) {
-            throw ValidationException::withMessages([
-                'replacement_media_asset_id' => ['Replacement media must be different from the source media.'],
-            ]);
+            return DB::transaction(function () use ($expected, $source): ?MediaReplacementEvent {
+                $lockedSource = MediaAsset::query()
+                    ->whereKey($source->id)
+                    ->with('canonicalDerivative')
+                    ->lockForUpdate()
+                    ->first();
+                if (! $lockedSource instanceof MediaAsset) {
+                    throw ValidationException::withMessages([
+                        'source_media_asset_id' => ['The current media asset no longer exists.'],
+                    ]);
+                }
+
+                $this->assertEligible($lockedSource);
+                $before = $this->snapshotAssignments([$lockedSource->id], true);
+                if ($before === []) {
+                    throw ValidationException::withMessages([
+                        'source_media_asset_id' => ['The current media has no governed assignments.'],
+                    ]);
+                }
+                if (! hash_equals($expected, self::fingerprint($before))) {
+                    throw ValidationException::withMessages([
+                        'assignment_fingerprint' => ['Source media assignments changed in another session. Reload before retrying.'],
+                    ]);
+                }
+
+                return null;
+            });
         }
+
+        $validatedReason = $this->validateReason($reason);
 
         return DB::transaction(function () use (
             $actor,
             $expected,
             $replacement,
             $source,
+            $validatedReason,
         ): MediaReplacementEvent {
             $assets = MediaAsset::query()
                 ->whereIn('id', [$source->id, $replacement->id])
@@ -158,6 +186,7 @@ final class MediaReplacementService
                 'after_assignments' => $after,
                 'before_fingerprint' => self::fingerprint($before),
                 'after_fingerprint' => self::fingerprint($after),
+                'reason' => $validatedReason,
                 'actor_fingerprint' => $actor,
             ]);
         });
@@ -167,14 +196,17 @@ final class MediaReplacementService
         MediaReplacementEvent $replacementEvent,
         string $expectedAfterFingerprint,
         string $actorFingerprint,
+        ?string $reason = null,
     ): MediaReplacementEvent {
         $actor = $this->validateActorFingerprint($actorFingerprint);
         $expected = $this->validateFingerprint($expectedAfterFingerprint);
+        $validatedReason = $this->validateReason($reason);
 
         return DB::transaction(function () use (
             $actor,
             $expected,
             $replacementEvent,
+            $validatedReason,
         ): MediaReplacementEvent {
             $event = MediaReplacementEvent::query()
                 ->whereKey($replacementEvent->id)
@@ -259,6 +291,7 @@ final class MediaReplacementService
                 'after_assignments' => $restored,
                 'before_fingerprint' => $event->after_fingerprint,
                 'after_fingerprint' => $event->before_fingerprint,
+                'reason' => $validatedReason,
                 'actor_fingerprint' => $actor,
             ]);
         });
@@ -442,5 +475,15 @@ final class MediaReplacementService
         )->validate();
 
         return $validated['fingerprint'];
+    }
+
+    private function validateReason(?string $reason): string
+    {
+        $validated = Validator::make(
+            ['reason' => is_string($reason) ? trim($reason) : $reason],
+            ['reason' => ['required', 'string', 'min:3', 'max:500']],
+        )->validate();
+
+        return $validated['reason'];
     }
 }
