@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'catalog_state_surface_v130.dart';
+import 'categories_cms_v124.dart';
 import 'discovery_reference_v123.dart';
 import 'home_premium_v122.dart';
 
@@ -41,8 +42,8 @@ class WalkaSearchPremiumV130 extends StatelessWidget {
   }
 }
 
-/// DESIGN-007B.2 public Categories surface based on the approved Android
-/// Categories reference. Search navigation remains a shell-level action.
+/// CMS-024 public Categories surface. Catalog membership remains protected;
+/// typed CMS content controls only display copy, ordering and visibility.
 class WalkaCategoriesPremiumV130 extends StatelessWidget {
   const WalkaCategoriesPremiumV130({this.onSearch, super.key});
 
@@ -51,7 +52,7 @@ class WalkaCategoriesPremiumV130 extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return WalkaCatalogStateSurfaceV130(
-      child: WalkaCategoriesPremiumV123(onSearch: onSearch),
+      child: WalkaCategoriesCmsV124(onSearch: onSearch),
     );
   }
 }
