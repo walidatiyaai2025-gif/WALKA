@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\V1\Admin\CatalogAdminController;
 use App\Http\Controllers\Api\V1\Admin\CatalogAuditController;
+use App\Http\Controllers\Api\V1\CanonicalMediaController;
 use App\Http\Controllers\Api\V1\CatalogController;
 use App\Http\Controllers\Api\V1\ConfigController;
 use App\Http\Controllers\Api\V1\HealthController;
@@ -17,6 +18,9 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
     Route::get('/media/product-galleries', ProductMediaGalleryController::class)
         ->name('media.product-galleries');
     Route::get('/media/surfaces', SurfaceMediaController::class)->name('media.surfaces');
+    Route::get('/media/assets/{mediaAsset}/canonical', CanonicalMediaController::class)
+        ->where('mediaAsset', '[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26}')
+        ->name('media.assets.canonical');
     Route::get('/content/home', [PublishedContentController::class, 'home'])->name('content.home');
     Route::get('/content/home-layout', [PublishedContentController::class, 'homeLayout'])
         ->name('content.home-layout');

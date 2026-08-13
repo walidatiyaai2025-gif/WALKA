@@ -47,7 +47,7 @@ final class SurfaceMediaController extends Controller
             ],
             'meta' => [
                 'api_version' => 'v1',
-                'binary_delivery' => 'not_available_until_cms_035',
+                'binary_delivery' => 'canonical_by_media_id',
             ],
         ])->header('ETag', $etag)
             ->header('Cache-Control', $cacheControl);

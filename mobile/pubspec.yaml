@@ -9,6 +9,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  crypto: ^3.0.7
+  flutter_cache_manager: ^3.4.1
   flutter_svg: ^2.0.10+1
   http: ^1.6.0
   shared_preferences: ^2.3.2

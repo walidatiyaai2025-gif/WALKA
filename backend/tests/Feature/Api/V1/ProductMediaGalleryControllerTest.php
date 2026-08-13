@@ -49,7 +49,7 @@ final class ProductMediaGalleryControllerTest extends TestCase
             ->assertOk()
             ->assertJsonPath('data.schema_version', 1)
             ->assertJsonPath('meta.api_version', 'v1')
-            ->assertJsonPath('meta.binary_delivery', 'not_enabled')
+            ->assertJsonPath('meta.binary_delivery', 'canonical_by_media_id')
             ->assertJsonPath('data.products.0.product_id', 'drawer-organizer')
             ->assertJsonPath('data.products.0.gallery.0.media_id', $productHero->id)
             ->assertJsonPath('data.products.0.gallery.0.semantic_label', 'Drawer Organizer product hero')
@@ -59,6 +59,16 @@ final class ProductMediaGalleryControllerTest extends TestCase
             ->assertJsonPath('data.products.0.variants.1.variant_id', 'drawer-organizer:gray')
             ->assertJsonPath('data.products.0.variants.1.gallery_source', 'product_fallback')
             ->assertJsonPath('data.products.0.variants.1.gallery.0.media_id', $productHero->id);
+
+        $revisionToken = $response->json('data.revision_token');
+        $this->assertIsString($revisionToken);
+        $this->assertMatchesRegularExpression('/^[a-f0-9]{64}$/', $revisionToken);
+        $etag = $response->headers->get('ETag');
+        $this->assertNotNull($etag);
+        $this->withHeader('If-None-Match', $etag)
+            ->get('/api/v1/media/product-galleries')
+            ->assertStatus(304)
+            ->assertHeader('ETag', $etag);
 
         $raw = $response->getContent();
         foreach ([
@@ -75,6 +85,7 @@ final class ProductMediaGalleryControllerTest extends TestCase
             'pantone',
             'amazon',
             'target_url',
+            '/api/v1/media/assets/',
         ] as $forbidden) {
             $this->assertStringNotContainsString($forbidden, $raw);
         }

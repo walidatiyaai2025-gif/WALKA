@@ -53,7 +53,11 @@ final class SurfaceMediaControllerTest extends TestCase
             ->assertOk()
             ->assertJsonPath('data.schema_version', 1)
             ->assertJsonPath('meta.api_version', 'v1')
-            ->assertJsonPath('meta.binary_delivery', 'not_available_until_cms_035');
+            ->assertJsonPath('meta.binary_delivery', 'canonical_by_media_id');
+
+        $revisionToken = $response->json('data.revision_token');
+        $this->assertIsString($revisionToken);
+        $this->assertMatchesRegularExpression('/^[a-f0-9]{64}$/', $revisionToken);
 
         $slots = collect($response->json('data.slots'));
         $this->assertSame([
@@ -83,6 +87,7 @@ final class SurfaceMediaControllerTest extends TestCase
         $this->assertStringNotContainsString('source_reference', $raw);
         $this->assertStringNotContainsString('original_filename', $raw);
         $this->assertStringNotContainsString('supplier-private', $raw);
+        $this->assertStringNotContainsString('/api/v1/media/assets/', $raw);
 
         $etag = $response->headers->get('ETag');
         $this->assertNotNull($etag);

@@ -10,6 +10,7 @@ import '../../features/content/domain/walka_home_featured_content.dart';
 import '../../features/content/domain/walka_home_layout_content.dart';
 import '../../features/content/domain/walka_mobile_content.dart';
 import '../../features/content/domain/walka_search_presentation_content.dart';
+import '../../features/media/domain/walka_remote_media.dart';
 
 class WalkaApiSettings {
   const WalkaApiSettings({required this.baseUrl});
@@ -40,6 +41,16 @@ class WalkaApiSettings {
         ? parsed
         : parsed.replace(path: '${parsed.path}/');
     return normalized.resolve(path.replaceFirst(RegExp(r'^/+'), ''));
+  }
+
+  Uri canonicalMediaEndpoint(String mediaId) {
+    if (!RegExp(
+      r'^[0-9A-HJKMNP-TV-Z]{26}$',
+      caseSensitive: false,
+    ).hasMatch(mediaId)) {
+      throw const FormatException('Canonical media ID must be a ULID.');
+    }
+    return endpoint('/api/v1/media/assets/$mediaId/canonical');
   }
 }
 
@@ -206,6 +217,18 @@ class WalkaApiClient implements WalkaCatalogRemoteDataSource {
   Future<WalkaSearchPresentationPayload> fetchSearchPresentation() async {
     return WalkaSearchPresentationPayload.fromApiJson(
       await _getJson('/api/v1/content/search'),
+    );
+  }
+
+  Future<WalkaRemoteProductMediaPayload> fetchProductMedia() async {
+    return WalkaRemoteProductMediaPayload.fromApiJson(
+      await _getJson('/api/v1/media/product-galleries'),
+    );
+  }
+
+  Future<WalkaRemoteSurfaceMediaPayload> fetchSurfaceMedia() async {
+    return WalkaRemoteSurfaceMediaPayload.fromApiJson(
+      await _getJson('/api/v1/media/surfaces'),
     );
   }
 
