@@ -6,6 +6,9 @@ const Set<String> _allowedRemoteMediaMime = <String>{
   'image/webp',
 };
 
+const int walkaRemoteMediaMaxBytes = 16 * 1024 * 1024;
+const int walkaRemoteProductGalleryMaxItems = 8;
+
 const Map<String, List<String>> walkaSupportedProductVariants =
     <String, List<String>>{
   'drawer-organizer': <String>[
@@ -35,21 +38,27 @@ const Map<String, ({String purpose, String? categoryId})>
 class WalkaRemoteMediaItem {
   const WalkaRemoteMediaItem({
     required this.mediaId,
+    required this.position,
     required this.semanticLabel,
     required this.mime,
+    required this.bytes,
     required this.width,
     required this.height,
     required this.sha256,
   });
 
   final String mediaId;
+  final int position;
   final String semanticLabel;
   final String mime;
+  final int bytes;
   final int width;
   final int height;
   final String sha256;
 
   String get cacheKey => 'walka-media-$mediaId-$sha256';
+
+  String get expectedEtag => '"sha256-$sha256"';
 
   String get fileExtension => switch (mime) {
         'image/png' => 'png',
@@ -63,6 +72,12 @@ class WalkaRemoteMediaItem {
     if (!RegExp(r'^[0-9A-HJKMNP-TV-Z]{26}$').hasMatch(mediaId)) {
       throw const FormatException('Remote media ID must be a canonical ULID.');
     }
+    final int position = _requiredInt(
+      json,
+      'position',
+      min: 1,
+      max: walkaRemoteProductGalleryMaxItems,
+    );
     final String semanticLabel =
         _requiredString(json, 'semantic_label', maxLength: 160);
     final Object? canonicalObject = json['canonical'];
@@ -75,6 +90,12 @@ class WalkaRemoteMediaItem {
     if (!_allowedRemoteMediaMime.contains(mime)) {
       throw const FormatException('Unsupported remote media MIME type.');
     }
+    final int bytes = _requiredInt(
+      canonical,
+      'bytes',
+      min: 1,
+      max: walkaRemoteMediaMaxBytes,
+    );
     final int width = _requiredInt(canonical, 'width', min: 1, max: 8192);
     final int height = _requiredInt(canonical, 'height', min: 1, max: 8192);
     final String sha256 =
@@ -85,8 +106,10 @@ class WalkaRemoteMediaItem {
 
     return WalkaRemoteMediaItem(
       mediaId: mediaId,
+      position: position,
       semanticLabel: semanticLabel,
       mime: mime,
+      bytes: bytes,
       width: width,
       height: height,
       sha256: sha256,
@@ -95,9 +118,11 @@ class WalkaRemoteMediaItem {
 
   Map<String, dynamic> toJson() => <String, dynamic>{
         'media_id': mediaId,
+        'position': position,
         'semantic_label': semanticLabel,
         'canonical': <String, dynamic>{
           'mime': mime,
+          'bytes': bytes,
           'width': width,
           'height': height,
           'sha256': sha256,
@@ -174,7 +199,7 @@ class WalkaRemoteProductMediaPayload {
         }
         galleries[variantId] = _parseMediaItems(
           _requiredList(variant, 'gallery'),
-          maxItems: 12,
+          maxItems: walkaRemoteProductGalleryMaxItems,
         );
       }
       if (!setEquals(seenVariants, expectedVariants.toSet())) {
@@ -204,8 +229,11 @@ class WalkaRemoteProductMediaPayload {
   ) {
     final String revisionToken = _requiredSha(json, 'revision_token');
     final Map<String, dynamic> raw = _requiredMap(json, 'galleries_by_variant');
-    if (!setEquals(raw.keys.toSet(),
-        walkaSupportedProductVariants.values.expand((List<String> ids) => ids).toSet())) {
+    if (!setEquals(
+        raw.keys.toSet(),
+        walkaSupportedProductVariants.values
+            .expand((List<String> ids) => ids)
+            .toSet())) {
       throw const FormatException('Cached product media identity set mismatch.');
     }
     return WalkaRemoteProductMediaPayload(
@@ -213,7 +241,10 @@ class WalkaRemoteProductMediaPayload {
       galleriesByVariant: raw.map(
         (String key, Object? value) => MapEntry(
           key,
-          _parseMediaItems(_asList(value, 'cached gallery'), maxItems: 12),
+          _parseMediaItems(
+            _asList(value, 'cached gallery'),
+            maxItems: walkaRemoteProductGalleryMaxItems,
+          ),
         ),
       ),
     );
@@ -274,7 +305,8 @@ class WalkaRemoteSurfaceMediaPayload {
         maxItems: 1,
       );
     }
-    if (!setEquals(itemsBySlot.keys.toSet(), walkaSupportedRemoteMediaSlots.keys.toSet())) {
+    if (!setEquals(
+        itemsBySlot.keys.toSet(), walkaSupportedRemoteMediaSlots.keys.toSet())) {
       throw const FormatException('Surface media slot identity set mismatch.');
     }
 
@@ -359,6 +391,7 @@ List<WalkaRemoteMediaItem> _parseMediaItems(
   }
   final List<WalkaRemoteMediaItem> items = <WalkaRemoteMediaItem>[];
   final Set<String> ids = <String>{};
+  int expectedPosition = 1;
   for (final Object? value in raw) {
     if (value is! Map) {
       throw const FormatException('Remote media item must be an object.');
@@ -367,6 +400,11 @@ List<WalkaRemoteMediaItem> _parseMediaItems(
         WalkaRemoteMediaItem.fromJson(Map<String, dynamic>.from(value));
     if (!ids.add(item.mediaId)) {
       throw const FormatException('Duplicate remote media ID in one gallery.');
+    }
+    if (item.position != expectedPosition++) {
+      throw const FormatException(
+        'Remote media positions must be contiguous from one.',
+      );
     }
     items.add(item);
   }
