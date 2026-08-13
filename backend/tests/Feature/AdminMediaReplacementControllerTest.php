@@ -46,9 +46,26 @@ final class AdminMediaReplacementControllerTest extends TestCase
 
     public function test_replacement_workspace_and_mutations_are_dashboard_protected(): void
     {
+        $source = $this->admittedAsset('protected-source', MediaAssetPurpose::Product);
+        $replacement = $this->admittedAsset('protected-replacement', MediaAssetPurpose::Product);
+        $this->galleries->replaceProductGallery(
+            'drawer-organizer',
+            [$source->id],
+            ProductMediaGalleryService::fingerprint([]),
+            $this->actor,
+        );
+        $event = $this->replacements->replace(
+            $source,
+            $replacement,
+            $this->replacements->assignmentFingerprint($source),
+            $this->actor,
+            'Create real event for route protection test',
+        );
+        $this->assertNotNull($event);
+
         $this->get('/admin/media/replacements')->assertRedirect(route('admin.login'));
         $this->post('/admin/media/replacements')->assertRedirect(route('admin.login'));
-        $this->post('/admin/media/replacements/01ARZ3NDEKTSV4RRFFQ69G5FAV/rollback')
+        $this->post(route('admin.media.replacements.rollback', ['event' => $event->id]))
             ->assertRedirect(route('admin.login'));
     }
 
