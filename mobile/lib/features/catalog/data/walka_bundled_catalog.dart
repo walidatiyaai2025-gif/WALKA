@@ -14,6 +14,7 @@ abstract final class WalkaBundledCatalog {
           id: 'drawer-organizer',
           name: 'WALKA Drawer Organizer',
           category: 'drawer-organization',
+          presentationOrder: 0,
           features: const <String>[
             '8 compartments',
             'Expandable to 22.4 in',
@@ -32,12 +33,14 @@ abstract final class WalkaBundledCatalog {
               color: 'White',
               asin: 'B0FQN4DCTG',
               purchaseUrl: 'https://www.amazon.com/dp/B0FQN4DCTG',
+              presentationOrder: 0,
             ),
             WalkaCatalogVariant(
               id: 'drawer-organizer:gray',
               color: 'Gray',
               asin: 'B0FQN4L2ZD',
               purchaseUrl: 'https://www.amazon.com/dp/B0FQN4L2ZD',
+              presentationOrder: 1,
             ),
           ],
         ),
@@ -45,6 +48,7 @@ abstract final class WalkaBundledCatalog {
           id: 'stainless-steel-bento-lunch-box',
           name: 'WALKA Large Stainless Steel Bento Lunch Box for Adults',
           category: 'lunch',
+          presentationOrder: 1,
           features: const <String>[
             '1200 ml',
             '4 compartments',
@@ -90,6 +94,7 @@ abstract final class WalkaBundledCatalog {
               asin: 'B0FQN4L8MW',
               pantone: 'PANTONE 4155 U',
               purchaseUrl: 'https://www.amazon.com/dp/B0FQN4L8MW',
+              presentationOrder: 0,
             ),
             WalkaCatalogVariant(
               id: 'lunch-box:pink',
@@ -97,6 +102,7 @@ abstract final class WalkaBundledCatalog {
               asin: 'B0FQN3W4SF',
               pantone: 'PANTONE 9242 U',
               purchaseUrl: 'https://www.amazon.com/dp/B0FQN3W4SF',
+              presentationOrder: 1,
             ),
             WalkaCatalogVariant(
               id: 'lunch-box:green',
@@ -104,6 +110,7 @@ abstract final class WalkaBundledCatalog {
               asin: 'B0GPZNKF9F',
               pantone: 'PANTONE 6198 U',
               purchaseUrl: 'https://www.amazon.com/dp/B0GPZNKF9F',
+              presentationOrder: 2,
             ),
           ],
         ),
