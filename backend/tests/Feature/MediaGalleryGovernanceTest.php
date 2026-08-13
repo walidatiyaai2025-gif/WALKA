@@ -20,9 +20,13 @@ final class MediaGalleryGovernanceTest extends TestCase
     use RefreshDatabase;
 
     private MediaGalleryService $service;
+
     private Product $product;
+
     private ProductVariant $variant;
+
     private string $actor;
+
     private array $session;
 
     protected function setUp(): void
@@ -59,6 +63,26 @@ final class MediaGalleryGovernanceTest extends TestCase
         $this->get('/admin/media/galleries')->assertRedirect(route('admin.login'));
         $this->put('/admin/media/galleries/products/'.$this->product->id)->assertRedirect(route('admin.login'));
         $this->put('/admin/media/galleries/variants/'.$this->variant->id)->assertRedirect(route('admin.login'));
+    }
+
+    public function test_unknown_targets_and_media_fail_closed(): void
+    {
+        $this->getJson('/api/v1/media/galleries/products/missing-product')->assertNotFound();
+        $this->getJson('/api/v1/media/galleries/variants/missing-variant')->assertNotFound();
+
+        try {
+            $this->service->replaceProductGallery(
+                $this->product,
+                [['media_asset_id' => '01J00000000000000000000000', 'position' => 0]],
+                0,
+                $this->actor,
+            );
+            $this->fail('Expected unknown media rejection.');
+        } catch (ValidationException $exception) {
+            $this->assertArrayHasKey('items', $exception->errors());
+        }
+
+        $this->assertSame(0, MediaGallery::query()->count());
     }
 
     public function test_product_gallery_is_atomic_ordered_and_revision_guarded(): void
