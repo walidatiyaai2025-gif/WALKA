@@ -52,7 +52,7 @@ final class AdminMediaGalleryControllerTest extends TestCase
         $this->withSession($this->session)
             ->get(route('admin.media.galleries.index'))
             ->assertOk()
-            ->assertSee('Product & variant galleries')
+            ->assertSeeText('Product & variant galleries')
             ->assertSee($first->semantic_label)
             ->assertSee('drawer-organizer')
             ->assertSee('lunch-box:blue');
