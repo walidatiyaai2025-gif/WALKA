@@ -1,0 +1,83 @@
+name: Pink Canonical Re-extraction Proof
+
+on:
+  push:
+    branches:
+      - 'agent/pinkfix-*'
+  pull_request:
+    paths:
+      - 'design_sources/pink/**'
+      - 'mobile/assets/products/lunch/pink.png'
+      - 'mobile/tool/pinkfix_source_reextract.py'
+      - 'mobile/tool/pinkfix_requirements.txt'
+      - 'mobile/test/pinkfix_001_100_canonical_reextract_test.dart'
+      - 'docs/ui/PINK_SOURCE_EXTRACTION_CONTRACT.json'
+      - 'docs/ui/PRODUCTION_SOURCE_ADMISSION.json'
+      - 'docs/ui/PRODUCTION_ASSET_PROVENANCE.json'
+      - 'docs/work/PINKFIX_001_100_RECEIPT.json'
+
+permissions:
+  contents: read
+
+jobs:
+  reproduce-and-prove:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+
+      - name: Install pinned image toolchain
+        run: python -m pip install --disable-pip-version-check -r mobile/tool/pinkfix_requirements.txt
+
+      - name: Reproduce Pink canonical byte-for-byte
+        shell: bash
+        run: |
+          set -euo pipefail
+          python mobile/tool/pinkfix_source_reextract.py \
+            --source design_sources/pink/1000389975.jpg \
+            --output /tmp/pink-reproduced.png \
+            --receipt /tmp/pink-reproduction-receipt.json
+          cmp /tmp/pink-reproduced.png mobile/assets/products/lunch/pink.png
+          echo '1667519c9a1931f16c8d26acefbed65e1f39ae7820ac58551de71a61a580d7fb  /tmp/pink-reproduced.png' | sha256sum -c -
+          echo '11a6020417067a8a1869eff1df90d0843f1e068a6cdc06d25e5c92abb1d2e3f5  design_sources/pink/1000389975.jpg' | sha256sum -c -
+
+      - name: Render direct review stages
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          from PIL import Image
+          image = Image.open('/tmp/pink-reproduced.png').convert('RGBA')
+          out = Path('/tmp/pink-proof')
+          out.mkdir(parents=True, exist_ok=True)
+          for name, background in [
+              ('white', (255,255,255,255)),
+              ('ivory', (248,246,239,255)),
+              ('navy', (0,51,102,255)),
+          ]:
+              stage = Image.new('RGBA', image.size, background)
+              stage.alpha_composite(image)
+              stage.convert('RGB').save(out / f'pink-{name}.png')
+          for size in [96, 160, 240, 384]:
+              scaled = image.resize((size,size), Image.Resampling.LANCZOS)
+              stage = Image.new('RGBA', (size,size), (0,51,102,255))
+              stage.alpha_composite(scaled)
+              stage.convert('RGB').save(out / f'pink-navy-{size}.png')
+          PY
+
+      - name: Upload Pink proof receipt and review stages
+        uses: actions/upload-artifact@v4
+        with:
+          name: pinkfix-proof-${{ github.sha }}
+          path: |
+            /tmp/pink-reproduction-receipt.json
+            /tmp/pink-proof/*.png
+          if-no-files-found: error
+          retention-days: 14
