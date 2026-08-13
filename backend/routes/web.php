@@ -10,6 +10,7 @@ use App\Http\Controllers\Admin\AdminHomeLayoutController;
 use App\Http\Controllers\Admin\AdminMediaController;
 use App\Http\Controllers\Admin\AdminMediaGalleryController;
 use App\Http\Controllers\Admin\AdminSearchPresentationController;
+use App\Http\Controllers\Admin\AdminSurfaceMediaController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -43,6 +44,11 @@ Route::prefix('admin')
             Route::put('/media/galleries/variants/{variant}', [AdminMediaGalleryController::class, 'updateVariant'])
                 ->where('variant', '.*')
                 ->name('media.galleries.variants.update');
+            Route::get('/media/surfaces', [AdminSurfaceMediaController::class, 'index'])
+                ->name('media.surfaces.index');
+            Route::patch('/media/surfaces/{slot}', [AdminSurfaceMediaController::class, 'update'])
+                ->where('slot', '.*')
+                ->name('media.surfaces.update');
 
             Route::get('/content', [AdminContentController::class, 'index'])->name('content.index');
             Route::post('/content', [AdminContentController::class, 'store'])->name('content.store');
