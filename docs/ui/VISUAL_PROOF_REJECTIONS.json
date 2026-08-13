@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "policy": {
+    "automationCanAcceptVisualFidelity": false,
+    "ownerVisualAcceptanceRequired": true,
+    "knownRejectedBinaryMustNeverBeAdmitted": true
+  },
+  "rejections": [
+    {
+      "variantId": "lunch-box:pink",
+      "sha256": "84b1c5b44980c29bf22ff88cafc747454d4caf8612209daa84edfc2e3f3a11ae",
+      "byteSize": 748350,
+      "width": 1024,
+      "height": 1024,
+      "alphaBoundingBox": [51, 161, 972, 862],
+      "surface": "navy",
+      "disposition": "REJECTED_WHITE_HALO_AND_BACKGROUND_CONTAMINATION",
+      "sourceMainCommit": "cd6bb64c1b37af97e274f42ce5752ac110ecdc77",
+      "workflowRun": 31625699344,
+      "artifactId": 9153009337,
+      "reason": "Direct current-main render on WALKA Navy exposed unacceptable white halo/background contamination around the product set and accessories."
+    }
+  ]
+}
