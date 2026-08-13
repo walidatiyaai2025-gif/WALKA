@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Enums\MediaAssetLifecycle;
 use App\Enums\MediaAssetPurpose;
 use App\Enums\MediaDerivativeKind;
 use App\Exceptions\MediaGalleryRevisionConflictException;
@@ -115,12 +116,15 @@ final class MediaGalleryServiceTest extends TestCase
         $draft = $this->draftAsset('h');
         $wrongPurpose = $this->admittedAsset('i', MediaAssetPurpose::Home);
         $missingCanonical = $this->draftAsset('j');
-        $this->media->admit($missingCanonical, $this->actor);
+        $missingCanonical->forceFill([
+            'lifecycle' => MediaAssetLifecycle::Admitted,
+            'admitted_at' => now(),
+        ])->save();
         $product = Product::query()->findOrFail('drawer-organizer');
 
         $this->galleries->replaceProductGallery($product, [$valid->id], 0, $this->actor);
 
-        foreach ([$draft, $wrongPurpose] as $invalid) {
+        foreach ([$draft, $wrongPurpose, $missingCanonical] as $invalid) {
             try {
                 $this->galleries->replaceProductGallery($product, [$invalid->id], 1, $this->actor);
                 $this->fail('Ineligible media must fail assignment.');
