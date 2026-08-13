@@ -44,7 +44,10 @@ class WalkaApiSettings {
   }
 
   Uri canonicalMediaEndpoint(String mediaId) {
-    if (!RegExp(r'^[0-9A-HJKMNP-TV-Z]{26}$').hasMatch(mediaId)) {
+    if (!RegExp(
+      r'^[0-9A-HJKMNP-TV-Z]{26}$',
+      caseSensitive: false,
+    ).hasMatch(mediaId)) {
       throw const FormatException('Canonical media ID must be a ULID.');
     }
     return endpoint('/api/v1/media/assets/$mediaId/canonical');
