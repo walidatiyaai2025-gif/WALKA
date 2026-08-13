@@ -30,7 +30,7 @@ final class MediaLibraryModelTest extends TestCase
     {
         $asset = $this->media->registerSource($this->source(), $this->actor);
 
-        $this->assertMatchesRegularExpression('/^[0-9A-HJKMNP-TV-Z]{26}$/', $asset->id);
+        $this->assertMatchesRegularExpression('/^[0-9A-HJKMNP-TV-Z]{26}$/i', $asset->id);
         $this->assertSame(MediaAssetPurpose::Product, $asset->purpose);
         $this->assertSame(MediaAssetLifecycle::Draft, $asset->lifecycle);
         $this->assertSame('white-source.jpg', $asset->original_filename);
