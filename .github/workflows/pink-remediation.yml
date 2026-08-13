@@ -1,0 +1,98 @@
+name: Pink Remediation Review Candidate
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - 'agent/pink-remediate-*'
+    paths:
+      - 'mobile/tool/src/pink_edge_matte.dart'
+      - 'mobile/tool/src/png_rgba_encoder.dart'
+      - 'mobile/tool/remediate_pink_edge_matte.dart'
+      - 'mobile/test/pink_edge_matte_test.dart'
+      - 'mobile/assets/products/lunch/pink.png'
+      - '.github/workflows/pink-remediation.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'mobile/tool/src/pink_edge_matte.dart'
+      - 'mobile/tool/src/png_rgba_encoder.dart'
+      - 'mobile/tool/remediate_pink_edge_matte.dart'
+      - 'mobile/test/pink_edge_matte_test.dart'
+      - 'mobile/assets/products/lunch/pink.png'
+      - '.github/workflows/pink-remediation.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pink-remediation-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  review-candidate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Guard protected reference masters
+        shell: bash
+        env:
+          BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+        run: bash mobile/tool/guard_protected_reference_masters.sh "$BASE_SHA"
+
+      - name: Setup Flutter stable
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Get packages
+        working-directory: mobile
+        run: flutter pub get
+
+      - name: Run Pink remediation regressions
+        working-directory: mobile
+        run: flutter test test/pink_edge_matte_test.dart --reporter expanded
+
+      - name: Generate review-only candidate
+        working-directory: mobile
+        run: dart run tool/remediate_pink_edge_matte.dart
+
+      - name: Summarize review candidate
+        working-directory: mobile
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+          r = json.loads(Path('build/pink-remediation/receipt.json').read_text())
+          before = r['vproofBefore']
+          after = r['vproofAfter']
+          summary = Path(os.environ['GITHUB_STEP_SUMMARY'])
+          with summary.open('a', encoding='utf-8') as out:
+              out.write('### Pink remediation review candidate\n\n')
+              out.write(f"- Mode: **{r['mode']}**\n")
+              out.write(f"- Edge pixels changed: **{r['transform']['changedPixelCount']}**\n")
+              out.write(f"- VPROOF mismatch pixels: **{before['mismatchNearWhitePartialEdgeCount']} -> {after['mismatchNearWhitePartialEdgeCount']}**\n")
+              out.write(f"- Alpha plane preserved: **{r['alphaPlanePreserved']}**\n")
+              out.write(f"- Alpha bounds preserved: **{r['alphaBoundingBoxPreserved']}**\n")
+              out.write('- Canonical runtime asset modified: **NO**\n')
+              out.write('- Owner visual acceptance: **REQUIRED**\n')
+          PY
+
+      - name: Upload Pink review candidate
+        uses: actions/upload-artifact@v4
+        with:
+          name: pink-remediation-${{ github.sha }}
+          path: |
+            mobile/build/pink-remediation/pink-edge-cleaned.png
+            mobile/build/pink-remediation/receipt.json
+          if-no-files-found: error
+          retention-days: 14
