@@ -237,7 +237,7 @@ final class MediaGalleryService
     private function eligibleAssets(array $assetIds): EloquentCollection
     {
         if ($assetIds === []) {
-            return new EloquentCollection();
+            return new EloquentCollection;
         }
 
         $assets = MediaAsset::query()
