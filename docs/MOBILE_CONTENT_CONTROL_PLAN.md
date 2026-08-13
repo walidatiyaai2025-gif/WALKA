@@ -1,6 +1,6 @@
 # WALKA Backend-First Mobile Content Control Plan
 
-Last updated: 2026-08-12
+Last updated: 2026-08-13
 Owner direction: **Every mobile-facing value that can be changed safely without shipping a new app build should be controlled from the WALKA backend/dashboard.**
 Tracking: #278
 
@@ -39,12 +39,15 @@ The owner workflow is:
 
 ### Current implementation milestone
 
-The generic CMS foundation is now delivered through CMS-003:
+The generic CMS foundation and first Home control plane are now delivered through CMS-022, with CMS-023 implementing scheduled announcements:
 
 - **CMS-001 completed** — stable content keys/types, draft/published snapshots, optimistic revisions, immutable history and restore primitives.
 - **CMS-002 completed** — protected `/admin/content` registry, draft editor, preview, explicit publish, history and restore controls.
 - **CMS-003 completed** — allowlisted published Home content API plus Flutter remote -> last-known-good cache -> bundled fallback and live Home Hero rendering.
-- **CMS-020 is code-complete and validating in #292 / PR #293** — first owner-friendly typed Home Hero editor, eliminating raw JSON for this surface.
+- **CMS-020 completed** — owner-friendly typed Home Hero editor (#292 / PR #293).
+- **CMS-021 completed** — owner-controlled approved Home section ordering/visibility with compiled Flutter components only (#294 / PR #295).
+- **CMS-022 completed** — owner-controlled featured product/variant membership and ordering using stable catalog IDs with runtime catalog validation (#296 / PR #311).
+- **CMS-023 implementing** — one governed Home announcement/promo banner with enabled state, UTC start/end schedule, compiled CTA routing and offline schedule enforcement (#313 / PR #314).
 
 ## 2. What must become backend-controlled
 
@@ -203,10 +206,10 @@ This program is a **P0 backend/mobile architecture priority**. New mobile presen
 
 | ID | Priority | Scope | Status |
 |---|---|---|---|
-| CMS-020 | P0 | Typed Home Hero editor on CMS-001..003 foundation | 🟡 VALIDATING · #292 / PR #293 |
-| CMS-021 | P0 | Home section block model, ordering and visibility | TODO |
-| CMS-022 | P0 | Featured collections/products/variants | TODO |
-| CMS-023 | P0 | Announcement/promo banners + scheduling | TODO |
+| CMS-020 | P0 | Typed Home Hero editor on CMS-001..003 foundation | ✅ COMPLETED · #292 / PR #293 |
+| CMS-021 | P0 | Home section block model, ordering and visibility | ✅ COMPLETED · #294 / PR #295 |
+| CMS-022 | P0 | Featured collections/products/variants | ✅ COMPLETED · #296 / PR #311 |
+| CMS-023 | P0 | Announcement/promo banners + scheduling | 🟡 IMPLEMENTING · #313 / PR #314 |
 | CMS-024 | P0 | Categories display metadata/order/visibility | TODO |
 | CMS-025 | P0 | Search/discovery presentation copy and configurable merchandising | TODO |
 
@@ -268,10 +271,13 @@ Keep `/api/v1` backward compatible. Current and planned additive surfaces includ
 
 ```text
 GET /api/v1/catalog
-GET /api/v1/content/home        # delivered by CMS-003
-GET /api/v1/content/categories  # planned
-GET /api/v1/content/information # planned
-GET /api/v1/app-config          # planned
+GET /api/v1/content/home           # CMS-003 / CMS-020
+GET /api/v1/content/home-layout    # CMS-021
+GET /api/v1/content/home-featured  # CMS-022
+GET /api/v1/content/home-banner    # CMS-023
+GET /api/v1/content/categories     # planned
+GET /api/v1/content/information    # planned
+GET /api/v1/app-config             # planned
 ```
 
 Every dynamic response must carry enough schema/revision metadata for deterministic validation, caching and rollback-safe mobile behavior.

@@ -31,11 +31,11 @@
         <p class="muted">Choose approved catalog variants for Home collection/editorial slots.</p>
         <a class="btn navy section-space" href="{{ route('admin.content.home.featured.edit') }}">Edit Featured →</a>
     </section>
-    <section class="card">
-        <p class="eyebrow">SAFETY MODEL</p>
-        <h2>Draft → Publish</h2>
-        <p class="muted">Nothing reaches public clients until an explicit typed publish passes validation.</p>
-        <span class="badge good section-space">REVISION PROTECTED</span>
+    <section class="card" style="border-color:#eadba8;background:linear-gradient(135deg,#fffefb,#fbf6e7)">
+        <p class="eyebrow">SCHEDULED ANNOUNCEMENT</p>
+        <h2>Home Banner</h2>
+        <p class="muted">Publish one safe announcement and let its UTC window control visibility automatically.</p>
+        <a class="btn primary section-space" href="{{ route('admin.content.home.banner.edit') }}">Edit Banner →</a>
     </section>
 </div>
 
@@ -79,6 +79,8 @@
                                     <a class="btn secondary" href="{{ route('admin.content.home.layout.edit') }}">Typed editor</a>
                                 @elseif ($entry->content_key === 'home.featured' && $entry->content_type === 'home.featured')
                                     <a class="btn secondary" href="{{ route('admin.content.home.featured.edit') }}">Typed editor</a>
+                                @elseif ($entry->content_key === 'home.banner' && $entry->content_type === 'home.banner')
+                                    <a class="btn secondary" href="{{ route('admin.content.home.banner.edit') }}">Typed editor</a>
                                 @else
                                     <a class="btn secondary" href="{{ route('admin.content.show', ['content' => $entry->id]) }}">Open</a>
                                 @endif

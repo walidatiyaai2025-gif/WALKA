@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Models\ContentEntry;
+use App\Services\Content\HomeBannerContentDefinition;
 use App\Services\Content\HomeFeaturedCatalogValidator;
 use App\Services\Content\HomeFeaturedContentDefinition;
 use App\Services\Content\HomeHeroContentDefinition;
@@ -61,8 +62,27 @@ final class PublishedContentController extends Controller
         );
     }
 
+    public function homeBanner(Request $request): JsonResponse|Response
+    {
+        return $this->publishedResponse(
+            request: $request,
+            key: HomeBannerContentDefinition::KEY,
+            type: HomeBannerContentDefinition::TYPE,
+            schemaVersion: HomeBannerContentDefinition::SCHEMA_VERSION,
+            etagFamily: 'home-banner',
+            notPublishedMessage: 'Published Home banner is not available.',
+            invalidMessage: 'Published Home banner failed its delivery contract.',
+            normalize: HomeBannerContentDefinition::validateAndNormalize(...),
+            extraMeta: fn (array $payload): array => [
+                'active' => HomeBannerContentDefinition::isActiveAt($payload),
+                'schedule_evaluated_at' => now()->utc()->toIso8601ZuluString(),
+            ],
+        );
+    }
+
     /**
      * @param  callable(array<string, mixed>): array<string, mixed>  $normalize
+     * @param  callable(array<string, mixed>): array<string, mixed>|null  $extraMeta
      */
     private function publishedResponse(
         Request $request,
@@ -73,6 +93,7 @@ final class PublishedContentController extends Controller
         string $notPublishedMessage,
         string $invalidMessage,
         callable $normalize,
+        ?callable $extraMeta = null,
     ): JsonResponse|Response {
         $entry = ContentEntry::query()
             ->where('content_key', $key)
@@ -91,6 +112,7 @@ final class PublishedContentController extends Controller
 
         try {
             $publicPayload = $normalize($entry->published_payload);
+            $additionalMeta = $extraMeta === null ? [] : $extraMeta($publicPayload);
         } catch (ValidationException) {
             return response()->json([
                 'error' => [
@@ -119,9 +141,9 @@ final class PublishedContentController extends Controller
                 'published_at' => $entry->published_at?->toIso8601String(),
                 'payload' => $publicPayload,
             ],
-            'meta' => [
+            'meta' => array_merge([
                 'api_version' => 'v1',
-            ],
+            ], $additionalMeta),
         ])->header('ETag', $etag)
             ->header('Cache-Control', $cacheControl);
     }
