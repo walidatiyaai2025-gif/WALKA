@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "issue": 326,
   "parentVisualBlocker": 230,
   "namespace": "PINKFIX",
@@ -31,7 +31,11 @@
     "sha256": "11a6020417067a8a1869eff1df90d0843f1e068a6cdc06d25e5c92abb1d2e3f5",
     "byteSize": 189515,
     "dimensions": [695, 1536],
-    "approvedPanel": [28, 760, 647, 575]
+    "approvedPanel": [28, 760, 647, 575],
+    "custody": "OWNER_FILE_LIBRARY_EXTERNAL",
+    "repositorySourcePresent": false,
+    "ownerLibraryFingerprintVerified": true,
+    "ownerLibraryDimensionsVerified": true
   },
   "canonical": {
     "path": "mobile/assets/products/lunch/pink.png",
@@ -46,7 +50,10 @@
     "tool": "mobile/tool/pinkfix_source_reextract.py",
     "requirements": "mobile/tool/pinkfix_requirements.txt",
     "byteForByteReproduction": true,
-    "marketplacePixelsOutsideApprovedPanelExcluded": true
+    "marketplacePixelsOutsideApprovedPanelExcluded": true,
+    "ciProofMode": "EXTERNAL_SOURCE_CUSTODY_CANONICAL_LOCK",
+    "fullRepositorySourceReproductionIsConditional": true,
+    "noSourceBytesFabricatedForCi": true
   },
   "visualProof": {
     "algorithm": "edge-interior-mismatch-v2",
