@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\AdminHomeHeroController;
 use App\Http\Controllers\Admin\AdminHomeLayoutController;
 use App\Http\Controllers\Admin\AdminMediaController;
 use App\Http\Controllers\Admin\AdminMediaGalleryController;
+use App\Http\Controllers\Admin\AdminMediaReplacementController;
 use App\Http\Controllers\Admin\AdminSearchPresentationController;
 use App\Http\Controllers\Admin\AdminSurfaceMediaController;
 use Illuminate\Support\Facades\Route;
@@ -49,6 +50,12 @@ Route::prefix('admin')
             Route::patch('/media/surfaces/{slot}', [AdminSurfaceMediaController::class, 'update'])
                 ->where('slot', '.*')
                 ->name('media.surfaces.update');
+            Route::get('/media/replacements', [AdminMediaReplacementController::class, 'index'])
+                ->name('media.replacements.index');
+            Route::post('/media/replacements', [AdminMediaReplacementController::class, 'store'])
+                ->name('media.replacements.store');
+            Route::post('/media/replacements/{event}/rollback', [AdminMediaReplacementController::class, 'rollback'])
+                ->name('media.replacements.rollback');
 
             Route::get('/content', [AdminContentController::class, 'index'])->name('content.index');
             Route::post('/content', [AdminContentController::class, 'store'])->name('content.store');

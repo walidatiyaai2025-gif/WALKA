@@ -12,7 +12,8 @@
     </div>
     <div class="actions">
         <a class="btn secondary" href="{{ route('admin.media.galleries.index') }}">Product galleries →</a>
-        <a class="btn primary" href="{{ route('admin.media.surfaces.index') }}">Home & category media →</a>
+        <a class="btn secondary" href="{{ route('admin.media.surfaces.index') }}">Home & category media →</a>
+        <a class="btn primary" href="{{ route('admin.media.replacements.index') }}">Replacement history →</a>
     </div>
 </div>
 
@@ -77,6 +78,7 @@
         <div class="stack section-space">
             <div class="locked"><small>Lifecycle</small><strong>Every successful upload remains Draft. Admission still requires a validated canonical derivative and an explicit governed action.</strong></div>
             <div class="locked"><small>Assignments</small><strong>Product galleries accept admitted Product media; Home/category/editorial slots accept only their compiled purpose-specific media.</strong></div>
+            <div class="locked"><small>Replacement</small><strong>Replacement history changes governed references only and never mutates source or derivative bytes.</strong></div>
             <div class="locked"><small>Runtime</small><strong>No file is copied to <code>mobile/assets/products/**</code>, no protected <code>Images/</code> file is changed, and no public media URL is created here.</strong></div>
             <div class="locked"><small>Product truth</small><strong>Product Master IDs, ASINs, Pantones, variant geometry and Amazon destinations remain outside this editor.</strong></div>
         </div>
