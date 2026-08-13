@@ -7,7 +7,6 @@ use App\Models\MediaAsset;
 use App\Models\MediaDerivative;
 use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Support\Facades\Storage;
-use RuntimeException;
 use Throwable;
 
 final class CanonicalMediaDeliveryService
@@ -141,7 +140,3 @@ final class CanonicalMediaDeliveryService
         }
     }
 }
-
-final class CanonicalMediaUnavailableException extends RuntimeException {}
-
-final class CanonicalMediaIntegrityException extends RuntimeException {}
