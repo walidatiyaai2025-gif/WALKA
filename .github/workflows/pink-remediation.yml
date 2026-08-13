@@ -70,11 +70,13 @@ jobs:
         run: |
           python3 - <<'PY'
           import json
+          import os
           from pathlib import Path
           r = json.loads(Path('build/pink-remediation/receipt.json').read_text())
           before = r['vproofBefore']
           after = r['vproofAfter']
-          with open(Path('${GITHUB_STEP_SUMMARY}'), 'a', encoding='utf-8') as out:
+          summary = Path(os.environ['GITHUB_STEP_SUMMARY'])
+          with summary.open('a', encoding='utf-8') as out:
               out.write('### Pink remediation review candidate\n\n')
               out.write(f"- Mode: **{r['mode']}**\n")
               out.write(f"- Edge pixels changed: **{r['transform']['changedPixelCount']}**\n")
