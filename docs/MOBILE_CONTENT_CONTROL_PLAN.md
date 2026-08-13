@@ -39,7 +39,7 @@ The owner workflow is:
 
 ### Current implementation milestone
 
-The generic CMS foundation plus governed Home, Categories and Search control planes are delivered through CMS-025. The production-media control plane now includes CMS-030 storage/lifecycle, CMS-031 byte-validated private upload quarantine, CMS-032 governed product/variant gallery assignment and ordering, and CMS-033 governed Home/category/editorial media assignment. CMS-034 media revision/audit/replacement/rollback is the next media-control slice. These controls do not bypass #230 production-asset admission truth:
+The generic CMS foundation plus governed Home, Categories and Search control planes are delivered through CMS-025. The production-media control plane now includes CMS-030 storage/lifecycle, CMS-031 byte-validated private upload quarantine, CMS-032 governed product/variant gallery assignment and ordering, CMS-033 governed Home/category/editorial media assignment, and CMS-034 immutable media replacement/audit/rollback. CMS-035 verified remote binary delivery, Flutter integrity verification, caching and bundled fallback is now the active next media-control slice under #341. These controls do not bypass #230 production-asset admission truth:
 
 - **CMS-001 completed** — stable content keys/types, draft/published snapshots, optimistic revisions, immutable history and restore primitives.
 - **CMS-002 completed** — protected `/admin/content` registry, draft editor, preview, explicit publish, history and restore controls.
@@ -54,6 +54,8 @@ The generic CMS foundation plus governed Home, Categories and Search control pla
 - **CMS-031 completed** — protected byte-validated PNG/JPEG/WebP upload quarantine with server-derived integrity metadata and Draft-only registration (#322 / PR #325).
 - **CMS-032 completed** — admitted Product media assignment and deterministic ordering for stable product/variant galleries (#329 / PR #330).
 - **CMS-033 completed** — governed allowlisted Home, category and editorial media assignments with purpose/lifecycle/canonical validation and fail-closed public metadata (#333 / PR #335).
+- **CMS-034 completed** — immutable reasoned media replacement/rollback across governed assignments with safe same-current no-op, stale-write protection and private audit history (#336 / PR #340).
+- **CMS-035 implementing** — verified canonical binary delivery plus Flutter metadata/binary integrity verification, cache and deterministic bundled fallback (#341).
 
 ## 2. What must become backend-controlled
 
@@ -227,8 +229,8 @@ This program is a **P0 backend/mobile architecture priority**. New mobile presen
 | CMS-031 | P0 | Upload validation: type, dimensions, file size, integrity | ✅ COMPLETED · #322 / PR #325 |
 | CMS-032 | P0 | Product/variant gallery assignment and ordering | ✅ COMPLETED · #329 / PR #330 |
 | CMS-033 | P0 | Home/category/editorial media assignment | ✅ COMPLETED · #333 / PR #335 |
-| CMS-034 | P0 | Media revision/audit/replacement/rollback | TODO |
-| CMS-035 | P0 | Flutter remote-media loading, caching, failure fallback and semantics | TODO |
+| CMS-034 | P0 | Media revision/audit/replacement/rollback | ✅ COMPLETED · #336 / PR #340 |
+| CMS-035 | P0 | Flutter remote-media loading, caching, failure fallback and semantics | 🔄 IMPLEMENTING · #341 |
 
 ### Phase E — Information, support and remote app configuration
 
