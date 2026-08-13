@@ -39,7 +39,7 @@ The owner workflow is:
 
 ### Current implementation milestone
 
-The generic CMS foundation plus governed Home, Categories and Search control planes are delivered through CMS-025. The production-media control plane now includes the CMS-030 storage/lifecycle foundation and CMS-031 byte-validated private upload quarantine; CMS-032 is implementing governed product/variant gallery assignment and ordering. These controls do not bypass #230 production-asset admission truth:
+The generic CMS foundation plus governed Home, Categories and Search control planes are delivered through CMS-025. The production-media control plane now includes CMS-030 storage/lifecycle, CMS-031 byte-validated private upload quarantine, and CMS-032 governed product/variant gallery assignment and ordering. CMS-033 Home/category/editorial media assignment is now being coordinated on existing team branches rather than duplicated. These controls do not bypass #230 production-asset admission truth:
 
 - **CMS-001 completed** — stable content keys/types, draft/published snapshots, optimistic revisions, immutable history and restore primitives.
 - **CMS-002 completed** — protected `/admin/content` registry, draft editor, preview, explicit publish, history and restore controls.
@@ -52,7 +52,8 @@ The generic CMS foundation plus governed Home, Categories and Search control pla
 - **CMS-025 completed** — governed Search/discovery copy, filter labels and complete-catalog Featured ordering (#317 / PR #318).
 - **CMS-030 completed** — governed production-media source/derivative storage and lifecycle model (#319 / PR #320).
 - **CMS-031 completed** — protected byte-validated PNG/JPEG/WebP upload quarantine with server-derived integrity metadata and Draft-only registration (#322 / PR #325).
-- **CMS-032 implementing** — admitted Product media assignment and deterministic ordering for stable product/variant galleries (#329).
+- **CMS-032 completed** — admitted Product media assignment and deterministic ordering for stable product/variant galleries (#329 / PR #330).
+- **CMS-033 implementing** — governed Home, category and editorial media assignments (#333); existing team branches must be coordinated instead of duplicated.
 
 ## 2. What must become backend-controlled
 
@@ -224,8 +225,8 @@ This program is a **P0 backend/mobile architecture priority**. New mobile presen
 |---|---|---|---|
 | CMS-030 | P0 | Production media library storage model | ✅ COMPLETED · #319 / PR #320 |
 | CMS-031 | P0 | Upload validation: type, dimensions, file size, integrity | ✅ COMPLETED · #322 / PR #325 |
-| CMS-032 | P0 | Product/variant gallery assignment and ordering | 🟡 IMPLEMENTING · #329 |
-| CMS-033 | P0 | Home/category/editorial media assignment | TODO |
+| CMS-032 | P0 | Product/variant gallery assignment and ordering | ✅ COMPLETED · #329 / PR #330 |
+| CMS-033 | P0 | Home/category/editorial media assignment | 🟡 IMPLEMENTING · #333 |
 | CMS-034 | P0 | Media revision/audit/replacement/rollback | TODO |
 | CMS-035 | P0 | Flutter remote-media loading, caching, failure fallback and semantics | TODO |
 
