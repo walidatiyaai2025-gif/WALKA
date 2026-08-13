@@ -21,6 +21,10 @@ import 'features/content/data/walka_home_layout_repository.dart';
 import 'features/content/data/walka_search_presentation_cache.dart';
 import 'features/content/data/walka_search_presentation_repository.dart';
 import 'features/favorites/favorites_state.dart';
+import 'features/media/data/walka_remote_media_cache.dart';
+import 'features/media/data/walka_remote_media_repository.dart';
+import 'features/media/data/walka_verified_remote_media_loader.dart';
+import 'features/media/walka_remote_media_state.dart';
 import 'features/storefront/storefront_v102.dart';
 
 Future<void> main() async {
@@ -69,16 +73,30 @@ Future<void> main() async {
       remoteLoader: apiClient?.fetchSearchPresentation,
     ),
   );
+  final WalkaRemoteMediaController remoteMediaController =
+      WalkaRemoteMediaController(
+    repository: WalkaRemoteMediaRepository(
+      cache: SharedPreferencesWalkaRemoteMediaCache(),
+      productLoader: apiClient?.fetchProductMedia,
+      surfaceLoader: apiClient?.fetchSurfaceMedia,
+    ),
+    binaryLoader: WalkaVerifiedRemoteMediaLoader(
+      settings: apiSettings,
+      cache: FlutterCacheManagerWalkaRemoteBinaryCache(),
+    ),
+  );
 
   runApp(
     WalkaApp(
       favoritesController: favoritesController,
       catalogController: catalogController,
       contentController: contentController,
+      remoteMediaController: remoteMediaController,
     ),
   );
   unawaited(catalogController.load());
   unawaited(contentController.load());
+  unawaited(remoteMediaController.load());
 }
 
 class WalkaApp extends StatelessWidget {
@@ -86,12 +104,14 @@ class WalkaApp extends StatelessWidget {
     required this.favoritesController,
     this.catalogController,
     this.contentController,
+    this.remoteMediaController,
     super.key,
   });
 
   final WalkaFavoritesController favoritesController;
   final WalkaCatalogController? catalogController;
   final WalkaContentController? contentController;
+  final WalkaRemoteMediaController? remoteMediaController;
 
   @override
   Widget build(BuildContext context) {
@@ -100,20 +120,26 @@ class WalkaApp extends StatelessWidget {
     final WalkaContentController resolvedContent =
         contentController ?? WalkaContentController();
 
-    return WalkaContentScope(
-      controller: resolvedContent,
-      child: WalkaCatalogScope(
-        controller: resolvedCatalog,
-        child: WalkaFavoritesScope(
-          controller: favoritesController,
-          child: MaterialApp(
-            title: 'WALKA',
-            debugShowCheckedModeBanner: false,
-            theme: buildWalkaTheme(),
-            home: const WalkaStorefrontSplashV102(),
-          ),
+    Widget app = WalkaCatalogScope(
+      controller: resolvedCatalog,
+      child: WalkaFavoritesScope(
+        controller: favoritesController,
+        child: MaterialApp(
+          title: 'WALKA',
+          debugShowCheckedModeBanner: false,
+          theme: buildWalkaTheme(),
+          home: const WalkaStorefrontSplashV102(),
         ),
       ),
+    );
+    final WalkaRemoteMediaController? resolvedRemote = remoteMediaController;
+    if (resolvedRemote != null) {
+      app = WalkaRemoteMediaScope(controller: resolvedRemote, child: app);
+    }
+
+    return WalkaContentScope(
+      controller: resolvedContent,
+      child: app,
     );
   }
 }
