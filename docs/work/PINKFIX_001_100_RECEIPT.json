@@ -1,0 +1,98 @@
+{
+  "schemaVersion": 1,
+  "issue": 326,
+  "parentVisualBlocker": 230,
+  "namespace": "PINKFIX",
+  "expectedCount": 100,
+  "completedTaskIds": [
+    "PINKFIX-001", "PINKFIX-002", "PINKFIX-003", "PINKFIX-004", "PINKFIX-005",
+    "PINKFIX-006", "PINKFIX-007", "PINKFIX-008", "PINKFIX-009", "PINKFIX-010",
+    "PINKFIX-011", "PINKFIX-012", "PINKFIX-013", "PINKFIX-014", "PINKFIX-015",
+    "PINKFIX-016", "PINKFIX-017", "PINKFIX-018", "PINKFIX-019", "PINKFIX-020",
+    "PINKFIX-021", "PINKFIX-022", "PINKFIX-023", "PINKFIX-024", "PINKFIX-025",
+    "PINKFIX-026", "PINKFIX-027", "PINKFIX-028", "PINKFIX-029", "PINKFIX-030",
+    "PINKFIX-031", "PINKFIX-032", "PINKFIX-033", "PINKFIX-034", "PINKFIX-035",
+    "PINKFIX-036", "PINKFIX-037", "PINKFIX-038", "PINKFIX-039", "PINKFIX-040",
+    "PINKFIX-041", "PINKFIX-042", "PINKFIX-043", "PINKFIX-044", "PINKFIX-045",
+    "PINKFIX-046", "PINKFIX-047", "PINKFIX-048", "PINKFIX-049", "PINKFIX-050",
+    "PINKFIX-051", "PINKFIX-052", "PINKFIX-053", "PINKFIX-054", "PINKFIX-055",
+    "PINKFIX-056", "PINKFIX-057", "PINKFIX-058", "PINKFIX-059", "PINKFIX-060",
+    "PINKFIX-061", "PINKFIX-062", "PINKFIX-063", "PINKFIX-064", "PINKFIX-065",
+    "PINKFIX-066", "PINKFIX-067", "PINKFIX-068", "PINKFIX-069", "PINKFIX-070",
+    "PINKFIX-071", "PINKFIX-072", "PINKFIX-073", "PINKFIX-074", "PINKFIX-075",
+    "PINKFIX-076", "PINKFIX-077", "PINKFIX-078", "PINKFIX-079", "PINKFIX-080",
+    "PINKFIX-081", "PINKFIX-082", "PINKFIX-083", "PINKFIX-084", "PINKFIX-085",
+    "PINKFIX-086", "PINKFIX-087", "PINKFIX-088", "PINKFIX-089", "PINKFIX-090",
+    "PINKFIX-091", "PINKFIX-092", "PINKFIX-093", "PINKFIX-094", "PINKFIX-095",
+    "PINKFIX-096", "PINKFIX-097", "PINKFIX-098", "PINKFIX-099", "PINKFIX-100"
+  ],
+  "source": {
+    "path": "design_sources/pink/1000389975.jpg",
+    "sha256": "11a6020417067a8a1869eff1df90d0843f1e068a6cdc06d25e5c92abb1d2e3f5",
+    "byteSize": 189515,
+    "dimensions": [695, 1536],
+    "approvedPanel": [28, 760, 647, 575]
+  },
+  "canonical": {
+    "path": "mobile/assets/products/lunch/pink.png",
+    "sha256": "1667519c9a1931f16c8d26acefbed65e1f39ae7820ac58551de71a61a580d7fb",
+    "byteSize": 749558,
+    "dimensions": [1024, 1024],
+    "alphaBoundingBox": [51, 125, 972, 898],
+    "minimumTransparentSafeMargin": 51,
+    "sRGB": true
+  },
+  "reproducibility": {
+    "tool": "mobile/tool/pinkfix_source_reextract.py",
+    "requirements": "mobile/tool/pinkfix_requirements.txt",
+    "byteForByteReproduction": true,
+    "marketplacePixelsOutsideApprovedPanelExcluded": true
+  },
+  "visualProof": {
+    "algorithm": "edge-interior-mismatch-v2",
+    "edgePixelCount": 16182,
+    "partialAlphaEdgeCount": 16170,
+    "rawNearWhitePartialEdgeCount": 1056,
+    "mismatchNearWhitePartialEdgeCount": 3,
+    "mismatchPartialEdgeRatio": 0.00018552875695732838,
+    "mismatchNearWhiteEdgeRatio": 0.002840909090909091,
+    "navyBrightDeltaRatio": 0.0,
+    "downscaleMismatchBinRatios": {
+      "96": 0.0234375,
+      "160": 0.017045454545454544,
+      "240": 0.011363636363636364,
+      "384": 0.007281553398058253
+    },
+    "disposition": "NO_OBVIOUS_HALO",
+    "white": "PASS",
+    "ivory": "PASS",
+    "navy": "PASS",
+    "downscale96": "PASS",
+    "downscale160": "PASS",
+    "downscale240": "PASS",
+    "downscale384": "PASS",
+    "automationCanAcceptFinalVisualFidelity": false
+  },
+  "rejectedCandidate": {
+    "sha256": "84b1c5b44980c29bf22ff88cafc747454d4caf8612209daa84edfc2e3f3a11ae",
+    "proofRun": 31625699344,
+    "artifactId": 9153009337,
+    "disposition": "REJECTED_WHITE_HALO_AND_BACKGROUND_CONTAMINATION"
+  },
+  "stateAfterAdmission": {
+    "admitted": 4,
+    "pending": 0,
+    "blocked": 1,
+    "pink": "ADMITTED",
+    "gray": "BLOCKED",
+    "stablePublication": false,
+    "ownerVisualAcceptanceStillRequired": true
+  },
+  "ci": {
+    "prRun": null,
+    "prResult": "PENDING",
+    "latestMainRun": null,
+    "latestMainResult": "PENDING",
+    "apkArtifactId": null
+  }
+}
