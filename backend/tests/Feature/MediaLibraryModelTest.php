@@ -5,7 +5,6 @@ namespace Tests\Feature;
 use App\Enums\MediaAssetLifecycle;
 use App\Enums\MediaAssetPurpose;
 use App\Enums\MediaDerivativeKind;
-use App\Models\MediaAsset;
 use App\Services\MediaLibraryService;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
