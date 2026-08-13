@@ -3,9 +3,8 @@
 namespace Tests\Feature\Api\V1;
 
 use App\Models\ProductVariant;
-use App\Services\Content\ContentRevisionService;
 use App\Services\Content\SearchPresentationContentDefinition;
-use App\Services\ContentRevisionService as ContentService;
+use App\Services\ContentRevisionService;
 use Database\Seeders\WalkaCatalogSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -97,8 +96,8 @@ final class PublishedSearchPresentationTest extends TestCase
             ->assertJsonPath('error.code', 'content_invalid');
     }
 
-    private function service(): ContentService
+    private function service(): ContentRevisionService
     {
-        return app(ContentService::class);
+        return app(ContentRevisionService::class);
     }
 }
