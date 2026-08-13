@@ -22,6 +22,7 @@ return new class extends Migration
             $table->json('after_assignments');
             $table->char('before_fingerprint', 64);
             $table->char('after_fingerprint', 64);
+            $table->string('reason', 500);
             $table->char('actor_fingerprint', 64);
             $table->timestamp('created_at');
 
