@@ -33,10 +33,10 @@ final class MediaReplacementEvent extends Model
 
     protected static function booted(): void
     {
-        static::updating(function (): never {
+        self::updating(function (): never {
             throw new LogicException('Media replacement audit events are immutable.');
         });
-        static::deleting(function (): never {
+        self::deleting(function (): never {
             throw new LogicException('Media replacement audit events cannot be deleted.');
         });
     }
