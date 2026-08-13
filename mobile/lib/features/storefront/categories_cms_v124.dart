@@ -137,6 +137,8 @@ class WalkaCategoriesCmsV124 extends StatelessWidget {
                                   'reference-category-${category.content.id}',
                                 ),
                                 variantId: category.visualVariantId,
+                                remoteSlotKey:
+                                    'category:${category.content.id}',
                                 title: category.content.displayName,
                                 subtitle: category.content.description,
                                 kind: category.kind,
