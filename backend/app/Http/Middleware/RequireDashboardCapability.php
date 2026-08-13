@@ -13,7 +13,7 @@ final class RequireDashboardCapability
     public function handle(Request $request, Closure $next, string $requiredCapability): Response
     {
         $role = DashboardRole::tryFrom(
-            (string) $request->session()->get('walka_admin_dashboard_role', ''),
+            trim((string) config('walka_dashboard.role', '')),
         );
         $capability = DashboardCapability::tryFrom($requiredCapability);
 
