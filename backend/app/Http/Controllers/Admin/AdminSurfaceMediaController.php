@@ -39,12 +39,17 @@ final class AdminSurfaceMediaController extends Controller
         $validated = $request->validate([
             'expected_fingerprint' => ['required', 'string', 'size:64', 'regex:/^[a-f0-9]+$/i'],
             'media_ids' => ['nullable', 'array', 'max:'.$definition['max_items']],
-            'media_ids.*' => ['required', 'string', 'max:64'],
+            'media_ids.*' => ['nullable', 'string', 'max:64'],
         ]);
+
+        $mediaIds = array_values(array_filter(
+            $validated['media_ids'] ?? [],
+            fn (mixed $id): bool => is_string($id) && trim($id) !== '',
+        ));
 
         $this->surfaceMedia->replace(
             slotKey: $slot,
-            mediaAssetIds: array_values($validated['media_ids'] ?? []),
+            mediaAssetIds: $mediaIds,
             expectedFingerprint: strtolower($validated['expected_fingerprint']),
             actorFingerprint: $this->actorFingerprint($request),
         );
