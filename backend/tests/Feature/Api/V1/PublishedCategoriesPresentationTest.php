@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Api\V1;
 
+use App\Models\Product;
 use App\Services\Content\CategoryPresentationContentDefinition;
 use App\Services\ContentRevisionService;
 use Database\Seeders\WalkaCatalogSeeder;
@@ -104,7 +105,7 @@ final class PublishedCategoriesPresentationTest extends TestCase
         );
         $service->publish(CategoryPresentationContentDefinition::KEY, 1, $this->actor);
 
-        \App\Models\Product::query()
+        Product::query()
             ->where('id', 'drawer-organizer')
             ->update(['category' => 'changed-protected-category']);
 
