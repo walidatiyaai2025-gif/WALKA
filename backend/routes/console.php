@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\DashboardRole;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use Illuminate\Foundation\Inspiring;
@@ -25,6 +26,7 @@ Artisan::command('walka:production-check', function () {
     $appKey = (string) config('app.key');
     $dashboardUsername = trim((string) config('walka.dashboard_username'));
     $dashboardPassword = (string) config('walka.dashboard_password');
+    $dashboardRole = trim((string) config('walka_dashboard.role', ''));
     $adminToken = (string) config('walka.admin_token');
     $sessionDriver = (string) config('session.driver');
     $sessionSameSite = (string) config('session.same_site');
@@ -38,6 +40,11 @@ Artisan::command('walka:production-check', function () {
         'Dashboard password',
         strlen($dashboardPassword) >= 12,
         strlen($dashboardPassword) >= 12 ? 'Dashboard password length is acceptable' : 'Use at least 12 characters'
+    );
+    $check(
+        'Dashboard role',
+        DashboardRole::tryFrom($dashboardRole) !== null,
+        $dashboardRole === '' ? 'WALKA_ADMIN_DASHBOARD_ROLE is missing' : "WALKA_ADMIN_DASHBOARD_ROLE={$dashboardRole}"
     );
     $check(
         'Catalog admin token',
