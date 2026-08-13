@@ -11,6 +11,7 @@ class WalkaScheduledHomeBanner extends StatefulWidget {
     required this.onBrowse,
     required this.onSearch,
     required this.horizontalPadding,
+    this.clock,
     super.key,
   });
 
@@ -18,6 +19,7 @@ class WalkaScheduledHomeBanner extends StatefulWidget {
   final VoidCallback onBrowse;
   final VoidCallback onSearch;
   final double horizontalPadding;
+  final DateTime Function()? clock;
 
   @override
   State<WalkaScheduledHomeBanner> createState() =>
@@ -37,7 +39,8 @@ class _WalkaScheduledHomeBannerState extends State<WalkaScheduledHomeBanner> {
   @override
   void didUpdateWidget(covariant WalkaScheduledHomeBanner oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (!identical(oldWidget.content, widget.content)) {
+    if (!identical(oldWidget.content, widget.content) ||
+        oldWidget.clock != widget.clock) {
       _refreshSchedule();
     }
   }
@@ -48,9 +51,11 @@ class _WalkaScheduledHomeBannerState extends State<WalkaScheduledHomeBanner> {
     super.dispose();
   }
 
+  DateTime _now() => (widget.clock?.call() ?? DateTime.now()).toUtc();
+
   void _refreshSchedule() {
     _boundaryTimer?.cancel();
-    final DateTime now = DateTime.now().toUtc();
+    final DateTime now = _now();
     _active = widget.content.isActiveAt(now);
 
     if (!widget.content.enabled) return;
@@ -78,7 +83,12 @@ class _WalkaScheduledHomeBannerState extends State<WalkaScheduledHomeBanner> {
 
     return Padding(
       key: const ValueKey<String>('home-banner-active'),
-      padding: EdgeInsets.fromLTRB(widget.horizontalPadding, 10, widget.horizontalPadding, 0),
+      padding: EdgeInsets.fromLTRB(
+        widget.horizontalPadding,
+        10,
+        widget.horizontalPadding,
+        0,
+      ),
       child: WalkaHomeBanner(
         content: widget.content,
         onBrowse: widget.onBrowse,
