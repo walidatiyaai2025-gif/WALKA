@@ -73,7 +73,8 @@ final class AdminMediaReplacementControllerTest extends TestCase
             ->assertSee($candidate->semantic_label)
             ->assertSee($unassigned->semantic_label)
             ->assertDontSee($home->semantic_label)
-            ->assertSeeText('Replace all current references');
+            ->assertSeeText('Apply governed replacement')
+            ->assertSeeText('CURRENT / NO-OP');
 
         $html = $response->getContent();
         $this->assertSame(1, substr_count($html, 'name="source_media_asset_id"'));
@@ -87,7 +88,7 @@ final class AdminMediaReplacementControllerTest extends TestCase
         );
     }
 
-    public function test_owner_can_replace_then_rollback_through_dashboard_with_immutable_history(): void
+    public function test_owner_can_replace_then_rollback_through_dashboard_with_immutable_reasoned_history(): void
     {
         $source = $this->admittedAsset('workflow-source', MediaAssetPurpose::Product);
         $replacement = $this->admittedAsset('workflow-replacement', MediaAssetPurpose::Product);
@@ -104,11 +105,13 @@ final class AdminMediaReplacementControllerTest extends TestCase
                 'source_media_asset_id' => $source->id,
                 'replacement_media_asset_id' => $replacement->id,
                 'expected_fingerprint' => $fingerprint,
+                'reason' => 'Owner approved refreshed product visual',
             ])
             ->assertRedirect(route('admin.media.replacements.index'))
             ->assertSessionHas('status');
 
         $event = MediaReplacementEvent::query()->where('operation', 'replace')->firstOrFail();
+        $this->assertSame('Owner approved refreshed product visual', $event->reason);
         $this->assertDatabaseHas('product_media_gallery_items', [
             'product_id' => 'drawer-organizer',
             'media_asset_id' => $replacement->id,
@@ -119,11 +122,13 @@ final class AdminMediaReplacementControllerTest extends TestCase
             ->get(route('admin.media.replacements.index'))
             ->assertOk()
             ->assertSee($event->id)
+            ->assertSeeText('Owner approved refreshed product visual')
             ->assertSeeText('Rollback exact snapshot');
 
         $this->withSession($this->session)
             ->post(route('admin.media.replacements.rollback', ['event' => $event->id]), [
                 'expected_after_fingerprint' => $event->after_fingerprint,
+                'reason' => 'Owner requested previous visual',
             ])
             ->assertRedirect(route('admin.media.replacements.index'))
             ->assertSessionHas('status');
@@ -138,12 +143,36 @@ final class AdminMediaReplacementControllerTest extends TestCase
             'rollback_of_event_id' => $event->id,
             'source_media_asset_id' => $replacement->id,
             'replacement_media_asset_id' => $source->id,
+            'reason' => 'Owner requested previous visual',
         ]);
 
         $this->withSession($this->session)
             ->get(route('admin.media.replacements.index'))
             ->assertOk()
             ->assertSeeText('ROLLED BACK');
+    }
+
+    public function test_dashboard_same_current_selection_is_noop_without_audit_event(): void
+    {
+        $source = $this->admittedAsset('noop-source', MediaAssetPurpose::Product);
+        $this->galleries->replaceProductGallery(
+            'drawer-organizer',
+            [$source->id],
+            ProductMediaGalleryService::fingerprint([]),
+            $this->actor,
+        );
+
+        $this->withSession($this->session)
+            ->post(route('admin.media.replacements.store'), [
+                'source_media_asset_id' => $source->id,
+                'replacement_media_asset_id' => $source->id,
+                'expected_fingerprint' => $this->replacements->assignmentFingerprint($source),
+            ])
+            ->assertRedirect(route('admin.media.replacements.index'))
+            ->assertSessionHas('status', 'Selected media is already current. No assignment or audit event was changed.');
+
+        $this->assertSame(0, MediaReplacementEvent::query()->count());
+        $this->assertSame($source->id, ProductMediaGalleryItem::query()->firstOrFail()->media_asset_id);
     }
 
     public function test_stale_dashboard_replace_is_rejected_without_changing_assignment_or_history(): void
@@ -171,6 +200,7 @@ final class AdminMediaReplacementControllerTest extends TestCase
                 'source_media_asset_id' => $source->id,
                 'replacement_media_asset_id' => $replacement->id,
                 'expected_fingerprint' => $stale,
+                'reason' => 'Attempt stale dashboard replacement',
             ])
             ->assertRedirect(route('admin.media.replacements.index'))
             ->assertSessionHasErrors('assignment_fingerprint');
@@ -195,13 +225,21 @@ final class AdminMediaReplacementControllerTest extends TestCase
             $replacement,
             $this->replacements->assignmentFingerprint($source),
             $this->actor,
+            'Apply replacement before rollback test',
         );
-        $this->replacements->rollback($event, $event->after_fingerprint, $this->actor);
+        $this->assertNotNull($event);
+        $this->replacements->rollback(
+            $event,
+            $event->after_fingerprint,
+            $this->actor,
+            'Restore original for rollback test',
+        );
 
         $this->withSession($this->session)
             ->from(route('admin.media.replacements.index'))
             ->post(route('admin.media.replacements.rollback', ['event' => $event->id]), [
                 'expected_after_fingerprint' => $event->after_fingerprint,
+                'reason' => 'Attempt second rollback',
             ])
             ->assertRedirect(route('admin.media.replacements.index'))
             ->assertSessionHasErrors('replacement_event');
