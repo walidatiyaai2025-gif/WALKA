@@ -233,14 +233,21 @@ final class MediaUploadService
 
     private function assertContainerIntegrity(string $mime, string $contents): void
     {
-        match ($mime) {
-            'image/png' => $this->assertPngIntegrity($contents),
-            'image/jpeg' => $this->assertJpegIntegrity($contents),
-            'image/webp' => $this->assertWebpIntegrity($contents),
-            default => throw ValidationException::withMessages([
-                'file' => ['Unsupported image container.'],
-            ]),
-        };
+        switch ($mime) {
+            case 'image/png':
+                $this->assertPngIntegrity($contents);
+                break;
+            case 'image/jpeg':
+                $this->assertJpegIntegrity($contents);
+                break;
+            case 'image/webp':
+                $this->assertWebpIntegrity($contents);
+                break;
+            default:
+                throw ValidationException::withMessages([
+                    'file' => ['Unsupported image container.'],
+                ]);
+        }
     }
 
     private function assertPngIntegrity(string $contents): void
@@ -255,7 +262,8 @@ final class MediaUploadService
         $seenEnd = false;
 
         while ($offset + 12 <= $length) {
-            $chunkLength = unpack('Nlength', substr($contents, $offset, 4))['length'] ?? null;
+            $unpackedLength = unpack('Nlength', substr($contents, $offset, 4));
+            $chunkLength = is_array($unpackedLength) ? ($unpackedLength['length'] ?? null) : null;
             if (! is_int($chunkLength) || $chunkLength < 0) {
                 break;
             }
@@ -310,7 +318,8 @@ final class MediaUploadService
             ]);
         }
 
-        $declaredSize = unpack('Vsize', substr($contents, 4, 4))['size'] ?? null;
+        $unpackedSize = unpack('Vsize', substr($contents, 4, 4));
+        $declaredSize = is_array($unpackedSize) ? ($unpackedSize['size'] ?? null) : null;
         if (! is_int($declaredSize) || $declaredSize + 8 !== $length) {
             throw ValidationException::withMessages([
                 'file' => ['WebP container size does not match uploaded bytes.'],
@@ -320,7 +329,8 @@ final class MediaUploadService
         $offset = 12;
         while ($offset + 8 <= $length) {
             $type = substr($contents, $offset, 4);
-            $chunkSize = unpack('Vsize', substr($contents, $offset + 4, 4))['size'] ?? null;
+            $unpackedChunk = unpack('Vsize', substr($contents, $offset + 4, 4));
+            $chunkSize = is_array($unpackedChunk) ? ($unpackedChunk['size'] ?? null) : null;
             if (! is_int($chunkSize) || $chunkSize < 0) {
                 break;
             }
