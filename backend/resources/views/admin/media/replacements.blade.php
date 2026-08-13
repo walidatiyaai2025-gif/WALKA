@@ -8,7 +8,7 @@
     <div>
         <p class="eyebrow">IMMUTABLE MEDIA HISTORY</p>
         <h1>Replacement & rollback</h1>
-        <p class="lead">Replace an assigned admitted asset without changing target order or media binaries. Every operation records immutable before/after assignment snapshots; rollback is allowed only while those exact affected assignments remain unchanged.</p>
+        <p class="lead">Replace an assigned admitted asset without changing target order or media binaries. Every effective operation records immutable before/after assignment snapshots and an owner reason; rollback is allowed only while those exact affected assignments remain unchanged.</p>
     </div>
     <div class="actions">
         <a class="btn secondary" href="{{ route('admin.media.index') }}">← Media library</a>
@@ -19,7 +19,7 @@
 
 <div class="locked">
     <small>CMS-034 SAFETY BOUNDARY</small>
-    <strong>Replacement changes assignment references only. Source/replacement must be distinct, admitted, canonical and the same purpose. No file is copied/deleted, no lifecycle is changed, and rollback never overwrites intervening owner edits.</strong>
+    <strong>Replacement changes assignment references only. Effective replacements require admitted, canonical, same-purpose media and a reason. Selecting the already-current asset is a verified no-op: no assignment and no audit event changes. No file is copied/deleted, no lifecycle is changed, and rollback never overwrites intervening owner edits.</strong>
 </div>
 
 <section class="card section-space">
@@ -63,12 +63,18 @@
                         <select id="replacement-{{ $asset->id }}" name="replacement_media_asset_id" required style="width:100%;border:1px solid #ccd8e1;border-radius:11px;background:#fff;padding:11px 12px;color:#102235">
                             <option value="">Select admitted replacement…</option>
                             @foreach ($source['candidates'] as $candidate)
-                                <option value="{{ $candidate->id }}">{{ $candidate->semantic_label }} · {{ $candidate->id }} · {{ $candidate->canonicalDerivative->width }}×{{ $candidate->canonicalDerivative->height }}</option>
+                                <option value="{{ $candidate->id }}">
+                                    {{ $candidate->is($asset) ? 'CURRENT / NO-OP · ' : '' }}{{ $candidate->semantic_label }} · {{ $candidate->id }} · {{ $candidate->canonicalDerivative->width }}×{{ $candidate->canonicalDerivative->height }}
+                                </option>
                             @endforeach
                         </select>
                     </div>
+                    <div class="field">
+                        <label for="reason-{{ $asset->id }}">Reason</label>
+                        <textarea id="reason-{{ $asset->id }}" name="reason" minlength="3" maxlength="500" rows="2" placeholder="Why is this media being replaced?" required></textarea>
+                    </div>
                     <div class="actions">
-                        <button class="btn navy" type="submit" @disabled($source['candidates']->isEmpty())>Replace all current references</button>
+                        <button class="btn navy" type="submit">Apply governed replacement</button>
                         <span class="muted">Fingerprint <code>{{ substr($source['fingerprint'], 0, 12) }}…</code></span>
                     </div>
                 </form>
@@ -86,7 +92,7 @@
     @else
         <div class="table-wrap section-space">
             <table>
-                <thead><tr><th>Event</th><th>Operation</th><th>From → To</th><th>Assignments</th><th>Actor</th><th>Time</th><th>Action</th></tr></thead>
+                <thead><tr><th>Event</th><th>Operation</th><th>From → To</th><th>Reason</th><th>Assignments</th><th>Actor</th><th>Time</th><th>Action</th></tr></thead>
                 <tbody>
                 @foreach ($events as $event)
                     <tr>
@@ -99,14 +105,16 @@
                                 <div class="muted">rollback of <code>{{ $event->rollback_of_event_id }}</code></div>
                             @endif
                         </td>
+                        <td>{{ $event->reason }}</td>
                         <td>{{ count($event->after_assignments ?? []) }}</td>
                         <td><code>{{ substr($event->actor_fingerprint, 0, 12) }}…</code></td>
                         <td>{{ $event->created_at?->toIso8601String() }}</td>
                         <td>
                             @if ($event->isReplacement() && $event->rollbackEvent === null)
-                                <form method="post" action="{{ route('admin.media.replacements.rollback', ['event' => $event->id]) }}">
+                                <form method="post" action="{{ route('admin.media.replacements.rollback', ['event' => $event->id]) }}" class="stack">
                                     @csrf
                                     <input type="hidden" name="expected_after_fingerprint" value="{{ $event->after_fingerprint }}">
+                                    <input name="reason" minlength="3" maxlength="500" placeholder="Rollback reason" required>
                                     <button class="btn secondary" type="submit">Rollback exact snapshot</button>
                                 </form>
                             @elseif ($event->isReplacement())
