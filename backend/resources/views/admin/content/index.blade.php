@@ -31,11 +31,17 @@
         <p class="muted">Choose approved catalog variants for Home collection/editorial slots.</p>
         <a class="btn navy section-space" href="{{ route('admin.content.home.featured.edit') }}">Edit Featured →</a>
     </section>
-    <section class="card" style="border-color:#eadba8;background:linear-gradient(135deg,#fffefb,#fbf6e7)">
+    <section class="card">
         <p class="eyebrow">SCHEDULED ANNOUNCEMENT</p>
         <h2>Home Banner</h2>
         <p class="muted">Publish one safe announcement and let its UTC window control visibility automatically.</p>
         <a class="btn primary section-space" href="{{ route('admin.content.home.banner.edit') }}">Edit Banner →</a>
+    </section>
+    <section class="card" style="border-color:#d7e4ec;background:linear-gradient(135deg,#ffffff,#f4f8fb)">
+        <p class="eyebrow">DISCOVERY CONTROL</p>
+        <h2>Categories</h2>
+        <p class="muted">Rename, describe, reorder and show/hide approved Product Master categories.</p>
+        <a class="btn navy section-space" href="{{ route('admin.content.categories.edit') }}">Edit Categories →</a>
     </section>
 </div>
 
@@ -81,6 +87,8 @@
                                     <a class="btn secondary" href="{{ route('admin.content.home.featured.edit') }}">Typed editor</a>
                                 @elseif ($entry->content_key === 'home.banner' && $entry->content_type === 'home.banner')
                                     <a class="btn secondary" href="{{ route('admin.content.home.banner.edit') }}">Typed editor</a>
+                                @elseif ($entry->content_key === 'categories.presentation' && $entry->content_type === 'categories.presentation')
+                                    <a class="btn secondary" href="{{ route('admin.content.categories.edit') }}">Typed editor</a>
                                 @else
                                     <a class="btn secondary" href="{{ route('admin.content.show', ['content' => $entry->id]) }}">Open</a>
                                 @endif

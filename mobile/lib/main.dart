@@ -8,6 +8,8 @@ import 'features/catalog/catalog_state.dart';
 import 'features/catalog/data/walka_catalog_cache.dart';
 import 'features/catalog/data/walka_catalog_repository.dart';
 import 'features/content/content_state.dart';
+import 'features/content/data/walka_category_presentation_cache.dart';
+import 'features/content/data/walka_category_presentation_repository.dart';
 import 'features/content/data/walka_home_banner_cache.dart';
 import 'features/content/data/walka_home_banner_repository.dart';
 import 'features/content/data/walka_home_featured_cache.dart';
@@ -55,6 +57,10 @@ Future<void> main() async {
     homeBannerRepository: WalkaHomeBannerRepository(
       cache: SharedPreferencesWalkaHomeBannerCache(),
       remoteLoader: apiClient?.fetchHomeBanner,
+    ),
+    categoryPresentationRepository: WalkaCategoryPresentationRepository(
+      cache: SharedPreferencesWalkaCategoryPresentationCache(),
+      remoteLoader: apiClient?.fetchCategoriesPresentation,
     ),
   );
 

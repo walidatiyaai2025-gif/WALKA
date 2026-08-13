@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Models\ContentEntry;
+use App\Services\Content\CategoryPresentationCatalogValidator;
+use App\Services\Content\CategoryPresentationContentDefinition;
 use App\Services\Content\HomeBannerContentDefinition;
 use App\Services\Content\HomeFeaturedCatalogValidator;
 use App\Services\Content\HomeFeaturedContentDefinition;
@@ -77,6 +79,24 @@ final class PublishedContentController extends Controller
                 'active' => HomeBannerContentDefinition::isActiveAt($payload),
                 'schedule_evaluated_at' => now()->utc()->toIso8601ZuluString(),
             ],
+        );
+    }
+
+    public function categories(
+        Request $request,
+        CategoryPresentationCatalogValidator $catalogValidator,
+    ): JsonResponse|Response {
+        return $this->publishedResponse(
+            request: $request,
+            key: CategoryPresentationContentDefinition::KEY,
+            type: CategoryPresentationContentDefinition::TYPE,
+            schemaVersion: CategoryPresentationContentDefinition::SCHEMA_VERSION,
+            etagFamily: 'categories',
+            notPublishedMessage: 'Published category presentation is not available.',
+            invalidMessage: 'Published category presentation failed its delivery contract.',
+            normalize: fn (array $payload): array => $catalogValidator->validate(
+                CategoryPresentationContentDefinition::validateAndNormalize($payload),
+            ),
         );
     }
 
