@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Exceptions\CatalogRevisionConflictException;
+use App\Exceptions\LastVisibleVariantException;
 use App\Models\CatalogAudit;
 use App\Models\Product;
 use App\Models\ProductVariant;
@@ -49,6 +50,22 @@ final class CatalogAuthoringService
         return DB::transaction(function () use ($variantId, $attributes, $expectedRevision, $actorFingerprint): ProductVariant {
             $variant = ProductVariant::query()->lockForUpdate()->findOrFail($variantId);
             $this->assertRevision('variant', $variant->id, $expectedRevision, $variant->revision);
+
+            if (
+                array_key_exists('is_visible', $attributes)
+                && $attributes['is_visible'] === false
+                && $variant->is_visible === true
+            ) {
+                $hasAnotherVisibleVariant = ProductVariant::query()
+                    ->where('product_id', $variant->product_id)
+                    ->whereKeyNot($variant->id)
+                    ->where('is_visible', true)
+                    ->exists();
+
+                if (! $hasAnotherVisibleVariant) {
+                    throw new LastVisibleVariantException($variant->product_id);
+                }
+            }
 
             $changes = $this->changesFor($variant, $attributes);
             if ($changes !== []) {
