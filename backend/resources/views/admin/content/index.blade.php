@@ -43,6 +43,12 @@
         <p class="muted">Rename, describe, reorder and show/hide approved Product Master categories.</p>
         <a class="btn navy section-space" href="{{ route('admin.content.categories.edit') }}">Edit Categories →</a>
     </section>
+    <section class="card" style="border-color:#d7e4ec;background:linear-gradient(135deg,#ffffff,#f4f8fb)">
+        <p class="eyebrow">SEARCH MERCHANDISING</p>
+        <h2>Search</h2>
+        <p class="muted">Edit safe Search copy, filter labels and complete-catalog Featured ordering.</p>
+        <a class="btn navy section-space" href="{{ route('admin.content.search.edit') }}">Edit Search →</a>
+    </section>
 </div>
 
 <div class="grid two section-space">
@@ -89,6 +95,8 @@
                                     <a class="btn secondary" href="{{ route('admin.content.home.banner.edit') }}">Typed editor</a>
                                 @elseif ($entry->content_key === 'categories.presentation' && $entry->content_type === 'categories.presentation')
                                     <a class="btn secondary" href="{{ route('admin.content.categories.edit') }}">Typed editor</a>
+                                @elseif ($entry->content_key === 'search.presentation' && $entry->content_type === 'search.presentation')
+                                    <a class="btn secondary" href="{{ route('admin.content.search.edit') }}">Typed editor</a>
                                 @else
                                     <a class="btn secondary" href="{{ route('admin.content.show', ['content' => $entry->id]) }}">Open</a>
                                 @endif

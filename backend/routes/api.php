@@ -21,6 +21,8 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
         ->name('content.home-banner');
     Route::get('/content/categories', [PublishedContentController::class, 'categories'])
         ->name('content.categories');
+    Route::get('/content/search', [PublishedContentController::class, 'search'])
+        ->name('content.search');
 
     Route::prefix('admin/catalog')
         ->middleware('catalog.admin')

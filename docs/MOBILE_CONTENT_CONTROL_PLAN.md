@@ -39,7 +39,7 @@ The owner workflow is:
 
 ### Current implementation milestone
 
-The generic CMS foundation and first Home control plane are now delivered through CMS-022, with CMS-023 implementing scheduled announcements:
+The generic CMS foundation plus the governed Home and Categories control planes are delivered through CMS-024, with CMS-025 implementing Search/discovery presentation and merchandising:
 
 - **CMS-001 completed** — stable content keys/types, draft/published snapshots, optimistic revisions, immutable history and restore primitives.
 - **CMS-002 completed** — protected `/admin/content` registry, draft editor, preview, explicit publish, history and restore controls.
@@ -47,7 +47,9 @@ The generic CMS foundation and first Home control plane are now delivered throug
 - **CMS-020 completed** — owner-friendly typed Home Hero editor (#292 / PR #293).
 - **CMS-021 completed** — owner-controlled approved Home section ordering/visibility with compiled Flutter components only (#294 / PR #295).
 - **CMS-022 completed** — owner-controlled featured product/variant membership and ordering using stable catalog IDs with runtime catalog validation (#296 / PR #311).
-- **CMS-023 implementing** — one governed Home announcement/promo banner with enabled state, UTC start/end schedule, compiled CTA routing and offline schedule enforcement (#313 / PR #314).
+- **CMS-023 completed** — one governed Home announcement/promo banner with enabled state, UTC start/end schedule, compiled CTA routing and offline schedule enforcement (#313 / PR #314).
+- **CMS-024 completed** — governed category display metadata, ordering and visibility while protected catalog membership remains immutable (#315 / PR #316).
+- **CMS-025 implementing** — governed Search/discovery copy, filter labels and complete-catalog Featured ordering (#317 / PR #318).
 
 ## 2. What must become backend-controlled
 
@@ -209,9 +211,9 @@ This program is a **P0 backend/mobile architecture priority**. New mobile presen
 | CMS-020 | P0 | Typed Home Hero editor on CMS-001..003 foundation | ✅ COMPLETED · #292 / PR #293 |
 | CMS-021 | P0 | Home section block model, ordering and visibility | ✅ COMPLETED · #294 / PR #295 |
 | CMS-022 | P0 | Featured collections/products/variants | ✅ COMPLETED · #296 / PR #311 |
-| CMS-023 | P0 | Announcement/promo banners + scheduling | 🟡 IMPLEMENTING · #313 / PR #314 |
-| CMS-024 | P0 | Categories display metadata/order/visibility | TODO |
-| CMS-025 | P0 | Search/discovery presentation copy and configurable merchandising | TODO |
+| CMS-023 | P0 | Announcement/promo banners + scheduling | ✅ COMPLETED · #313 / PR #314 |
+| CMS-024 | P0 | Categories display metadata/order/visibility | ✅ COMPLETED · #315 / PR #316 |
+| CMS-025 | P0 | Search/discovery presentation copy and configurable merchandising | 🟡 IMPLEMENTING · #317 / PR #318 |
 
 ### Phase D — Media library
 
@@ -275,7 +277,8 @@ GET /api/v1/content/home           # CMS-003 / CMS-020
 GET /api/v1/content/home-layout    # CMS-021
 GET /api/v1/content/home-featured  # CMS-022
 GET /api/v1/content/home-banner    # CMS-023
-GET /api/v1/content/categories     # planned
+GET /api/v1/content/categories     # CMS-024
+GET /api/v1/content/search         # CMS-025
 GET /api/v1/content/information    # planned
 GET /api/v1/app-config             # planned
 ```

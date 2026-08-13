@@ -11,6 +11,8 @@ use App\Services\Content\HomeFeaturedCatalogValidator;
 use App\Services\Content\HomeFeaturedContentDefinition;
 use App\Services\Content\HomeHeroContentDefinition;
 use App\Services\Content\HomeLayoutContentDefinition;
+use App\Services\Content\SearchPresentationCatalogValidator;
+use App\Services\Content\SearchPresentationContentDefinition;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -96,6 +98,24 @@ final class PublishedContentController extends Controller
             invalidMessage: 'Published category presentation failed its delivery contract.',
             normalize: fn (array $payload): array => $catalogValidator->validate(
                 CategoryPresentationContentDefinition::validateAndNormalize($payload),
+            ),
+        );
+    }
+
+    public function search(
+        Request $request,
+        SearchPresentationCatalogValidator $catalogValidator,
+    ): JsonResponse|Response {
+        return $this->publishedResponse(
+            request: $request,
+            key: SearchPresentationContentDefinition::KEY,
+            type: SearchPresentationContentDefinition::TYPE,
+            schemaVersion: SearchPresentationContentDefinition::SCHEMA_VERSION,
+            etagFamily: 'search',
+            notPublishedMessage: 'Published Search presentation is not available.',
+            invalidMessage: 'Published Search presentation failed its delivery contract.',
+            normalize: fn (array $payload): array => $catalogValidator->validate(
+                SearchPresentationContentDefinition::validateAndNormalize($payload),
             ),
         );
     }

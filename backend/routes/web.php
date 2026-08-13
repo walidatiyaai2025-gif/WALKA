@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\AdminHomeBannerController;
 use App\Http\Controllers\Admin\AdminHomeFeaturedController;
 use App\Http\Controllers\Admin\AdminHomeHeroController;
 use App\Http\Controllers\Admin\AdminHomeLayoutController;
+use App\Http\Controllers\Admin\AdminSearchPresentationController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -78,6 +79,15 @@ Route::prefix('admin')
                 ->name('content.categories.publish');
             Route::post('/content/categories/restore', [AdminCategoryPresentationController::class, 'restore'])
                 ->name('content.categories.restore');
+
+            Route::get('/content/search', [AdminSearchPresentationController::class, 'edit'])
+                ->name('content.search.edit');
+            Route::patch('/content/search', [AdminSearchPresentationController::class, 'update'])
+                ->name('content.search.update');
+            Route::post('/content/search/publish', [AdminSearchPresentationController::class, 'publish'])
+                ->name('content.search.publish');
+            Route::post('/content/search/restore', [AdminSearchPresentationController::class, 'restore'])
+                ->name('content.search.restore');
 
             Route::get('/content/{content}', [AdminContentController::class, 'show'])->name('content.show');
             Route::patch('/content/{content}/draft', [AdminContentController::class, 'updateDraft'])

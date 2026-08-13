@@ -7,11 +7,17 @@ class WalkaSearchFilters extends StatelessWidget {
   const WalkaSearchFilters({
     required this.selectedFamily,
     required this.onChanged,
+    this.allLabel = 'All',
+    this.drawerLabel = 'Drawer',
+    this.lunchLabel = 'Lunch',
     super.key,
   });
 
   final WalkaCatalogFamily? selectedFamily;
   final ValueChanged<WalkaCatalogFamily?> onChanged;
+  final String allLabel;
+  final String drawerLabel;
+  final String lunchLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -20,17 +26,20 @@ class WalkaSearchFilters extends StatelessWidget {
       runSpacing: 8,
       children: <Widget>[
         _FamilyChip(
-          label: 'All',
+          key: const ValueKey<String>('premium-family-All'),
+          label: allLabel,
           selected: selectedFamily == null,
           onSelected: () => onChanged(null),
         ),
         _FamilyChip(
-          label: 'Drawer',
+          key: const ValueKey<String>('premium-family-Drawer'),
+          label: drawerLabel,
           selected: selectedFamily == WalkaCatalogFamily.drawer,
           onSelected: () => onChanged(WalkaCatalogFamily.drawer),
         ),
         _FamilyChip(
-          label: 'Lunch',
+          key: const ValueKey<String>('premium-family-Lunch'),
+          label: lunchLabel,
           selected: selectedFamily == WalkaCatalogFamily.lunch,
           onSelected: () => onChanged(WalkaCatalogFamily.lunch),
         ),
@@ -44,6 +53,7 @@ class _FamilyChip extends StatelessWidget {
     required this.label,
     required this.selected,
     required this.onSelected,
+    super.key,
   });
 
   final String label;
@@ -53,7 +63,6 @@ class _FamilyChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChoiceChip(
-      key: ValueKey<String>('premium-family-$label'),
       label: Text(label),
       selected: selected,
       onSelected: (_) => onSelected(),
