@@ -218,7 +218,7 @@ final class ProductMediaGalleryService
     private function validatedAssignableAssets(array $ids): EloquentCollection
     {
         if ($ids === []) {
-            return new EloquentCollection();
+            return new EloquentCollection;
         }
 
         $assets = MediaAsset::query()
@@ -230,7 +230,7 @@ final class ProductMediaGalleryService
 
         foreach ($ids as $id) {
             $asset = $assets->get($id);
-            if (! $asset instanceof MediaAsset) {
+            if ($asset instanceof MediaAsset === false) {
                 throw ValidationException::withMessages([
                     'media_ids' => ["Media asset $id does not exist."],
                 ]);
@@ -269,7 +269,7 @@ final class ProductMediaGalleryService
         $result = [];
         foreach ($items as $item) {
             $asset = $item->mediaAsset;
-            if (! $asset instanceof MediaAsset) {
+            if ($asset instanceof MediaAsset === false) {
                 throw ValidationException::withMessages([
                     'gallery' => ['Published gallery references a missing media asset.'],
                 ]);
