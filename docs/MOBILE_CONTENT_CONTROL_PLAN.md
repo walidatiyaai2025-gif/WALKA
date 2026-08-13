@@ -39,7 +39,7 @@ The owner workflow is:
 
 ### Current implementation milestone
 
-The generic CMS foundation plus governed Home, Categories and Search control planes are delivered through CMS-025. The production-media control plane now includes CMS-030 storage/lifecycle, CMS-031 byte-validated private upload quarantine, CMS-032 governed product/variant gallery assignment and ordering, CMS-033 governed Home/category/editorial media assignment, and CMS-034 immutable media replacement/audit/rollback. CMS-035 verified remote binary delivery, Flutter integrity verification, caching and bundled fallback is now the active next media-control slice under #341. These controls do not bypass #230 production-asset admission truth:
+The generic CMS foundation plus governed Home, Categories and Search control planes are delivered through CMS-025. The production-media control plane is now complete through CMS-035: CMS-030 storage/lifecycle, CMS-031 byte-validated private upload quarantine, CMS-032 governed product/variant gallery assignment and ordering, CMS-033 governed Home/category/editorial media assignment, CMS-034 immutable media replacement/audit/rollback, and CMS-035 verified canonical binary delivery with Flutter integrity verification, last-known-good caching and bundled fallback. These controls do not bypass #230 production-asset admission truth:
 
 - **CMS-001 completed** — stable content keys/types, draft/published snapshots, optimistic revisions, immutable history and restore primitives.
 - **CMS-002 completed** — protected `/admin/content` registry, draft editor, preview, explicit publish, history and restore controls.
@@ -55,7 +55,7 @@ The generic CMS foundation plus governed Home, Categories and Search control pla
 - **CMS-032 completed** — admitted Product media assignment and deterministic ordering for stable product/variant galleries (#329 / PR #330).
 - **CMS-033 completed** — governed allowlisted Home, category and editorial media assignments with purpose/lifecycle/canonical validation and fail-closed public metadata (#333 / PR #335).
 - **CMS-034 completed** — immutable reasoned media replacement/rollback across governed assignments with safe same-current no-op, stale-write protection and private audit history (#336 / PR #340).
-- **CMS-035 implementing** — verified canonical binary delivery plus Flutter metadata/binary integrity verification, cache and deterministic bundled fallback (#341).
+- **CMS-035 completed** — URL-free canonical binary delivery by stable MediaAsset ID plus Flutter metadata/binary integrity verification, last-known-good cache, deterministic bundled/local fallback and remote Home/category/PDP integration (#341 / PR #343).
 
 ## 2. What must become backend-controlled
 
@@ -230,7 +230,7 @@ This program is a **P0 backend/mobile architecture priority**. New mobile presen
 | CMS-032 | P0 | Product/variant gallery assignment and ordering | ✅ COMPLETED · #329 / PR #330 |
 | CMS-033 | P0 | Home/category/editorial media assignment | ✅ COMPLETED · #333 / PR #335 |
 | CMS-034 | P0 | Media revision/audit/replacement/rollback | ✅ COMPLETED · #336 / PR #340 |
-| CMS-035 | P0 | Flutter remote-media loading, caching, failure fallback and semantics | 🔄 IMPLEMENTING · #341 |
+| CMS-035 | P0 | Flutter remote-media loading, caching, failure fallback and semantics | ✅ COMPLETED · #341 / PR #343 |
 
 ### Phase E — Information, support and remote app configuration
 
@@ -278,9 +278,10 @@ New owner-changeable copy, images, banners, ordering, visibility or merchandisin
 Keep `/api/v1` backward compatible. Current and planned additive surfaces include:
 
 ```text
+GET|HEAD /api/v1/media/assets/{media_id}/canonical # CMS-035 verified canonical bytes by stable media ID
 GET /api/v1/catalog
-GET /api/v1/media/product-galleries # CMS-032 metadata only; binary delivery remains CMS-035
-GET /api/v1/media/surfaces          # CMS-033 metadata only; binary delivery remains CMS-035
+GET /api/v1/media/product-galleries # CMS-032 assignment metadata + CMS-035 revision/binary-delivery contract
+GET /api/v1/media/surfaces          # CMS-033 slot metadata + CMS-035 revision/binary-delivery contract
 GET /api/v1/content/home           # CMS-003 / CMS-020
 GET /api/v1/content/home-layout    # CMS-021
 GET /api/v1/content/home-featured  # CMS-022
@@ -291,7 +292,7 @@ GET /api/v1/content/information    # planned
 GET /api/v1/app-config             # planned
 ```
 
-Every dynamic response must carry enough schema/revision metadata for deterministic validation, caching and rollback-safe mobile behavior.
+Media metadata remains URL-free: compatible clients derive the canonical binary route from the configured API base URL and stable MediaAsset ID. Every dynamic response must carry enough schema/revision metadata for deterministic validation, caching and rollback-safe mobile behavior.
 
 ## 8. Production deployment rule
 
