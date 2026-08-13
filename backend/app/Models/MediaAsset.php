@@ -22,6 +22,8 @@ final class MediaAsset extends Model
         'purpose',
         'lifecycle',
         'source_reference',
+        'source_storage_disk',
+        'source_storage_path',
         'original_filename',
         'original_mime',
         'original_bytes',

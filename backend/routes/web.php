@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\AdminHomeBannerController;
 use App\Http\Controllers\Admin\AdminHomeFeaturedController;
 use App\Http\Controllers\Admin\AdminHomeHeroController;
 use App\Http\Controllers\Admin\AdminHomeLayoutController;
+use App\Http\Controllers\Admin\AdminMediaController;
 use App\Http\Controllers\Admin\AdminSearchPresentationController;
 use Illuminate\Support\Facades\Route;
 
@@ -31,6 +32,9 @@ Route::prefix('admin')
             Route::patch('/catalog/variants/{variant}', [AdminDashboardController::class, 'updateVariant'])
                 ->where('variant', '.*')
                 ->name('catalog.variants.update');
+
+            Route::get('/media', [AdminMediaController::class, 'index'])->name('media.index');
+            Route::post('/media/uploads', [AdminMediaController::class, 'store'])->name('media.store');
 
             Route::get('/content', [AdminContentController::class, 'index'])->name('content.index');
             Route::post('/content', [AdminContentController::class, 'store'])->name('content.store');

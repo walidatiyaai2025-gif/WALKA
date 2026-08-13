@@ -10,7 +10,10 @@
         <h1>Storefront overview</h1>
         <p class="lead">One operational view of the Laravel API that powers the WALKA mobile storefront. Catalog edits here flow through the same database-backed API consumed by Flutter.</p>
     </div>
-    <a class="btn primary" href="{{ route('admin.catalog') }}">Manage catalog →</a>
+    <div class="actions">
+        <a class="btn secondary" href="{{ route('admin.media.index') }}">Media library</a>
+        <a class="btn primary" href="{{ route('admin.catalog') }}">Manage catalog →</a>
+    </div>
 </div>
 
 <section class="grid metrics" aria-label="Dashboard metrics">
