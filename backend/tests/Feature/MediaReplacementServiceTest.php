@@ -77,6 +77,7 @@ final class MediaReplacementServiceTest extends TestCase
             $replacement,
             $expectedFingerprint,
             $this->actor,
+            'Refresh approved product photography',
         );
 
         $afterProduct = ProductMediaGalleryItem::query()->findOrFail($beforeProduct->id);
@@ -90,7 +91,9 @@ final class MediaReplacementServiceTest extends TestCase
         $this->assertDatabaseMissing('product_media_gallery_items', ['media_asset_id' => $source->id]);
         $this->assertDatabaseMissing('variant_media_gallery_items', ['media_asset_id' => $source->id]);
 
+        $this->assertNotNull($event);
         $this->assertTrue($event->isReplacement());
+        $this->assertSame('Refresh approved product photography', $event->reason);
         $this->assertSame($source->id, $event->source_media_asset_id);
         $this->assertSame($replacement->id, $event->replacement_media_asset_id);
         $this->assertCount(2, $event->before_assignments);
@@ -126,8 +129,10 @@ final class MediaReplacementServiceTest extends TestCase
             $replacement,
             $this->replacements->assignmentFingerprint($source),
             $this->actor,
+            'Refresh Home hero visual',
         );
 
+        $this->assertNotNull($event);
         $after = SurfaceMediaItem::query()->findOrFail($row->id);
         $this->assertSame('home.hero', $after->slot_key);
         $this->assertSame(1, $after->position);
@@ -138,7 +143,7 @@ final class MediaReplacementServiceTest extends TestCase
         $this->assertSame($replacement->id, $home['items'][0]['media_id']);
     }
 
-    public function test_replace_rejects_same_asset_wrong_purpose_ineligible_destination_and_source_without_assignments_without_mutation(): void
+    public function test_replace_noops_same_asset_and_rejects_wrong_purpose_ineligible_destination_and_source_without_assignments_without_mutation(): void
     {
         $source = $this->admittedAsset('guard-source', MediaAssetPurpose::Product);
         $validReplacement = $this->admittedAsset('guard-valid', MediaAssetPurpose::Product);
@@ -160,9 +165,23 @@ final class MediaReplacementServiceTest extends TestCase
         );
         $fingerprint = $this->replacements->assignmentFingerprint($source);
 
-        foreach ([$source, $wrongPurpose, $draft, $archived, $missingCanonical] as $invalid) {
+        $this->assertNull($this->replacements->replace(
+            $source,
+            $source,
+            $fingerprint,
+            $this->actor,
+        ));
+        $this->assertSame(0, MediaReplacementEvent::query()->count());
+
+        foreach ([$wrongPurpose, $draft, $archived, $missingCanonical] as $invalid) {
             try {
-                $this->replacements->replace($source, $invalid, $fingerprint, $this->actor);
+                $this->replacements->replace(
+                    $source,
+                    $invalid,
+                    $fingerprint,
+                    $this->actor,
+                    'Validate invalid replacement guard',
+                );
                 $this->fail('Invalid replacement must fail.');
             } catch (ValidationException) {
                 $this->assertDatabaseHas('product_media_gallery_items', [
@@ -181,11 +200,72 @@ final class MediaReplacementServiceTest extends TestCase
                 $validReplacement,
                 $this->replacements->assignmentFingerprint($unassigned),
                 $this->actor,
+                'Attempt replacement for unassigned source',
             );
             $this->fail('Unassigned source must fail.');
         } catch (ValidationException) {
             $this->assertSame(0, MediaReplacementEvent::query()->count());
         }
+    }
+
+    public function test_effective_replacement_requires_reason_and_stale_same_asset_noop_cannot_bypass_concurrency(): void
+    {
+        $source = $this->admittedAsset('reason-source', MediaAssetPurpose::Product);
+        $replacement = $this->admittedAsset('reason-replacement', MediaAssetPurpose::Product);
+        $other = $this->admittedAsset('reason-other', MediaAssetPurpose::Product);
+        $this->galleries->replaceProductGallery(
+            'drawer-organizer',
+            [$source->id],
+            ProductMediaGalleryService::fingerprint([]),
+            $this->actor,
+        );
+        $staleAssignmentFingerprint = $this->replacements->assignmentFingerprint($source);
+
+        try {
+            $this->replacements->replace(
+                $source,
+                $replacement,
+                $staleAssignmentFingerprint,
+                $this->actor,
+            );
+            $this->fail('Effective replacement without reason must fail.');
+        } catch (ValidationException $exception) {
+            $this->assertArrayHasKey('reason', $exception->errors());
+        }
+        $this->assertSame(0, MediaReplacementEvent::query()->count());
+        $this->assertDatabaseHas('product_media_gallery_items', [
+            'product_id' => 'drawer-organizer',
+            'media_asset_id' => $source->id,
+        ]);
+
+        $this->galleries->replaceProductGallery(
+            'drawer-organizer',
+            [$source->id, $other->id],
+            ProductMediaGalleryService::fingerprint([$source->id]),
+            $this->actor,
+        );
+
+        try {
+            $this->replacements->replace(
+                $source,
+                $source,
+                $staleAssignmentFingerprint,
+                $this->actor,
+            );
+            $this->fail('Stale same-asset no-op must still fail concurrency validation.');
+        } catch (ValidationException $exception) {
+            $this->assertArrayHasKey('assignment_fingerprint', $exception->errors());
+        }
+
+        $this->assertSame(0, MediaReplacementEvent::query()->count());
+        $this->assertSame(
+            [$source->id, $other->id],
+            ProductMediaGalleryItem::query()
+                ->where('product_id', 'drawer-organizer')
+                ->orderBy('position')
+                ->pluck('media_asset_id')
+                ->all(),
+        );
     }
 
     public function test_stale_fingerprint_and_destination_already_in_affected_target_are_rejected_atomically(): void
@@ -209,7 +289,13 @@ final class MediaReplacementServiceTest extends TestCase
         );
 
         try {
-            $this->replacements->replace($source, $replacement, $stale, $this->actor);
+            $this->replacements->replace(
+                $source,
+                $replacement,
+                $stale,
+                $this->actor,
+                'Attempt stale replacement',
+            );
             $this->fail('Stale assignment fingerprint must fail.');
         } catch (ValidationException) {
             $this->assertDatabaseHas('product_media_gallery_items', ['media_asset_id' => $source->id]);
@@ -229,6 +315,7 @@ final class MediaReplacementServiceTest extends TestCase
                 $replacement,
                 $this->replacements->assignmentFingerprint($source),
                 $this->actor,
+                'Attempt conflicting target replacement',
             );
             $this->fail('Replacement already in affected target must fail.');
         } catch (ValidationException) {
@@ -245,7 +332,7 @@ final class MediaReplacementServiceTest extends TestCase
         }
     }
 
-    public function test_replacement_event_is_immutable_and_rollback_restores_exact_rows_and_creates_linked_history(): void
+    public function test_replacement_event_is_immutable_and_reasoned_rollback_restores_exact_rows_and_creates_linked_history(): void
     {
         $source = $this->admittedAsset('rollback-source', MediaAssetPurpose::Product);
         $replacement = $this->admittedAsset('rollback-replacement', MediaAssetPurpose::Product);
@@ -266,7 +353,10 @@ final class MediaReplacementServiceTest extends TestCase
             $replacement,
             $this->replacements->assignmentFingerprint($source),
             $this->actor,
+            'Introduce newer approved image',
         );
+        $this->assertNotNull($event);
+        $this->assertSame('Introduce newer approved image', $event->reason);
 
         try {
             $event->forceFill(['operation' => 'tampered'])->save();
@@ -285,6 +375,7 @@ final class MediaReplacementServiceTest extends TestCase
             $event,
             $event->after_fingerprint,
             $this->actor,
+            'Restore prior owner-approved image',
         );
 
         $restored = ProductMediaGalleryItem::query()->findOrFail($originalRow->id);
@@ -292,6 +383,7 @@ final class MediaReplacementServiceTest extends TestCase
         $this->assertSame('drawer-organizer', $restored->product_id);
         $this->assertSame(2, $restored->position);
         $this->assertTrue($rollback->isRollback());
+        $this->assertSame('Restore prior owner-approved image', $rollback->reason);
         $this->assertSame($event->id, $rollback->rollback_of_event_id);
         $this->assertSame($replacement->id, $rollback->source_media_asset_id);
         $this->assertSame($source->id, $rollback->replacement_media_asset_id);
@@ -300,7 +392,12 @@ final class MediaReplacementServiceTest extends TestCase
         $this->assertSame(2, MediaReplacementEvent::query()->count());
 
         $this->expectException(ValidationException::class);
-        $this->replacements->rollback($event, $event->after_fingerprint, $this->actor);
+        $this->replacements->rollback(
+            $event,
+            $event->after_fingerprint,
+            $this->actor,
+            'Attempt duplicate rollback',
+        );
     }
 
     public function test_rollback_is_blocked_after_intervening_assignment_edit_and_newer_owner_work_is_preserved(): void
@@ -319,7 +416,9 @@ final class MediaReplacementServiceTest extends TestCase
             $replacement,
             $this->replacements->assignmentFingerprint($source),
             $this->actor,
+            'Apply replacement before owner edit',
         );
+        $this->assertNotNull($event);
 
         $this->galleries->replaceProductGallery(
             'drawer-organizer',
@@ -329,7 +428,12 @@ final class MediaReplacementServiceTest extends TestCase
         );
 
         try {
-            $this->replacements->rollback($event, $event->after_fingerprint, $this->actor);
+            $this->replacements->rollback(
+                $event,
+                $event->after_fingerprint,
+                $this->actor,
+                'Attempt rollback after owner edit',
+            );
             $this->fail('Intervening assignment edit must block rollback.');
         } catch (ValidationException) {
             $this->assertSame(
@@ -359,11 +463,18 @@ final class MediaReplacementServiceTest extends TestCase
             $replacement,
             $this->replacements->assignmentFingerprint($source),
             $this->actor,
+            'Refresh Home hero before archive test',
         );
+        $this->assertNotNull($event);
         $this->media->archive($source, $this->actor);
 
         try {
-            $this->replacements->rollback($event, $event->after_fingerprint, $this->actor);
+            $this->replacements->rollback(
+                $event,
+                $event->after_fingerprint,
+                $this->actor,
+                'Attempt rollback to archived source',
+            );
             $this->fail('Archived original source must block rollback.');
         } catch (ValidationException) {
             $this->assertSame(MediaAssetLifecycle::Archived, $source->fresh()->lifecycle);
