@@ -8,7 +8,9 @@ on:
     paths:
       - 'mobile/assets/products/**'
       - 'mobile/tool/src/visual_proof.dart'
+      - 'mobile/tool/src/visual_proof_v2.dart'
       - 'mobile/tool/verify_visual_proof.dart'
+      - 'mobile/tool/verify_visual_proof_v2.dart'
       - 'mobile/test/vproof_001_100_visual_proof_test.dart'
       - 'docs/ui/PRODUCTION_ASSET_PROVENANCE.json'
       - 'docs/ui/VISUAL_PROOF_REJECTIONS.json'
@@ -19,7 +21,9 @@ on:
     paths:
       - 'mobile/assets/products/**'
       - 'mobile/tool/src/visual_proof.dart'
+      - 'mobile/tool/src/visual_proof_v2.dart'
       - 'mobile/tool/verify_visual_proof.dart'
+      - 'mobile/tool/verify_visual_proof_v2.dart'
       - 'mobile/test/vproof_001_100_visual_proof_test.dart'
       - 'docs/ui/PRODUCTION_ASSET_PROVENANCE.json'
       - 'docs/ui/VISUAL_PROOF_REJECTIONS.json'
@@ -63,14 +67,14 @@ jobs:
         working-directory: mobile
         run: flutter test test/vproof_001_100_visual_proof_test.dart --reporter expanded
 
-      - name: Enforce direct visual-proof diagnostics
+      - name: Enforce calibrated direct visual-proof diagnostics
         id: vproof
         working-directory: mobile
         shell: bash
         run: |
           set -euo pipefail
           report='visual-proof-report.json'
-          dart run tool/verify_visual_proof.dart \
+          dart run tool/verify_visual_proof_v2.dart \
             --root . \
             --provenance ../docs/ui/PRODUCTION_ASSET_PROVENANCE.json \
             --rejections ../docs/ui/VISUAL_PROOF_REJECTIONS.json \
@@ -86,6 +90,7 @@ jobs:
           {
             echo '### WALKA direct visual proof'
             echo
+            echo '- Algorithm: **edge-interior-mismatch-v2**'
             echo "- Diagnostic state: **$state**"
             echo "- Admitted variants inspected: **$admitted**"
             echo "- Admission blockers: **$blockers**"
