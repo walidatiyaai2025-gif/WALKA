@@ -90,13 +90,18 @@ final class DashboardCapabilityTest extends TestCase
             ->assertForbidden();
     }
 
-    public function test_unknown_role_fails_closed_and_does_not_bypass_authentication(): void
+    public function test_unknown_role_fails_closed_for_authenticated_session(): void
     {
         config()->set('walka_dashboard.role', 'not-a-real-role');
 
         $this->withSession($this->authenticatedSession())
             ->get('/admin')
             ->assertForbidden();
+    }
+
+    public function test_unauthenticated_request_redirects_before_capability_check(): void
+    {
+        config()->set('walka_dashboard.role', 'not-a-real-role');
 
         $this->get('/admin/catalog')
             ->assertRedirect('/admin/login');
