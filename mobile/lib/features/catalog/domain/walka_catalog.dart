@@ -87,12 +87,20 @@ class WalkaCatalogProduct {
     required this.features,
     required this.facts,
     required this.variants,
+    this.shortDescription,
+    this.highlights = const <String>[],
+    this.featured = false,
+    this.presentationOrder = 0,
   });
 
   final String id;
   final String name;
   final String category;
   final List<String> features;
+  final String? shortDescription;
+  final List<String> highlights;
+  final bool featured;
+  final int presentationOrder;
   final Map<String, dynamic> facts;
   final List<WalkaCatalogVariant> variants;
 
@@ -100,6 +108,30 @@ class WalkaCatalogProduct {
     final List<dynamic> rawFeatures = _requiredList(json, 'features');
     final List<dynamic> rawVariants = _requiredList(json, 'variants');
     final Map<String, dynamic> facts = _requiredMap(json, 'facts');
+    final Object? rawDescription = json['short_description'];
+    if (rawDescription != null && rawDescription is! String) {
+      throw const FormatException('short_description must be a string or null.');
+    }
+    final Object? rawHighlights = json['highlights'];
+    if (rawHighlights != null && rawHighlights is! List) {
+      throw const FormatException('highlights must be a list when present.');
+    }
+    final Object? rawFeatured = json['featured'];
+    if (rawFeatured != null && rawFeatured is! bool) {
+      throw const FormatException('featured must be a boolean when present.');
+    }
+    final Object? rawOrder = json['presentation_order'];
+    if (rawOrder != null && (rawOrder is! int || rawOrder < 0)) {
+      throw const FormatException('presentation_order must be a non-negative integer.');
+    }
+
+    final List<String> highlights = (rawHighlights as List<dynamic>? ?? const <dynamic>[])
+        .map((dynamic value) {
+      if (value is! String || value.trim().isEmpty) {
+        throw const FormatException('Product highlights must be strings.');
+      }
+      return value;
+    }).toList(growable: false);
 
     return WalkaCatalogProduct(
       id: _requiredString(json, 'id'),
@@ -111,6 +143,12 @@ class WalkaCatalogProduct {
         }
         return value;
       }).toList(growable: false),
+      shortDescription: rawDescription == null || rawDescription.trim().isEmpty
+          ? null
+          : rawDescription.trim(),
+      highlights: highlights,
+      featured: rawFeatured as bool? ?? false,
+      presentationOrder: rawOrder as int? ?? 0,
       facts: Map<String, dynamic>.unmodifiable(facts),
       variants: rawVariants.map((dynamic value) {
         if (value is! Map) {
@@ -126,6 +164,10 @@ class WalkaCatalogProduct {
         'name': name,
         'category': category,
         'features': features,
+        'short_description': shortDescription,
+        'highlights': highlights,
+        'featured': featured,
+        'presentation_order': presentationOrder,
         'facts': facts,
         'variants': variants
             .map((WalkaCatalogVariant variant) => variant.toJson())
@@ -243,17 +285,22 @@ class WalkaCatalogSnapshot {
 }
 
 abstract final class WalkaCatalogContract {
-  static const Set<String> requiredProductIds = <String>{
+  static const Set<String> allowedProductIds = <String>{
     'drawer-organizer',
     'stainless-steel-bento-lunch-box',
   };
 
-  static const Set<String> requiredVariantIds = <String>{
-    'drawer-organizer:white',
-    'drawer-organizer:gray',
-    'lunch-box:blue',
-    'lunch-box:pink',
-    'lunch-box:green',
+  static const Map<String, Set<String>> allowedVariantIdsByProduct =
+      <String, Set<String>>{
+    'drawer-organizer': <String>{
+      'drawer-organizer:white',
+      'drawer-organizer:gray',
+    },
+    'stainless-steel-bento-lunch-box': <String>{
+      'lunch-box:blue',
+      'lunch-box:pink',
+      'lunch-box:green',
+    },
   };
 
   static void validate(WalkaCatalogSnapshot snapshot) {
@@ -267,26 +314,31 @@ abstract final class WalkaCatalogContract {
       throw const FormatException('Unsupported WALKA purchase mode.');
     }
 
-    final Set<String> productIds = snapshot.products
-        .map((WalkaCatalogProduct product) => product.id)
-        .toSet();
-    if (!productIds.containsAll(requiredProductIds)) {
-      throw const FormatException('Catalog is missing required WALKA products.');
-    }
+    final Set<String> seenProducts = <String>{};
+    int previousOrder = -1;
+    String previousId = '';
+    for (final WalkaCatalogProduct product in snapshot.products) {
+      if (!allowedProductIds.contains(product.id) || !seenProducts.add(product.id)) {
+        throw const FormatException('Catalog contains an unknown or duplicate product ID.');
+      }
+      if (product.presentationOrder < previousOrder ||
+          (product.presentationOrder == previousOrder &&
+              previousId.isNotEmpty &&
+              product.id.compareTo(previousId) < 0)) {
+        throw const FormatException('Catalog product presentation order is not deterministic.');
+      }
+      previousOrder = product.presentationOrder;
+      previousId = product.id;
 
-    final List<WalkaCatalogVariant> variants = snapshot.variants.toList();
-    final Set<String> variantIds = variants
-        .map((WalkaCatalogVariant variant) => variant.id)
-        .toSet();
-    if (!variantIds.containsAll(requiredVariantIds)) {
-      throw const FormatException('Catalog is missing required WALKA variants.');
-    }
-    if (variantIds.length != variants.length) {
-      throw const FormatException('Catalog contains duplicate variant IDs.');
-    }
-
-    for (final WalkaCatalogVariant variant in variants) {
-      variant.purchaseUri;
+      final Set<String> allowedVariants =
+          allowedVariantIdsByProduct[product.id] ?? const <String>{};
+      final Set<String> seenVariants = <String>{};
+      for (final WalkaCatalogVariant variant in product.variants) {
+        if (!allowedVariants.contains(variant.id) || !seenVariants.add(variant.id)) {
+          throw const FormatException('Catalog contains an invalid product variant identity.');
+        }
+        variant.purchaseUri;
+      }
     }
   }
 }
