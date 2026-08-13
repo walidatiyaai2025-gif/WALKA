@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Models\ContentEntry;
+use App\Services\Content\HomeFeaturedCatalogValidator;
+use App\Services\Content\HomeFeaturedContentDefinition;
 use App\Services\Content\HomeHeroContentDefinition;
 use App\Services\Content\HomeLayoutContentDefinition;
 use Illuminate\Http\JsonResponse;
@@ -38,6 +40,24 @@ final class PublishedContentController extends Controller
             notPublishedMessage: 'Published Home layout is not available.',
             invalidMessage: 'Published Home layout failed its delivery contract.',
             normalize: HomeLayoutContentDefinition::validateAndNormalize(...),
+        );
+    }
+
+    public function homeFeatured(
+        Request $request,
+        HomeFeaturedCatalogValidator $catalogValidator,
+    ): JsonResponse|Response {
+        return $this->publishedResponse(
+            request: $request,
+            key: HomeFeaturedContentDefinition::KEY,
+            type: HomeFeaturedContentDefinition::TYPE,
+            schemaVersion: HomeFeaturedContentDefinition::SCHEMA_VERSION,
+            etagFamily: 'home-featured',
+            notPublishedMessage: 'Published Home featured merchandising is not available.',
+            invalidMessage: 'Published Home featured merchandising failed its delivery contract.',
+            normalize: fn (array $payload): array => $catalogValidator->validate(
+                HomeFeaturedContentDefinition::validateAndNormalize($payload),
+            ),
         );
     }
 

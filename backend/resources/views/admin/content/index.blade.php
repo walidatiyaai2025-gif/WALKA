@@ -12,18 +12,30 @@
     </div>
 </div>
 
-<div class="grid two">
-    <section class="card" style="border-color:#eadba8;background:linear-gradient(135deg,#fffefb,#fbf6e7)">
+<div class="grid metrics">
+    <section class="card">
         <p class="eyebrow">LIVE-CONTROLLED COPY</p>
         <h2>Home Hero</h2>
-        <p class="muted">Edit the Home eyebrow, headline, body and CTA labels with typed validation, mobile preview, publish history and rollback.</p>
+        <p class="muted">Edit the Home eyebrow, headline, body and CTA labels.</p>
         <a class="btn primary section-space" href="{{ route('admin.content.home.hero.edit') }}">Edit Home Hero →</a>
     </section>
-    <section class="card" style="border-color:#d7e4ec;background:linear-gradient(135deg,#ffffff,#f4f8fb)">
+    <section class="card">
         <p class="eyebrow">LIVE-CONTROLLED COMPOSITION</p>
         <h2>Home Layout</h2>
-        <p class="muted">Reorder approved Home modules, hide optional sections and edit safe section headings. Core Hero and Collection modules stay protected.</p>
+        <p class="muted">Reorder approved Home modules and hide optional sections.</p>
         <a class="btn navy section-space" href="{{ route('admin.content.home.layout.edit') }}">Edit Home Layout →</a>
+    </section>
+    <section class="card">
+        <p class="eyebrow">LIVE-CONTROLLED MERCHANDISING</p>
+        <h2>Featured Products</h2>
+        <p class="muted">Choose approved catalog variants for Home collection/editorial slots.</p>
+        <a class="btn navy section-space" href="{{ route('admin.content.home.featured.edit') }}">Edit Featured →</a>
+    </section>
+    <section class="card">
+        <p class="eyebrow">SAFETY MODEL</p>
+        <h2>Draft → Publish</h2>
+        <p class="muted">Nothing reaches public clients until an explicit typed publish passes validation.</p>
+        <span class="badge good section-space">REVISION PROTECTED</span>
     </section>
 </div>
 
@@ -39,9 +51,7 @@
         @else
             <div class="table-wrap">
                 <table>
-                    <thead>
-                    <tr><th>Key</th><th>Type</th><th>State</th><th>Revision</th><th>History</th><th>Action</th></tr>
-                    </thead>
+                    <thead><tr><th>Key</th><th>Type</th><th>State</th><th>Revision</th><th>History</th><th>Action</th></tr></thead>
                     <tbody>
                     @foreach ($entries as $entry)
                         @php
@@ -67,6 +77,8 @@
                                     <a class="btn secondary" href="{{ route('admin.content.home.hero.edit') }}">Typed editor</a>
                                 @elseif ($entry->content_key === 'home.layout' && $entry->content_type === 'home.layout')
                                     <a class="btn secondary" href="{{ route('admin.content.home.layout.edit') }}">Typed editor</a>
+                                @elseif ($entry->content_key === 'home.featured' && $entry->content_type === 'home.featured')
+                                    <a class="btn secondary" href="{{ route('admin.content.home.featured.edit') }}">Typed editor</a>
                                 @else
                                     <a class="btn secondary" href="{{ route('admin.content.show', ['content' => $entry->id]) }}">Open</a>
                                 @endif
@@ -82,27 +94,15 @@
     <aside class="card">
         <p class="eyebrow">ADVANCED DRAFT</p>
         <h2>Create content entry</h2>
-        <p class="muted">Use this structured foundation editor only for content families that do not yet have a typed owner UI. Stable content type cannot be changed after creation.</p>
+        <p class="muted">Use this structured foundation editor only for content families that do not yet have a typed owner UI.</p>
         <form method="post" action="{{ route('admin.content.store') }}" class="stack section-space">
             @csrf
-            <div class="field">
-                <label for="content_key">Stable content key</label>
-                <input id="content_key" name="content_key" value="{{ old('content_key') }}" placeholder="about.story" required>
-            </div>
-            <div class="field">
-                <label for="content_type">Content type</label>
-                <input id="content_type" name="content_type" value="{{ old('content_type') }}" placeholder="about.story" required>
-            </div>
-            <div class="field">
-                <label for="payload_json">Structured JSON draft</label>
-                <textarea id="payload_json" name="payload_json" spellcheck="false" required>{{ old('payload_json', "{\n  \"title\": \"\",\n  \"body\": \"\"\n}") }}</textarea>
-            </div>
+            <div class="field"><label for="content_key">Stable content key</label><input id="content_key" name="content_key" value="{{ old('content_key') }}" placeholder="about.story" required></div>
+            <div class="field"><label for="content_type">Content type</label><input id="content_type" name="content_type" value="{{ old('content_type') }}" placeholder="about.story" required></div>
+            <div class="field"><label for="payload_json">Structured JSON draft</label><textarea id="payload_json" name="payload_json" spellcheck="false" required>{{ old('payload_json', "{\n  \"title\": \"\",\n  \"body\": \"\"\n}") }}</textarea></div>
             <button class="btn navy" type="submit">Create private draft</button>
         </form>
-        <div class="locked section-space">
-            <small>Safety boundary</small>
-            <strong>Structured data only. Public APIs expose explicit allowlisted typed fields, never arbitrary generic payload keys.</strong>
-        </div>
+        <div class="locked section-space"><small>Safety boundary</small><strong>Public APIs expose explicit typed allowlists, never arbitrary generic payload keys.</strong></div>
     </aside>
 </div>
 @endsection

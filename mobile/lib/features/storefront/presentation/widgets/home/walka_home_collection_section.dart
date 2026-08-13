@@ -1,31 +1,39 @@
 import 'package:flutter/material.dart';
 
-import 'package:walka/design_system/walka_product_visual.dart';
 import 'package:walka/design_system/walka_theme.dart';
-import 'package:walka/features/lunch/lunch_box_v6.dart';
 
 import 'walka_home_collection_card.dart';
+import 'walka_home_featured_visual.dart';
 
 class WalkaHomeCollectionSection extends StatelessWidget {
   const WalkaHomeCollectionSection({
-    required this.lunchSemanticLabel,
-    required this.drawerSemanticLabel,
-    required this.onLunch,
-    required this.onDrawer,
+    required this.firstVariantId,
+    required this.secondVariantId,
+    required this.firstSemanticLabel,
+    required this.secondSemanticLabel,
+    required this.onFirst,
+    required this.onSecond,
     this.eyebrow = 'OUR COLLECTION',
     this.title = 'Everything in Its Place',
     super.key,
   });
 
-  final String lunchSemanticLabel;
-  final String drawerSemanticLabel;
-  final VoidCallback onLunch;
-  final VoidCallback onDrawer;
+  final String firstVariantId;
+  final String secondVariantId;
+  final String firstSemanticLabel;
+  final String secondSemanticLabel;
+  final VoidCallback onFirst;
+  final VoidCallback onSecond;
   final String eyebrow;
   final String title;
 
   @override
   Widget build(BuildContext context) {
+    final WalkaHomeFeaturedVisualSpec first =
+        walkaHomeFeaturedVisualFor(firstVariantId);
+    final WalkaHomeFeaturedVisualSpec second =
+        walkaHomeFeaturedVisualFor(secondVariantId);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
@@ -58,33 +66,48 @@ class WalkaHomeCollectionSection extends StatelessWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              WalkaHomeCollectionCard(
-                key: const ValueKey<String>('home-reference-lunch-card'),
-                variantId: 'lunch-box:blue',
-                title: 'Stainless Steel\nLunch Boxes',
-                subtitle: '1200 ml · SUS304 tray · 4 compartments.',
-                kind: WalkaProductVisualKind.lunchBox,
-                primaryColor: WalkaLunchVariant.blue.color,
-                visualBackground: const Color(0xFFEAF0F5),
-                semanticLabel: lunchSemanticLabel,
-                onTap: onLunch,
+              _FeaturedCollectionCard(
+                spec: first,
+                semanticLabel: firstSemanticLabel,
+                onTap: onFirst,
               ),
               const SizedBox(width: 12),
-              WalkaHomeCollectionCard(
-                key: const ValueKey<String>('home-reference-drawer-card'),
-                variantId: 'drawer-organizer:white',
-                title: 'Drawer Organizers',
-                subtitle: '8 compartments · expands from 13 to 22.4 in.',
-                kind: WalkaProductVisualKind.drawerOrganizer,
-                primaryColor: const Color(0xFFF7F4EC),
-                visualBackground: const Color(0xFFF0E2C7),
-                semanticLabel: drawerSemanticLabel,
-                onTap: onDrawer,
+              _FeaturedCollectionCard(
+                spec: second,
+                semanticLabel: secondSemanticLabel,
+                onTap: onSecond,
               ),
             ],
           ),
         ),
       ],
+    );
+  }
+}
+
+class _FeaturedCollectionCard extends StatelessWidget {
+  const _FeaturedCollectionCard({
+    required this.spec,
+    required this.semanticLabel,
+    required this.onTap,
+  });
+
+  final WalkaHomeFeaturedVisualSpec spec;
+  final String semanticLabel;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return WalkaHomeCollectionCard(
+      key: ValueKey<String>('home-reference-${spec.variantId}-card'),
+      variantId: spec.variantId,
+      title: spec.title,
+      subtitle: spec.subtitle,
+      kind: spec.kind,
+      primaryColor: spec.primaryColor,
+      visualBackground: spec.backgroundColor,
+      semanticLabel: semanticLabel,
+      onTap: onTap,
     );
   }
 }

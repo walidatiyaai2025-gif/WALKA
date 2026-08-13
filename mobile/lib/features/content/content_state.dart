@@ -1,7 +1,9 @@
 import 'package:flutter/widgets.dart';
 
+import 'data/walka_home_featured_repository.dart';
 import 'data/walka_home_hero_repository.dart';
 import 'data/walka_home_layout_repository.dart';
+import 'domain/walka_home_featured_content.dart';
 import 'domain/walka_home_layout_content.dart';
 import 'domain/walka_mobile_content.dart';
 
@@ -9,31 +11,46 @@ class WalkaContentController extends ChangeNotifier {
   WalkaContentController({
     WalkaHomeHeroRepository? homeRepository,
     WalkaHomeLayoutRepository? homeLayoutRepository,
+    WalkaHomeFeaturedRepository? homeFeaturedRepository,
   })  : _homeRepository = homeRepository,
         _homeLayoutRepository = homeLayoutRepository,
+        _homeFeaturedRepository = homeFeaturedRepository,
         _home = WalkaHomeHeroSnapshot.bundled(),
         _homeLayout = WalkaHomeLayoutSnapshot.bundled(),
-        _isLoading = homeRepository != null || homeLayoutRepository != null;
+        _homeFeatured = WalkaHomeFeaturedSnapshot.bundled(),
+        _isLoading = homeRepository != null ||
+            homeLayoutRepository != null ||
+            homeFeaturedRepository != null;
 
   final WalkaHomeHeroRepository? _homeRepository;
   final WalkaHomeLayoutRepository? _homeLayoutRepository;
+  final WalkaHomeFeaturedRepository? _homeFeaturedRepository;
   WalkaHomeHeroSnapshot _home;
   WalkaHomeLayoutSnapshot _homeLayout;
+  WalkaHomeFeaturedSnapshot _homeFeatured;
   bool _isLoading;
 
   WalkaHomeHeroSnapshot get home => _home;
   WalkaHomeLayoutSnapshot get homeLayout => _homeLayout;
+  WalkaHomeFeaturedSnapshot get homeFeatured => _homeFeatured;
   bool get isLoading => _isLoading;
   bool get canRefresh =>
-      _homeRepository != null || _homeLayoutRepository != null;
+      _homeRepository != null ||
+      _homeLayoutRepository != null ||
+      _homeFeaturedRepository != null;
   bool get isOffline =>
       _home.source != WalkaContentSource.remote ||
-      _homeLayout.source != WalkaContentSource.remote;
+      _homeLayout.source != WalkaContentSource.remote ||
+      _homeFeatured.source != WalkaContentSource.remote;
 
   Future<void> load() async {
     final WalkaHomeHeroRepository? homeRepository = _homeRepository;
     final WalkaHomeLayoutRepository? layoutRepository = _homeLayoutRepository;
-    if (homeRepository == null && layoutRepository == null) {
+    final WalkaHomeFeaturedRepository? featuredRepository =
+        _homeFeaturedRepository;
+    if (homeRepository == null &&
+        layoutRepository == null &&
+        featuredRepository == null) {
       if (_isLoading) {
         _isLoading = false;
         notifyListeners();
@@ -49,6 +66,9 @@ class WalkaContentController extends ChangeNotifier {
     }
     if (layoutRepository != null) {
       _homeLayout = await layoutRepository.load();
+    }
+    if (featuredRepository != null) {
+      _homeFeatured = await featuredRepository.load();
     }
 
     _isLoading = false;

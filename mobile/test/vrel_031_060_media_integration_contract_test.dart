@@ -67,6 +67,9 @@ void main() {
     final String collections = _read(
       'lib/features/storefront/presentation/widgets/home/walka_home_collection_section.dart',
     );
+    final String featuredVisual = _read(
+      'lib/features/storefront/presentation/widgets/home/walka_home_featured_visual.dart',
+    );
     final String smallChanges = _read(
       'lib/features/storefront/presentation/widgets/home/walka_home_small_changes.dart',
     );
@@ -83,15 +86,26 @@ void main() {
     expect(hero, contains('WalkaResolvedProductMedia'));
     expect(hero, contains("variantId: 'lunch-box:green'"));
     expect(hero, contains("variantId: 'drawer-organizer:white'"));
-    expect(collections, contains("variantId: 'lunch-box:blue'"));
-    expect(collections, contains("variantId: 'drawer-organizer:white'"));
+
+    // CMS-022 may choose/order only released stable variant IDs. The actual
+    // Home widgets consume the compiled allowlisted spec; the server never
+    // supplies a painter, asset path or arbitrary visual definition.
+    expect(collections, contains('walkaHomeFeaturedVisualFor(firstVariantId)'));
+    expect(collections, contains('walkaHomeFeaturedVisualFor(secondVariantId)'));
+    expect(collections, contains('variantId: spec.variantId'));
+    for (final String variantId in releasedVariants) {
+      expect(featuredVisual, contains("'$variantId'"));
+    }
+
     expect(smallChanges, contains('WalkaResolvedProductMedia'));
-    expect(smallChanges, contains("variantId: 'drawer-organizer:white'"));
+    expect(smallChanges, contains('walkaHomeFeaturedVisualFor(variantId)'));
+    expect(smallChanges, contains('variantId: visualSpec.variantId'));
+    expect(smallChanges, contains("this.variantId = 'drawer-organizer:white'"));
     expect(categoryCard, contains('WalkaResolvedProductMedia'));
     expect(productRow, contains('variantId: item.variantId'));
     expect(searchResults, contains('WalkaDiscoveryProductRow'));
 
-    // The audited owner-visible Home surfaces no longer branch around the
+    // The audited owner-visible Home surfaces do not branch around the
     // resolver with screen-specific direct product painters.
     expect(hero, isNot(contains('child: WalkaProductVisual(')));
     expect(smallChanges, isNot(contains('child: WalkaProductVisual(')));

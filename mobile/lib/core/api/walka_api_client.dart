@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import '../../features/catalog/domain/walka_catalog.dart';
+import '../../features/content/domain/walka_home_featured_content.dart';
 import '../../features/content/domain/walka_home_layout_content.dart';
 import '../../features/content/domain/walka_mobile_content.dart';
 
@@ -178,6 +179,12 @@ class WalkaApiClient implements WalkaCatalogRemoteDataSource {
   Future<WalkaHomeLayoutPayload> fetchHomeLayout() async {
     return WalkaHomeLayoutPayload.fromApiJson(
       await _getJson('/api/v1/content/home-layout'),
+    );
+  }
+
+  Future<WalkaHomeFeaturedPayload> fetchHomeFeatured() async {
+    return WalkaHomeFeaturedPayload.fromApiJson(
+      await _getJson('/api/v1/content/home-featured'),
     );
   }
 
