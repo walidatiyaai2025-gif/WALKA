@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:walka/features/catalog/data/walka_bundled_catalog.dart';
 import 'package:walka/features/catalog/domain/walka_catalog.dart';
+import 'package:walka/features/products/presentation/walka_pdp_model.dart';
 
 void main() {
   test('product presentation fields parse additively with safe defaults', () {
@@ -31,6 +32,43 @@ void main() {
     expect(legacyParsed.highlights, isEmpty);
     expect(legacyParsed.featured, isFalse);
     expect(legacyParsed.presentationOrder, 0);
+  });
+
+  test('PDP editorial copy reuses CMS-010 product presentation source', () {
+    final WalkaCatalogProduct source =
+        WalkaBundledCatalog.snapshot().products.first;
+    final WalkaCatalogProduct governed = WalkaCatalogProduct(
+      id: source.id,
+      name: source.name,
+      category: source.category,
+      features: source.features,
+      shortDescription: 'Owner-authored Product Detail supporting copy.',
+      highlights: const <String>[
+        'Owner-authored Product Detail headline',
+        'Additional catalog highlight',
+      ],
+      facts: source.facts,
+      variants: source.variants,
+    );
+
+    final WalkaPdpEditorialCopy copy =
+        WalkaPdpEditorialCopy.fromCatalogProduct(
+      governed,
+      fallbackTitle: 'Bundled title',
+      fallbackBody: 'Bundled body',
+    );
+
+    expect(copy.title, 'Owner-authored Product Detail headline');
+    expect(copy.body, 'Owner-authored Product Detail supporting copy.');
+
+    final WalkaPdpEditorialCopy legacy =
+        WalkaPdpEditorialCopy.fromCatalogProduct(
+      source,
+      fallbackTitle: 'Bundled title',
+      fallbackBody: 'Bundled body',
+    );
+    expect(legacy.title, 'Bundled title');
+    expect(legacy.body, 'Bundled body');
   });
 
   test('a hidden product may be absent while visible product identity remains strict', () {
