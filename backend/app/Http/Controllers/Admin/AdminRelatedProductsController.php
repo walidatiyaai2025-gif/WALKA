@@ -230,8 +230,7 @@ final class AdminRelatedProductsController extends Controller
 
             usort(
                 $selected,
-                static fn (array $left, array $right): int =>
-                    ($left['position'] <=> $right['position']) ?: ($left['id'] <=> $right['id']),
+                static fn (array $left, array $right): int => ($left['position'] <=> $right['position']) ?: ($left['id'] <=> $right['id']),
             );
 
             $relationships[] = [
