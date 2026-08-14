@@ -55,6 +55,12 @@
         <p class="muted">Reorder approved Product Detail modules and hide only optional presentation sections.</p>
         <a class="btn navy section-space" href="{{ route('admin.content.pdp.layout.edit') }}">Edit PDP Layout →</a>
     </section>
+    <section class="card" style="border-color:#d7e4ec;background:linear-gradient(135deg,#ffffff,#f4f8fb)">
+        <p class="eyebrow">PDP MERCHANDISING</p>
+        <h2>Related Products</h2>
+        <p class="muted">Order safe recommendations using existing stable WALKA product IDs only.</p>
+        <a class="btn navy section-space" href="{{ route('admin.content.pdp.related-products.edit') }}">Edit Related Products →</a>
+    </section>
 </div>
 
 <div class="grid two section-space">
@@ -105,6 +111,8 @@
                                     <a class="btn secondary" href="{{ route('admin.content.search.edit') }}">Typed editor</a>
                                 @elseif ($entry->content_key === 'pdp.layout' && $entry->content_type === 'pdp.layout')
                                     <a class="btn secondary" href="{{ route('admin.content.pdp.layout.edit') }}">Typed editor</a>
+                                @elseif ($entry->content_key === 'pdp.related_products' && $entry->content_type === 'pdp.related_products')
+                                    <a class="btn secondary" href="{{ route('admin.content.pdp.related-products.edit') }}">Typed editor</a>
                                 @else
                                     <a class="btn secondary" href="{{ route('admin.content.show', ['content' => $entry->id]) }}">Open</a>
                                 @endif
