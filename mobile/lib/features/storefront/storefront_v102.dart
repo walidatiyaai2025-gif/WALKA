@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../design_system/walka_adaptive.dart';
@@ -118,16 +120,76 @@ class _WalkaStorefrontShellV102State extends State<WalkaStorefrontShellV102> {
         content?.maintenanceNotice.content ?? WalkaMaintenanceNoticeContent.bundled;
     final WalkaAppConfigContent appConfig =
         content?.appConfig.content ?? WalkaAppConfigContent.bundled;
-    final bool showOperationalNotice = appConfig.showOperationalNotice &&
-        notice.isActiveAt(DateTime.now().toUtc());
 
     return WalkaMobileShellScaffold(
       controller: _shellController,
       pages: pages,
-      topBanner: showOperationalNotice
-          ? WalkaOperationalNoticeBanner(notice: notice)
+      topBanner: appConfig.showOperationalNotice
+          ? WalkaOperationalNoticeGate(notice: notice)
           : null,
     );
+  }
+}
+
+class WalkaOperationalNoticeGate extends StatefulWidget {
+  const WalkaOperationalNoticeGate({required this.notice, super.key});
+
+  final WalkaMaintenanceNoticeContent notice;
+
+  @override
+  State<WalkaOperationalNoticeGate> createState() =>
+      _WalkaOperationalNoticeGateState();
+}
+
+class _WalkaOperationalNoticeGateState
+    extends State<WalkaOperationalNoticeGate> {
+  Timer? _boundaryTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _scheduleBoundary();
+  }
+
+  @override
+  void didUpdateWidget(covariant WalkaOperationalNoticeGate oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.notice.toJson().toString() != widget.notice.toJson().toString()) {
+      _scheduleBoundary();
+    }
+  }
+
+  @override
+  void dispose() {
+    _boundaryTimer?.cancel();
+    super.dispose();
+  }
+
+  void _scheduleBoundary() {
+    _boundaryTimer?.cancel();
+    final DateTime now = DateTime.now().toUtc();
+    final List<DateTime> futureBoundaries = <DateTime>[
+      if (widget.notice.startsAt != null && widget.notice.startsAt!.isAfter(now))
+        widget.notice.startsAt!,
+      if (widget.notice.endsAt != null && widget.notice.endsAt!.isAfter(now))
+        widget.notice.endsAt!,
+    ]..sort();
+    if (futureBoundaries.isEmpty) return;
+
+    final Duration delay = futureBoundaries.first.difference(now);
+    _boundaryTimer = Timer(delay, () {
+      if (!mounted) return;
+      setState(() {});
+      _scheduleBoundary();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!widget.notice.isActiveAt(DateTime.now().toUtc())) {
+      return const SizedBox.shrink();
+    }
+    return WalkaOperationalNoticeBanner(notice: widget.notice);
   }
 }
 
