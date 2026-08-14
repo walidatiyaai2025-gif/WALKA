@@ -161,6 +161,7 @@ final class AdminContentDashboardTest extends TestCase
             ->post(route('admin.content.restore', ['content' => $entry->id]), [
                 'revision' => 3,
                 'source_revision' => 1,
+                'reason' => 'Restore the original approved dashboard copy',
             ])
             ->assertRedirect(route('admin.content.show', ['content' => $entry->id]));
 
@@ -173,6 +174,7 @@ final class AdminContentDashboardTest extends TestCase
         $latest = ContentRevision::query()->latest('revision')->firstOrFail();
         $this->assertSame('draft_restored', $latest->action);
         $this->assertSame(1, $latest->source_revision);
+        $this->assertSame('Restore the original approved dashboard copy', $latest->reason);
     }
 
     private function createDraft(array $payload = ['title' => 'Draft A']): ContentEntry
