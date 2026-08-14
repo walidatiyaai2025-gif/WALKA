@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:walka_mobile/features/content/content_state.dart';
-import 'package:walka_mobile/features/content/data/walka_operational_cache.dart';
-import 'package:walka_mobile/features/content/data/walka_operational_repository.dart';
-import 'package:walka_mobile/features/content/domain/walka_mobile_content.dart';
-import 'package:walka_mobile/features/content/domain/walka_operational_content.dart';
-import 'package:walka_mobile/features/storefront/account_about_cms_v140.dart';
-import 'package:walka_mobile/features/storefront/storefront_v102.dart';
+import 'package:walka/features/content/content_state.dart';
+import 'package:walka/features/content/data/walka_operational_cache.dart';
+import 'package:walka/features/content/data/walka_operational_repository.dart';
+import 'package:walka/features/content/domain/walka_mobile_content.dart';
+import 'package:walka/features/content/domain/walka_operational_content.dart';
+import 'package:walka/features/storefront/account_about_cms_v140.dart';
+import 'package:walka/features/storefront/storefront_v102.dart';
 
 void main() {
   group('CMS-044 maintenance notice contract', () {
