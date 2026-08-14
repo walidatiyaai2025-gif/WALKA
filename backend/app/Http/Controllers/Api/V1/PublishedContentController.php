@@ -11,6 +11,7 @@ use App\Services\Content\HomeFeaturedCatalogValidator;
 use App\Services\Content\HomeFeaturedContentDefinition;
 use App\Services\Content\HomeHeroContentDefinition;
 use App\Services\Content\HomeLayoutContentDefinition;
+use App\Services\Content\PdpLayoutContentDefinition;
 use App\Services\Content\SearchPresentationCatalogValidator;
 use App\Services\Content\SearchPresentationContentDefinition;
 use Illuminate\Http\JsonResponse;
@@ -117,6 +118,20 @@ final class PublishedContentController extends Controller
             normalize: fn (array $payload): array => $catalogValidator->validate(
                 SearchPresentationContentDefinition::validateAndNormalize($payload),
             ),
+        );
+    }
+
+    public function pdpLayout(Request $request): JsonResponse|Response
+    {
+        return $this->publishedResponse(
+            request: $request,
+            key: PdpLayoutContentDefinition::KEY,
+            type: PdpLayoutContentDefinition::TYPE,
+            schemaVersion: PdpLayoutContentDefinition::SCHEMA_VERSION,
+            etagFamily: 'pdp-layout',
+            notPublishedMessage: 'Published PDP layout is not available.',
+            invalidMessage: 'Published PDP layout failed its delivery contract.',
+            normalize: PdpLayoutContentDefinition::validateAndNormalize(...),
         );
     }
 
