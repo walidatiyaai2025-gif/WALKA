@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\AdminHomeBannerController;
 use App\Http\Controllers\Admin\AdminHomeFeaturedController;
 use App\Http\Controllers\Admin\AdminHomeHeroController;
 use App\Http\Controllers\Admin\AdminHomeLayoutController;
+use App\Http\Controllers\Admin\AdminInformationController;
 use App\Http\Controllers\Admin\AdminMediaController;
 use App\Http\Controllers\Admin\AdminMediaGalleryController;
 use App\Http\Controllers\Admin\AdminMediaReplacementController;
@@ -84,6 +85,23 @@ Route::prefix('admin')->name('admin.')->middleware('walka.dashboard.headers')->g
         Route::patch('/content/search', [AdminSearchPresentationController::class, 'update'])->middleware('walka.dashboard.can:content.write')->name('content.search.update');
         Route::post('/content/search/publish', [AdminSearchPresentationController::class, 'publish'])->middleware('walka.dashboard.can:content.publish')->name('content.search.publish');
         Route::post('/content/search/restore', [AdminSearchPresentationController::class, 'restore'])->middleware('walka.dashboard.can:content.restore')->name('content.search.restore');
+
+        Route::get('/content/information/{section}', [AdminInformationController::class, 'edit'])
+            ->whereIn('section', ['about', 'faq', 'support', 'legal'])
+            ->middleware('walka.dashboard.can:content.view')
+            ->name('content.information.edit');
+        Route::patch('/content/information/{section}', [AdminInformationController::class, 'update'])
+            ->whereIn('section', ['about', 'faq', 'support', 'legal'])
+            ->middleware('walka.dashboard.can:content.write')
+            ->name('content.information.update');
+        Route::post('/content/information/{section}/publish', [AdminInformationController::class, 'publish'])
+            ->whereIn('section', ['about', 'faq', 'support', 'legal'])
+            ->middleware('walka.dashboard.can:content.publish')
+            ->name('content.information.publish');
+        Route::post('/content/information/{section}/restore', [AdminInformationController::class, 'restore'])
+            ->whereIn('section', ['about', 'faq', 'support', 'legal'])
+            ->middleware('walka.dashboard.can:content.restore')
+            ->name('content.information.restore');
 
         Route::get('/content/{content}', [AdminContentController::class, 'show'])->middleware('walka.dashboard.can:content.view')->name('content.show');
         Route::patch('/content/{content}/draft', [AdminContentController::class, 'updateDraft'])->middleware('walka.dashboard.can:content.write')->name('content.draft.update');
