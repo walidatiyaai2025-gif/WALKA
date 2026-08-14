@@ -2,6 +2,18 @@ import 'package:flutter/material.dart';
 
 import '../../../catalog/domain/walka_catalog.dart';
 
+List<WalkaCatalogProduct> walkaResolveVisibleRelatedProducts({
+  required WalkaCatalogSnapshot catalog,
+  required List<String> relatedProductIds,
+}) {
+  final List<WalkaCatalogProduct> products = <WalkaCatalogProduct>[];
+  for (final String productId in relatedProductIds) {
+    final WalkaCatalogProduct? product = catalog.productById(productId);
+    if (product != null) products.add(product);
+  }
+  return List<WalkaCatalogProduct>.unmodifiable(products);
+}
+
 class WalkaPdpRelatedProducts extends StatelessWidget {
   const WalkaPdpRelatedProducts({
     required this.products,
