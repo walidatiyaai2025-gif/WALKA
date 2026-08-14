@@ -6,6 +6,7 @@ import '../../design_system/walka_platform_adaptive.dart';
 import '../../design_system/walka_theme.dart';
 import '../content/content_state.dart';
 import '../content/domain/walka_information_content.dart';
+import '../content/domain/walka_operational_content.dart';
 import '../information/information_cms_v140.dart';
 import 'presentation/widgets/about/walka_about_closing.dart';
 import 'presentation/widgets/about/walka_about_hero.dart';
@@ -31,6 +32,10 @@ class WalkaAccountCmsV140 extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final WalkaAppConfigContent appConfig =
+        WalkaContentScope.maybeOf(context)?.appConfig.content ??
+            WalkaAppConfigContent.bundled;
+
     return SafeArea(
       bottom: false,
       child: Column(
@@ -120,6 +125,10 @@ class WalkaAccountCmsV140 extends StatelessWidget {
                                   SizedBox(height: 24),
                                   WalkaAccountOverview(),
                                 ],
+                                if (appConfig.showAccountServiceNote) ...const <Widget>[
+                                  SizedBox(height: 16),
+                                  WalkaAccountServiceNote(),
+                                ],
                                 const SizedBox(height: 24),
                                 WalkaResponsiveGrid(
                                   minItemWidth: desktop ? 300 : 520,
@@ -144,6 +153,58 @@ class WalkaAccountCmsV140 extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class WalkaAccountServiceNote extends StatelessWidget {
+  const WalkaAccountServiceNote({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      key: const Key('walka-account-service-note'),
+      color: const Color(0xFFF5F8FB),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(14),
+        side: const BorderSide(color: WalkaColors.line),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: const Padding(
+        padding: EdgeInsets.all(16),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Icon(Icons.info_outline_rounded, color: WalkaColors.navy, size: 21),
+            SizedBox(width: 11),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(
+                    'SERVICE INFORMATION',
+                    style: TextStyle(
+                      color: WalkaColors.navy,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 1.1,
+                    ),
+                  ),
+                  SizedBox(height: 5),
+                  Text(
+                    'WALKA informational content can refresh without an app update. Purchase destinations, account behavior and security remain compiled.',
+                    style: TextStyle(
+                      color: WalkaColors.muted,
+                      fontSize: 12.5,
+                      height: 1.45,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
