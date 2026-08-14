@@ -11,6 +11,7 @@ use App\Http\Controllers\Admin\AdminMediaController;
 use App\Http\Controllers\Admin\AdminMediaGalleryController;
 use App\Http\Controllers\Admin\AdminMediaReplacementController;
 use App\Http\Controllers\Admin\AdminPdpLayoutController;
+use App\Http\Controllers\Admin\AdminRelatedProductsController;
 use App\Http\Controllers\Admin\AdminSearchPresentationController;
 use App\Http\Controllers\Admin\AdminSurfaceMediaController;
 use App\Http\Controllers\Admin\ProductPresentationController;
@@ -58,6 +59,11 @@ Route::prefix('admin')->name('admin.')->middleware('walka.dashboard.headers')->g
         Route::patch('/content/pdp/layout', [AdminPdpLayoutController::class, 'update'])->middleware('walka.dashboard.can:content.write')->name('content.pdp.layout.update');
         Route::post('/content/pdp/layout/publish', [AdminPdpLayoutController::class, 'publish'])->middleware('walka.dashboard.can:content.publish')->name('content.pdp.layout.publish');
         Route::post('/content/pdp/layout/restore', [AdminPdpLayoutController::class, 'restore'])->middleware('walka.dashboard.can:content.restore')->name('content.pdp.layout.restore');
+
+        Route::get('/content/pdp/related-products', [AdminRelatedProductsController::class, 'edit'])->middleware('walka.dashboard.can:content.view')->name('content.pdp.related-products.edit');
+        Route::patch('/content/pdp/related-products', [AdminRelatedProductsController::class, 'update'])->middleware('walka.dashboard.can:content.write')->name('content.pdp.related-products.update');
+        Route::post('/content/pdp/related-products/publish', [AdminRelatedProductsController::class, 'publish'])->middleware('walka.dashboard.can:content.publish')->name('content.pdp.related-products.publish');
+        Route::post('/content/pdp/related-products/restore', [AdminRelatedProductsController::class, 'restore'])->middleware('walka.dashboard.can:content.restore')->name('content.pdp.related-products.restore');
 
         Route::get('/content/home/featured', [AdminHomeFeaturedController::class, 'edit'])->middleware('walka.dashboard.can:content.view')->name('content.home.featured.edit');
         Route::patch('/content/home/featured', [AdminHomeFeaturedController::class, 'update'])->middleware('walka.dashboard.can:content.write')->name('content.home.featured.update');
