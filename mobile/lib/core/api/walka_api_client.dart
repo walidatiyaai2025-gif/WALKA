@@ -9,6 +9,7 @@ import '../../features/content/domain/walka_home_banner_content.dart';
 import '../../features/content/domain/walka_home_featured_content.dart';
 import '../../features/content/domain/walka_home_layout_content.dart';
 import '../../features/content/domain/walka_mobile_content.dart';
+import '../../features/content/domain/walka_pdp_layout_content.dart';
 import '../../features/content/domain/walka_search_presentation_content.dart';
 import '../../features/media/domain/walka_remote_media.dart';
 
@@ -217,6 +218,12 @@ class WalkaApiClient implements WalkaCatalogRemoteDataSource {
   Future<WalkaSearchPresentationPayload> fetchSearchPresentation() async {
     return WalkaSearchPresentationPayload.fromApiJson(
       await _getJson('/api/v1/content/search'),
+    );
+  }
+
+  Future<WalkaPdpLayoutPayload> fetchPdpLayout() async {
+    return WalkaPdpLayoutPayload.fromApiJson(
+      await _getJson('/api/v1/content/pdp-layout'),
     );
   }
 
