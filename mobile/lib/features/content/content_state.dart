@@ -5,6 +5,7 @@ import 'data/walka_home_banner_repository.dart';
 import 'data/walka_home_featured_repository.dart';
 import 'data/walka_home_hero_repository.dart';
 import 'data/walka_home_layout_repository.dart';
+import 'data/walka_information_repository.dart';
 import 'data/walka_pdp_layout_repository.dart';
 import 'data/walka_related_products_repository.dart';
 import 'data/walka_search_presentation_repository.dart';
@@ -12,6 +13,7 @@ import 'domain/walka_category_presentation_content.dart';
 import 'domain/walka_home_banner_content.dart';
 import 'domain/walka_home_featured_content.dart';
 import 'domain/walka_home_layout_content.dart';
+import 'domain/walka_information_content.dart';
 import 'domain/walka_mobile_content.dart';
 import 'domain/walka_pdp_layout_content.dart';
 import 'domain/walka_related_products_content.dart';
@@ -25,6 +27,7 @@ class WalkaContentController extends ChangeNotifier {
     WalkaHomeBannerRepository? homeBannerRepository,
     WalkaCategoryPresentationRepository? categoryPresentationRepository,
     WalkaSearchPresentationRepository? searchPresentationRepository,
+    WalkaInformationRepository? informationRepository,
     WalkaPdpLayoutRepository? pdpLayoutRepository,
     WalkaRelatedProductsRepository? relatedProductsRepository,
   })  : _homeRepository = homeRepository,
@@ -33,6 +36,7 @@ class WalkaContentController extends ChangeNotifier {
         _homeBannerRepository = homeBannerRepository,
         _categoryPresentationRepository = categoryPresentationRepository,
         _searchPresentationRepository = searchPresentationRepository,
+        _informationRepository = informationRepository,
         _pdpLayoutRepository = pdpLayoutRepository,
         _relatedProductsRepository = relatedProductsRepository,
         _home = WalkaHomeHeroSnapshot.bundled(),
@@ -41,6 +45,7 @@ class WalkaContentController extends ChangeNotifier {
         _homeBanner = WalkaHomeBannerSnapshot.bundled(),
         _categories = WalkaCategoryPresentationSnapshot.bundled(),
         _search = WalkaSearchPresentationSnapshot.bundled(),
+        _information = WalkaInformationSnapshot.bundled(),
         _pdpLayout = WalkaPdpLayoutSnapshot.bundled(),
         _relatedProducts = WalkaRelatedProductsSnapshot.bundled(),
         _isLoading = homeRepository != null ||
@@ -49,6 +54,7 @@ class WalkaContentController extends ChangeNotifier {
             homeBannerRepository != null ||
             categoryPresentationRepository != null ||
             searchPresentationRepository != null ||
+            informationRepository != null ||
             pdpLayoutRepository != null ||
             relatedProductsRepository != null;
 
@@ -58,6 +64,7 @@ class WalkaContentController extends ChangeNotifier {
   final WalkaHomeBannerRepository? _homeBannerRepository;
   final WalkaCategoryPresentationRepository? _categoryPresentationRepository;
   final WalkaSearchPresentationRepository? _searchPresentationRepository;
+  final WalkaInformationRepository? _informationRepository;
   final WalkaPdpLayoutRepository? _pdpLayoutRepository;
   final WalkaRelatedProductsRepository? _relatedProductsRepository;
   WalkaHomeHeroSnapshot _home;
@@ -66,6 +73,7 @@ class WalkaContentController extends ChangeNotifier {
   WalkaHomeBannerSnapshot _homeBanner;
   WalkaCategoryPresentationSnapshot _categories;
   WalkaSearchPresentationSnapshot _search;
+  WalkaInformationSnapshot _information;
   WalkaPdpLayoutSnapshot _pdpLayout;
   WalkaRelatedProductsSnapshot _relatedProducts;
   bool _isLoading;
@@ -76,6 +84,7 @@ class WalkaContentController extends ChangeNotifier {
   WalkaHomeBannerSnapshot get homeBanner => _homeBanner;
   WalkaCategoryPresentationSnapshot get categories => _categories;
   WalkaSearchPresentationSnapshot get search => _search;
+  WalkaInformationSnapshot get information => _information;
   WalkaPdpLayoutSnapshot get pdpLayout => _pdpLayout;
   WalkaRelatedProductsSnapshot get relatedProducts => _relatedProducts;
   bool get isLoading => _isLoading;
@@ -86,6 +95,7 @@ class WalkaContentController extends ChangeNotifier {
       _homeBannerRepository != null ||
       _categoryPresentationRepository != null ||
       _searchPresentationRepository != null ||
+      _informationRepository != null ||
       _pdpLayoutRepository != null ||
       _relatedProductsRepository != null;
   bool get isOffline =>
@@ -95,6 +105,7 @@ class WalkaContentController extends ChangeNotifier {
       _homeBanner.source != WalkaContentSource.remote ||
       _categories.source != WalkaContentSource.remote ||
       _search.source != WalkaContentSource.remote ||
+      _information.source != WalkaContentSource.remote ||
       _pdpLayout.source != WalkaContentSource.remote ||
       _relatedProducts.source != WalkaContentSource.remote;
 
@@ -108,6 +119,8 @@ class WalkaContentController extends ChangeNotifier {
         _categoryPresentationRepository;
     final WalkaSearchPresentationRepository? searchRepository =
         _searchPresentationRepository;
+    final WalkaInformationRepository? informationRepository =
+        _informationRepository;
     final WalkaPdpLayoutRepository? pdpRepository = _pdpLayoutRepository;
     final WalkaRelatedProductsRepository? relatedRepository =
         _relatedProductsRepository;
@@ -117,6 +130,7 @@ class WalkaContentController extends ChangeNotifier {
         bannerRepository == null &&
         categoryRepository == null &&
         searchRepository == null &&
+        informationRepository == null &&
         pdpRepository == null &&
         relatedRepository == null) {
       if (_isLoading) {
@@ -146,6 +160,9 @@ class WalkaContentController extends ChangeNotifier {
     }
     if (searchRepository != null) {
       _search = await searchRepository.load();
+    }
+    if (informationRepository != null) {
+      _information = await informationRepository.load();
     }
     if (pdpRepository != null) {
       _pdpLayout = await pdpRepository.load();
