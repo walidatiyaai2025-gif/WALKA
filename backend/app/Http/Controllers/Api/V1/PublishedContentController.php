@@ -11,6 +11,7 @@ use App\Services\Content\HomeFeaturedCatalogValidator;
 use App\Services\Content\HomeFeaturedContentDefinition;
 use App\Services\Content\HomeHeroContentDefinition;
 use App\Services\Content\HomeLayoutContentDefinition;
+use App\Services\Content\InformationContentDefinition;
 use App\Services\Content\PdpLayoutContentDefinition;
 use App\Services\Content\RelatedProductsCatalogValidator;
 use App\Services\Content\RelatedProductsContentDefinition;
@@ -120,6 +121,20 @@ final class PublishedContentController extends Controller
             normalize: fn (array $payload): array => $catalogValidator->validate(
                 SearchPresentationContentDefinition::validateAndNormalize($payload),
             ),
+        );
+    }
+
+    public function information(Request $request): JsonResponse|Response
+    {
+        return $this->publishedResponse(
+            request: $request,
+            key: InformationContentDefinition::KEY,
+            type: InformationContentDefinition::TYPE,
+            schemaVersion: InformationContentDefinition::SCHEMA_VERSION,
+            etagFamily: 'information',
+            notPublishedMessage: 'Published Information content is not available.',
+            invalidMessage: 'Published Information content failed its delivery contract.',
+            normalize: InformationContentDefinition::validateAndNormalize(...),
         );
     }
 
