@@ -4,6 +4,8 @@ import '../../design_system/walka_adaptive.dart';
 import '../../design_system/walka_shell.dart';
 import '../../design_system/walka_theme.dart';
 import '../catalog/catalog_state.dart';
+import '../content/content_state.dart';
+import '../content/domain/walka_operational_content.dart';
 import 'account_about_cms_v140.dart';
 import 'favorites_reference_v131.dart';
 import 'storefront_resilient_v130.dart';
@@ -111,9 +113,86 @@ class _WalkaStorefrontShellV102State extends State<WalkaStorefrontShellV102> {
       ),
     ];
 
+    final WalkaContentController? content = WalkaContentScope.maybeOf(context);
+    final WalkaMaintenanceNoticeContent notice =
+        content?.maintenanceNotice.content ?? WalkaMaintenanceNoticeContent.bundled;
+    final WalkaAppConfigContent appConfig =
+        content?.appConfig.content ?? WalkaAppConfigContent.bundled;
+    final bool showOperationalNotice = appConfig.showOperationalNotice &&
+        notice.isActiveAt(DateTime.now().toUtc());
+
     return WalkaMobileShellScaffold(
       controller: _shellController,
       pages: pages,
+      topBanner: showOperationalNotice
+          ? WalkaOperationalNoticeBanner(notice: notice)
+          : null,
+    );
+  }
+}
+
+class WalkaOperationalNoticeBanner extends StatelessWidget {
+  const WalkaOperationalNoticeBanner({required this.notice, super.key});
+
+  final WalkaMaintenanceNoticeContent notice;
+
+  @override
+  Widget build(BuildContext context) {
+    final IconData icon = switch (notice.severity) {
+      'maintenance' => Icons.build_circle_outlined,
+      'warning' => Icons.warning_amber_rounded,
+      _ => Icons.info_outline_rounded,
+    };
+
+    return SafeArea(
+      bottom: false,
+      child: Semantics(
+        liveRegion: true,
+        container: true,
+        label: '${notice.title}. ${notice.body}',
+        child: Material(
+          key: const Key('walka-operational-notice'),
+          color: const Color(0xFFFFF8E7),
+          child: Container(
+            width: double.infinity,
+            decoration: const BoxDecoration(
+              border: Border(bottom: BorderSide(color: WalkaColors.line)),
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 11),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Icon(icon, size: 20, color: WalkaColors.navy),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Text(
+                        notice.title,
+                        style: const TextStyle(
+                          color: WalkaColors.navy,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 13,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        notice.body,
+                        style: const TextStyle(
+                          color: WalkaColors.muted,
+                          height: 1.35,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
