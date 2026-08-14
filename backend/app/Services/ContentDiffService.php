@@ -40,10 +40,12 @@ final class ContentDiffService
 
             if ($hasBefore === false) {
                 $rows[] = ['path' => $path, 'state' => 'added', 'before' => null, 'after' => $this->safeValue($after[$key])];
+
                 continue;
             }
             if ($hasAfter === false) {
                 $rows[] = ['path' => $path, 'state' => 'removed', 'before' => $this->safeValue($before[$key]), 'after' => null];
+
                 continue;
             }
 
@@ -51,6 +53,7 @@ final class ContentDiffService
             $right = $after[$key];
             if (is_array($left) && is_array($right)) {
                 $this->walk($left, $right, $path, $rows);
+
                 continue;
             }
             if ($left !== $right) {
