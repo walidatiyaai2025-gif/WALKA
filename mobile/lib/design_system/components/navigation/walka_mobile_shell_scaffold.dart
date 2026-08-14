@@ -11,11 +11,13 @@ class WalkaMobileShellScaffold extends StatelessWidget {
   const WalkaMobileShellScaffold({
     required this.controller,
     required this.pages,
+    this.topBanner,
     super.key,
   }) : assert(pages.length == WalkaShellDestination.values.length);
 
   final WalkaShellController controller;
   final List<Widget> pages;
+  final Widget? topBanner;
 
   @override
   Widget build(BuildContext context) {
@@ -23,11 +25,18 @@ class WalkaMobileShellScaffold extends StatelessWidget {
       animation: controller,
       builder: (BuildContext context, Widget? child) {
         return Scaffold(
-          body: WalkaAdaptiveFrame(
-            child: IndexedStack(
-              index: controller.selectedIndex,
-              children: pages,
-            ),
+          body: Column(
+            children: <Widget>[
+              if (topBanner != null) topBanner!,
+              Expanded(
+                child: WalkaAdaptiveFrame(
+                  child: IndexedStack(
+                    index: controller.selectedIndex,
+                    children: pages,
+                  ),
+                ),
+              ),
+            ],
           ),
           bottomNavigationBar: SizedBox(
             height: WalkaShellMetrics.navigationHeight,
