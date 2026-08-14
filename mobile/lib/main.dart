@@ -18,6 +18,8 @@ import 'features/content/data/walka_home_hero_cache.dart';
 import 'features/content/data/walka_home_hero_repository.dart';
 import 'features/content/data/walka_home_layout_cache.dart';
 import 'features/content/data/walka_home_layout_repository.dart';
+import 'features/content/data/walka_information_cache.dart';
+import 'features/content/data/walka_information_repository.dart';
 import 'features/content/data/walka_pdp_layout_cache.dart';
 import 'features/content/data/walka_pdp_layout_repository.dart';
 import 'features/content/data/walka_related_products_cache.dart';
@@ -75,6 +77,10 @@ Future<void> main() async {
     searchPresentationRepository: WalkaSearchPresentationRepository(
       cache: SharedPreferencesWalkaSearchPresentationCache(),
       remoteLoader: apiClient?.fetchSearchPresentation,
+    ),
+    informationRepository: WalkaInformationRepository(
+      cache: SharedPreferencesWalkaInformationCache(),
+      remoteLoader: apiClient?.fetchInformation,
     ),
     pdpLayoutRepository: WalkaPdpLayoutRepository(
       cache: SharedPreferencesWalkaPdpLayoutCache(),
