@@ -12,6 +12,8 @@ use App\Services\Content\HomeFeaturedContentDefinition;
 use App\Services\Content\HomeHeroContentDefinition;
 use App\Services\Content\HomeLayoutContentDefinition;
 use App\Services\Content\PdpLayoutContentDefinition;
+use App\Services\Content\RelatedProductsCatalogValidator;
+use App\Services\Content\RelatedProductsContentDefinition;
 use App\Services\Content\SearchPresentationCatalogValidator;
 use App\Services\Content\SearchPresentationContentDefinition;
 use Illuminate\Http\JsonResponse;
@@ -132,6 +134,24 @@ final class PublishedContentController extends Controller
             notPublishedMessage: 'Published PDP layout is not available.',
             invalidMessage: 'Published PDP layout failed its delivery contract.',
             normalize: PdpLayoutContentDefinition::validateAndNormalize(...),
+        );
+    }
+
+    public function relatedProducts(
+        Request $request,
+        RelatedProductsCatalogValidator $catalogValidator,
+    ): JsonResponse|Response {
+        return $this->publishedResponse(
+            request: $request,
+            key: RelatedProductsContentDefinition::KEY,
+            type: RelatedProductsContentDefinition::TYPE,
+            schemaVersion: RelatedProductsContentDefinition::SCHEMA_VERSION,
+            etagFamily: 'related-products',
+            notPublishedMessage: 'Published related products are not available.',
+            invalidMessage: 'Published related products failed their delivery contract.',
+            normalize: fn (array $payload): array => $catalogValidator->validate(
+                RelatedProductsContentDefinition::validateAndNormalize($payload),
+            ),
         );
     }
 
