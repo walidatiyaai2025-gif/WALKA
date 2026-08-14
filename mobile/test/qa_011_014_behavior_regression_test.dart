@@ -17,7 +17,7 @@ void main() {
     final String shell = File('lib/features/storefront/storefront_v102.dart')
         .readAsStringSync();
     final String account = _joinExistingSources(<String>[
-      'lib/features/storefront/account_about_reference_v131.dart',
+      'lib/features/storefront/account_about_cms_v140.dart',
       'lib/features/storefront/presentation/widgets/account/walka_account_groups.dart',
     ]);
     final String favorites =
@@ -29,12 +29,15 @@ void main() {
       'WalkaSearchPremiumV130',
       'WalkaCategoriesPremiumV130',
       'WalkaFavoritesReferenceV131',
-      'WalkaAccountReferenceV131',
+      'WalkaAccountCmsV140',
     ]) {
       expect(shell, contains(destination), reason: 'Missing shell route $destination');
     }
     expect(account, contains("title: 'Our Story'"));
-    expect(account, contains('WalkaAboutReferenceV131'));
+    expect(account, contains('WalkaAboutCmsV140'));
+    expect(account, contains('WalkaFaqCmsV140'));
+    expect(account, contains('WalkaContactCmsV140'));
+    expect(account, contains('WalkaLegalCmsV140'));
     expect(favorites, contains('WalkaDrawerProductDetailV100'));
   });
 
