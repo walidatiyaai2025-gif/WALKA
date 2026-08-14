@@ -38,23 +38,25 @@ final class ContentScheduleService
                 }
 
                 $unpublishDue = $entry->scheduled_unpublish_at !== null
-                    && ! $entry->scheduled_unpublish_at->greaterThan($at);
+                    && $entry->scheduled_unpublish_at->lessThanOrEqualTo($at);
                 if ($unpublishDue) {
                     $this->applyScheduledUnpublish($entry, $at);
+
                     return 'unpublished';
                 }
 
                 $publishDue = $entry->scheduled_publish_at !== null
-                    && ! $entry->scheduled_publish_at->greaterThan($at);
+                    && $entry->scheduled_publish_at->lessThanOrEqualTo($at);
                 if ($publishDue) {
                     $this->applyScheduledPublish($entry, $at);
+
                     return 'published';
                 }
 
                 return 'stale';
             });
 
-            $result[$outcome]++;
+            $result[$outcome] = $result[$outcome] + 1;
         }
 
         return $result;
@@ -71,7 +73,7 @@ final class ContentScheduleService
         $publishAt = $publishAt?->utc();
         $unpublishAt = $unpublishAt?->utc();
 
-        if ($publishAt !== null && $unpublishAt !== null && ! $unpublishAt->greaterThan($publishAt)) {
+        if ($publishAt !== null && $unpublishAt !== null && $unpublishAt->lessThanOrEqualTo($publishAt)) {
             throw ValidationException::withMessages([
                 'scheduled_unpublish_at' => ['Unpublish time must be after publish time.'],
             ]);
