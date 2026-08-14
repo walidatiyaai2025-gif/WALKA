@@ -8,7 +8,7 @@
     <div>
         <p class="eyebrow">DRAFT · DIFF · SCHEDULE · PUBLISH · ROLLBACK</p>
         <h1>{{ $entry->content_key }}</h1>
-        <p class="lead">Edit the draft, inspect a deterministic non-executable diff, optionally schedule publication in UTC, then publish explicitly. Historical restore always creates a new draft.</p>
+        <p class="lead">Edit the draft, inspect a deterministic non-executable diff, optionally schedule publication in UTC, then publish explicitly. Historical rollback always creates a new private draft and never changes live content automatically.</p>
     </div>
     <a class="btn secondary" href="{{ route('admin.content.index') }}">← All content</a>
 </div>
@@ -18,6 +18,7 @@
     $hasChanges = $hasPublished && $entry->draft_payload !== $entry->published_payload;
     $hasSchedule = $entry->scheduled_publish_at || $entry->scheduled_unpublish_at;
     $scheduleCurrent = $hasSchedule && $entry->schedule_revision === $entry->revision;
+    $lastRollback = $entry->revisions->firstWhere('action', 'draft_restored');
 @endphp
 
 <div class="grid metrics">
@@ -46,7 +47,7 @@
     <aside class="card">
         <p class="eyebrow">PUBLICATION GATE</p>
         <h2>Publish controls</h2>
-        <p class="muted">Publishing snapshots the current draft into an immutable revision. A later edit stays private until the next explicit or scheduled publish.</p>
+        <p class="muted">Publishing snapshots the current draft into an immutable revision. A later edit or rollback stays private until the next explicit or scheduled publish.</p>
         <div class="status-row">
             <div><strong>Live state</strong><div class="muted">{{ $hasPublished ? 'Revision '.$entry->published_revision : 'No public snapshot yet' }}</div></div>
             @if (! $hasPublished)<span class="badge warn">NOT LIVE</span>@elseif ($hasChanges)<span class="badge warn">CHANGES WAITING</span>@else<span class="badge good">CURRENT</span>@endif
@@ -105,18 +106,38 @@
 </section>
 
 <section class="card section-space">
-    <p class="eyebrow">IMMUTABLE HISTORY</p>
-    <h2>Revision timeline</h2>
+    <p class="eyebrow">CMS-052 · ROLLBACK CENTER</p>
+    <h2>Immutable history and recovery shortcuts</h2>
+    <div class="locked" style="margin-bottom:16px">
+        <strong>Rollback safety contract</strong>
+        <p class="muted">Recovery copies a selected historical snapshot into revision #{{ $entry->revision + 1 }} as a private draft. It does not rewrite the source revision, does not change published revision {{ $entry->published_revision ? '#'.$entry->published_revision : '—' }}, and requires a reason that is stored on the immutable receipt.</p>
+        @if ($lastRollback)
+            <small>Latest rollback receipt</small><strong>#{{ $lastRollback->revision }} from #{{ $lastRollback->source_revision }} · {{ $lastRollback->reason ?? 'Historical revision restore' }}</strong>
+        @endif
+    </div>
     <div class="table-wrap">
-        <table><thead><tr><th>Revision</th><th>Action</th><th>Source</th><th>Created</th><th>Compare</th><th>Recovery</th></tr></thead><tbody>
+        <table><thead><tr><th>Revision</th><th>Action</th><th>Source</th><th>Reason</th><th>Created</th><th>Compare</th><th>Recovery</th></tr></thead><tbody>
         @foreach ($entry->revisions as $revision)
             <tr>
-                <td><strong>#{{ $revision->revision }}</strong></td>
+                <td><strong>#{{ $revision->revision }}</strong>@if ($entry->published_revision === $revision->revision)<div><span class="badge good">LIVE</span></div>@endif</td>
                 <td>{{ str_replace('_', ' ', strtoupper($revision->action)) }}</td>
                 <td>{{ $revision->source_revision ? '#'.$revision->source_revision : '—' }}</td>
+                <td>{{ $revision->reason ?? '—' }}</td>
                 <td>{{ $revision->created_at?->format('Y-m-d H:i:s') }}</td>
                 <td><a class="btn secondary" href="{{ route('admin.content.show', ['content' => $entry->id, 'compare_revision' => $revision->revision]) }}">Diff</a></td>
-                <td>@if ($revision->payload !== $entry->draft_payload)<form method="post" action="{{ route('admin.content.restore', ['content' => $entry->id]) }}">@csrf<input type="hidden" name="revision" value="{{ $entry->revision }}"><input type="hidden" name="source_revision" value="{{ $revision->revision }}"><button class="btn secondary" type="submit">Restore to draft</button></form>@else<span class="badge lock">CURRENT DRAFT</span>@endif</td>
+                <td>
+                    @if ($revision->payload !== $entry->draft_payload)
+                        <form method="post" action="{{ route('admin.content.restore', ['content' => $entry->id]) }}" class="stack" onsubmit="return confirm('Restore revision #{{ $revision->revision }} into a new PRIVATE draft? Live content will not change until a later publish.');">
+                            @csrf
+                            <input type="hidden" name="revision" value="{{ $entry->revision }}">
+                            <input type="hidden" name="source_revision" value="{{ $revision->revision }}">
+                            <div class="field"><label for="reason_{{ $revision->revision }}">Rollback reason</label><input id="reason_{{ $revision->revision }}" name="reason" maxlength="280" minlength="3" required placeholder="Why are we restoring this revision?"></div>
+                            <button class="btn secondary" type="submit">Restore to private draft</button>
+                        </form>
+                    @else
+                        <span class="badge lock">CURRENT DRAFT</span>
+                    @endif
+                </td>
             </tr>
         @endforeach
         </tbody></table>
