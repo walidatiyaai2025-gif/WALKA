@@ -3,12 +3,30 @@
 use App\Enums\DashboardRole;
 use App\Models\Product;
 use App\Models\ProductVariant;
+use App\Services\ContentScheduleService;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Schedule;
 
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
+
+Artisan::command('walka:content-schedule-run', function () {
+    /** @var ContentScheduleService $service */
+    $service = app(ContentScheduleService::class);
+    $result = $service->runDue();
+    $this->info(sprintf(
+        'WALKA content schedule run: published=%d unpublished=%d stale=%d',
+        $result['published'],
+        $result['unpublished'],
+        $result['stale'],
+    ));
+
+    return 0;
+})->purpose('Apply due governed CMS publish/unpublish transitions idempotently');
+
+Schedule::command('walka:content-schedule-run')->everyMinute()->withoutOverlapping();
 
 Artisan::command('walka:production-check', function () {
     $rows = [];
