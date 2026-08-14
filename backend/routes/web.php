@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\AdminCategoryPresentationController;
 use App\Http\Controllers\Admin\AdminContentController;
+use App\Http\Controllers\Admin\AdminContentHealthController;
 use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\AdminHomeBannerController;
 use App\Http\Controllers\Admin\AdminHomeFeaturedController;
@@ -46,6 +47,8 @@ Route::prefix('admin')->name('admin.')->middleware('walka.dashboard.headers')->g
 
         Route::get('/content', [AdminContentController::class, 'index'])->middleware('walka.dashboard.can:content.view')->name('content.index');
         Route::post('/content', [AdminContentController::class, 'store'])->middleware('walka.dashboard.can:content.write')->name('content.store');
+        Route::get('/content/health', [AdminContentHealthController::class, 'index'])->middleware('walka.dashboard.can:content.view')->name('content.health');
+        Route::get('/content/health.json', [AdminContentHealthController::class, 'json'])->middleware('walka.dashboard.can:content.view')->name('content.health.json');
 
         Route::get('/content/home/hero', [AdminHomeHeroController::class, 'edit'])->middleware('walka.dashboard.can:content.view')->name('content.home.hero.edit');
         Route::patch('/content/home/hero', [AdminHomeHeroController::class, 'update'])->middleware('walka.dashboard.can:content.write')->name('content.home.hero.update');
