@@ -228,7 +228,7 @@ void main() {
         tester.getTopLeft(find.text('VARIANT SELECTOR TEST')).dy;
     final double galleryY = tester.getTopLeft(find.text('GALLERY TEST')).dy;
     expect(variantY, lessThan(galleryY));
-    expect(find.textContaining('Official Amazon'), findsWidgets);
+    expect(find.byType(WalkaPdpAmazonTrust), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }
