@@ -140,8 +140,10 @@ final class ContentRevisionService
         int $revisionToRestore,
         int $expectedRevision,
         string $actorFingerprint,
+        ?string $reason = null,
     ): ContentEntry {
         $this->validateExistingWrite($contentKey, $expectedRevision, $actorFingerprint);
+        $reason = $this->normalizeRestoreReason($reason);
 
         Validator::make(
             ['revision_to_restore' => $revisionToRestore],
@@ -153,6 +155,7 @@ final class ContentRevisionService
             $revisionToRestore,
             $expectedRevision,
             $actorFingerprint,
+            $reason,
         ): ContentEntry {
             $entry = ContentEntry::query()
                 ->where('content_key', $contentKey)
@@ -182,6 +185,7 @@ final class ContentRevisionService
                 payload: $source->payload,
                 sourceRevision: $revisionToRestore,
                 actorFingerprint: $actorFingerprint,
+                reason: $reason,
             );
 
             return $entry->refresh();
@@ -258,6 +262,21 @@ final class ContentRevisionService
         ])->validate();
     }
 
+    private function normalizeRestoreReason(?string $reason): string
+    {
+        $reason = trim((string) $reason);
+        if ($reason === '') {
+            $reason = 'Historical revision restore';
+        }
+
+        Validator::make(
+            ['reason' => $reason],
+            ['reason' => ['required', 'string', 'min:3', 'max:280']],
+        )->validate();
+
+        return $reason;
+    }
+
     private function contentKeyRules(): array
     {
         return ['required', 'string', 'max:160', 'regex:/^[a-z0-9][a-z0-9._:-]*$/'];
@@ -288,6 +307,7 @@ final class ContentRevisionService
         array $payload,
         ?int $sourceRevision,
         string $actorFingerprint,
+        ?string $reason = null,
     ): void {
         ContentRevision::query()->create([
             'content_entry_id' => $entry->id,
@@ -295,6 +315,7 @@ final class ContentRevisionService
             'action' => $action,
             'payload' => $payload,
             'source_revision' => $sourceRevision,
+            'reason' => $reason,
             'actor_fingerprint' => $actorFingerprint,
             'created_at' => now(),
         ]);
