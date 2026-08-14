@@ -93,9 +93,8 @@ final class CmsProductionSmokeService
 
             $incoherent = ContentEntry::query()
                 ->get()
-                ->filter(fn (ContentEntry $entry): bool =>
-                    ($entry->published_revision === null) !== ($entry->published_payload === null)
-                )->count();
+                ->filter(fn (ContentEntry $entry): bool => ($entry->published_revision === null) !== ($entry->published_payload === null))
+                ->count();
             $check('content.publication-coherence', 'Backend', $incoherent === 0, "incoherent_entries={$incoherent}");
 
             $health = $this->health->report();
