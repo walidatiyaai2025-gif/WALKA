@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Models\ContentEntry;
+use App\Services\Content\AppConfigContentDefinition;
 use App\Services\Content\CategoryPresentationCatalogValidator;
 use App\Services\Content\CategoryPresentationContentDefinition;
 use App\Services\Content\HomeBannerContentDefinition;
@@ -12,6 +13,7 @@ use App\Services\Content\HomeFeaturedContentDefinition;
 use App\Services\Content\HomeHeroContentDefinition;
 use App\Services\Content\HomeLayoutContentDefinition;
 use App\Services\Content\InformationContentDefinition;
+use App\Services\Content\MaintenanceNoticeContentDefinition;
 use App\Services\Content\PdpLayoutContentDefinition;
 use App\Services\Content\RelatedProductsCatalogValidator;
 use App\Services\Content\RelatedProductsContentDefinition;
@@ -135,6 +137,38 @@ final class PublishedContentController extends Controller
             notPublishedMessage: 'Published Information content is not available.',
             invalidMessage: 'Published Information content failed its delivery contract.',
             normalize: InformationContentDefinition::validateAndNormalize(...),
+        );
+    }
+
+    public function maintenanceNotice(Request $request): JsonResponse|Response
+    {
+        return $this->publishedResponse(
+            request: $request,
+            key: MaintenanceNoticeContentDefinition::KEY,
+            type: MaintenanceNoticeContentDefinition::TYPE,
+            schemaVersion: MaintenanceNoticeContentDefinition::SCHEMA_VERSION,
+            etagFamily: 'maintenance-notice',
+            notPublishedMessage: 'Published maintenance notice is not available.',
+            invalidMessage: 'Published maintenance notice failed its delivery contract.',
+            normalize: MaintenanceNoticeContentDefinition::validateAndNormalize(...),
+            extraMeta: fn (array $payload): array => [
+                'active' => MaintenanceNoticeContentDefinition::isActiveAt($payload),
+                'schedule_evaluated_at' => now()->utc()->toIso8601ZuluString(),
+            ],
+        );
+    }
+
+    public function appConfig(Request $request): JsonResponse|Response
+    {
+        return $this->publishedResponse(
+            request: $request,
+            key: AppConfigContentDefinition::KEY,
+            type: AppConfigContentDefinition::TYPE,
+            schemaVersion: AppConfigContentDefinition::SCHEMA_VERSION,
+            etagFamily: 'app-config',
+            notPublishedMessage: 'Published App Config is not available.',
+            invalidMessage: 'Published App Config failed its delivery contract.',
+            normalize: AppConfigContentDefinition::validateAndNormalize(...),
         );
     }
 
