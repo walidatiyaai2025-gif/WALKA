@@ -15,6 +15,7 @@ final class ContentRevision extends Model
         'action',
         'payload',
         'source_revision',
+        'reason',
         'actor_fingerprint',
         'created_at',
     ];
