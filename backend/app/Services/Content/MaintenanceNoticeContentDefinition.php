@@ -8,7 +8,9 @@ use Illuminate\Validation\ValidationException;
 final class MaintenanceNoticeContentDefinition
 {
     public const KEY = 'app.maintenance_notice';
+
     public const TYPE = 'app.maintenance_notice';
+
     public const SCHEMA_VERSION = 1;
 
     /** @return array<string, mixed> */
@@ -44,7 +46,7 @@ final class MaintenanceNoticeContentDefinition
         $startsAt = self::timestamp($payload['starts_at'] ?? null, 'starts_at');
         $endsAt = self::timestamp($payload['ends_at'] ?? null, 'ends_at');
 
-        if ($startsAt !== null && $endsAt !== null && ! $endsAt->greaterThan($startsAt)) {
+        if ($startsAt !== null && $endsAt !== null && $endsAt->lessThanOrEqualTo($startsAt)) {
             self::fail('ends_at', 'End time must be after start time.');
         }
 
@@ -73,7 +75,7 @@ final class MaintenanceNoticeContentDefinition
         if ($startsAt !== null && $at->lessThan($startsAt)) {
             return false;
         }
-        if ($endsAt !== null && ! $at->lessThan($endsAt)) {
+        if ($endsAt !== null && $at->greaterThanOrEqualTo($endsAt)) {
             return false;
         }
 
