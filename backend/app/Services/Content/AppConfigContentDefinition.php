@@ -38,7 +38,7 @@ final class AppConfigContentDefinition
     public static function validateAndNormalize(array $payload): array
     {
         $flags = $payload['flags'] ?? null;
-        if (! is_array($flags) || array_is_list($flags)) {
+        if (is_array($flags) === false || array_is_list($flags)) {
             self::fail('flags', 'Flags must be an object keyed by compiled flag ID.');
         }
 
@@ -49,7 +49,7 @@ final class AppConfigContentDefinition
 
         $normalized = [];
         foreach (self::flagIds() as $id) {
-            if (! array_key_exists($id, $flags) || ! is_bool($flags[$id])) {
+            if (array_key_exists($id, $flags) === false || is_bool($flags[$id]) === false) {
                 self::fail("flags.$id", 'Every compiled presentation flag must be present as a boolean.');
             }
             $normalized[$id] = $flags[$id];
