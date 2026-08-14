@@ -3,44 +3,46 @@ import 'package:flutter/material.dart';
 import 'package:walka/design_system/components/cards/walka_surface_card.dart';
 import 'package:walka/design_system/components/layout/walka_responsive_grid.dart';
 import 'package:walka/design_system/walka_theme.dart';
+import 'package:walka/features/content/domain/walka_information_content.dart';
 
 class WalkaAboutPrinciples extends StatelessWidget {
-  const WalkaAboutPrinciples({super.key});
+  const WalkaAboutPrinciples({
+    this.eyebrow = 'HOW WE DESIGN',
+    this.title = 'Simple choices, made deliberately.',
+    this.items,
+    super.key,
+  });
+
+  final String eyebrow;
+  final String title;
+  final List<WalkaInformationCopyItem>? items;
 
   @override
   Widget build(BuildContext context) {
-    return const Column(
+    final List<WalkaInformationCopyItem> resolved = items ??
+        WalkaInformationContent.bundled.about.principles;
+
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        Text('HOW WE DESIGN', style: WalkaType.eyebrow),
-        SizedBox(height: 9),
-        Text('Simple choices, made deliberately.', style: WalkaType.sectionTitle),
-        SizedBox(height: 16),
+        Text(eyebrow, style: WalkaType.eyebrow),
+        const SizedBox(height: 9),
+        Text(title, style: WalkaType.sectionTitle),
+        const SizedBox(height: 16),
         WalkaResponsiveGrid(
           minItemWidth: 250,
           maxColumns: 3,
           gap: 10,
           runGap: 10,
-          children: <Widget>[
-            WalkaAboutPrincipleCard(
-              number: '01',
-              title: 'Useful first',
-              body:
-                  'Every WALKA product starts with the routine it needs to improve, then removes unnecessary complexity.',
+          children: List<Widget>.generate(
+            resolved.length,
+            (int index) => WalkaAboutPrincipleCard(
+              number: (index + 1).toString().padLeft(2, '0'),
+              title: resolved[index].title,
+              body: resolved[index].body,
             ),
-            WalkaAboutPrincipleCard(
-              number: '02',
-              title: 'Calm by design',
-              body:
-                  'Clean proportions, restrained color and considered details help products sit naturally in the home.',
-            ),
-            WalkaAboutPrincipleCard(
-              number: '03',
-              title: 'Made for repetition',
-              body:
-                  'The best organization products quietly support everyday habits and remain easy to use again and again.',
-            ),
-          ],
+            growable: false,
+          ),
         ),
       ],
     );
