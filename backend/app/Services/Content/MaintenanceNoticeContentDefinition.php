@@ -32,12 +32,12 @@ final class MaintenanceNoticeContentDefinition
     public static function validateAndNormalize(array $payload): array
     {
         $enabled = $payload['enabled'] ?? null;
-        if (! is_bool($enabled)) {
+        if (is_bool($enabled) === false) {
             self::fail('enabled', 'Enabled must be a boolean.');
         }
 
         $severity = trim((string) ($payload['severity'] ?? ''));
-        if (! in_array($severity, ['info', 'warning', 'maintenance'], true)) {
+        if (in_array($severity, ['info', 'warning', 'maintenance'], true) === false) {
             self::fail('severity', 'Severity must be info, warning or maintenance.');
         }
 
