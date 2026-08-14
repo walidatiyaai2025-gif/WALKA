@@ -102,6 +102,14 @@ class _WalkaDrawerProductDetailV112State
       return const _UnavailableCatalogProduct(label: 'Drawer Organizer');
     }
 
+    final WalkaCatalogController? catalog = WalkaCatalogScope.maybeOf(context);
+    final WalkaPdpEditorialCopy editorial =
+        WalkaPdpEditorialCopy.fromCatalogProduct(
+      catalog?.snapshot.productById('drawer-organizer'),
+      fallbackTitle: 'Organize the drawer. Keep the counter calm.',
+      fallbackBody:
+          'An expandable eight-compartment layout gives everyday utensils a defined place while keeping the visual language clean and minimal.',
+    );
     final WalkaFavoritesController favorites = WalkaFavoritesScope.of(context);
     final bool isFavorite = favorites.isDrawerFavorite(gray: _gray);
     final WalkaPdpPresentationModel model = _model;
@@ -148,9 +156,8 @@ class _WalkaDrawerProductDetailV112State
               .toList(growable: false),
           onChanged: (bool gray) => setState(() => _gray = gray),
         ),
-        editorialTitle: 'Organize the drawer. Keep the counter calm.',
-        editorialBody:
-            'An expandable eight-compartment layout gives everyday utensils a defined place while keeping the visual language clean and minimal.',
+        editorialTitle: editorial.title,
+        editorialBody: editorial.body,
       ),
     );
   }
@@ -248,6 +255,14 @@ class _WalkaLunchProductDetailV112State
       return const _UnavailableCatalogProduct(label: 'Lunch Box');
     }
 
+    final WalkaCatalogController? catalog = WalkaCatalogScope.maybeOf(context);
+    final WalkaPdpEditorialCopy editorial =
+        WalkaPdpEditorialCopy.fromCatalogProduct(
+      catalog?.snapshot.productById('stainless-steel-bento-lunch-box'),
+      fallbackTitle: 'A complete lunch system for the workday.',
+      fallbackBody:
+          'The food-grade stainless tray, PP outer box, sauce cup, utensils and carry bag form one coordinated adult lunch set.',
+    );
     final WalkaPdpPresentationModel model = _model;
     return Scaffold(
       backgroundColor: const Color(0xFFFFFEFC),
@@ -289,9 +304,8 @@ class _WalkaLunchProductDetailV112State
           onChanged: (WalkaLunchVariant variant) =>
               setState(() => _variant = variant),
         ),
-        editorialTitle: 'A complete lunch system for the workday.',
-        editorialBody:
-            'The food-grade stainless tray, PP outer box, sauce cup, utensils and carry bag form one coordinated adult lunch set.',
+        editorialTitle: editorial.title,
+        editorialBody: editorial.body,
       ),
     );
   }
