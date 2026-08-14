@@ -38,11 +38,11 @@ final class ContentDiffService
             $hasBefore = array_key_exists($key, $before);
             $hasAfter = array_key_exists($key, $after);
 
-            if (! $hasBefore) {
+            if ($hasBefore === false) {
                 $rows[] = ['path' => $path, 'state' => 'added', 'before' => null, 'after' => $this->safeValue($after[$key])];
                 continue;
             }
-            if (! $hasAfter) {
+            if ($hasAfter === false) {
                 $rows[] = ['path' => $path, 'state' => 'removed', 'before' => $this->safeValue($before[$key]), 'after' => null];
                 continue;
             }
@@ -80,7 +80,7 @@ final class ContentDiffService
 
     private function safeValue(mixed $value): mixed
     {
-        if (! is_array($value)) {
+        if (is_array($value) === false) {
             return $value;
         }
 
