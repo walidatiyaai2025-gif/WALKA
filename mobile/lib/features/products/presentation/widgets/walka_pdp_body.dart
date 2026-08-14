@@ -16,6 +16,7 @@ class WalkaPdpBody extends StatelessWidget {
     required this.variantSelector,
     required this.editorialTitle,
     required this.editorialBody,
+    this.relatedProducts,
     super.key,
   });
 
@@ -25,6 +26,7 @@ class WalkaPdpBody extends StatelessWidget {
   final Widget variantSelector;
   final String editorialTitle;
   final String editorialBody;
+  final Widget? relatedProducts;
 
   @override
   Widget build(BuildContext context) {
@@ -35,6 +37,13 @@ class WalkaPdpBody extends StatelessWidget {
     final List<Widget> sections = <Widget>[];
     for (final WalkaPdpSectionConfig section in layout.visibleSections) {
       sections.addAll(_sectionWidgets(section.id));
+    }
+
+    final Widget? related = relatedProducts;
+    if (related != null) {
+      sections
+        ..add(const SizedBox(height: 26))
+        ..add(related);
     }
 
     return SingleChildScrollView(
