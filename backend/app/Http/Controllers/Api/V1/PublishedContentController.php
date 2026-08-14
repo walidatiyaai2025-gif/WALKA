@@ -19,6 +19,7 @@ use App\Services\Content\RelatedProductsCatalogValidator;
 use App\Services\Content\RelatedProductsContentDefinition;
 use App\Services\Content\SearchPresentationCatalogValidator;
 use App\Services\Content\SearchPresentationContentDefinition;
+use App\Services\ContentDeliveryMetadataService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -26,6 +27,10 @@ use Illuminate\Validation\ValidationException;
 
 final class PublishedContentController extends Controller
 {
+    public function __construct(
+        private readonly ContentDeliveryMetadataService $deliveryMetadata,
+    ) {}
+
     public function home(Request $request): JsonResponse|Response
     {
         return $this->publishedResponse(
@@ -33,7 +38,6 @@ final class PublishedContentController extends Controller
             key: HomeHeroContentDefinition::KEY,
             type: HomeHeroContentDefinition::TYPE,
             schemaVersion: HomeHeroContentDefinition::SCHEMA_VERSION,
-            etagFamily: 'home-hero',
             notPublishedMessage: 'Published Home content is not available.',
             invalidMessage: 'Published Home content failed its delivery contract.',
             normalize: HomeHeroContentDefinition::validateAndNormalize(...),
@@ -47,7 +51,6 @@ final class PublishedContentController extends Controller
             key: HomeLayoutContentDefinition::KEY,
             type: HomeLayoutContentDefinition::TYPE,
             schemaVersion: HomeLayoutContentDefinition::SCHEMA_VERSION,
-            etagFamily: 'home-layout',
             notPublishedMessage: 'Published Home layout is not available.',
             invalidMessage: 'Published Home layout failed its delivery contract.',
             normalize: HomeLayoutContentDefinition::validateAndNormalize(...),
@@ -63,7 +66,6 @@ final class PublishedContentController extends Controller
             key: HomeFeaturedContentDefinition::KEY,
             type: HomeFeaturedContentDefinition::TYPE,
             schemaVersion: HomeFeaturedContentDefinition::SCHEMA_VERSION,
-            etagFamily: 'home-featured',
             notPublishedMessage: 'Published Home featured merchandising is not available.',
             invalidMessage: 'Published Home featured merchandising failed its delivery contract.',
             normalize: fn (array $payload): array => $catalogValidator->validate(
@@ -79,7 +81,6 @@ final class PublishedContentController extends Controller
             key: HomeBannerContentDefinition::KEY,
             type: HomeBannerContentDefinition::TYPE,
             schemaVersion: HomeBannerContentDefinition::SCHEMA_VERSION,
-            etagFamily: 'home-banner',
             notPublishedMessage: 'Published Home banner is not available.',
             invalidMessage: 'Published Home banner failed its delivery contract.',
             normalize: HomeBannerContentDefinition::validateAndNormalize(...),
@@ -99,7 +100,6 @@ final class PublishedContentController extends Controller
             key: CategoryPresentationContentDefinition::KEY,
             type: CategoryPresentationContentDefinition::TYPE,
             schemaVersion: CategoryPresentationContentDefinition::SCHEMA_VERSION,
-            etagFamily: 'categories',
             notPublishedMessage: 'Published category presentation is not available.',
             invalidMessage: 'Published category presentation failed its delivery contract.',
             normalize: fn (array $payload): array => $catalogValidator->validate(
@@ -117,7 +117,6 @@ final class PublishedContentController extends Controller
             key: SearchPresentationContentDefinition::KEY,
             type: SearchPresentationContentDefinition::TYPE,
             schemaVersion: SearchPresentationContentDefinition::SCHEMA_VERSION,
-            etagFamily: 'search',
             notPublishedMessage: 'Published Search presentation is not available.',
             invalidMessage: 'Published Search presentation failed its delivery contract.',
             normalize: fn (array $payload): array => $catalogValidator->validate(
@@ -133,7 +132,6 @@ final class PublishedContentController extends Controller
             key: InformationContentDefinition::KEY,
             type: InformationContentDefinition::TYPE,
             schemaVersion: InformationContentDefinition::SCHEMA_VERSION,
-            etagFamily: 'information',
             notPublishedMessage: 'Published Information content is not available.',
             invalidMessage: 'Published Information content failed its delivery contract.',
             normalize: InformationContentDefinition::validateAndNormalize(...),
@@ -147,7 +145,6 @@ final class PublishedContentController extends Controller
             key: MaintenanceNoticeContentDefinition::KEY,
             type: MaintenanceNoticeContentDefinition::TYPE,
             schemaVersion: MaintenanceNoticeContentDefinition::SCHEMA_VERSION,
-            etagFamily: 'maintenance-notice',
             notPublishedMessage: 'Published maintenance notice is not available.',
             invalidMessage: 'Published maintenance notice failed its delivery contract.',
             normalize: MaintenanceNoticeContentDefinition::validateAndNormalize(...),
@@ -165,7 +162,6 @@ final class PublishedContentController extends Controller
             key: AppConfigContentDefinition::KEY,
             type: AppConfigContentDefinition::TYPE,
             schemaVersion: AppConfigContentDefinition::SCHEMA_VERSION,
-            etagFamily: 'app-config',
             notPublishedMessage: 'Published App Config is not available.',
             invalidMessage: 'Published App Config failed its delivery contract.',
             normalize: AppConfigContentDefinition::validateAndNormalize(...),
@@ -179,7 +175,6 @@ final class PublishedContentController extends Controller
             key: PdpLayoutContentDefinition::KEY,
             type: PdpLayoutContentDefinition::TYPE,
             schemaVersion: PdpLayoutContentDefinition::SCHEMA_VERSION,
-            etagFamily: 'pdp-layout',
             notPublishedMessage: 'Published PDP layout is not available.',
             invalidMessage: 'Published PDP layout failed its delivery contract.',
             normalize: PdpLayoutContentDefinition::validateAndNormalize(...),
@@ -195,7 +190,6 @@ final class PublishedContentController extends Controller
             key: RelatedProductsContentDefinition::KEY,
             type: RelatedProductsContentDefinition::TYPE,
             schemaVersion: RelatedProductsContentDefinition::SCHEMA_VERSION,
-            etagFamily: 'related-products',
             notPublishedMessage: 'Published related products are not available.',
             invalidMessage: 'Published related products failed their delivery contract.',
             normalize: fn (array $payload): array => $catalogValidator->validate(
@@ -213,7 +207,6 @@ final class PublishedContentController extends Controller
         string $key,
         string $type,
         int $schemaVersion,
-        string $etagFamily,
         string $notPublishedMessage,
         string $invalidMessage,
         callable $normalize,
@@ -247,13 +240,12 @@ final class PublishedContentController extends Controller
         }
 
         $revision = (int) $entry->published_revision;
-        $etag = sprintf('"walka-%s-r%d"', $etagFamily, $revision);
-        $cacheControl = 'public, max-age=60, stale-while-revalidate=300';
+        $delivery = $this->deliveryMetadata->forPublishedRevision($key, $revision);
 
-        if ($request->header('If-None-Match') === $etag) {
+        if ($request->header('If-None-Match') === $delivery['etag']) {
             return response('', 304)
-                ->header('ETag', $etag)
-                ->header('Cache-Control', $cacheControl);
+                ->header('ETag', $delivery['etag'])
+                ->header('Cache-Control', $delivery['cache_control']);
         }
 
         return response()->json([
@@ -268,7 +260,7 @@ final class PublishedContentController extends Controller
             'meta' => array_merge([
                 'api_version' => 'v1',
             ], $additionalMeta),
-        ])->header('ETag', $etag)
-            ->header('Cache-Control', $cacheControl);
+        ])->header('ETag', $delivery['etag'])
+            ->header('Cache-Control', $delivery['cache_control']);
     }
 }
