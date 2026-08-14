@@ -200,30 +200,36 @@ class _FaqTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      decoration: BoxDecoration(
+    final BorderRadius borderRadius = BorderRadius.circular(18);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Material(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: WalkaColors.line),
-      ),
-      child: ExpansionTile(
-        tilePadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 4),
-        childrenPadding: const EdgeInsets.fromLTRB(18, 0, 18, 18),
-        title: Text(
-          question,
-          style: const TextStyle(
-            color: WalkaColors.navy,
-            fontSize: 13,
-            fontWeight: FontWeight.w800,
-          ),
+        shape: RoundedRectangleBorder(
+          borderRadius: borderRadius,
+          side: const BorderSide(color: WalkaColors.line),
         ),
-        children: <Widget>[
-          Align(
-            alignment: Alignment.centerLeft,
-            child: Text(answer, style: WalkaType.body),
+        clipBehavior: Clip.antiAlias,
+        child: ExpansionTile(
+          tilePadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 4),
+          childrenPadding: const EdgeInsets.fromLTRB(18, 0, 18, 18),
+          shape: RoundedRectangleBorder(borderRadius: borderRadius),
+          collapsedShape: RoundedRectangleBorder(borderRadius: borderRadius),
+          title: Text(
+            question,
+            style: const TextStyle(
+              color: WalkaColors.navy,
+              fontSize: 13,
+              fontWeight: FontWeight.w800,
+            ),
           ),
-        ],
+          children: <Widget>[
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(answer, style: WalkaType.body),
+            ),
+          ],
+        ),
       ),
     );
   }
