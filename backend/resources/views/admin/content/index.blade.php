@@ -61,6 +61,17 @@
         <p class="muted">Order safe recommendations using existing stable WALKA product IDs only.</p>
         <a class="btn navy section-space" href="{{ route('admin.content.pdp.related-products.edit') }}">Edit Related Products →</a>
     </section>
+    <section class="card" style="border-color:#ead8aa;background:linear-gradient(135deg,#ffffff,#fffaf0)">
+        <p class="eyebrow">CMS-040..043 · INFORMATION</p>
+        <h2>About, FAQ, Support & Legal</h2>
+        <p class="muted">Edit the four released information surfaces as one revision-safe snapshot. Destinations and executable behavior remain protected.</p>
+        <div class="section-space" style="display:flex;flex-wrap:wrap;gap:8px">
+            <a class="btn navy" href="{{ route('admin.content.information.edit', ['section' => 'about']) }}">About / Story</a>
+            <a class="btn secondary" href="{{ route('admin.content.information.edit', ['section' => 'faq']) }}">FAQ</a>
+            <a class="btn secondary" href="{{ route('admin.content.information.edit', ['section' => 'support']) }}">Support</a>
+            <a class="btn secondary" href="{{ route('admin.content.information.edit', ['section' => 'legal']) }}">Legal</a>
+        </div>
+    </section>
 </div>
 
 <div class="grid two section-space">
@@ -113,6 +124,8 @@
                                     <a class="btn secondary" href="{{ route('admin.content.pdp.layout.edit') }}">Typed editor</a>
                                 @elseif ($entry->content_key === 'pdp.related_products' && $entry->content_type === 'pdp.related_products')
                                     <a class="btn secondary" href="{{ route('admin.content.pdp.related-products.edit') }}">Typed editor</a>
+                                @elseif ($entry->content_key === 'information' && $entry->content_type === 'information')
+                                    <a class="btn secondary" href="{{ route('admin.content.information.edit', ['section' => 'about']) }}">Typed editors</a>
                                 @else
                                     <a class="btn secondary" href="{{ route('admin.content.show', ['content' => $entry->id]) }}">Open</a>
                                 @endif
