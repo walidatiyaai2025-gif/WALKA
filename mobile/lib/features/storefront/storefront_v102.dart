@@ -4,7 +4,7 @@ import '../../design_system/walka_adaptive.dart';
 import '../../design_system/walka_shell.dart';
 import '../../design_system/walka_theme.dart';
 import '../catalog/catalog_state.dart';
-import 'account_about_reference_v131.dart';
+import 'account_about_cms_v140.dart';
 import 'favorites_reference_v131.dart';
 import 'storefront_resilient_v130.dart';
 
@@ -106,7 +106,7 @@ class _WalkaStorefrontShellV102State extends State<WalkaStorefrontShellV102> {
       WalkaFavoritesReferenceV131(
         onExplore: () => _select(WalkaShellDestination.categories),
       ),
-      WalkaAccountReferenceV131(
+      WalkaAccountCmsV140(
         onFavorites: () => _select(WalkaShellDestination.favorites),
       ),
     ];
