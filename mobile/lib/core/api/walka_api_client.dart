@@ -10,6 +10,7 @@ import '../../features/content/domain/walka_home_featured_content.dart';
 import '../../features/content/domain/walka_home_layout_content.dart';
 import '../../features/content/domain/walka_information_content.dart';
 import '../../features/content/domain/walka_mobile_content.dart';
+import '../../features/content/domain/walka_operational_content.dart';
 import '../../features/content/domain/walka_pdp_layout_content.dart';
 import '../../features/content/domain/walka_related_products_content.dart';
 import '../../features/content/domain/walka_search_presentation_content.dart';
@@ -226,6 +227,18 @@ class WalkaApiClient implements WalkaCatalogRemoteDataSource {
   Future<WalkaInformationPayload> fetchInformation() async {
     return WalkaInformationPayload.fromApiJson(
       await _getJson('/api/v1/content/information'),
+    );
+  }
+
+  Future<WalkaMaintenanceNoticePayload> fetchMaintenanceNotice() async {
+    return WalkaMaintenanceNoticePayload.fromApiJson(
+      await _getJson('/api/v1/content/maintenance-notice'),
+    );
+  }
+
+  Future<WalkaAppConfigPayload> fetchAppConfig() async {
+    return WalkaAppConfigPayload.fromApiJson(
+      await _getJson('/api/v1/content/app-config'),
     );
   }
 
