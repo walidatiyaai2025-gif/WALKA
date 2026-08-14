@@ -3,10 +3,14 @@
 use App\Enums\DashboardRole;
 use App\Models\Product;
 use App\Models\ProductVariant;
+use App\Services\CmsMetadataBackupService;
+use App\Services\CmsProductionSmokeService;
 use App\Services\ContentScheduleService;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Schedule;
+use JsonException;
 
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
@@ -27,6 +31,108 @@ Artisan::command('walka:content-schedule-run', function () {
 })->purpose('Apply due governed CMS publish/unpublish transitions idempotently');
 
 Schedule::command('walka:content-schedule-run')->everyMinute()->withoutOverlapping();
+
+Artisan::command('walka:cms-backup {path? : Private JSON output path; defaults under storage/app/private/backups}', function () {
+    /** @var CmsMetadataBackupService $service */
+    $service = app(CmsMetadataBackupService::class);
+    $package = $service->export();
+    $path = trim((string) ($this->argument('path') ?? ''));
+    if ($path === '') {
+        $path = storage_path('app/private/backups/walka-cms-'.now()->utc()->format('Ymd-His').'.json');
+    }
+
+    File::ensureDirectoryExists(dirname($path));
+    try {
+        $json = json_encode($package, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
+    } catch (JsonException $error) {
+        $this->error('Could not encode metadata backup: '.$error->getMessage());
+
+        return 1;
+    }
+    File::put($path, $json."\n");
+    $this->info('WALKA metadata backup written.');
+    $this->line('path='.$path);
+    $this->line('sha256='.$package['sha256']);
+
+    return 0;
+})->purpose('Export a canonical private CMS/catalog/media metadata backup; no binary media or secrets');
+
+Artisan::command('walka:cms-backup-validate {path : Candidate metadata backup JSON path}', function () {
+    $path = (string) $this->argument('path');
+    if (! File::isFile($path)) {
+        $this->error('Backup file does not exist.');
+
+        return 1;
+    }
+
+    try {
+        $decoded = json_decode(File::get($path), true, 128, JSON_THROW_ON_ERROR);
+    } catch (JsonException $error) {
+        $this->error('Backup JSON is invalid: '.$error->getMessage());
+
+        return 1;
+    }
+    if (! is_array($decoded)) {
+        $this->error('Backup root must be a JSON object.');
+
+        return 1;
+    }
+
+    /** @var CmsMetadataBackupService $service */
+    $service = app(CmsMetadataBackupService::class);
+    try {
+        $result = $service->validatePackage($decoded);
+    } catch (Throwable $error) {
+        $this->error('WALKA metadata restore validation FAILED: '.$error->getMessage());
+
+        return 1;
+    }
+
+    $this->info('WALKA metadata restore validation: PASS (zero mutations).');
+    $this->line('sha256='.$result['sha256']);
+
+    return 0;
+})->purpose('Dry-run validate a WALKA metadata restore package without writing production state');
+
+Artisan::command('walka:cms-smoke {--live-base-url= : Optional live HTTP(S) API base URL} {--no-flutter-source : Allow backend-only deployment checkout} {--json : Emit machine-readable JSON}', function () {
+    /** @var CmsProductionSmokeService $service */
+    $service = app(CmsProductionSmokeService::class);
+    $report = $service->run(
+        liveBaseUrl: ($this->option('live-base-url') ?: null),
+        requireFlutterSource: ! (bool) $this->option('no-flutter-source'),
+    );
+
+    if ((bool) $this->option('json')) {
+        try {
+            $this->line(json_encode($report, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR));
+        } catch (JsonException $error) {
+            $this->error('Could not encode smoke report: '.$error->getMessage());
+
+            return 1;
+        }
+    } else {
+        $this->table(
+            ['Status', 'Layer', 'Check', 'Detail'],
+            array_map(fn (array $row): array => [$row['status'], $row['layer'], $row['id'], $row['detail']], $report['checks']),
+        );
+        $this->line(sprintf(
+            'summary: passed=%d failed=%d total=%d',
+            $report['summary']['passed'],
+            $report['summary']['failed'],
+            $report['summary']['total'],
+        ));
+    }
+
+    if ($report['summary']['failed'] > 0) {
+        $this->error('WALKA CMS production smoke: FAIL.');
+
+        return 1;
+    }
+
+    $this->info('WALKA CMS production smoke: PASS.');
+
+    return 0;
+})->purpose('Run the read-only Admin/API/Flutter CMS production smoke matrix');
 
 Artisan::command('walka:production-check', function () {
     $rows = [];
