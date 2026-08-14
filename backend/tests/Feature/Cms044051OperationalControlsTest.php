@@ -164,6 +164,37 @@ final class Cms044051OperationalControlsTest extends TestCase
         );
     }
 
+    public function test_catch_up_run_prefers_final_unpublished_state_when_both_boundaries_are_due(): void
+    {
+        /** @var ContentRevisionService $content */
+        $content = app(ContentRevisionService::class);
+        /** @var ContentScheduleService $schedules */
+        $schedules = app(ContentScheduleService::class);
+
+        $entry = $content->saveDraft('ops.catch-up', 'ops.catch-up', ['title' => 'Transient'], 0, self::ACTOR);
+        $entry = $schedules->schedule(
+            $entry->content_key,
+            $entry->revision,
+            CarbonImmutable::parse('2026-08-14T10:00:00Z'),
+            CarbonImmutable::parse('2026-08-14T11:00:00Z'),
+            self::ACTOR,
+        );
+
+        $this->assertSame(
+            ['published' => 0, 'unpublished' => 1, 'stale' => 0],
+            $schedules->runDue(CarbonImmutable::parse('2026-08-14T12:00:00Z')),
+        );
+        $entry->refresh();
+        $this->assertNull($entry->published_payload);
+        $this->assertNull($entry->published_revision);
+        $this->assertNull($entry->scheduled_publish_at);
+        $this->assertNull($entry->scheduled_unpublish_at);
+        $this->assertSame(
+            ['draft_created', 'schedule_updated', 'scheduled_unpublished'],
+            $entry->revisions()->orderBy('revision')->pluck('action')->all(),
+        );
+    }
+
     public function test_schedule_does_not_execute_after_later_draft_revision(): void
     {
         /** @var ContentRevisionService $content */
