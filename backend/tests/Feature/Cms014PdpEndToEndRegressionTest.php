@@ -149,7 +149,7 @@ final class Cms014PdpEndToEndRegressionTest extends TestCase
             ->assertJsonPath('data.payload.sections.7.id', 'usage')
             ->assertJsonPath('data.payload.sections.7.visible', false);
 
-        $this->getJson('/api/v1/content/related-products')
+        $relatedResponse = $this->getJson('/api/v1/content/related-products')
             ->assertOk()
             ->assertJsonPath('data.revision', 3)
             ->assertJsonPath('data.payload.relationships.0.product_id', 'drawer-organizer')
@@ -161,6 +161,12 @@ final class Cms014PdpEndToEndRegressionTest extends TestCase
                 'data.payload.relationships.1.related_product_ids',
                 [],
             );
+        $firstRelationship = $relatedResponse->json('data.payload.relationships.0');
+        $this->assertIsArray($firstRelationship);
+        $this->assertSame(
+            ['product_id', 'related_product_ids'],
+            array_keys($firstRelationship),
+        );
 
         $product->refresh();
         $this->assertSame($protectedFacts, $product->facts);
