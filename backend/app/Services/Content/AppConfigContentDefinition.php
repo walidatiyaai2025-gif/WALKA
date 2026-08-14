@@ -32,8 +32,9 @@ final class AppConfigContentDefinition
         ];
     }
 
-    /** @param array<string, mixed> $payload
-     *  @return array<string, mixed>
+    /**
+     * @param  array<string, mixed>  $payload
+     * @return array<string, mixed>
      */
     public static function validateAndNormalize(array $payload): array
     {
