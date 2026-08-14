@@ -32,6 +32,8 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
         ->name('content.categories');
     Route::get('/content/search', [PublishedContentController::class, 'search'])
         ->name('content.search');
+    Route::get('/content/information', [PublishedContentController::class, 'information'])
+        ->name('content.information');
     Route::get('/content/pdp-layout', [PublishedContentController::class, 'pdpLayout'])
         ->name('content.pdp-layout');
     Route::get('/content/related-products', [PublishedContentController::class, 'relatedProducts'])
