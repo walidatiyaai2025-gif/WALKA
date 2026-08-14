@@ -10,6 +10,7 @@ import '../../features/content/domain/walka_home_featured_content.dart';
 import '../../features/content/domain/walka_home_layout_content.dart';
 import '../../features/content/domain/walka_mobile_content.dart';
 import '../../features/content/domain/walka_pdp_layout_content.dart';
+import '../../features/content/domain/walka_related_products_content.dart';
 import '../../features/content/domain/walka_search_presentation_content.dart';
 import '../../features/media/domain/walka_remote_media.dart';
 
@@ -224,6 +225,12 @@ class WalkaApiClient implements WalkaCatalogRemoteDataSource {
   Future<WalkaPdpLayoutPayload> fetchPdpLayout() async {
     return WalkaPdpLayoutPayload.fromApiJson(
       await _getJson('/api/v1/content/pdp-layout'),
+    );
+  }
+
+  Future<WalkaRelatedProductsPayload> fetchRelatedProducts() async {
+    return WalkaRelatedProductsPayload.fromApiJson(
+      await _getJson('/api/v1/content/related-products'),
     );
   }
 
