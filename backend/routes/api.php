@@ -34,6 +34,8 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
         ->name('content.search');
     Route::get('/content/pdp-layout', [PublishedContentController::class, 'pdpLayout'])
         ->name('content.pdp-layout');
+    Route::get('/content/related-products', [PublishedContentController::class, 'relatedProducts'])
+        ->name('content.related-products');
 
     Route::prefix('admin/catalog')
         ->middleware('catalog.admin')
