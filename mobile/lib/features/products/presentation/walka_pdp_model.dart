@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../design_system/walka_product_visual.dart';
+import '../../catalog/domain/walka_catalog.dart';
 import '../../lunch/lunch_box_v6.dart';
 import 'widgets/walka_pdp_details.dart';
 
@@ -114,6 +115,34 @@ class WalkaPdpPresentationModel {
           ],
         ),
       ],
+    );
+  }
+}
+
+class WalkaPdpEditorialCopy {
+  const WalkaPdpEditorialCopy({required this.title, required this.body});
+
+  final String title;
+  final String body;
+
+  factory WalkaPdpEditorialCopy.fromCatalogProduct(
+    WalkaCatalogProduct? product, {
+    required String fallbackTitle,
+    required String fallbackBody,
+  }) {
+    final String? governedTitle =
+        product != null && product.highlights.isNotEmpty
+            ? product.highlights.first.trim()
+            : null;
+    final String? governedBody = product?.shortDescription?.trim();
+
+    return WalkaPdpEditorialCopy(
+      title: governedTitle == null || governedTitle.isEmpty
+          ? fallbackTitle
+          : governedTitle,
+      body: governedBody == null || governedBody.isEmpty
+          ? fallbackBody
+          : governedBody,
     );
   }
 }
