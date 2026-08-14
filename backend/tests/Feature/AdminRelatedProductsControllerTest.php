@@ -141,6 +141,9 @@ final class AdminRelatedProductsControllerTest extends TestCase
             ->post(route('admin.content.pdp.related-products.publish'), ['revision' => 1])
             ->assertRedirect();
 
+        $published = ContentEntry::query()->where('content_key', 'pdp.related_products')->firstOrFail();
+        $publishedAt = $published->published_at?->toISOString();
+
         $this->withSession($this->session)
             ->patch(route('admin.content.pdp.related-products.update'), [
                 'revision' => 2,
@@ -169,7 +172,8 @@ final class AdminRelatedProductsControllerTest extends TestCase
         $entry = ContentEntry::query()->where('content_key', 'pdp.related_products')->firstOrFail();
         $this->assertSame(4, $entry->revision);
         $this->assertSame(2, $entry->published_revision);
-        $this->assertNotSame($entry->draft_payload, $entry->published_payload);
+        $this->assertSame($publishedAt, $entry->published_at?->toISOString());
+        $this->assertSame($entry->published_payload, $entry->draft_payload);
 
         $latest = ContentRevision::query()
             ->where('content_entry_id', $entry->id)
