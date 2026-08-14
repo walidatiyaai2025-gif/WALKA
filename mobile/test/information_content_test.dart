@@ -261,8 +261,6 @@ WalkaInformationPayload _payload(
 }
 
 class _MemoryInformationCache implements WalkaInformationCache {
-  _MemoryInformationCache({this.value});
-
   WalkaInformationSnapshot? value;
 
   @override
