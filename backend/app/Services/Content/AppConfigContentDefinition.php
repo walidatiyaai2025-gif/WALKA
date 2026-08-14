@@ -7,7 +7,9 @@ use Illuminate\Validation\ValidationException;
 final class AppConfigContentDefinition
 {
     public const KEY = 'app.config';
+
     public const TYPE = 'app.config';
+
     public const SCHEMA_VERSION = 1;
 
     /** @return list<string> */
