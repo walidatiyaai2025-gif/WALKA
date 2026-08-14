@@ -171,6 +171,7 @@ final class AdminContentController extends Controller
         $validated = $request->validate([
             'revision' => ['required', 'integer', 'min:1'],
             'source_revision' => ['required', 'integer', 'min:1'],
+            'reason' => ['required', 'string', 'min:3', 'max:280'],
         ]);
 
         try {
@@ -179,6 +180,7 @@ final class AdminContentController extends Controller
                 revisionToRestore: (int) $validated['source_revision'],
                 expectedRevision: (int) $validated['revision'],
                 actorFingerprint: $this->actorFingerprint($request),
+                reason: (string) $validated['reason'],
             );
         } catch (ContentRevisionConflictException) {
             return redirect()
@@ -188,7 +190,7 @@ final class AdminContentController extends Controller
 
         return redirect()
             ->route('admin.content.show', ['content' => $content->id])
-            ->with('status', 'Historical snapshot restored into a new draft. Review it before publishing.');
+            ->with('status', 'Historical snapshot restored into a new private draft with an immutable rollback receipt. Review it before publishing.');
     }
 
     private function decodePayload(string $json): array
