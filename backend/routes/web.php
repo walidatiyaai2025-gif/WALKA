@@ -11,6 +11,7 @@ use App\Http\Controllers\Admin\AdminInformationController;
 use App\Http\Controllers\Admin\AdminMediaController;
 use App\Http\Controllers\Admin\AdminMediaGalleryController;
 use App\Http\Controllers\Admin\AdminMediaReplacementController;
+use App\Http\Controllers\Admin\AdminOperationalSettingsController;
 use App\Http\Controllers\Admin\AdminPdpLayoutController;
 use App\Http\Controllers\Admin\AdminRelatedProductsController;
 use App\Http\Controllers\Admin\AdminSearchPresentationController;
@@ -103,9 +104,20 @@ Route::prefix('admin')->name('admin.')->middleware('walka.dashboard.headers')->g
             ->middleware('walka.dashboard.can:content.restore')
             ->name('content.information.restore');
 
+        Route::get('/content/maintenance', [AdminOperationalSettingsController::class, 'noticeEdit'])->middleware('walka.dashboard.can:content.view')->name('content.maintenance.edit');
+        Route::patch('/content/maintenance', [AdminOperationalSettingsController::class, 'noticeUpdate'])->middleware('walka.dashboard.can:content.write')->name('content.maintenance.update');
+        Route::post('/content/maintenance/publish', [AdminOperationalSettingsController::class, 'noticePublish'])->middleware('walka.dashboard.can:content.publish')->name('content.maintenance.publish');
+        Route::post('/content/maintenance/restore', [AdminOperationalSettingsController::class, 'noticeRestore'])->middleware('walka.dashboard.can:content.restore')->name('content.maintenance.restore');
+
+        Route::get('/app-config', [AdminOperationalSettingsController::class, 'appConfigEdit'])->middleware('walka.dashboard.can:app_config.view')->name('app-config.edit');
+        Route::patch('/app-config', [AdminOperationalSettingsController::class, 'appConfigUpdate'])->middleware('walka.dashboard.can:app_config.manage')->name('app-config.update');
+        Route::post('/app-config/publish', [AdminOperationalSettingsController::class, 'appConfigPublish'])->middleware('walka.dashboard.can:app_config.manage')->name('app-config.publish');
+        Route::post('/app-config/restore', [AdminOperationalSettingsController::class, 'appConfigRestore'])->middleware('walka.dashboard.can:app_config.manage')->name('app-config.restore');
+
         Route::get('/content/{content}', [AdminContentController::class, 'show'])->middleware('walka.dashboard.can:content.view')->name('content.show');
         Route::patch('/content/{content}/draft', [AdminContentController::class, 'updateDraft'])->middleware('walka.dashboard.can:content.write')->name('content.draft.update');
         Route::post('/content/{content}/publish', [AdminContentController::class, 'publish'])->middleware('walka.dashboard.can:content.publish')->name('content.publish');
+        Route::post('/content/{content}/schedule', [AdminContentController::class, 'schedule'])->middleware('walka.dashboard.can:content.publish')->name('content.schedule');
         Route::post('/content/{content}/restore', [AdminContentController::class, 'restore'])->middleware('walka.dashboard.can:content.restore')->name('content.restore');
 
         Route::get('/audits', [AdminDashboardController::class, 'audits'])->middleware('walka.dashboard.can:audits.view')->name('audits');
