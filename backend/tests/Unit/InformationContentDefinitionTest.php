@@ -4,7 +4,7 @@ namespace Tests\Unit;
 
 use App\Services\Content\InformationContentDefinition;
 use Illuminate\Validation\ValidationException;
-use PHPUnit\Framework\TestCase;
+use Tests\TestCase;
 
 final class InformationContentDefinitionTest extends TestCase
 {
