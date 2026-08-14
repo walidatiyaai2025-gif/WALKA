@@ -15,6 +15,9 @@ final class ContentEntry extends Model
         'draft_payload',
         'published_payload',
         'published_at',
+        'scheduled_publish_at',
+        'scheduled_unpublish_at',
+        'schedule_revision',
     ];
 
     protected function casts(): array
@@ -25,6 +28,9 @@ final class ContentEntry extends Model
             'draft_payload' => 'array',
             'published_payload' => 'array',
             'published_at' => 'immutable_datetime',
+            'scheduled_publish_at' => 'immutable_datetime',
+            'scheduled_unpublish_at' => 'immutable_datetime',
+            'schedule_revision' => 'integer',
         ];
     }
 
