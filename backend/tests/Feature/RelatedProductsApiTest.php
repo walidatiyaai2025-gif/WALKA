@@ -26,7 +26,7 @@ final class RelatedProductsApiTest extends TestCase
             contentType: RelatedProductsContentDefinition::TYPE,
             payload: RelatedProductsContentDefinition::defaultPayload(),
             expectedRevision: 0,
-            actorFingerprint: 'test',
+            actorFingerprint: $this->actorFingerprint(),
         );
 
         $this->getJson('/api/v1/content/related-products')
@@ -42,12 +42,12 @@ final class RelatedProductsApiTest extends TestCase
             contentType: RelatedProductsContentDefinition::TYPE,
             payload: RelatedProductsContentDefinition::defaultPayload(),
             expectedRevision: 0,
-            actorFingerprint: 'test',
+            actorFingerprint: $this->actorFingerprint(),
         );
         $service->publish(
             contentKey: RelatedProductsContentDefinition::KEY,
             expectedRevision: 1,
-            actorFingerprint: 'test',
+            actorFingerprint: $this->actorFingerprint(),
         );
 
         $response = $this->getJson('/api/v1/content/related-products')
@@ -81,12 +81,12 @@ final class RelatedProductsApiTest extends TestCase
             contentType: RelatedProductsContentDefinition::TYPE,
             payload: $payload,
             expectedRevision: 0,
-            actorFingerprint: 'test',
+            actorFingerprint: $this->actorFingerprint(),
         );
         $service->publish(
             contentKey: RelatedProductsContentDefinition::KEY,
             expectedRevision: 1,
-            actorFingerprint: 'test',
+            actorFingerprint: $this->actorFingerprint(),
         );
 
         $json = $this->getJson('/api/v1/content/related-products')
@@ -108,12 +108,12 @@ final class RelatedProductsApiTest extends TestCase
             contentType: RelatedProductsContentDefinition::TYPE,
             payload: RelatedProductsContentDefinition::defaultPayload(),
             expectedRevision: 0,
-            actorFingerprint: 'test',
+            actorFingerprint: $this->actorFingerprint(),
         );
         $service->publish(
             contentKey: RelatedProductsContentDefinition::KEY,
             expectedRevision: 1,
-            actorFingerprint: 'test',
+            actorFingerprint: $this->actorFingerprint(),
         );
 
         $entry = ContentEntry::query()
@@ -126,5 +126,10 @@ final class RelatedProductsApiTest extends TestCase
         $this->getJson('/api/v1/content/related-products')
             ->assertStatus(503)
             ->assertJsonPath('error.code', 'content_invalid');
+    }
+
+    private function actorFingerprint(): string
+    {
+        return hash('sha256', 'cms-013-related-products-api-test');
     }
 }
