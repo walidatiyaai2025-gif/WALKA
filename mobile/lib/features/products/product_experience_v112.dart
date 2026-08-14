@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../catalog/catalog_state.dart';
+import '../catalog/domain/walka_catalog.dart';
 import '../commerce/amazon_purchase.dart';
+import '../content/content_state.dart';
+import '../content/domain/walka_related_products_content.dart';
 import '../favorites/favorites_state.dart';
 import '../lunch/lunch_box_v6.dart';
 import 'presentation/walka_pdp_model.dart';
@@ -11,6 +14,7 @@ import 'presentation/widgets/walka_pdp_app_bar.dart';
 import 'presentation/widgets/walka_pdp_body.dart';
 import 'presentation/widgets/walka_pdp_fullscreen_gallery.dart';
 import 'presentation/widgets/walka_pdp_gallery.dart';
+import 'presentation/widgets/walka_pdp_related_products.dart';
 import 'presentation/widgets/walka_pdp_variant_selector.dart';
 
 class WalkaDrawerProductDetailV112 extends StatefulWidget {
@@ -110,6 +114,8 @@ class _WalkaDrawerProductDetailV112State
       fallbackBody:
           'An expandable eight-compartment layout gives everyday utensils a defined place while keeping the visual language clean and minimal.',
     );
+    final List<WalkaCatalogProduct> related =
+        _visibleRelatedProducts(context, 'drawer-organizer');
     final WalkaFavoritesController favorites = WalkaFavoritesScope.of(context);
     final bool isFavorite = favorites.isDrawerFavorite(gray: _gray);
     final WalkaPdpPresentationModel model = _model;
@@ -158,6 +164,13 @@ class _WalkaDrawerProductDetailV112State
         ),
         editorialTitle: editorial.title,
         editorialBody: editorial.body,
+        relatedProducts: related.isEmpty
+            ? null
+            : WalkaPdpRelatedProducts(
+                products: related,
+                onOpen: (String productId) =>
+                    _pushRelatedProduct(context, productId),
+              ),
       ),
     );
   }
@@ -263,6 +276,10 @@ class _WalkaLunchProductDetailV112State
       fallbackBody:
           'The food-grade stainless tray, PP outer box, sauce cup, utensils and carry bag form one coordinated adult lunch set.',
     );
+    final List<WalkaCatalogProduct> related = _visibleRelatedProducts(
+      context,
+      'stainless-steel-bento-lunch-box',
+    );
     final WalkaPdpPresentationModel model = _model;
     return Scaffold(
       backgroundColor: const Color(0xFFFFFEFC),
@@ -306,9 +323,47 @@ class _WalkaLunchProductDetailV112State
         ),
         editorialTitle: editorial.title,
         editorialBody: editorial.body,
+        relatedProducts: related.isEmpty
+            ? null
+            : WalkaPdpRelatedProducts(
+                products: related,
+                onOpen: (String productId) =>
+                    _pushRelatedProduct(context, productId),
+              ),
       ),
     );
   }
+}
+
+List<WalkaCatalogProduct> _visibleRelatedProducts(
+  BuildContext context,
+  String productId,
+) {
+  final WalkaCatalogController? catalog = WalkaCatalogScope.maybeOf(context);
+  if (catalog == null) return const <WalkaCatalogProduct>[];
+
+  final WalkaRelatedProductsContent relationships =
+      WalkaContentScope.maybeOf(context)?.relatedProducts.content ??
+          WalkaRelatedProductsContent.bundled;
+  final List<WalkaCatalogProduct> products = <WalkaCatalogProduct>[];
+  for (final String relatedId in relationships.relatedIdsFor(productId)) {
+    final WalkaCatalogProduct? product = catalog.snapshot.productById(relatedId);
+    if (product != null) products.add(product);
+  }
+  return products;
+}
+
+void _pushRelatedProduct(BuildContext context, String productId) {
+  final Widget? destination = switch (productId) {
+    'drawer-organizer' => const WalkaDrawerProductDetailV112(),
+    'stainless-steel-bento-lunch-box' => const WalkaLunchProductDetailV112(),
+    _ => null,
+  };
+  if (destination == null) return;
+
+  Navigator.of(context).push(
+    MaterialPageRoute<void>(builder: (_) => destination),
+  );
 }
 
 class _UnavailableCatalogProduct extends StatelessWidget {
