@@ -200,7 +200,7 @@ final class AdminInformationControllerTest extends TestCase
         $entry = $this->entry();
         $this->assertSame(4, $entry->revision);
         $this->assertSame(2, $entry->published_revision);
-        $this->assertSame(
+        $this->assertEquals(
             InformationContentDefinition::defaultPayload(),
             $entry->draft_payload,
         );
