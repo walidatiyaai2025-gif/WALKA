@@ -117,8 +117,9 @@ final class AdminPdpLayoutControllerTest extends TestCase
         $this->assertTrue($this->section($entry, 'gallery')['visible']);
         $this->assertTrue($this->section($entry, 'facts')['visible']);
         $this->assertTrue($this->section($entry, 'amazon_trust')['visible']);
+        $this->assertSame(1, $entry->revision);
 
-        $duplicate = $this->formPayload(revision: 2);
+        $duplicate = $this->formPayload(revision: 1);
         $duplicate['order']['editorial'] = 7;
         $duplicate['order']['specifications'] = 7;
 
@@ -129,7 +130,7 @@ final class AdminPdpLayoutControllerTest extends TestCase
             ->assertSessionHasErrors('order');
 
         $entry->refresh();
-        $this->assertSame(2, $entry->revision);
+        $this->assertSame(1, $entry->revision);
     }
 
     public function test_stale_edit_is_blocked_and_restore_never_auto_publishes(): void
