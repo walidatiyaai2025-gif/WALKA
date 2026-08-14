@@ -40,7 +40,7 @@ final class ContentHealthService
                 ? ($entry->schedule_revision === $entry->revision ? 'armed' : 'stale')
                 : 'none';
             $publishedAgeSeconds = $hasPublished && $entry->published_at !== null
-                ? max(0, $entry->published_at->utc()->diffInSeconds($at, false))
+                ? (int) max(0, $entry->published_at->utc()->diffInSeconds($at, false))
                 : null;
             $freshness = $this->freshness($publishedAgeSeconds);
             $health = $hasPublished && $scheduleState !== 'stale' ? 'healthy' : 'attention';
