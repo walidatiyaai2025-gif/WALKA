@@ -20,6 +20,8 @@ import 'features/content/data/walka_home_layout_cache.dart';
 import 'features/content/data/walka_home_layout_repository.dart';
 import 'features/content/data/walka_pdp_layout_cache.dart';
 import 'features/content/data/walka_pdp_layout_repository.dart';
+import 'features/content/data/walka_related_products_cache.dart';
+import 'features/content/data/walka_related_products_repository.dart';
 import 'features/content/data/walka_search_presentation_cache.dart';
 import 'features/content/data/walka_search_presentation_repository.dart';
 import 'features/favorites/favorites_state.dart';
@@ -77,6 +79,10 @@ Future<void> main() async {
     pdpLayoutRepository: WalkaPdpLayoutRepository(
       cache: SharedPreferencesWalkaPdpLayoutCache(),
       remoteLoader: apiClient?.fetchPdpLayout,
+    ),
+    relatedProductsRepository: WalkaRelatedProductsRepository(
+      cache: SharedPreferencesWalkaRelatedProductsCache(),
+      remoteLoader: apiClient?.fetchRelatedProducts,
     ),
   );
   final WalkaRemoteMediaController remoteMediaController =
