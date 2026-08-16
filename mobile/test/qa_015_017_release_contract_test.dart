@@ -28,11 +28,30 @@ void main() {
     expect(workflow, contains('if-no-files-found: error'));
   });
 
-  test('QA-017 stable-main publication is guarded against stale builds', () {
-    expect(workflow, contains('- name: Guard stable main publication'));
+  test('QA-017 stable-main publication is guarded and publishes evidence', () {
+    const String enforce =
+        '- name: Enforce production and owner visual release before stable publication';
+    const String guard = '- name: Guard stable main publication';
+    const String publish =
+        '- name: Publish latest verified APK and release evidence to main';
+
+    final int enforceIndex = workflow.indexOf(enforce);
+    final int guardIndex = workflow.indexOf(guard);
+    final int publishIndex = workflow.indexOf(publish);
+
+    expect(enforceIndex, greaterThan(-1));
+    expect(guardIndex, greaterThan(enforceIndex));
+    expect(publishIndex, greaterThan(guardIndex));
     expect(workflow, contains('remote_main='));
-    expect(workflow, contains(r'if [[ "$remote_main" == "$GITHUB_SHA" ]]'.replaceAll(r'\"', '"')));
-    expect(workflow, contains('- name: Publish latest verified APK to main'));
+    expect(
+      workflow,
+      contains(
+        r'if [[ "$remote_main" == "$GITHUB_SHA" ]]'.replaceAll(r'\"', '"'),
+      ),
+    );
+    expect(workflow, contains('visual-release-gate-enforce.json'));
+    expect(workflow, contains('RELEASE_TOOLCHAIN_CONTRACT.json'));
+    expect(workflow, contains('pubspec.lock'));
     expect(workflow, contains('git push origin HEAD:main'));
   });
 
