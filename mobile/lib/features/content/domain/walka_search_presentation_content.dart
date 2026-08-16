@@ -57,11 +57,11 @@ class WalkaSearchPresentationContent {
   final List<String> featuredVariantIds;
   final List<WalkaSearchFilterLabel> filterLabels;
 
-  String? filterLabel(String id) {
+  String? filterLabel(String id, [String? fallback]) {
     for (final WalkaSearchFilterLabel item in filterLabels) {
       if (item.id == id) return item.label;
     }
-    return null;
+    return fallback;
   }
 
   factory WalkaSearchPresentationContent.fromJson(Map<String, dynamic> json) {
