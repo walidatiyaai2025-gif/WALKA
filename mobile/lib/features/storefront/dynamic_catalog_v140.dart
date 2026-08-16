@@ -383,9 +383,9 @@ class _WalkaDynamicSearchV140State extends State<WalkaDynamicSearchV140> {
           child: Row(
             children: <Widget>[
               ChoiceChip(
-                label: presentation?.filterLabel('all') case final String label
-                    ? Text(label)
-                    : const Icon(Icons.apps_rounded, size: 16),
+                label: Text(
+                  presentation?.filterLabel('all') ?? catalog.config.brand,
+                ),
                 selected: _categoryId == null,
                 onSelected: (_) => setState(() => _categoryId = null),
               ),
