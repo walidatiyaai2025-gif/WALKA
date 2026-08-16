@@ -61,8 +61,19 @@ final class PublishedStorefrontCopyTest extends TestCase
             ->assertJsonPath('data.schema_version', 1)
             ->assertJsonPath('data.revision', 2)
             ->assertJsonPath('data.payload.categories_heading', 'Shop by collection')
+            ->assertJsonPath('data.payload.favorites_heading', 'Favorites')
+            ->assertJsonPath('data.payload.favorites_remove_label', 'Remove')
             ->assertJsonPath('data.payload.pdp_buy_label', 'Continue to Amazon')
-            ->assertJsonCount(8, 'data.payload');
+            ->assertJsonPath('data.payload.pdp_favorite_add_label', 'Save favorite')
+            ->assertJsonPath('data.payload.pdp_favorite_remove_label', 'Remove favorite');
+
+        $publicPayload = $response->json('data.payload');
+        $this->assertIsArray($publicPayload);
+        $this->assertSame(
+            array_keys(StorefrontCopyContentDefinition::defaultPayload()),
+            array_keys($publicPayload),
+            'Public Storefront copy must expose exactly the typed allowlist.',
+        );
 
         $raw = $response->getContent();
         $this->assertStringNotContainsString('internal_note', $raw);
