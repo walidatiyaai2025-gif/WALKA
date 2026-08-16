@@ -6,45 +6,34 @@ import 'package:walka/features/catalog/data/walka_catalog_repository.dart';
 import 'package:walka/features/catalog/domain/walka_catalog.dart';
 
 void main() {
-  final DateTime now = DateTime.utc(2026, 8, 10, 1, 0);
+  final DateTime now = DateTime.utc(2026, 8, 16, 1, 0);
 
-  test('bundled fallback mirrors the current Product Master contract', () {
+  test('compatibility initial snapshot contains no static catalog entities', () {
     final WalkaCatalogSnapshot snapshot = WalkaBundledCatalog.snapshot(
       fetchedAt: now,
     );
 
-    expect(snapshot.source, WalkaCatalogSource.bundled);
-    expect(snapshot.variants.length, 5);
-    expect(
-      snapshot.variants.map((WalkaCatalogVariant item) => item.id).toSet(),
-      WalkaCatalogContract.requiredVariantIds,
-    );
-
-    final WalkaCatalogProduct drawer = snapshot.productById('drawer-organizer')!;
-    expect(drawer.facts['material'], 'Plastic');
-    expect(drawer.facts['expandable_width_in'], 22.4);
-    expect(drawer.facts.containsKey('product_weight_lb'), isFalse);
-    expect(drawer.facts.containsKey('packaging_in'), isFalse);
-
-    final WalkaCatalogProduct lunch =
-        snapshot.productById('stainless-steel-bento-lunch-box')!;
-    expect(lunch.facts['outer_body'], 'Food-grade PP');
-    expect(
-      (lunch.facts['care'] as Map<String, String>)['lid_and_gasket'],
-      'Dishwasher safe on the top rack; not microwave safe.',
-    );
-    expect(
-      lunch.variants.map((WalkaCatalogVariant item) => item.pantone).toList(),
-      <String?>['PANTONE 4155 U', 'PANTONE 9242 U', 'PANTONE 6198 U'],
-    );
+    expect(snapshot.source, WalkaCatalogSource.unavailable);
+    expect(snapshot.products, isEmpty);
+    expect(snapshot.categories, isEmpty);
+    expect(snapshot.variants, isEmpty);
+    expect(snapshot.isAvailable, isFalse);
   });
 
-  test('valid remote catalog wins and becomes last-known-good cache', () async {
+  test('arbitrary remote Dashboard catalog wins and becomes LKG cache', () async {
     final _MemoryCache cache = _MemoryCache();
-    final WalkaCatalogSnapshot bundled = WalkaBundledCatalog.snapshot(
+    final WalkaCatalogSnapshot remoteSnapshot = _dynamicSnapshot(
       fetchedAt: now,
+      productId: 'desk-kit',
+      productName: 'Desk Kit Pro',
+      categoryId: 'workspace',
+      categoryName: 'Workspace Essentials',
+      variantId: 'desk-kit:midnight',
+      color: 'Midnight',
+      swatchHex: '#102030',
+      asin: 'B012345678',
     );
-    final _FakeRemote remote = _FakeRemote.fromSnapshot(bundled);
+    final _FakeRemote remote = _FakeRemote.fromSnapshot(remoteSnapshot);
     final WalkaCatalogRepository repository = WalkaCatalogRepository(
       cache: cache,
       remote: remote,
@@ -55,20 +44,24 @@ void main() {
 
     expect(result.source, WalkaCatalogSource.remote);
     expect(result.fetchedAt, now);
-    expect(result.variantById('lunch-box:green')?.asin, 'B0GPZNKF9F');
+    expect(result.productById('desk-kit')?.name, 'Desk Kit Pro');
+    expect(result.categoryById('workspace')?.name, 'Workspace Essentials');
+    expect(result.variantById('desk-kit:midnight')?.color, 'Midnight');
+    expect(result.variantById('desk-kit:midnight')?.swatchHex, '#102030');
+    expect(result.variantById('desk-kit:midnight')?.asin, 'B012345678');
     expect(cache.written?.source, WalkaCatalogSource.remote);
     expect(remote.configCalls, 1);
     expect(remote.catalogCalls, 1);
   });
 
-  test('remote failure falls back to a valid last-known-good cache', () async {
-    final WalkaCatalogSnapshot cached = WalkaBundledCatalog.snapshot(
+  test('remote failure falls back only to a valid last-known-good cache', () async {
+    final WalkaCatalogSnapshot cached = _dynamicSnapshot(
       fetchedAt: now.subtract(const Duration(hours: 6)),
     ).asSource(WalkaCatalogSource.cache);
     final _MemoryCache cache = _MemoryCache()..stored = cached;
     final WalkaCatalogRepository repository = WalkaCatalogRepository(
       cache: cache,
-      remote: _FakeRemote.failure(),
+      remote: _FakeRemote.failure(now),
       clock: () => now,
     );
 
@@ -77,38 +70,37 @@ void main() {
     expect(result.source, WalkaCatalogSource.cache);
     expect(result.isStale, isTrue);
     expect(result.fetchedAt, cached.fetchedAt);
-    expect(result.variants.length, 5);
+    expect(result.productById('dynamic-product'), isNotNull);
   });
 
-  test('fresh-install offline failure uses bundled catalog', () async {
+  test('fresh-install offline failure does not invent a built-in catalog', () async {
     final WalkaCatalogRepository repository = WalkaCatalogRepository(
       cache: _MemoryCache(),
-      remote: _FakeRemote.failure(),
+      remote: _FakeRemote.failure(now),
       clock: () => now,
     );
 
-    final WalkaCatalogSnapshot result = await repository.load();
-
-    expect(result.source, WalkaCatalogSource.bundled);
-    expect(result.fetchedAt, now);
-    expect(result.variants.length, 5);
+    await expectLater(
+      repository.load(),
+      throwsA(isA<WalkaCatalogUnavailableException>()),
+    );
   });
 
-  test('corrupted cache safely falls back to bundled catalog', () async {
+  test('corrupted cache does not resurrect static products', () async {
     final WalkaCatalogRepository repository = WalkaCatalogRepository(
       cache: _ThrowingCache(),
-      remote: _FakeRemote.failure(),
+      remote: _FakeRemote.failure(now),
       clock: () => now,
     );
 
-    final WalkaCatalogSnapshot result = await repository.load();
-
-    expect(result.source, WalkaCatalogSource.bundled);
-    expect(result.variantById('drawer-organizer:white')?.asin, 'B0FQN4DCTG');
+    await expectLater(
+      repository.load(),
+      throwsA(isA<WalkaCatalogUnavailableException>()),
+    );
   });
 
-  test('remote metadata mismatch is rejected before replacing cache', () async {
-    final WalkaCatalogSnapshot cached = WalkaBundledCatalog.snapshot(
+  test('remote metadata mismatch is rejected before replacing LKG cache', () async {
+    final WalkaCatalogSnapshot cached = _dynamicSnapshot(
       fetchedAt: now.subtract(const Duration(days: 1)),
     ).asSource(WalkaCatalogSource.cache);
     final _MemoryCache cache = _MemoryCache()..stored = cached;
@@ -126,33 +118,25 @@ void main() {
     expect(cache.writeCount, 0);
   });
 
-  test('remote catalog missing a stable variant is rejected', () async {
-    final WalkaCatalogSnapshot bundled = WalkaBundledCatalog.snapshot(
-      fetchedAt: now,
+  test('remote product without a visible variant fails closed', () async {
+    final WalkaCatalogSnapshot source = _dynamicSnapshot(fetchedAt: now);
+    final WalkaCatalogProduct product = source.products.single;
+    final WalkaCatalogProduct broken = WalkaCatalogProduct(
+      id: product.id,
+      name: product.name,
+      category: product.category,
+      features: product.features,
+      facts: product.facts,
+      variants: const <WalkaCatalogVariant>[],
     );
-    final List<WalkaCatalogProduct> brokenProducts = bundled.products.map(
-      (WalkaCatalogProduct product) {
-        if (product.id != 'stainless-steel-bento-lunch-box') return product;
-        return WalkaCatalogProduct(
-          id: product.id,
-          name: product.name,
-          category: product.category,
-          features: product.features,
-          facts: product.facts,
-          variants: product.variants
-              .where((WalkaCatalogVariant variant) => variant.id != 'lunch-box:green')
-              .toList(growable: false),
-        );
-      },
-    ).toList(growable: false);
-
     final _FakeRemote remote = _FakeRemote(
-      config: bundled.config,
+      config: source.config,
       payload: WalkaCatalogPayload(
-        products: brokenProducts,
-        release: bundled.config.release,
-        apiVersion: bundled.config.apiVersion,
-        purchaseMode: bundled.config.purchaseMode,
+        products: <WalkaCatalogProduct>[broken],
+        categories: source.categories,
+        release: source.config.release,
+        apiVersion: source.config.apiVersion,
+        purchaseMode: source.config.purchaseMode,
       ),
     );
     final WalkaCatalogRepository repository = WalkaCatalogRepository(
@@ -161,11 +145,58 @@ void main() {
       clock: () => now,
     );
 
-    final WalkaCatalogSnapshot result = await repository.load();
-
-    expect(result.source, WalkaCatalogSource.bundled);
-    expect(result.variantById('lunch-box:green'), isNotNull);
+    await expectLater(
+      repository.load(),
+      throwsA(isA<WalkaCatalogUnavailableException>()),
+    );
   });
+}
+
+WalkaCatalogSnapshot _dynamicSnapshot({
+  required DateTime fetchedAt,
+  String productId = 'dynamic-product',
+  String productName = 'Dynamic Product',
+  String categoryId = 'dynamic-category',
+  String categoryName = 'Dynamic Category',
+  String variantId = 'dynamic-product:custom',
+  String color = 'Custom Color',
+  String swatchHex = '#445566',
+  String asin = 'B000000001',
+}) {
+  final WalkaCatalogCategory category = WalkaCatalogCategory(
+    id: categoryId,
+    name: categoryName,
+    sortOrder: 0,
+  );
+  return WalkaCatalogSnapshot(
+    config: const WalkaStorefrontConfig(
+      brand: 'WALKA',
+      release: 'dynamic-test',
+      apiVersion: 'v1',
+      purchaseMode: 'amazon_redirect',
+    ),
+    categories: <WalkaCatalogCategory>[category],
+    products: <WalkaCatalogProduct>[
+      WalkaCatalogProduct(
+        id: productId,
+        name: productName,
+        category: categoryId,
+        features: const <String>['Dashboard managed'],
+        facts: const <String, dynamic>{'source': 'dashboard'},
+        variants: <WalkaCatalogVariant>[
+          WalkaCatalogVariant(
+            id: variantId,
+            color: color,
+            asin: asin,
+            swatchHex: swatchHex,
+            purchaseUrl: 'https://www.amazon.com/dp/$asin',
+          ),
+        ],
+      ),
+    ],
+    source: WalkaCatalogSource.remote,
+    fetchedAt: fetchedAt,
+  );
 }
 
 class _FakeRemote implements WalkaCatalogRemoteDataSource {
@@ -176,6 +207,7 @@ class _FakeRemote implements WalkaCatalogRemoteDataSource {
       config: snapshot.config,
       payload: WalkaCatalogPayload(
         products: snapshot.products,
+        categories: snapshot.categories,
         release: snapshot.config.release,
         apiVersion: snapshot.config.apiVersion,
         purchaseMode: snapshot.config.purchaseMode,
@@ -183,9 +215,9 @@ class _FakeRemote implements WalkaCatalogRemoteDataSource {
     );
   }
 
-  factory _FakeRemote.failure() {
-    final WalkaCatalogSnapshot snapshot = WalkaBundledCatalog.snapshot();
-    return _FakeRemote.fromSnapshot(snapshot)..shouldFail = true;
+  factory _FakeRemote.failure(DateTime now) {
+    return _FakeRemote.fromSnapshot(_dynamicSnapshot(fetchedAt: now))
+      ..shouldFail = true;
   }
 
   final WalkaStorefrontConfig config;
@@ -208,6 +240,7 @@ class _FakeRemote implements WalkaCatalogRemoteDataSource {
     if (shouldFail) throw const WalkaApiException('offline');
     return WalkaCatalogPayload(
       products: payload.products,
+      categories: payload.categories,
       release: catalogReleaseOverride ?? payload.release,
       apiVersion: payload.apiVersion,
       purchaseMode: payload.purchaseMode,
