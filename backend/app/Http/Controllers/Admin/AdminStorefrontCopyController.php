@@ -114,6 +114,10 @@ final class AdminStorefrontCopyController extends Controller
                 revisionToRestore: (int) $validated['source_revision'],
                 expectedRevision: (int) $validated['revision'],
                 actorFingerprint: $this->actorFingerprint($request),
+                payloadTransformer: static fn (array $payload): array =>
+                    StorefrontCopyContentDefinition::validateAndNormalize(
+                        StorefrontCopyContentDefinition::editableFields($payload),
+                    ),
             );
         } catch (ContentRevisionConflictException) {
             return redirect()
@@ -123,7 +127,7 @@ final class AdminStorefrontCopyController extends Controller
 
         return redirect()
             ->route('admin.content.storefront.copy.edit')
-            ->with('status', 'Historical Storefront copy restored into a private draft. Review it before publishing.');
+            ->with('status', 'Historical Storefront copy restored into a private draft and upgraded to the current editable contract. Review it before publishing.');
     }
 
     private function entry(): ContentEntry
