@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\V1\Admin\CatalogAdminController;
 use App\Http\Controllers\Api\V1\Admin\CatalogAuditController;
+use App\Http\Controllers\Api\V1\AmazonOutboundController;
 use App\Http\Controllers\Api\V1\CanonicalMediaController;
 use App\Http\Controllers\Api\V1\CatalogController;
 use App\Http\Controllers\Api\V1\ConfigController;
@@ -15,43 +16,27 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
     Route::get('/health', HealthController::class)->name('health');
     Route::get('/config', ConfigController::class)->name('config');
     Route::get('/catalog', CatalogController::class)->name('catalog');
-    Route::get('/media/product-galleries', ProductMediaGalleryController::class)
-        ->name('media.product-galleries');
+    Route::get('/media/product-galleries', ProductMediaGalleryController::class)->name('media.product-galleries');
     Route::get('/media/surfaces', SurfaceMediaController::class)->name('media.surfaces');
-    Route::get('/media/assets/{mediaAsset}/canonical', CanonicalMediaController::class)
-        ->where('mediaAsset', '[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26}')
-        ->name('media.assets.canonical');
+    Route::get('/media/assets/{mediaAsset}/canonical', CanonicalMediaController::class)->where('mediaAsset', '[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26}')->name('media.assets.canonical');
     Route::get('/content/home', [PublishedContentController::class, 'home'])->name('content.home');
-    Route::get('/content/home-layout', [PublishedContentController::class, 'homeLayout'])
-        ->name('content.home-layout');
-    Route::get('/content/home-featured', [PublishedContentController::class, 'homeFeatured'])
-        ->name('content.home-featured');
-    Route::get('/content/home-banner', [PublishedContentController::class, 'homeBanner'])
-        ->name('content.home-banner');
-    Route::get('/content/categories', [PublishedContentController::class, 'categories'])
-        ->name('content.categories');
-    Route::get('/content/search', [PublishedContentController::class, 'search'])
-        ->name('content.search');
-    Route::get('/content/information', [PublishedContentController::class, 'information'])
-        ->name('content.information');
-    Route::get('/content/maintenance-notice', [PublishedContentController::class, 'maintenanceNotice'])
-        ->name('content.maintenance-notice');
-    Route::get('/content/app-config', [PublishedContentController::class, 'appConfig'])
-        ->name('content.app-config');
-    Route::get('/content/pdp-layout', [PublishedContentController::class, 'pdpLayout'])
-        ->name('content.pdp-layout');
-    Route::get('/content/related-products', [PublishedContentController::class, 'relatedProducts'])
-        ->name('content.related-products');
+    Route::get('/content/home-layout', [PublishedContentController::class, 'homeLayout'])->name('content.home-layout');
+    Route::get('/content/home-featured', [PublishedContentController::class, 'homeFeatured'])->name('content.home-featured');
+    Route::get('/content/home-banner', [PublishedContentController::class, 'homeBanner'])->name('content.home-banner');
+    Route::get('/content/categories', [PublishedContentController::class, 'categories'])->name('content.categories');
+    Route::get('/content/search', [PublishedContentController::class, 'search'])->name('content.search');
+    Route::get('/content/information', [PublishedContentController::class, 'information'])->name('content.information');
+    Route::get('/content/maintenance-notice', [PublishedContentController::class, 'maintenanceNotice'])->name('content.maintenance-notice');
+    Route::get('/content/app-config', [PublishedContentController::class, 'appConfig'])->name('content.app-config');
+    Route::get('/content/pdp-layout', [PublishedContentController::class, 'pdpLayout'])->name('content.pdp-layout');
+    Route::get('/content/related-products', [PublishedContentController::class, 'relatedProducts'])->name('content.related-products');
+    Route::get('/commerce/amazon', [AmazonOutboundController::class, 'index'])->name('commerce.amazon.index');
+    Route::get('/commerce/amazon/{variant}', [AmazonOutboundController::class, 'resolve'])->where('variant', '[a-z0-9][a-z0-9-]*:[a-z0-9][a-z0-9-]*')->name('commerce.amazon.resolve');
 
-    Route::prefix('admin/catalog')
-        ->middleware('catalog.admin')
-        ->name('admin.catalog.')
-        ->group(function (): void {
-            Route::get('/', [CatalogAdminController::class, 'index'])->name('index');
-            Route::get('/audits', [CatalogAuditController::class, 'index'])->name('audits.index');
-            Route::patch('/products/{product}', [CatalogAdminController::class, 'updateProduct'])
-                ->name('products.update');
-            Route::patch('/variants/{variant}', [CatalogAdminController::class, 'updateVariant'])
-                ->name('variants.update');
-        });
+    Route::prefix('admin/catalog')->middleware('catalog.admin')->name('admin.catalog.')->group(function (): void {
+        Route::get('/', [CatalogAdminController::class, 'index'])->name('index');
+        Route::get('/audits', [CatalogAuditController::class, 'index'])->name('audits.index');
+        Route::patch('/products/{product}', [CatalogAdminController::class, 'updateProduct'])->name('products.update');
+        Route::patch('/variants/{variant}', [CatalogAdminController::class, 'updateVariant'])->name('variants.update');
+    });
 });
