@@ -37,7 +37,9 @@ final class GovernedCommerceMapTest extends TestCase
             $this->actor,
         );
 
-        $this->assertSame('https://www.amazon.com/dp/B0FQN4L8MW', $entry->draft_payload['mappings'][0]['destination_url']);
+        $blue = $this->mapping($entry->draft_payload, 'lunch-box:blue', 'US');
+        $this->assertSame('B0FQN4L8MW', $blue['asin']);
+        $this->assertSame('https://www.amazon.com/dp/B0FQN4L8MW', $blue['destination_url']);
         $service->publish(CommerceMapContentDefinition::KEY, 1, $this->actor);
 
         $response = $this->getJson('/api/v1/commerce/amazon/lunch-box:blue?market=US')
@@ -80,6 +82,72 @@ final class GovernedCommerceMapTest extends TestCase
         $this->assertStringNotContainsString('destination_url', $unmapped->getContent());
     }
 
+    public function test_asin_tamper_is_rejected_against_product_master(): void
+    {
+        $payload = $this->payload(function (array $mappings): array {
+            foreach ($mappings as &$mapping) {
+                if ($mapping['variant_id'] === 'lunch-box:blue') {
+                    $mapping['asin'] = 'B000000000';
+                    break;
+                }
+            }
+            unset($mapping);
+
+            return $mappings;
+        });
+
+        $this->expectException(ValidationException::class);
+        app(ContentRevisionService::class)->saveDraft(
+            CommerceMapContentDefinition::KEY,
+            CommerceMapContentDefinition::TYPE,
+            $payload,
+            0,
+            $this->actor,
+        );
+    }
+
+    public function test_incomplete_or_inactive_us_mapping_is_rejected_for_released_variants(): void
+    {
+        $service = app(ContentRevisionService::class);
+        $incomplete = $this->payload(static function (array $mappings): array {
+            array_pop($mappings);
+
+            return $mappings;
+        });
+
+        try {
+            $service->saveDraft(
+                CommerceMapContentDefinition::KEY,
+                CommerceMapContentDefinition::TYPE,
+                $incomplete,
+                0,
+                $this->actor,
+            );
+            $this->fail('A CommerceMap missing a released variant should be rejected.');
+        } catch (ValidationException $exception) {
+            $this->assertArrayHasKey('mappings', $exception->errors());
+        }
+
+        $inactive = $this->payload(static function (array $mappings): array {
+            $mappings[0]['active'] = false;
+
+            return $mappings;
+        });
+
+        try {
+            $service->saveDraft(
+                CommerceMapContentDefinition::KEY,
+                CommerceMapContentDefinition::TYPE,
+                $inactive,
+                0,
+                $this->actor,
+            );
+            $this->fail('An inactive mandatory US mapping should be rejected.');
+        } catch (ValidationException $exception) {
+            $this->assertArrayHasKey('mappings', $exception->errors());
+        }
+    }
+
     public function test_published_mapping_fails_closed_after_variant_revision_becomes_stale(): void
     {
         $this->publishPayload($this->payload());
@@ -117,11 +185,10 @@ final class GovernedCommerceMapTest extends TestCase
             $this->assertTrue(true);
         }
 
-        $freshPayload = $this->payload(variantRevision: 2);
         $service->saveDraft(
             CommerceMapContentDefinition::KEY,
             CommerceMapContentDefinition::TYPE,
-            $freshPayload,
+            $this->payload(),
             1,
             $this->actor,
         );
@@ -142,15 +209,20 @@ final class GovernedCommerceMapTest extends TestCase
         $this->assertNull(ContentEntry::query()->where('content_key', CommerceMapContentDefinition::KEY)->value('published_payload'));
     }
 
-    /** @return array<string, mixed> */
-    private function payload(int $variantRevision = 1): array
+    /**
+     * @param  null|callable(list<array<string, mixed>>): list<array<string, mixed>>  $mutate
+     * @return array{mappings: list<array<string, mixed>>}
+     */
+    private function payload(?callable $mutate = null): array
     {
-        return [
-            'mappings' => [[
-                'variant_id' => 'lunch-box:blue',
-                'variant_revision' => $variantRevision,
-                'region_market' => 'us',
-                'asin' => 'b0fqn4l8mw',
+        $mappings = ProductVariant::query()
+            ->orderBy('id')
+            ->get()
+            ->map(static fn (ProductVariant $variant): array => [
+                'variant_id' => $variant->id,
+                'variant_revision' => (int) $variant->revision,
+                'region_market' => 'US',
+                'asin' => strtoupper((string) $variant->asin),
                 'destination_url' => 'https://example.invalid/open-redirect-is-ignored',
                 'cta_key' => 'buy_on_amazon',
                 'disclosure_key' => 'amazon_purchase_disclosure',
@@ -160,8 +232,15 @@ final class GovernedCommerceMapTest extends TestCase
                     'source' => 'cms',
                     'reference' => 'CMS-060',
                 ],
-            ]],
-        ];
+            ])
+            ->values()
+            ->all();
+
+        if ($mutate !== null) {
+            $mappings = $mutate($mappings);
+        }
+
+        return ['mappings' => $mappings];
     }
 
     /** @param array<string, mixed> $payload */
@@ -176,5 +255,20 @@ final class GovernedCommerceMapTest extends TestCase
             $this->actor,
         );
         $service->publish(CommerceMapContentDefinition::KEY, 1, $this->actor);
+    }
+
+    /**
+     * @param  array<string, mixed>  $payload
+     * @return array<string, mixed>
+     */
+    private function mapping(array $payload, string $variantId, string $market): array
+    {
+        foreach ($payload['mappings'] as $mapping) {
+            if ($mapping['variant_id'] === $variantId && $mapping['region_market'] === $market) {
+                return $mapping;
+            }
+        }
+
+        $this->fail("Missing mapping for $variantId / $market");
     }
 }
