@@ -8,13 +8,18 @@ on:
       - 'agent/pinksrc-*'
     paths:
       - 'docs/ui/PINK_SOURCE_EXTRACTION_CONTRACT.json'
+      - 'docs/ui/PINK_OWNER_VISUAL_ACCEPTANCE.json'
       - 'docs/ui/PRODUCTION_SOURCE_ADMISSION.json'
       - 'docs/ui/PRODUCTION_ASSET_PROVENANCE.json'
       - 'mobile/lib/design_system/components/media/walka_product_media_admission.dart'
       - 'mobile/tool/src/pink_source_contract.dart'
+      - 'mobile/tool/src/pink_owner_review_gate.dart'
       - 'mobile/tool/verify_pink_source_contract.dart'
+      - 'mobile/tool/verify_pink_owner_review_gate.dart'
       - 'mobile/test/pinksrc_001_020_source_contract_test.dart'
+      - 'mobile/test/pink_owner_review_gate_test.dart'
       - 'docs/work/PINKSRC-001-020.md'
+      - 'docs/work/PINKSRC-CLEAN-OWNER-REVIEW.md'
       - '.github/workflows/pink-source-contract.yml'
   pull_request:
     branches:
@@ -89,5 +94,60 @@ jobs:
           print(
               'Pink source contract is consistent: '
               f"state={report['state']} admitted={report['productionAdmitted']}"
+          )
+          PY
+
+      - name: Verify Pink owner visual acceptance gate
+        id: pink_owner_review
+        working-directory: mobile
+        shell: bash
+        run: |
+          set -euo pipefail
+          report='pink-owner-review-gate-report.json'
+          dart run tool/verify_pink_owner_review_gate.dart \
+            --root . \
+            --json "$report" \
+            --report
+          state="$(python3 -c "import json; print(json.load(open('$report'))['state'])")"
+          accepted="$(python3 -c "import json; print(str(json.load(open('$report'))['ownerAccepted']).lower())")"
+          blocker_count="$(python3 -c "import json; print(json.load(open('$report'))['blockerCount'])")"
+          candidate_sha="$(python3 -c "import json; print(json.load(open('$report'))['reviewCandidateSha256'])")"
+          report_sha="$(sha256sum "$report" | awk '{print $1}')"
+          {
+            echo '### Pink owner visual acceptance gate'
+            echo
+            echo "- State: **$state**"
+            echo "- Owner accepted: **$accepted**"
+            echo "- Review candidate SHA-256: \`$candidate_sha\`"
+            echo "- Gate blockers: **$blocker_count**"
+            echo "- Report SHA-256: \`$report_sha\`"
+            echo '- Automation may verify mechanical evidence but cannot set or infer owner visual acceptance.'
+            echo '- Any Pink production admission before a matching explicit owner receipt is fail-closed.'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload Pink owner review gate report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pink-owner-review-gate-${{ github.sha }}
+          path: mobile/pink-owner-review-gate-report.json
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Enforce Pink owner visual acceptance gate
+        working-directory: mobile
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          report = json.load(open('pink-owner-review-gate-report.json'))
+          if not report['gateReady']:
+              for violation in report['violations']:
+                  print(f"BLOCKER {violation['code']}: {violation['message']}")
+              raise SystemExit(1)
+          print(
+              'Pink owner-review gate is consistent: '
+              f"state={report['state']} ownerAccepted={report['ownerAccepted']}"
           )
           PY

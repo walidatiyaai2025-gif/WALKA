@@ -37,6 +37,29 @@
     "candidateAlphaBoundingBox": [51, 161, 972, 862],
     "candidateDisposition": "REJECTED_NAVY_HALO"
   },
+  "reviewCandidate": {
+    "issue": 328,
+    "state": "MECHANICALLY_CLEAN_AWAITING_OWNER_REVIEW",
+    "sha256": "755ead90e98b51f2fd732c267c01671ffa776d59624565b7521bd4c4ac3f1776",
+    "byteSize": 683551,
+    "width": 1024,
+    "height": 1024,
+    "pixelFormat": "8-bit RGBA",
+    "colorProfile": "sRGB",
+    "alphaBoundingBox": [51, 128, 973, 895],
+    "minimumTransparentSafeMarginPx": 51,
+    "sourceDerivedFromApprovedPanel": true,
+    "marketplacePixelsOutsidePanelExcluded": true,
+    "vproof": {
+      "disposition": "NO_OBVIOUS_HALO",
+      "partialAlphaEdgeCount": 14876,
+      "mismatchNearWhitePartialEdgeCount": 35,
+      "mismatchNearWhitePartialEdgeRatio": 0.002352783006184458,
+      "navyBrightDeltaRatioApprox": 0.057
+    },
+    "automationCanAcceptFinalVisualFidelity": false,
+    "ownerAcceptanceReceipt": "docs/ui/PINK_OWNER_VISUAL_ACCEPTANCE.json"
+  },
   "requiredVisualQa": [
     "surfaceWhite",
     "surfaceIvory",
@@ -56,8 +79,8 @@
     "requiredCanonicalExportPresent": false,
     "requiredRuntimeEligible": false,
     "stablePublicationMustRemainFailClosed": true,
-    "globalReadinessReason": "The current candidate was rendered from the actual current-main binary on White/Ivory/Navy. Navy proof shows unacceptable white halo/background contamination, so Pink remains quarantined until a cleaner approved-panel cutout passes all nine visual QA checks.",
-    "migrationRule": "PENDING is valid while mandatory visual QA is incomplete or rejected; ADMITTED is valid only when source approval, a confirmed canonical fingerprint, export presence, all nine QA states, provenance and runtime admission agree."
+    "globalReadinessReason": "The previously admitted current-main candidate was directly rejected on WALKA Navy. A separate approved-panel-derived candidate is mechanically clean enough for owner review, but automation cannot accept final visual fidelity. Pink therefore remains quarantined until the owner explicitly accepts the exact review-candidate SHA and the admission/provenance/runtime records are reconciled in a later reviewed change.",
+    "migrationRule": "PENDING is valid while visual QA or owner acceptance is incomplete. ADMITTED is valid only when source approval, a confirmed canonical fingerprint, export presence, all nine QA states, a matching explicit owner visual-acceptance receipt, provenance and runtime admission agree."
   },
   "lastVisualProof": {
     "sourceMainCommit": "cd6bb64c1b37af97e274f42ce5752ac110ecdc77",
@@ -72,6 +95,7 @@
     "product recoloring used as a substitute for the approved Pink source",
     "geometry reconstruction or invented accessories",
     "generative fill for missing product structure",
-    "runtime admission without complete provenance and visual QA"
+    "runtime admission without complete provenance and visual QA",
+    "production admission without a matching explicit owner visual acceptance receipt"
   ]
 }
