@@ -68,8 +68,15 @@ jobs:
           grep -E 'version "17\.|openjdk version "17\.' <<<"$java_version"
 
       - name: Get locked packages
+        id: dependencies
         working-directory: mobile
-        run: flutter pub get --enforce-lockfile
+        shell: bash
+        run: |
+          set -euo pipefail
+          flutter pub get --enforce-lockfile
+          lock_sha="$(sha256sum pubspec.lock | awk '{print $1}')"
+          git diff --exit-code -- pubspec.yaml pubspec.lock analysis_options.yaml
+          echo "lock_sha=$lock_sha" >> "$GITHUB_OUTPUT"
 
       - name: Analyze
         working-directory: mobile
@@ -202,6 +209,27 @@ jobs:
         working-directory: mobile
         run: flutter create --platforms=android --project-name walka .
 
+      - name: Reconcile locked dependencies after Android bootstrap
+        working-directory: mobile
+        shell: bash
+        env:
+          EXPECTED_LOCK_SHA: ${{ steps.dependencies.outputs.lock_sha }}
+        run: |
+          set -euo pipefail
+          git diff --exit-code -- pubspec.yaml analysis_options.yaml
+          current_lock_sha="$(sha256sum pubspec.lock | awk '{print $1}')"
+          if [[ "$current_lock_sha" != "$EXPECTED_LOCK_SHA" ]]; then
+            echo "Android bootstrap changed pubspec.lock ($current_lock_sha); restoring the validated lock $EXPECTED_LOCK_SHA."
+            git restore --source=HEAD -- pubspec.lock
+          fi
+          flutter pub get --enforce-lockfile
+          final_lock_sha="$(sha256sum pubspec.lock | awk '{print $1}')"
+          if [[ "$final_lock_sha" != "$EXPECTED_LOCK_SHA" ]]; then
+            echo "Dependency lock mismatch after reconciliation: expected $EXPECTED_LOCK_SHA, got $final_lock_sha." >&2
+            exit 1
+          fi
+          git diff --exit-code -- pubspec.yaml pubspec.lock analysis_options.yaml
+
       - name: Apply WALKA Android branding
         working-directory: mobile
         run: bash tool/apply_android_branding.sh
@@ -219,6 +247,8 @@ jobs:
           VISUAL_INPUT_DIGEST: ${{ steps.production_assets.outputs.visual_input_digest }}
           RELEASE_INPUT_DIGEST: ${{ steps.production_assets.outputs.release_input_digest }}
           VISUAL_RELEASE_STATE: ${{ steps.production_assets.outputs.visual_release_state }}
+          DEPENDENCY_LOCK_SHA: ${{ steps.dependencies.outputs.lock_sha }}
+          IMPLEMENTATION_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
         run: |
           set -euo pipefail
 
@@ -229,6 +259,12 @@ jobs:
 
           if [[ ! -f "$source_apk" ]]; then
             echo "Expected release APK not found: $source_apk" >&2
+            exit 1
+          fi
+
+          current_lock_sha="$(sha256sum mobile/pubspec.lock | awk '{print $1}')"
+          if [[ "$current_lock_sha" != "$DEPENDENCY_LOCK_SHA" ]]; then
+            echo "Staged dependency lock drifted: expected $DEPENDENCY_LOCK_SHA, got $current_lock_sha." >&2
             exit 1
           fi
 
@@ -262,7 +298,6 @@ jobs:
           cp mobile/pubspec.lock stable-apk-stage/pubspec.lock
 
           apk_sha="$(sha256sum stable-apk-stage/WALKA-latest.apk | awk '{print $1}')"
-          lock_sha="$(sha256sum mobile/pubspec.lock | awk '{print $1}')"
           app_version="$(awk '/^version:/ {print $2; exit}' mobile/pubspec.yaml)"
           built_utc="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
 
@@ -276,7 +311,8 @@ jobs:
           # WALKA Last Verified APK Receipt
 
           - App version: \`${app_version}\`
-          - Source commit: \`${GITHUB_SHA}\`
+          - Source commit: \`${IMPLEMENTATION_SHA}\`
+          - Validation commit: \`${GITHUB_SHA}\`
           - Workflow run: \`${GITHUB_RUN_ID}\`
           - Workflow run number: \`${GITHUB_RUN_NUMBER}\`
           - Flutter: \`3.47.0\`
@@ -285,7 +321,7 @@ jobs:
           - APK type: \`${apk_type}\`
           - APK bytes: \`${apk_bytes}\`
           - APK SHA-256: \`${apk_sha}\`
-          - pubspec.lock SHA-256: \`${lock_sha}\`
+          - pubspec.lock SHA-256: \`${DEPENDENCY_LOCK_SHA}\`
           - Visual input digest: \`${VISUAL_INPUT_DIGEST}\`
           - Release input digest: \`${RELEASE_INPUT_DIGEST}\`
           - Production asset readiness: \`${asset_state}\`
@@ -302,7 +338,9 @@ jobs:
           echo "apk_bytes=${apk_bytes}" >> "$GITHUB_OUTPUT"
           echo "apk_type=${apk_type}" >> "$GITHUB_OUTPUT"
           echo "app_version=${app_version}" >> "$GITHUB_OUTPUT"
-          echo "lock_sha=${lock_sha}" >> "$GITHUB_OUTPUT"
+          echo "lock_sha=${DEPENDENCY_LOCK_SHA}" >> "$GITHUB_OUTPUT"
+          echo "implementation_sha=${IMPLEMENTATION_SHA}" >> "$GITHUB_OUTPUT"
+          echo "validation_sha=${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
 
       - name: Upload installable APK candidate
         uses: actions/upload-artifact@v4
