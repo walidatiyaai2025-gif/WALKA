@@ -194,7 +194,10 @@ final class AdminCatalogController extends Controller
         ]);
 
         $asin = strtoupper((string) $validated['asin']);
-        if (ProductVariant::query()->where('asin', $asin)->whereKeyNot($current->id)->exists()) {
+        if (ProductVariant::query()
+            ->where('asin', $asin)
+            ->where('id', '!=', $current->id)
+            ->exists()) {
             throw ValidationException::withMessages(['asin' => 'That ASIN is already assigned to another variant.']);
         }
 
@@ -272,7 +275,9 @@ final class AdminCatalogController extends Controller
     private function factsFromJson(string $value): array
     {
         $value = trim($value);
-        if ($value === '') return [];
+        if ($value === '') {
+            return [];
+        }
 
         try {
             $decoded = json_decode($value, true, 64, JSON_THROW_ON_ERROR);
@@ -299,18 +304,21 @@ final class AdminCatalogController extends Controller
     private function nullableTrimmed(mixed $value): ?string
     {
         $trimmed = trim((string) ($value ?? ''));
+
         return $trimmed === '' ? null : $trimmed;
     }
 
     private function normalizedHex(mixed $value): ?string
     {
         $hex = $this->nullableTrimmed($value);
+
         return $hex === null ? null : strtoupper($hex);
     }
 
     private function actorFingerprint(Request $request): string
     {
         $fingerprint = (string) $request->session()->get('walka_admin_dashboard_actor', '');
+
         return $fingerprint !== '' ? $fingerprint : hash('sha256', 'dashboard|'.$request->session()->getId());
     }
 
