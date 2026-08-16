@@ -14,7 +14,9 @@ use Illuminate\View\View;
 
 final class AdminStorefrontCopyController extends Controller
 {
-    public function __construct(private readonly ContentRevisionService $content) {}
+    public function __construct(private readonly ContentRevisionService $content)
+    {
+    }
 
     public function edit(Request $request): View
     {
@@ -136,12 +138,14 @@ final class AdminStorefrontCopyController extends Controller
                 'content_type' => ['The reserved storefront.copy key has an incompatible content type.'],
             ]);
         }
+
         return $entry;
     }
 
     private function actorFingerprint(Request $request): string
     {
         $fingerprint = (string) $request->session()->get('walka_admin_dashboard_actor', '');
+
         return $fingerprint !== ''
             ? $fingerprint
             : hash('sha256', 'dashboard|'.$request->session()->getId());
