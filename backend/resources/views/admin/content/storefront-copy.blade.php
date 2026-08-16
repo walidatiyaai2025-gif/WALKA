@@ -8,7 +8,7 @@
     <div>
         <p class="eyebrow">LIVE-CONTROLLED COPY</p>
         <h1>Storefront copy</h1>
-        <p class="lead">Control generic Categories and Product Detail labels from the Dashboard. Draft changes remain private until Publish.</p>
+        <p class="lead">Control generic Categories, Favorites, and Product Detail labels from the Dashboard. Draft changes remain private until Publish.</p>
     </div>
 </div>
 
@@ -26,6 +26,16 @@
         <div class="field"><label for="categories_heading">Heading</label><input id="categories_heading" name="categories_heading" maxlength="80" required value="{{ old('categories_heading', $draft['categories_heading']) }}"></div>
         <div class="field"><label for="categories_body">Supporting copy</label><textarea id="categories_body" name="categories_body" maxlength="240" required>{{ old('categories_body', $draft['categories_body']) }}</textarea></div>
 
+        <h2 class="section-space">Favorites screen</h2>
+        <div class="grid two">
+            <div class="field"><label for="favorites_heading">Heading</label><input id="favorites_heading" name="favorites_heading" maxlength="80" required value="{{ old('favorites_heading', $draft['favorites_heading']) }}"></div>
+            <div class="field"><label for="favorites_explore_label">Explore CTA label</label><input id="favorites_explore_label" name="favorites_explore_label" maxlength="80" required value="{{ old('favorites_explore_label', $draft['favorites_explore_label']) }}"></div>
+            <div class="field"><label for="favorites_empty_title">Empty-state title</label><input id="favorites_empty_title" name="favorites_empty_title" maxlength="100" required value="{{ old('favorites_empty_title', $draft['favorites_empty_title']) }}"></div>
+            <div class="field"><label for="favorites_remove_label">Remove action label</label><input id="favorites_remove_label" name="favorites_remove_label" maxlength="60" required value="{{ old('favorites_remove_label', $draft['favorites_remove_label']) }}"></div>
+        </div>
+        <div class="field"><label for="favorites_body">Supporting copy</label><textarea id="favorites_body" name="favorites_body" maxlength="240" required>{{ old('favorites_body', $draft['favorites_body']) }}</textarea></div>
+        <div class="field"><label for="favorites_empty_body">Empty-state body</label><textarea id="favorites_empty_body" name="favorites_empty_body" maxlength="240" required>{{ old('favorites_empty_body', $draft['favorites_empty_body']) }}</textarea></div>
+
         <h2 class="section-space">Product detail</h2>
         <div class="field"><label for="pdp_unavailable">Unavailable message</label><input id="pdp_unavailable" name="pdp_unavailable" maxlength="160" required value="{{ old('pdp_unavailable', $draft['pdp_unavailable']) }}"></div>
         <div class="grid two">
@@ -34,6 +44,8 @@
             <div class="field"><label for="pdp_details_label">Details label</label><input id="pdp_details_label" name="pdp_details_label" maxlength="60" required value="{{ old('pdp_details_label', $draft['pdp_details_label']) }}"></div>
             <div class="field"><label for="pdp_buy_label">Amazon CTA label</label><input id="pdp_buy_label" name="pdp_buy_label" maxlength="80" required value="{{ old('pdp_buy_label', $draft['pdp_buy_label']) }}"></div>
             <div class="field"><label for="pdp_asin_label">ASIN label</label><input id="pdp_asin_label" name="pdp_asin_label" maxlength="40" required value="{{ old('pdp_asin_label', $draft['pdp_asin_label']) }}"></div>
+            <div class="field"><label for="pdp_favorite_add_label">Favorite add label</label><input id="pdp_favorite_add_label" name="pdp_favorite_add_label" maxlength="80" required value="{{ old('pdp_favorite_add_label', $draft['pdp_favorite_add_label']) }}"></div>
+            <div class="field"><label for="pdp_favorite_remove_label">Favorite remove label</label><input id="pdp_favorite_remove_label" name="pdp_favorite_remove_label" maxlength="80" required value="{{ old('pdp_favorite_remove_label', $draft['pdp_favorite_remove_label']) }}"></div>
         </div>
         <button class="btn navy" type="submit">Save private draft</button>
     </form>
