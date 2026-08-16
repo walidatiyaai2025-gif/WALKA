@@ -1,4 +1,4 @@
-enum WalkaCatalogSource { remote, cache, bundled }
+enum WalkaCatalogSource { remote, cache, unavailable, bundled }
 
 class WalkaStorefrontConfig {
   const WalkaStorefrontConfig({
@@ -30,6 +30,36 @@ class WalkaStorefrontConfig {
       };
 }
 
+class WalkaCatalogCategory {
+  const WalkaCatalogCategory({
+    required this.id,
+    required this.name,
+    required this.sortOrder,
+  });
+
+  final String id;
+  final String name;
+  final int sortOrder;
+
+  factory WalkaCatalogCategory.fromJson(Map<String, dynamic> json) {
+    final Object? order = json['sort_order'];
+    if (order is! int || order < 0) {
+      throw const FormatException('Category sort_order must be a non-negative integer.');
+    }
+    return WalkaCatalogCategory(
+      id: _requiredString(json, 'id'),
+      name: _requiredString(json, 'name'),
+      sortOrder: order,
+    );
+  }
+
+  Map<String, dynamic> toJson() => <String, dynamic>{
+        'id': id,
+        'name': name,
+        'sort_order': sortOrder,
+      };
+}
+
 class WalkaCatalogVariant {
   const WalkaCatalogVariant({
     required this.id,
@@ -37,12 +67,14 @@ class WalkaCatalogVariant {
     required this.asin,
     required this.purchaseUrl,
     this.pantone,
+    this.swatchHex,
   });
 
   final String id;
   final String color;
   final String asin;
   final String? pantone;
+  final String? swatchHex;
   final String purchaseUrl;
 
   Uri get purchaseUri {
@@ -58,12 +90,19 @@ class WalkaCatalogVariant {
     if (pantoneValue != null && pantoneValue is! String) {
       throw const FormatException('Variant pantone must be a string or null.');
     }
+    final Object? swatchValue = json['swatch_hex'];
+    if (swatchValue != null &&
+        (swatchValue is! String ||
+            !RegExp(r'^#[0-9A-Fa-f]{6}$').hasMatch(swatchValue))) {
+      throw const FormatException('Variant swatch_hex must be #RRGGBB or null.');
+    }
 
     final WalkaCatalogVariant variant = WalkaCatalogVariant(
       id: _requiredString(json, 'id'),
       color: _requiredString(json, 'color'),
       asin: _requiredString(json, 'asin'),
       pantone: pantoneValue as String?,
+      swatchHex: swatchValue as String?,
       purchaseUrl: _requiredString(json, 'purchase_url'),
     );
     variant.purchaseUri;
@@ -75,6 +114,7 @@ class WalkaCatalogVariant {
         'color': color,
         'asin': asin,
         'pantone': pantone,
+        'swatch_hex': swatchHex,
         'purchase_url': purchaseUrl,
       };
 }
@@ -136,12 +176,14 @@ class WalkaCatalogProduct {
 class WalkaCatalogPayload {
   const WalkaCatalogPayload({
     required this.products,
+    required this.categories,
     required this.release,
     required this.apiVersion,
     required this.purchaseMode,
   });
 
   final List<WalkaCatalogProduct> products;
+  final List<WalkaCatalogCategory> categories;
   final String release;
   final String apiVersion;
   final String purchaseMode;
@@ -149,14 +191,35 @@ class WalkaCatalogPayload {
   factory WalkaCatalogPayload.fromJson(Map<String, dynamic> json) {
     final List<dynamic> rawProducts = _requiredList(json, 'data');
     final Map<String, dynamic> meta = _requiredMap(json, 'meta');
+    final List<WalkaCatalogProduct> products = rawProducts.map((dynamic value) {
+      if (value is! Map) {
+        throw const FormatException('Catalog products must be objects.');
+      }
+      return WalkaCatalogProduct.fromJson(Map<String, dynamic>.from(value));
+    }).toList(growable: false);
+
+    final Object? categoryValue = meta['categories'];
+    final List<WalkaCatalogCategory> categories;
+    if (categoryValue == null) {
+      final List<String> ids = products.map((p) => p.category).toSet().toList()..sort();
+      categories = <WalkaCatalogCategory>[
+        for (int index = 0; index < ids.length; index++)
+          WalkaCatalogCategory(id: ids[index], name: ids[index], sortOrder: index),
+      ];
+    } else if (categoryValue is List) {
+      categories = categoryValue.map((dynamic value) {
+        if (value is! Map) {
+          throw const FormatException('Catalog categories must be objects.');
+        }
+        return WalkaCatalogCategory.fromJson(Map<String, dynamic>.from(value));
+      }).toList(growable: false);
+    } else {
+      throw const FormatException('Catalog categories must be a list.');
+    }
 
     return WalkaCatalogPayload(
-      products: rawProducts.map((dynamic value) {
-        if (value is! Map) {
-          throw const FormatException('Catalog products must be objects.');
-        }
-        return WalkaCatalogProduct.fromJson(Map<String, dynamic>.from(value));
-      }).toList(growable: false),
+      products: products,
+      categories: categories,
       release: _requiredString(meta, 'release'),
       apiVersion: _requiredString(meta, 'api_version'),
       purchaseMode: _requiredString(meta, 'purchase_mode'),
@@ -170,19 +233,29 @@ class WalkaCatalogSnapshot {
     required this.products,
     required this.source,
     required this.fetchedAt,
+    this.categories = const <WalkaCatalogCategory>[],
   });
 
   final WalkaStorefrontConfig config;
+  final List<WalkaCatalogCategory> categories;
   final List<WalkaCatalogProduct> products;
   final WalkaCatalogSource source;
   final DateTime fetchedAt;
 
   bool get isStale => source != WalkaCatalogSource.remote;
+  bool get isAvailable => products.isNotEmpty;
 
   Iterable<WalkaCatalogVariant> get variants sync* {
     for (final WalkaCatalogProduct product in products) {
       yield* product.variants;
     }
+  }
+
+  WalkaCatalogCategory? categoryById(String id) {
+    for (final WalkaCatalogCategory category in categories) {
+      if (category.id == id) return category;
+    }
+    return null;
   }
 
   WalkaCatalogProduct? productById(String id) {
@@ -202,6 +275,7 @@ class WalkaCatalogSnapshot {
   WalkaCatalogSnapshot asSource(WalkaCatalogSource nextSource) {
     return WalkaCatalogSnapshot(
       config: config,
+      categories: categories,
       products: products,
       source: nextSource,
       fetchedAt: fetchedAt,
@@ -210,9 +284,8 @@ class WalkaCatalogSnapshot {
 
   Map<String, dynamic> toJson() => <String, dynamic>{
         'config': config.toJson(),
-        'products': products
-            .map((WalkaCatalogProduct product) => product.toJson())
-            .toList(growable: false),
+        'categories': categories.map((category) => category.toJson()).toList(growable: false),
+        'products': products.map((product) => product.toJson()).toList(growable: false),
         'fetched_at': fetchedAt.toUtc().toIso8601String(),
       };
 
@@ -222,20 +295,40 @@ class WalkaCatalogSnapshot {
   }) {
     final Map<String, dynamic> rawConfig = _requiredMap(json, 'config');
     final List<dynamic> rawProducts = _requiredList(json, 'products');
+    final Object? rawCategoriesValue = json['categories'];
     final String fetchedAt = _requiredString(json, 'fetched_at');
     final DateTime? parsedFetchedAt = DateTime.tryParse(fetchedAt);
     if (parsedFetchedAt == null) {
       throw const FormatException('Catalog fetched_at is invalid.');
     }
 
+    final List<WalkaCatalogProduct> products = rawProducts.map((dynamic value) {
+      if (value is! Map) {
+        throw const FormatException('Cached products must be objects.');
+      }
+      return WalkaCatalogProduct.fromJson(Map<String, dynamic>.from(value));
+    }).toList(growable: false);
+
+    final List<WalkaCatalogCategory> categories;
+    if (rawCategoriesValue is List) {
+      categories = rawCategoriesValue.map((dynamic value) {
+        if (value is! Map) {
+          throw const FormatException('Cached categories must be objects.');
+        }
+        return WalkaCatalogCategory.fromJson(Map<String, dynamic>.from(value));
+      }).toList(growable: false);
+    } else {
+      final List<String> ids = products.map((p) => p.category).toSet().toList()..sort();
+      categories = <WalkaCatalogCategory>[
+        for (int index = 0; index < ids.length; index++)
+          WalkaCatalogCategory(id: ids[index], name: ids[index], sortOrder: index),
+      ];
+    }
+
     return WalkaCatalogSnapshot(
       config: WalkaStorefrontConfig.fromJson(rawConfig),
-      products: rawProducts.map((dynamic value) {
-        if (value is! Map) {
-          throw const FormatException('Cached products must be objects.');
-        }
-        return WalkaCatalogProduct.fromJson(Map<String, dynamic>.from(value));
-      }).toList(growable: false),
+      categories: categories,
+      products: products,
       source: source,
       fetchedAt: parsedFetchedAt.toUtc(),
     );
@@ -243,19 +336,6 @@ class WalkaCatalogSnapshot {
 }
 
 abstract final class WalkaCatalogContract {
-  static const Set<String> requiredProductIds = <String>{
-    'drawer-organizer',
-    'stainless-steel-bento-lunch-box',
-  };
-
-  static const Set<String> requiredVariantIds = <String>{
-    'drawer-organizer:white',
-    'drawer-organizer:gray',
-    'lunch-box:blue',
-    'lunch-box:pink',
-    'lunch-box:green',
-  };
-
   static void validate(WalkaCatalogSnapshot snapshot) {
     if (snapshot.config.brand != 'WALKA') {
       throw const FormatException('Unexpected catalog brand.');
@@ -266,27 +346,35 @@ abstract final class WalkaCatalogContract {
     if (snapshot.config.purchaseMode != 'amazon_redirect') {
       throw const FormatException('Unsupported WALKA purchase mode.');
     }
-
-    final Set<String> productIds = snapshot.products
-        .map((WalkaCatalogProduct product) => product.id)
-        .toSet();
-    if (!productIds.containsAll(requiredProductIds)) {
-      throw const FormatException('Catalog is missing required WALKA products.');
+    if (snapshot.source != WalkaCatalogSource.unavailable && snapshot.products.isEmpty) {
+      throw const FormatException('Catalog contains no visible products.');
     }
 
-    final List<WalkaCatalogVariant> variants = snapshot.variants.toList();
-    final Set<String> variantIds = variants
-        .map((WalkaCatalogVariant variant) => variant.id)
-        .toSet();
-    if (!variantIds.containsAll(requiredVariantIds)) {
-      throw const FormatException('Catalog is missing required WALKA variants.');
-    }
-    if (variantIds.length != variants.length) {
-      throw const FormatException('Catalog contains duplicate variant IDs.');
+    final Set<String> categoryIds = <String>{};
+    for (final WalkaCatalogCategory category in snapshot.categories) {
+      if (!categoryIds.add(category.id)) {
+        throw const FormatException('Catalog contains duplicate category IDs.');
+      }
     }
 
-    for (final WalkaCatalogVariant variant in variants) {
-      variant.purchaseUri;
+    final Set<String> productIds = <String>{};
+    final Set<String> variantIds = <String>{};
+    for (final WalkaCatalogProduct product in snapshot.products) {
+      if (!productIds.add(product.id)) {
+        throw const FormatException('Catalog contains duplicate product IDs.');
+      }
+      if (categoryIds.isNotEmpty && !categoryIds.contains(product.category)) {
+        throw FormatException('Product ${product.id} references an unknown category.');
+      }
+      if (product.variants.isEmpty) {
+        throw FormatException('Product ${product.id} has no visible variants.');
+      }
+      for (final WalkaCatalogVariant variant in product.variants) {
+        if (!variantIds.add(variant.id)) {
+          throw const FormatException('Catalog contains duplicate variant IDs.');
+        }
+        variant.purchaseUri;
+      }
     }
   }
 }
