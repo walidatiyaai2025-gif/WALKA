@@ -13,24 +13,9 @@ final class HomeFeaturedContentDefinition
     public const SCHEMA_VERSION = 1;
 
     /**
-     * Preserve the currently released Home merchandising as the safe default.
-     *
-     * @return array<string, mixed>
-     */
-    public static function defaultPayload(): array
-    {
-        return [
-            'collection_variant_ids' => [
-                'lunch-box:blue',
-                'drawer-organizer:white',
-            ],
-            'editorial_variant_id' => 'drawer-organizer:white',
-        ];
-    }
-
-    /**
-     * Validate shape only. Catalog existence/relationship checks live in
-     * HomeFeaturedCatalogValidator so this contract can be reused by API/UI.
+     * Validate presentation structure only. The two collection identities and
+     * editorial identity always come from the current Dashboard catalog through
+     * the Admin bootstrap/validator; no Product or Variant IDs belong here.
      *
      * @param  array<string, mixed>  $payload
      * @return array{collection_variant_ids: list<string>, editorial_variant_id: string}
@@ -41,7 +26,7 @@ final class HomeFeaturedContentDefinition
         $editorial = $payload['editorial_variant_id'] ?? null;
 
         if (! is_array($collection) || ! array_is_list($collection) || count($collection) !== 2) {
-            self::fail('collection_variant_ids', 'Home collection must contain exactly two ordered variant IDs.');
+            self::fail('collection_variant_ids', 'Home collection must contain exactly two ordered Dashboard variant IDs.');
         }
 
         $normalizedCollection = [];
