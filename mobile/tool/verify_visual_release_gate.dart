@@ -65,6 +65,17 @@ void main(List<String> args) {
     currentVisualInputDigest: visualInputDigest,
   ).audit();
 
+  if (result.pinkReport.ownerAccepted &&
+      result.pinkReport.state != 'OWNER_ACCEPTED_ADMISSION_RECONCILED' &&
+      !result.releaseBlockers.contains('pink-admission-not-reconciled')) {
+    result.releaseBlockers.add('pink-admission-not-reconciled');
+  }
+  if (result.grayReport.ownerApproved &&
+      !result.grayReport.fullyAdmitted &&
+      !result.releaseBlockers.contains('gray-admission-not-reconciled')) {
+    result.releaseBlockers.add('gray-admission-not-reconciled');
+  }
+
   if (jsonPath != null) {
     final File output = File(jsonPath);
     output.parent.createSync(recursive: true);
