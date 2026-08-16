@@ -6,8 +6,9 @@ import '../catalog/catalog_state.dart';
 import '../catalog/domain/walka_catalog.dart';
 import 'catalog_status_v130.dart';
 
-/// Shared production catalog boundary. Legacy premium compositions are rendered
-/// only when a validated remote or last-known-good Dashboard catalog exists.
+/// Shared production catalog boundary. Catalog-bearing compositions are
+/// rendered only when a validated remote or last-known-good Dashboard catalog
+/// exists. A fresh/offline install never substitutes compiled product data.
 class WalkaCatalogStateSurfaceV130 extends StatefulWidget {
   const WalkaCatalogStateSurfaceV130({required this.child, super.key});
 
@@ -63,32 +64,56 @@ class _WalkaCatalogStateSurfaceV130State
             ),
           Expanded(
             child: unavailable
-                ? Center(
-                    key: const ValueKey<String>('walka-catalog-unavailable'),
-                    child: Padding(
-                      padding: const EdgeInsets.all(28),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: <Widget>[
-                          const Icon(Icons.inventory_2_outlined, size: 42, color: WalkaColors.navy),
-                          const SizedBox(height: 14),
-                          const Text(
-                            'Catalog unavailable',
-                            style: TextStyle(color: WalkaColors.navy, fontSize: 18, fontWeight: FontWeight.w900),
+                ? LayoutBuilder(
+                    builder: (BuildContext context, BoxConstraints constraints) {
+                      return SingleChildScrollView(
+                        key: const ValueKey<String>('walka-catalog-unavailable'),
+                        padding: const EdgeInsets.fromLTRB(24, 18, 24, 28),
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(
+                            minHeight: (constraints.maxHeight - 46).clamp(0, double.infinity),
                           ),
-                          const SizedBox(height: 7),
-                          const Text(
-                            'Connect to load the Dashboard catalog. No built-in products or colors are substituted.',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(color: WalkaColors.muted, height: 1.45),
+                          child: Center(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: <Widget>[
+                                const Icon(
+                                  Icons.inventory_2_outlined,
+                                  size: 42,
+                                  color: WalkaColors.navy,
+                                ),
+                                const SizedBox(height: 14),
+                                const Text(
+                                  'Catalog unavailable',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    color: WalkaColors.navy,
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w900,
+                                  ),
+                                ),
+                                const SizedBox(height: 7),
+                                const Text(
+                                  'Connect to load the Dashboard catalog. No built-in products or colors are substituted.',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    color: WalkaColors.muted,
+                                    height: 1.45,
+                                  ),
+                                ),
+                                if (source.canRefresh) ...<Widget>[
+                                  const SizedBox(height: 16),
+                                  FilledButton(
+                                    onPressed: source.load,
+                                    child: const Text('Retry'),
+                                  ),
+                                ],
+                              ],
+                            ),
                           ),
-                          if (source.canRefresh) ...<Widget>[
-                            const SizedBox(height: 16),
-                            FilledButton(onPressed: source.load, child: const Text('Retry')),
-                          ],
-                        ],
-                      ),
-                    ),
+                        ),
+                      );
+                    },
                   )
                 : WalkaCatalogScope(
                     controller: presentation,
