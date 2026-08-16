@@ -70,7 +70,7 @@ void main() {
     expect(readiness, contains('run #632'));
   });
 
-  test('closure workflow keeps protected master guard and asset enforcement before publication', () {
+  test('closure workflow orders owner enforcement before governed publication', () {
     final String workflow =
         File('../.github/workflows/flutter-preview.yml').readAsStringSync();
 
@@ -83,10 +83,12 @@ void main() {
     final int build = workflow.indexOf('Build installable release APK');
     final int candidate = workflow.indexOf('Upload installable APK candidate');
     final int enforce = workflow.indexOf(
-      'Enforce production product assets before stable publication',
+      'Enforce production and owner visual release before stable publication',
     );
     final int staleGuard = workflow.indexOf('Guard stable main publication');
-    final int publish = workflow.indexOf('Publish latest verified APK to main');
+    final int publish = workflow.indexOf(
+      'Publish latest verified APK and release evidence to main',
+    );
 
     expect(protectedGuard, greaterThan(-1));
     expect(analyze, greaterThan(protectedGuard));
@@ -97,6 +99,10 @@ void main() {
     expect(enforce, greaterThan(candidate));
     expect(staleGuard, greaterThan(enforce));
     expect(publish, greaterThan(staleGuard));
+    expect(workflow, contains('visual-release-gate-enforce.json'));
+    expect(workflow, contains('VISUAL_RELEASE_OWNER_ACCEPTANCE.json'));
+    expect(workflow, contains('RELEASE_TOOLCHAIN_CONTRACT.json'));
+    expect(workflow, contains('pubspec.lock'));
   });
 
   test('visual acceptance lifecycle distinguishes PASS BLOCKED and REOPEN', () {
