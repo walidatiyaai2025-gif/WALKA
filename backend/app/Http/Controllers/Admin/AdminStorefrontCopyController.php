@@ -14,9 +14,7 @@ use Illuminate\View\View;
 
 final class AdminStorefrontCopyController extends Controller
 {
-    public function __construct(private readonly ContentRevisionService $content)
-    {
-    }
+    public function __construct(private readonly ContentRevisionService $content) {}
 
     public function edit(Request $request): View
     {
