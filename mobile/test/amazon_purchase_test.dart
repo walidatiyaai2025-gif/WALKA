@@ -1,60 +1,89 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:walka/features/catalog/domain/walka_catalog.dart';
 import 'package:walka/features/commerce/amazon_purchase.dart';
 
 void main() {
-  group('Amazon drawer organizer routing', () {
-    test('white variant maps to the white WALKA ASIN', () {
-      final Uri uri = amazonDrawerOrganizerUri(gray: false);
+  setUp(WalkaAmazonPurchaseRegistry.clearForTesting);
 
-      expect(uri.scheme, 'https');
-      expect(uri.host, 'www.amazon.com');
-      expect(uri.path, '/dp/$walkaDrawerOrganizerWhiteAsin');
-      expect(walkaDrawerOrganizerWhiteAsin, 'B0FQN4DCTG');
-    });
-
-    test('gray variant maps to the gray WALKA ASIN', () {
-      final Uri uri = amazonDrawerOrganizerUri(gray: true);
-
-      expect(uri.scheme, 'https');
-      expect(uri.host, 'www.amazon.com');
-      expect(uri.path, '/dp/$walkaDrawerOrganizerGrayAsin');
-      expect(walkaDrawerOrganizerGrayAsin, 'B0FQN4L2ZD');
-    });
-
-    test('white and gray listings stay distinct', () {
-      expect(
-        amazonDrawerOrganizerUri(gray: false),
-        isNot(amazonDrawerOrganizerUri(gray: true)),
-      );
-    });
+  test('purchase registry fails closed before a Dashboard catalog is loaded', () {
+    expect(
+      () => WalkaAmazonPurchaseRegistry.requireUriForVariant('desk-kit:midnight'),
+      throwsStateError,
+    );
   });
 
-  group('Amazon lunch box routing', () {
-    test('blue variant maps to the official listing', () {
-      final Uri uri = amazonLunchBoxUri(WalkaAmazonLunchVariant.blue);
-      expect(uri.scheme, 'https');
-      expect(uri.host, 'www.amazon.com');
-      expect(uri.path, '/dp/$walkaLunchBoxBlueAsin');
-      expect(walkaLunchBoxBlueAsin, 'B0FQN4L8MW');
-    });
+  test('purchase URL comes from an arbitrary Dashboard variant', () {
+    WalkaAmazonPurchaseRegistry.replaceFromSnapshot(_snapshot(
+      variantId: 'desk-kit:midnight',
+      asin: 'B012345678',
+    ));
 
-    test('pink variant maps to the official listing', () {
-      final Uri uri = amazonLunchBoxUri(WalkaAmazonLunchVariant.pink);
-      expect(uri.path, '/dp/$walkaLunchBoxPinkAsin');
-      expect(walkaLunchBoxPinkAsin, 'B0FQN3W4SF');
-    });
+    final Uri uri = WalkaAmazonPurchaseRegistry.requireUriForVariant(
+      'desk-kit:midnight',
+    );
 
-    test('green variant maps to the official listing', () {
-      final Uri uri = amazonLunchBoxUri(WalkaAmazonLunchVariant.green);
-      expect(uri.path, '/dp/$walkaLunchBoxGreenAsin');
-      expect(walkaLunchBoxGreenAsin, 'B0GPZNKF9F');
-    });
-
-    test('all lunch listings stay distinct', () {
-      final Set<Uri> uris = WalkaAmazonLunchVariant.values
-          .map(amazonLunchBoxUri)
-          .toSet();
-      expect(uris.length, 3);
-    });
+    expect(uri, Uri.parse('https://www.amazon.com/dp/B012345678'));
   });
+
+  test('replacing Dashboard snapshot removes stale variant purchase routes', () {
+    WalkaAmazonPurchaseRegistry.replaceFromSnapshot(_snapshot(
+      variantId: 'desk-kit:midnight',
+      asin: 'B012345678',
+    ));
+    WalkaAmazonPurchaseRegistry.replaceFromSnapshot(_snapshot(
+      variantId: 'travel-mug:sand',
+      asin: 'B087654321',
+    ));
+
+    expect(
+      WalkaAmazonPurchaseRegistry.uriForVariant('desk-kit:midnight'),
+      isNull,
+    );
+    expect(
+      WalkaAmazonPurchaseRegistry.requireUriForVariant('travel-mug:sand'),
+      Uri.parse('https://www.amazon.com/dp/B087654321'),
+    );
+  });
+}
+
+WalkaCatalogSnapshot _snapshot({
+  required String variantId,
+  required String asin,
+}) {
+  const WalkaCatalogCategory category = WalkaCatalogCategory(
+    id: 'workspace',
+    name: 'Workspace',
+    sortOrder: 0,
+  );
+  final String productId = variantId.split(':').first;
+
+  return WalkaCatalogSnapshot(
+    config: const WalkaStorefrontConfig(
+      brand: 'WALKA',
+      release: 'dynamic-test',
+      apiVersion: 'v1',
+      purchaseMode: 'amazon_redirect',
+    ),
+    categories: const <WalkaCatalogCategory>[category],
+    products: <WalkaCatalogProduct>[
+      WalkaCatalogProduct(
+        id: productId,
+        name: 'Dashboard Product',
+        category: category.id,
+        features: const <String>['Dashboard managed'],
+        facts: const <String, dynamic>{'source': 'dashboard'},
+        variants: <WalkaCatalogVariant>[
+          WalkaCatalogVariant(
+            id: variantId,
+            color: 'Dynamic Color',
+            asin: asin,
+            swatchHex: '#123456',
+            purchaseUrl: 'https://www.amazon.com/dp/$asin',
+          ),
+        ],
+      ),
+    ],
+    source: WalkaCatalogSource.remote,
+    fetchedAt: DateTime.utc(2026, 8, 16),
+  );
 }
