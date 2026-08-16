@@ -7,10 +7,22 @@ import 'data/walka_catalog_repository.dart';
 import 'domain/walka_catalog.dart';
 
 class WalkaCatalogController extends ChangeNotifier {
-  WalkaCatalogController({WalkaCatalogRepository? repository})
-      : _repository = repository,
-        _snapshot = walkaPresentationSnapshot(WalkaBundledCatalog.snapshot()),
+  WalkaCatalogController({
+    WalkaCatalogRepository? repository,
+    WalkaCatalogSnapshot? initialSnapshot,
+  })  : _repository = repository,
+        _snapshot = walkaPresentationSnapshot(
+          initialSnapshot ??
+              (repository == null ? presentationInitialSnapshotFactory?.call() : null) ??
+              WalkaBundledCatalog.snapshot(),
+        ),
         _isLoading = repository != null;
+
+  /// Test/presentation dependency injection only. Production does not assign
+  /// this hook, so repository-backed runtime controllers still start empty and
+  /// can load only Remote -> Last-Known-Good cache.
+  @visibleForTesting
+  static WalkaCatalogSnapshot Function()? presentationInitialSnapshotFactory;
 
   /// Side-effect-free base constructor for a presentation-only delegating
   /// controller. It intentionally does not touch the global Amazon registry.
