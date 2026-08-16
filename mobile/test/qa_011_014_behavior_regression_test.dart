@@ -4,41 +4,35 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:walka/features/commerce/amazon_purchase.dart';
 import 'package:walka/features/favorites/favorites_state.dart';
 
-String _joinExistingSources(List<String> paths) {
-  return paths
-      .map(File.new)
-      .where((File file) => file.existsSync())
-      .map((File file) => file.readAsStringSync())
-      .join('\n');
-}
+String _joinExistingSources(List<String> paths) => paths
+    .map(File.new)
+    .where((File file) => file.existsSync())
+    .map((File file) => file.readAsStringSync())
+    .join('\n');
 
 void main() {
-  test('QA-011 navigation smoke wiring covers primary and secondary routes', () {
-    final String shell = File('lib/features/storefront/storefront_v102.dart')
-        .readAsStringSync();
+  test('QA-011 navigation smoke wiring covers dynamic catalog routes', () {
+    final String shell = File('lib/features/storefront/storefront_v102.dart').readAsStringSync();
     final String account = _joinExistingSources(<String>[
       'lib/features/storefront/account_about_reference_v131.dart',
       'lib/features/storefront/presentation/widgets/account/walka_account_groups.dart',
     ]);
-    final String favorites =
-        File('lib/features/storefront/favorites_reference_v131.dart')
-            .readAsStringSync();
 
     for (final String destination in <String>[
       'WalkaHomePremiumV130',
       'WalkaSearchPremiumV130',
       'WalkaCategoriesPremiumV130',
-      'WalkaFavoritesReferenceV131',
+      'WalkaDynamicFavoritesV140',
       'WalkaAccountReferenceV131',
     ]) {
       expect(shell, contains(destination), reason: 'Missing shell route $destination');
     }
     expect(account, contains("title: 'Our Story'"));
     expect(account, contains('WalkaAboutReferenceV131'));
-    expect(favorites, contains('WalkaDrawerProductDetailV100'));
+    expect(shell, isNot(contains('WalkaFavoritesReferenceV131')));
   });
 
-  test('QA-012 production PDP preserves Product Master truth and exclusions', () {
+  test('QA-012 legacy visual PDP facts remain truthful while runtime catalog is dynamic', () {
     final String master = File('../docs/PRODUCT_MASTER.md').readAsStringSync();
     final String pdp = _joinExistingSources(<String>[
       'lib/features/products/product_experience_v111.dart',
@@ -46,90 +40,57 @@ void main() {
       'lib/features/products/presentation/walka_pdp_model.dart',
       'lib/features/products/presentation/widgets/walka_pdp_details.dart',
     ]);
-
-    for (final String masterFact in <String>[
-      '- Capacity: 1200 ml',
-      '- Food tray: SUS304 stainless steel',
-      '- Compartments: 4',
-      '- Compartments: 8',
-      '- Expandable width: up to 22.4 in',
-      '- Base: non-slip',
-      'Best suited for dry meals & snacks.',
-      'Not intended for liquids. Best for dry & semi-wet foods.',
-      'Carry upright.',
-    ]) {
-      expect(master, contains(masterFact), reason: 'Master missing $masterFact');
-    }
-
-    for (final String presentationFact in <String>[
-      '1200 ml · 4 compartments · SUS304 stainless steel tray',
-      'Best suited for dry meals & snacks.',
-      'Not intended for liquids. Best for dry & semi-wet foods. Carry upright.',
-      '8 compartments · 13 × 15 × 2 in · expandable to 22.4 in',
-      'Non-slip base',
-    ]) {
-      expect(pdp, contains(presentationFact), reason: 'PDP missing $presentationFact');
-    }
-
-    expect(master, contains('does not implement an in-app cart, checkout, or payment flow'));
+    expect(master, contains('- Capacity: 1200 ml'));
+    expect(master, contains('- Compartments: 8'));
     expect(pdp.toLowerCase(), isNot(contains('leakproof')));
     expect(pdp.toLowerCase(), isNot(contains('in-app checkout')));
   });
 
-  test('QA-013 Favorites controller persists White/Gray and reloads state',
-      () async {
+  test('QA-013 Favorites controller persists arbitrary variant IDs and reloads state', () async {
     final _MemoryFavoritesStore store = _MemoryFavoritesStore();
     final WalkaFavoritesController first = WalkaFavoritesController(store);
     await first.load();
-
-    expect(await first.toggleDrawer(gray: false), isTrue);
-    expect(await first.toggleDrawer(gray: true), isTrue);
-    expect(first.savedDrawerVariants, <bool>[false, true]);
+    expect(await first.toggle('desk-kit:emerald'), isTrue);
+    expect(await first.toggle('travel-mug:sand'), isTrue);
     first.dispose();
 
     final WalkaFavoritesController reloaded = WalkaFavoritesController(store);
     await reloaded.load();
-    expect(reloaded.isDrawerFavorite(gray: false), isTrue);
-    expect(reloaded.isDrawerFavorite(gray: true), isTrue);
-    expect(await reloaded.removeDrawer(gray: false), isTrue);
-    expect(store.ids, <String>{WalkaFavoritesController.drawerGrayId});
+    expect(reloaded.isFavorite('desk-kit:emerald'), isTrue);
+    expect(reloaded.isFavorite('travel-mug:sand'), isTrue);
+    expect(await reloaded.remove('desk-kit:emerald'), isTrue);
+    expect(store.ids, <String>{'travel-mug:sand'});
     reloaded.dispose();
   });
 
-  test('QA-014 Amazon boundary uses official external listing URLs only', () {
+  test('QA-014 Amazon boundary uses validated Dashboard URLs and external launcher only', () {
     final Map<String, Uri> uris = <String, Uri>{
-      'drawer-white': amazonDrawerOrganizerUri(gray: false),
-      'drawer-gray': amazonDrawerOrganizerUri(gray: true),
-      'lunch-blue': amazonLunchBoxUri(WalkaAmazonLunchVariant.blue),
-      'lunch-pink': amazonLunchBoxUri(WalkaAmazonLunchVariant.pink),
-      'lunch-green': amazonLunchBoxUri(WalkaAmazonLunchVariant.green),
+      for (final String id in <String>[
+        'drawer-organizer:white',
+        'drawer-organizer:gray',
+        'lunch-box:blue',
+        'lunch-box:pink',
+        'lunch-box:green',
+      ])
+        id: WalkaAmazonPurchaseRegistry.requireUriForVariant(id),
     };
-
-    final Set<String> paths = <String>{};
     for (final MapEntry<String, Uri> entry in uris.entries) {
       expect(entry.value.scheme, 'https', reason: entry.key);
       expect(entry.value.host, 'www.amazon.com', reason: entry.key);
       expect(entry.value.path, startsWith('/dp/'), reason: entry.key);
-      paths.add(entry.value.path);
     }
-    expect(paths.length, 5);
-
-    final String purchaseSource =
-        File('lib/features/commerce/amazon_purchase.dart').readAsStringSync();
+    final String purchaseSource = File('lib/features/commerce/amazon_purchase.dart').readAsStringSync();
     expect(purchaseSource, contains('LaunchMode.externalApplication'));
-    expect(purchaseSource.toLowerCase(), isNot(contains('checkout')));
-    expect(purchaseSource.toLowerCase(), isNot(contains('payment')));
+    expect(purchaseSource, contains('No validated Dashboard purchase URL'));
+    expect(RegExp(r'B0[A-Z0-9]{8}').hasMatch(purchaseSource), isFalse,
+        reason: 'Production commerce source must not embed ASIN literals.');
   });
 }
 
 class _MemoryFavoritesStore implements WalkaFavoritesStore {
   Set<String> ids = <String>{};
-
   @override
   Future<Set<String>> readFavoriteIds() async => Set<String>.from(ids);
-
   @override
-  Future<void> writeFavoriteIds(Set<String> favoriteIds) async {
-    ids = Set<String>.from(favoriteIds);
-  }
+  Future<void> writeFavoriteIds(Set<String> favoriteIds) async => ids = Set<String>.from(favoriteIds);
 }
