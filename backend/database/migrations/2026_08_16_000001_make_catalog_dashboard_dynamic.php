@@ -24,6 +24,7 @@ return new class extends Migration
         });
 
         Schema::table('product_variants', function (Blueprint $table): void {
+            $table->string('swatch_hex', 7)->nullable()->after('color');
             $table->boolean('is_visible')->default(true)->after('sort_order')->index();
         });
 
@@ -50,12 +51,24 @@ return new class extends Migration
         DB::table('products')->update([
             'category_id' => DB::raw('category'),
         ]);
+
+        $swatches = [
+            'drawer-organizer:white' => '#F6F3EC',
+            'drawer-organizer:gray' => '#E1E4E7',
+            'lunch-box:blue' => '#436B73',
+            'lunch-box:pink' => '#E7C2C7',
+            'lunch-box:green' => '#B9B995',
+        ];
+
+        foreach ($swatches as $variantId => $hex) {
+            DB::table('product_variants')->where('id', $variantId)->update(['swatch_hex' => $hex]);
+        }
     }
 
     public function down(): void
     {
         Schema::table('product_variants', function (Blueprint $table): void {
-            $table->dropColumn('is_visible');
+            $table->dropColumn(['swatch_hex', 'is_visible']);
         });
 
         Schema::table('products', function (Blueprint $table): void {
