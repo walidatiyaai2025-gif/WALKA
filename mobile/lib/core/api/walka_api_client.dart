@@ -10,6 +10,7 @@ import '../../features/content/domain/walka_home_featured_content.dart';
 import '../../features/content/domain/walka_home_layout_content.dart';
 import '../../features/content/domain/walka_mobile_content.dart';
 import '../../features/content/domain/walka_search_presentation_content.dart';
+import '../../features/content/domain/walka_storefront_copy_content.dart';
 import '../../features/media/domain/walka_remote_media.dart';
 
 class WalkaApiSettings {
@@ -89,7 +90,6 @@ class WalkaApiHealth {
 
 abstract interface class WalkaCatalogRemoteDataSource {
   Future<WalkaStorefrontConfig> fetchConfig();
-
   Future<WalkaCatalogPayload> fetchCatalog();
 }
 
@@ -217,6 +217,12 @@ class WalkaApiClient implements WalkaCatalogRemoteDataSource {
   Future<WalkaSearchPresentationPayload> fetchSearchPresentation() async {
     return WalkaSearchPresentationPayload.fromApiJson(
       await _getJson('/api/v1/content/search'),
+    );
+  }
+
+  Future<WalkaStorefrontCopyPayload> fetchStorefrontCopy() async {
+    return WalkaStorefrontCopyPayload.fromApiJson(
+      await _getJson('/api/v1/content/storefront'),
     );
   }
 
