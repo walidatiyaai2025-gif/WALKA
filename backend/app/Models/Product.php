@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 final class Product extends Model
@@ -15,9 +16,11 @@ final class Product extends Model
         'id',
         'name',
         'category',
+        'category_id',
         'features',
         'facts',
         'sort_order',
+        'is_visible',
         'revision',
     ];
 
@@ -27,8 +30,14 @@ final class Product extends Model
             'features' => 'array',
             'facts' => 'array',
             'sort_order' => 'integer',
+            'is_visible' => 'boolean',
             'revision' => 'integer',
         ];
+    }
+
+    public function categoryEntity(): BelongsTo
+    {
+        return $this->belongsTo(CatalogCategory::class, 'category_id');
     }
 
     public function variants(): HasMany
