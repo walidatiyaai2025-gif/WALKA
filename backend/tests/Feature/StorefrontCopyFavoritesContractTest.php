@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\ContentEntry;
+use App\Models\ContentRevision;
 use App\Services\Content\StorefrontCopyContentDefinition;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -107,6 +108,88 @@ final class StorefrontCopyFavoritesContractTest extends TestCase
             'action' => 'draft_migrated',
             'source_revision' => 5,
         ]);
+    }
+
+    public function test_historical_restore_upgrades_only_the_new_draft_and_preserves_source_revision(): void
+    {
+        $legacy = $this->legacyPayload('Historical categories');
+        $current = StorefrontCopyContentDefinition::defaultPayload();
+        $current['categories_heading'] = 'Current categories';
+        $actor = hash('sha256', 'favorites-restore-test');
+
+        $entry = ContentEntry::query()->create([
+            'content_key' => StorefrontCopyContentDefinition::KEY,
+            'content_type' => StorefrontCopyContentDefinition::TYPE,
+            'revision' => 2,
+            'published_revision' => 2,
+            'draft_payload' => $current,
+            'published_payload' => $current,
+            'published_at' => now()->subMinute(),
+        ]);
+        ContentRevision::query()->create([
+            'content_entry_id' => $entry->id,
+            'revision' => 1,
+            'action' => 'draft_created',
+            'payload' => $legacy,
+            'source_revision' => null,
+            'actor_fingerprint' => $actor,
+            'created_at' => now()->subMinutes(2),
+        ]);
+        ContentRevision::query()->create([
+            'content_entry_id' => $entry->id,
+            'revision' => 2,
+            'action' => 'published',
+            'payload' => $current,
+            'source_revision' => 1,
+            'actor_fingerprint' => $actor,
+            'created_at' => now()->subMinute(),
+        ]);
+
+        config()->set('walka_dashboard.role', 'owner');
+        $session = [
+            'walka_admin_dashboard_authenticated' => true,
+            'walka_admin_dashboard_actor' => $actor,
+        ];
+
+        $this->withSession($session)
+            ->post(route('admin.content.storefront.copy.restore'), [
+                'revision' => 2,
+                'source_revision' => 1,
+            ])
+            ->assertRedirect(route('admin.content.storefront.copy.edit'))
+            ->assertSessionHasNoErrors();
+
+        $entry->refresh();
+        $source = ContentRevision::query()
+            ->where('content_entry_id', $entry->id)
+            ->where('revision', 1)
+            ->firstOrFail();
+        $restored = ContentRevision::query()
+            ->where('content_entry_id', $entry->id)
+            ->where('revision', 3)
+            ->firstOrFail();
+
+        $this->assertSame(3, $entry->revision);
+        $this->assertSame(2, $entry->published_revision);
+        $this->assertSame('Historical categories', $entry->draft_payload['categories_heading']);
+        $this->assertSame('Favorites', $entry->draft_payload['favorites_heading']);
+        $this->assertSame('Save favorite', $entry->draft_payload['pdp_favorite_add_label']);
+        $this->assertSame($legacy, $source->payload, 'Historical source must remain immutable.');
+        $this->assertArrayNotHasKey('favorites_heading', $source->payload);
+        $this->assertSame('draft_restored', $restored->action);
+        $this->assertSame(1, $restored->source_revision);
+        $this->assertSame($entry->draft_payload, $restored->payload);
+        StorefrontCopyContentDefinition::validateAndNormalize($entry->draft_payload);
+
+        $this->withSession($session)
+            ->post(route('admin.content.storefront.copy.publish'), ['revision' => 3])
+            ->assertRedirect(route('admin.content.storefront.copy.edit'))
+            ->assertSessionHasNoErrors();
+
+        $entry->refresh();
+        $this->assertSame(4, $entry->revision);
+        $this->assertSame(4, $entry->published_revision);
+        $this->assertSame('Favorites', $entry->published_payload['favorites_heading']);
     }
 
     /**
