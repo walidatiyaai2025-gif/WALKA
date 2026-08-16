@@ -13,6 +13,7 @@ use App\Services\Content\HomeHeroContentDefinition;
 use App\Services\Content\HomeLayoutContentDefinition;
 use App\Services\Content\SearchPresentationCatalogValidator;
 use App\Services\Content\SearchPresentationContentDefinition;
+use App\Services\Content\StorefrontCopyContentDefinition;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -117,6 +118,20 @@ final class PublishedContentController extends Controller
             normalize: fn (array $payload): array => $catalogValidator->validate(
                 SearchPresentationContentDefinition::validateAndNormalize($payload),
             ),
+        );
+    }
+
+    public function storefront(Request $request): JsonResponse|Response
+    {
+        return $this->publishedResponse(
+            request: $request,
+            key: StorefrontCopyContentDefinition::KEY,
+            type: StorefrontCopyContentDefinition::TYPE,
+            schemaVersion: StorefrontCopyContentDefinition::SCHEMA_VERSION,
+            etagFamily: 'storefront-copy',
+            notPublishedMessage: 'Published Storefront copy is not available.',
+            invalidMessage: 'Published Storefront copy failed its delivery contract.',
+            normalize: StorefrontCopyContentDefinition::validateAndNormalize(...),
         );
     }
 
