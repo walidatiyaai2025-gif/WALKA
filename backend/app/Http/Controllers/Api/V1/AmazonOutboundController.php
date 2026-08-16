@@ -5,15 +5,20 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Services\CommerceMapService;
 use App\Services\Content\CommerceMapContentDefinition;
+use App\Services\ContentDeliveryMetadataService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Validation\ValidationException;
 
 final class AmazonOutboundController extends Controller
 {
-    public function __construct(private readonly CommerceMapService $commerce) {}
+    public function __construct(
+        private readonly CommerceMapService $commerce,
+        private readonly ContentDeliveryMetadataService $deliveryMetadata,
+    ) {}
 
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse|Response
     {
         try {
             $snapshot = $this->commerce->publishedSnapshot();
@@ -28,11 +33,24 @@ final class AmazonOutboundController extends Controller
             ]], 404);
         }
 
+        $revision = (int) $snapshot['verification']['published_revision'];
+        $delivery = $this->deliveryMetadata->forPublishedRevision(
+            CommerceMapContentDefinition::KEY,
+            $revision,
+        );
+
+        if ($request->header('If-None-Match') === $delivery['etag']) {
+            return response('', 304)
+                ->header('ETag', $delivery['etag'])
+                ->header('Cache-Control', $delivery['cache_control']);
+        }
+
         return response()->json(['data' => [
-            'schema_version' => 1,
+            'schema_version' => CommerceMapContentDefinition::SCHEMA_VERSION,
             'mappings' => $snapshot['payload']['mappings'],
             'verification' => $snapshot['verification'],
-        ]]);
+        ]])->header('ETag', $delivery['etag'])
+            ->header('Cache-Control', $delivery['cache_control']);
     }
 
     public function resolve(Request $request, string $variant): JsonResponse

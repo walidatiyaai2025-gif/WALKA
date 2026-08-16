@@ -7,6 +7,10 @@ import 'design_system/walka_theme.dart';
 import 'features/catalog/catalog_state.dart';
 import 'features/catalog/data/walka_catalog_cache.dart';
 import 'features/catalog/data/walka_catalog_repository.dart';
+import 'features/commerce/amazon_purchase.dart';
+import 'features/commerce/walka_commerce_api_client.dart';
+import 'features/commerce/walka_commerce_cache.dart';
+import 'features/commerce/walka_commerce_repository.dart';
 import 'features/content/content_state.dart';
 import 'features/content/data/walka_category_presentation_cache.dart';
 import 'features/content/data/walka_category_presentation_repository.dart';
@@ -49,6 +53,14 @@ Future<void> main() async {
   final WalkaApiClient? apiClient = apiSettings.isConfigured
       ? WalkaApiClient(settings: apiSettings)
       : null;
+  final WalkaCommerceApiClient? commerceApiClient = apiSettings.isConfigured
+      ? WalkaCommerceApiClient(settings: apiSettings)
+      : null;
+  final WalkaCommerceRepository commerceRepository = WalkaCommerceRepository(
+    cache: SharedPreferencesWalkaCommerceCache(),
+    remoteLoader: commerceApiClient?.fetchCommerceMap,
+  );
+
   final WalkaCatalogController catalogController = WalkaCatalogController(
     repository: WalkaCatalogRepository(
       cache: SharedPreferencesWalkaCatalogCache(),
@@ -125,6 +137,11 @@ Future<void> main() async {
   unawaited(catalogController.load());
   unawaited(contentController.load());
   unawaited(remoteMediaController.load());
+  unawaited(
+    commerceRepository.load().then((snapshot) {
+      WalkaAmazonPurchaseRegistry.replaceCommerceSnapshot(snapshot);
+    }),
+  );
 }
 
 class WalkaApp extends StatelessWidget {

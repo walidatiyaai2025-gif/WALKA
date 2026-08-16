@@ -26,6 +26,8 @@ final class CmsProductionSmokeService
         'pdp.related_products' => '/api/v1/content/related-products',
     ];
 
+    private const COMMERCE_PATH = '/api/v1/commerce/amazon';
+
     public function __construct(
         private readonly ContentHealthService $health,
         private readonly CmsMetadataBackupService $backups,
@@ -113,6 +115,20 @@ final class CmsProductionSmokeService
                 $validated['valid'] === true,
                 'sha256='.$validated['sha256'],
             );
+
+            $verification = app(CommerceMapService::class)->verification(['mappings' => []], 1);
+            $verificationOk = ($verification['algorithm'] ?? null) === 'sha256'
+                && ($verification['schema_version'] ?? null) === 1
+                && ($verification['published_revision'] ?? null) === 1
+                && ($verification['active_mapping_count'] ?? null) === 0
+                && is_string($verification['digest'] ?? null)
+                && preg_match('/^[a-f0-9]{64}$/', $verification['digest']) === 1;
+            $check(
+                'commerce.verification-contract',
+                'API',
+                $verificationOk,
+                'schema=1 algorithm=sha256 revision-bound digest',
+            );
         } catch (Throwable $error) {
             $check('backend.exception', 'Backend', false, $error->getMessage());
         }
@@ -122,6 +138,15 @@ final class CmsProductionSmokeService
                 ->first(fn ($route): bool => '/'.$route->uri() === $path && in_array('GET', $route->methods(), true));
             $check('api.route.'.$key, 'API', $route !== null, "GET {$path}");
         }
+
+        $commerceRoute = collect(Route::getRoutes()->getRoutes())
+            ->first(fn ($route): bool => '/'.$route->uri() === self::COMMERCE_PATH && in_array('GET', $route->methods(), true));
+        $check(
+            'api.route.commerce.map',
+            'API',
+            $commerceRoute !== null,
+            'GET '.self::COMMERCE_PATH,
+        );
     }
 
     private function runFlutterContractChecks(callable $check, bool $required): void
@@ -161,6 +186,56 @@ final class CmsProductionSmokeService
             'Flutter',
             str_contains($catalog, 'amazon_redirect'),
             'Bundled storefront preserves amazon_redirect purchase architecture.',
+        );
+
+        $commerceClientPath = base_path('../mobile/lib/features/commerce/walka_commerce_api_client.dart');
+        $commerceMapPath = base_path('../mobile/lib/features/commerce/walka_commerce_map.dart');
+        $purchasePath = base_path('../mobile/lib/features/commerce/amazon_purchase.dart');
+        $commerceSourcePresent = is_file($commerceClientPath)
+            && is_file($commerceMapPath)
+            && is_file($purchasePath);
+        $check(
+            'flutter.commerce.source-present',
+            'Flutter',
+            $commerceSourcePresent || ! $required,
+            $commerceSourcePresent
+                ? 'Commerce client, verified map parser and purchase guard source are present.'
+                : 'Commerce Flutter source is missing from this checkout.',
+        );
+        if (! $commerceSourcePresent) {
+            return;
+        }
+
+        $commerceClient = file_get_contents($commerceClientPath);
+        $commerceMap = file_get_contents($commerceMapPath);
+        $purchase = file_get_contents($purchasePath);
+        if (! is_string($commerceClient) || ! is_string($commerceMap) || ! is_string($purchase)) {
+            $check('flutter.commerce.source-readable', 'Flutter', false, 'Could not read commerce Flutter source files.');
+
+            return;
+        }
+
+        $check(
+            'flutter.commerce.endpoint',
+            'Flutter',
+            str_contains($commerceClient, self::COMMERCE_PATH),
+            'client_path='.self::COMMERCE_PATH,
+        );
+        $check(
+            'flutter.commerce.verification',
+            'Flutter',
+            str_contains($commerceMap, 'verificationDigest')
+                && str_contains($commerceMap, 'published_revision')
+                && str_contains($commerceMap, 'active_mapping_count'),
+            'Flutter parser consumes revision-bound verification metadata.',
+        );
+        $check(
+            'flutter.commerce.purchase-guard',
+            'Flutter',
+            str_contains($purchase, 'WalkaProtectedCommerceMaster')
+                && str_contains($purchase, 'replaceCommerceSnapshot')
+                && str_contains($purchase, 'fallbackUri'),
+            'Runtime purchase helper preserves protected Product Master fallback and validates dynamic destinations.',
         );
     }
 
@@ -204,6 +279,48 @@ final class CmsProductionSmokeService
                 }
             } catch (Throwable $error) {
                 $check('live.content.'.$key, 'API', false, $error->getMessage());
+            }
+        }
+
+        $commerceRow = collect($health['entries'])->firstWhere('key', 'commerce.map');
+        if (is_array($commerceRow) && $commerceRow['delivery'] !== null) {
+            try {
+                $response = Http::acceptJson()->timeout(8)->get($baseUrl.self::COMMERCE_PATH);
+                $etag = (string) $response->header('ETag');
+                $cache = (string) $response->header('Cache-Control');
+                $verification = $response->json('data.verification');
+                $expectedEtag = $commerceRow['delivery']['etag'];
+                $expectedCache = $commerceRow['delivery']['cache_control'];
+                $verificationOk = is_array($verification)
+                    && ($verification['algorithm'] ?? null) === 'sha256'
+                    && ($verification['published_revision'] ?? null) === $commerceRow['published_revision']
+                    && is_string($verification['digest'] ?? null)
+                    && preg_match('/^[a-f0-9]{64}$/', $verification['digest']) === 1;
+                $ok = $response->successful()
+                    && $etag === $expectedEtag
+                    && $cache === $expectedCache
+                    && $verificationOk;
+                $check(
+                    'live.commerce.map',
+                    'API',
+                    $ok,
+                    'GET '.self::COMMERCE_PATH." status={$response->status()} etag={$etag}",
+                );
+
+                if ($response->successful()) {
+                    $conditional = Http::acceptJson()
+                        ->withHeaders(['If-None-Match' => $expectedEtag])
+                        ->timeout(8)
+                        ->get($baseUrl.self::COMMERCE_PATH);
+                    $check(
+                        'live.cache.commerce.map',
+                        'API',
+                        $conditional->status() === 304,
+                        'conditional_status='.$conditional->status(),
+                    );
+                }
+            } catch (Throwable $error) {
+                $check('live.commerce.map', 'API', false, $error->getMessage());
             }
         }
     }

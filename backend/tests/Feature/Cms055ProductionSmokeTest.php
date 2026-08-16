@@ -27,7 +27,7 @@ final class Cms055ProductionSmokeTest extends TestCase
         $report = app(CmsProductionSmokeService::class)->run();
 
         $this->assertSame(0, $report['summary']['failed'], json_encode($report, JSON_PRETTY_PRINT));
-        $this->assertGreaterThan(20, $report['summary']['passed']);
+        $this->assertGreaterThan(24, $report['summary']['passed']);
 
         $layers = collect($report['checks'])->pluck('layer')->unique()->sort()->values()->all();
         $this->assertSame(['API', 'Admin', 'Backend', 'Flutter'], $layers);
@@ -35,8 +35,13 @@ final class Cms055ProductionSmokeTest extends TestCase
         $ids = collect($report['checks'])->pluck('id');
         $this->assertTrue($ids->contains('admin.route.admin.content.health'));
         $this->assertTrue($ids->contains('api.route.information'));
+        $this->assertTrue($ids->contains('api.route.commerce.map'));
+        $this->assertTrue($ids->contains('commerce.verification-contract'));
         $this->assertTrue($ids->contains('flutter.endpoint.app.config'));
         $this->assertTrue($ids->contains('flutter.purchase-mode'));
+        $this->assertTrue($ids->contains('flutter.commerce.endpoint'));
+        $this->assertTrue($ids->contains('flutter.commerce.verification'));
+        $this->assertTrue($ids->contains('flutter.commerce.purchase-guard'));
         $this->assertTrue($ids->contains('metadata.backup-self-validation'));
 
         $this->assertSame($before['products'], Product::query()->count());

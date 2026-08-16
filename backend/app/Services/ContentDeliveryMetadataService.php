@@ -21,6 +21,7 @@ final class ContentDeliveryMetadataService
         'app.config' => 'app-config',
         'pdp.layout' => 'pdp-layout',
         'pdp.related_products' => 'related-products',
+        'commerce.map' => 'commerce-map',
     ];
 
     /**
