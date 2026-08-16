@@ -10,9 +10,7 @@ class WalkaCatalogController extends ChangeNotifier {
   WalkaCatalogController({WalkaCatalogRepository? repository})
       : _repository = repository,
         _snapshot = walkaPresentationSnapshot(WalkaBundledCatalog.snapshot()),
-        _isLoading = repository != null {
-    WalkaAmazonPurchaseRegistry.replaceFromSnapshot(_snapshot);
-  }
+        _isLoading = repository != null;
 
   /// Side-effect-free base constructor for a presentation-only delegating
   /// controller. It intentionally does not touch the global Amazon registry.
@@ -31,8 +29,10 @@ class WalkaCatalogController extends ChangeNotifier {
   bool get canRefresh => _repository != null;
   bool get isOffline => _snapshot.source != WalkaCatalogSource.remote;
   bool get isUsingCache => _snapshot.source == WalkaCatalogSource.cache;
-  bool get isUsingBundledFallback =>
-      _snapshot.source == WalkaCatalogSource.bundled;
+  bool get isUnavailable => !_snapshot.isAvailable;
+
+  @Deprecated('Bundled catalog entities were removed; use isUnavailable.')
+  bool get isUsingBundledFallback => false;
 
   Future<void> load() async {
     final WalkaCatalogRepository? repository = _repository;
@@ -46,13 +46,19 @@ class WalkaCatalogController extends ChangeNotifier {
 
     _isLoading = true;
     notifyListeners();
-    final WalkaCatalogSnapshot next = walkaPresentationSnapshot(
-      await repository.load(),
-    );
-    _snapshot = next;
-    WalkaAmazonPurchaseRegistry.replaceFromSnapshot(next);
-    _isLoading = false;
-    notifyListeners();
+    try {
+      final WalkaCatalogSnapshot next = walkaPresentationSnapshot(
+        await repository.load(),
+      );
+      _snapshot = next;
+      WalkaAmazonPurchaseRegistry.replaceFromSnapshot(next);
+    } on WalkaCatalogUnavailableException {
+      // Keep a previously validated LKG snapshot if one is already active.
+      // Initial empty state remains unavailable instead of inventing products.
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
   }
 }
 
