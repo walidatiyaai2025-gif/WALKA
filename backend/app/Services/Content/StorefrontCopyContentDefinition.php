@@ -7,10 +7,14 @@ use Illuminate\Support\Facades\Validator;
 final class StorefrontCopyContentDefinition
 {
     public const KEY = 'storefront.copy';
+
     public const TYPE = 'storefront.copy';
+
     public const SCHEMA_VERSION = 1;
 
-    /** @return array<string, string> */
+    /**
+     * @return array<string, string>
+     */
     public static function defaultPayload(): array
     {
         return [
@@ -25,7 +29,9 @@ final class StorefrontCopyContentDefinition
         ];
     }
 
-    /** @return array<string, array<int, string>> */
+    /**
+     * @return array<string, array<int, string>>
+     */
     public static function rules(): array
     {
         return [
@@ -40,7 +46,10 @@ final class StorefrontCopyContentDefinition
         ];
     }
 
-    /** @param array<string, mixed> $payload @return array<string, string> */
+    /**
+     * @param  array<string, mixed>  $payload
+     * @return array<string, string>
+     */
     public static function validateAndNormalize(array $payload): array
     {
         $normalized = [];
@@ -52,7 +61,10 @@ final class StorefrontCopyContentDefinition
         return Validator::make($normalized, self::rules())->validate();
     }
 
-    /** @param array<string, mixed>|null $payload @return array<string, string> */
+    /**
+     * @param  array<string, mixed>|null  $payload
+     * @return array<string, string>
+     */
     public static function editableFields(?array $payload): array
     {
         $fields = self::defaultPayload();
@@ -62,6 +74,7 @@ final class StorefrontCopyContentDefinition
                 $fields[$key] = $value;
             }
         }
+
         return $fields;
     }
 }
