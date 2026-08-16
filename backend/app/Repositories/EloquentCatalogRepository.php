@@ -14,19 +14,34 @@ final class EloquentCatalogRepository implements CatalogRepository
     public function all(): array
     {
         $products = Product::query()
-            ->with('variants')
-            ->orderBy('sort_order')
-            ->get();
+            ->where('is_visible', true)
+            ->whereHas('categoryEntity', fn ($query) => $query->where('is_visible', true))
+            ->whereHas('variants', fn ($query) => $query->where('is_visible', true))
+            ->with([
+                'categoryEntity',
+                'variants' => fn ($query) => $query
+                    ->where('is_visible', true)
+                    ->orderBy('sort_order')
+                    ->orderBy('id'),
+            ])
+            ->get()
+            ->sortBy(fn (Product $product): string => sprintf(
+                '%05d|%05d|%s',
+                $product->categoryEntity?->sort_order ?? 65535,
+                $product->sort_order,
+                $product->id,
+            ))
+            ->values();
 
         if ($products->isEmpty()) {
-            throw new CatalogUnavailableException('WALKA catalog is not seeded.');
+            throw new CatalogUnavailableException('No visible WALKA catalog is available.');
         }
 
         return $products->map(
             static fn (Product $product): ProductData => new ProductData(
                 id: $product->id,
                 name: $product->name,
-                category: $product->category,
+                category: $product->category_id ?? $product->category,
                 features: $product->features ?? [],
                 facts: $product->facts ?? [],
                 variants: $product->variants->map(
@@ -35,6 +50,7 @@ final class EloquentCatalogRepository implements CatalogRepository
                         color: $variant->color,
                         asin: $variant->asin,
                         pantone: $variant->pantone,
+                        swatchHex: $variant->swatch_hex,
                     ),
                 )->values()->all(),
             ),
