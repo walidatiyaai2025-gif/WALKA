@@ -5,7 +5,6 @@ namespace Tests\Feature;
 use App\Models\CatalogCategory;
 use App\Models\ContentEntry;
 use App\Models\Product;
-use App\Models\ProductVariant;
 use Database\Seeders\WalkaCatalogSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
