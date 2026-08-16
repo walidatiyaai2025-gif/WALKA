@@ -7,7 +7,6 @@ use App\Http\Controllers\Controller;
 use App\Models\CatalogCategory;
 use App\Models\ContentEntry;
 use App\Models\Product;
-use App\Models\ProductVariant;
 use App\Services\Content\SearchPresentationCatalogValidator;
 use App\Services\Content\SearchPresentationContentDefinition;
 use App\Services\ContentRevisionService;
@@ -19,10 +18,17 @@ use Illuminate\View\View;
 
 final class AdminSearchPresentationController extends Controller
 {
+    private readonly ContentRevisionService $content;
+
+    private readonly SearchPresentationCatalogValidator $catalogValidator;
+
     public function __construct(
-        private readonly ContentRevisionService $content,
-        private readonly SearchPresentationCatalogValidator $catalogValidator,
-    ) {}
+        ContentRevisionService $content,
+        SearchPresentationCatalogValidator $catalogValidator,
+    ) {
+        $this->content = $content;
+        $this->catalogValidator = $catalogValidator;
+    }
 
     public function edit(Request $request): View
     {
