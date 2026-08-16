@@ -101,7 +101,11 @@ final class AdminDashboardTest extends TestCase
         ])->patch(route('admin.catalog.products.update', ['product' => $product->id]), [
             'revision' => $product->revision,
             'name' => 'WALKA Premium Expandable Drawer Organizer',
+            'category_id' => $product->category_id ?? $product->category,
             'features_text' => "8 compartments\nExpandable width\nNon-slip base",
+            'facts_json' => json_encode($product->facts ?? [], JSON_THROW_ON_ERROR),
+            'sort_order' => $product->sort_order,
+            'is_visible' => '1',
         ])->assertRedirect(route('admin.catalog'));
 
         $product->refresh();
@@ -112,27 +116,43 @@ final class AdminDashboardTest extends TestCase
 
         $this->getJson('/api/v1/catalog')
             ->assertOk()
-            ->assertJsonPath('data.0.name', 'WALKA Premium Expandable Drawer Organizer')
+            ->assertJsonFragment(['name' => 'WALKA Premium Expandable Drawer Organizer'])
             ->assertJsonMissingPath('data.0.revision');
     }
 
-    public function test_dashboard_variant_edit_preserves_locked_commerce_identity(): void
+    public function test_dashboard_variant_fields_are_dynamic_and_public_api_reflects_them(): void
     {
         $variant = ProductVariant::query()->findOrFail('lunch-box:blue');
-        $asin = $variant->asin;
-        $pantone = $variant->pantone;
 
         $this->withSession(['walka_admin_dashboard_authenticated' => true])
             ->patch(route('admin.catalog.variants.update', ['variant' => $variant->id]), [
                 'revision' => $variant->revision,
-                'color' => 'WALKA Blue',
+                'color' => 'Ocean Blue',
+                'swatch_hex' => '#123ABC',
+                'pantone' => 'PANTONE TEST U',
+                'asin' => 'B012345679',
+                'sort_order' => 9,
+                'is_visible' => '1',
             ])->assertRedirect(route('admin.catalog'));
 
         $variant->refresh();
-        $this->assertSame('WALKA Blue', $variant->color);
-        $this->assertSame($asin, $variant->asin);
-        $this->assertSame($pantone, $variant->pantone);
+        $this->assertSame('Ocean Blue', $variant->color);
+        $this->assertSame('#123ABC', $variant->swatch_hex);
+        $this->assertSame('PANTONE TEST U', $variant->pantone);
+        $this->assertSame('B012345679', $variant->asin);
+        $this->assertSame(9, $variant->sort_order);
         $this->assertSame(2, $variant->revision);
+
+        $this->getJson('/api/v1/catalog')
+            ->assertOk()
+            ->assertJsonFragment([
+                'id' => 'lunch-box:blue',
+                'color' => 'Ocean Blue',
+                'swatch_hex' => '#123ABC',
+                'pantone' => 'PANTONE TEST U',
+                'asin' => 'B012345679',
+                'purchase_url' => 'https://www.amazon.com/dp/B012345679',
+            ]);
     }
 
     public function test_dashboard_can_sign_out(): void
