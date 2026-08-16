@@ -4,33 +4,57 @@ class WalkaStorefrontCopyContent {
   const WalkaStorefrontCopyContent({
     required this.categoriesHeading,
     required this.categoriesBody,
+    required this.favoritesHeading,
+    required this.favoritesBody,
+    required this.favoritesEmptyTitle,
+    required this.favoritesEmptyBody,
+    required this.favoritesExploreLabel,
+    required this.favoritesRemoveLabel,
     required this.pdpUnavailable,
     required this.pdpColorsLabel,
     required this.pdpFeaturesLabel,
     required this.pdpDetailsLabel,
     required this.pdpBuyLabel,
     required this.pdpAsinLabel,
+    required this.pdpFavoriteAddLabel,
+    required this.pdpFavoriteRemoveLabel,
   });
 
   static const WalkaStorefrontCopyContent bundled = WalkaStorefrontCopyContent(
     categoriesHeading: '',
     categoriesBody: '',
+    favoritesHeading: '',
+    favoritesBody: '',
+    favoritesEmptyTitle: '',
+    favoritesEmptyBody: '',
+    favoritesExploreLabel: '',
+    favoritesRemoveLabel: '',
     pdpUnavailable: '',
     pdpColorsLabel: '',
     pdpFeaturesLabel: '',
     pdpDetailsLabel: '',
     pdpBuyLabel: '',
     pdpAsinLabel: '',
+    pdpFavoriteAddLabel: '',
+    pdpFavoriteRemoveLabel: '',
   );
 
   final String categoriesHeading;
   final String categoriesBody;
+  final String favoritesHeading;
+  final String favoritesBody;
+  final String favoritesEmptyTitle;
+  final String favoritesEmptyBody;
+  final String favoritesExploreLabel;
+  final String favoritesRemoveLabel;
   final String pdpUnavailable;
   final String pdpColorsLabel;
   final String pdpFeaturesLabel;
   final String pdpDetailsLabel;
   final String pdpBuyLabel;
   final String pdpAsinLabel;
+  final String pdpFavoriteAddLabel;
+  final String pdpFavoriteRemoveLabel;
 
   factory WalkaStorefrontCopyContent.fromJson(Map<String, dynamic> json) {
     String requiredString(String key, int maxLength) {
@@ -46,24 +70,40 @@ class WalkaStorefrontCopyContent {
     return WalkaStorefrontCopyContent(
       categoriesHeading: requiredString('categories_heading', 80),
       categoriesBody: requiredString('categories_body', 240),
+      favoritesHeading: requiredString('favorites_heading', 80),
+      favoritesBody: requiredString('favorites_body', 240),
+      favoritesEmptyTitle: requiredString('favorites_empty_title', 100),
+      favoritesEmptyBody: requiredString('favorites_empty_body', 240),
+      favoritesExploreLabel: requiredString('favorites_explore_label', 80),
+      favoritesRemoveLabel: requiredString('favorites_remove_label', 60),
       pdpUnavailable: requiredString('pdp_unavailable', 160),
       pdpColorsLabel: requiredString('pdp_colors_label', 60),
       pdpFeaturesLabel: requiredString('pdp_features_label', 60),
       pdpDetailsLabel: requiredString('pdp_details_label', 60),
       pdpBuyLabel: requiredString('pdp_buy_label', 80),
       pdpAsinLabel: requiredString('pdp_asin_label', 40),
+      pdpFavoriteAddLabel: requiredString('pdp_favorite_add_label', 80),
+      pdpFavoriteRemoveLabel: requiredString('pdp_favorite_remove_label', 80),
     );
   }
 
   Map<String, dynamic> toJson() => <String, dynamic>{
         'categories_heading': categoriesHeading,
         'categories_body': categoriesBody,
+        'favorites_heading': favoritesHeading,
+        'favorites_body': favoritesBody,
+        'favorites_empty_title': favoritesEmptyTitle,
+        'favorites_empty_body': favoritesEmptyBody,
+        'favorites_explore_label': favoritesExploreLabel,
+        'favorites_remove_label': favoritesRemoveLabel,
         'pdp_unavailable': pdpUnavailable,
         'pdp_colors_label': pdpColorsLabel,
         'pdp_features_label': pdpFeaturesLabel,
         'pdp_details_label': pdpDetailsLabel,
         'pdp_buy_label': pdpBuyLabel,
         'pdp_asin_label': pdpAsinLabel,
+        'pdp_favorite_add_label': pdpFavoriteAddLabel,
+        'pdp_favorite_remove_label': pdpFavoriteRemoveLabel,
       };
 }
 
