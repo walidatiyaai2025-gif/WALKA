@@ -1,0 +1,117 @@
+name: CI ONLY · Reference UUID Classification
+
+on:
+  push:
+    branches:
+      - agent/ci-ref-uuid-classify
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  package-reference-evidence:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact branch
+        uses: actions/checkout@v5
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+
+      - name: Install image tooling
+        run: python -m pip install --disable-pip-version-check pillow
+
+      - name: Build read-only reference review package
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from PIL import Image, ImageDraw, ImageFont
+          import json, math, shutil
+
+          image_dir = Path('Images')
+          target_name = 'f96465c7-d756-4409-9963-d96bb6b5893e.png'
+          target = image_dir / target_name
+          assert target.is_file(), target
+
+          files = sorted(
+              p for p in image_dir.iterdir()
+              if p.is_file() and p.suffix.lower() in {'.png', '.jpg', '.jpeg', '.webp'}
+          )
+          assert len(files) == 18, f'Expected 18 protected references, found {len(files)}'
+
+          out = Path('/tmp/ref-review')
+          out.mkdir(parents=True, exist_ok=True)
+          shutil.copy2(target, out / 'uuid-reference-original.png')
+
+          def dhash(path: Path) -> int:
+              with Image.open(path) as im:
+                  gray = im.convert('L').resize((9, 8), Image.Resampling.LANCZOS)
+                  px = list(gray.getdata())
+              value = 0
+              bit = 0
+              for y in range(8):
+                  row = y * 9
+                  for x in range(8):
+                      if px[row + x] > px[row + x + 1]:
+                          value |= 1 << bit
+                      bit += 1
+              return value
+
+          target_hash = dhash(target)
+          similarity = []
+          for p in files:
+              if p == target:
+                  continue
+              distance = (target_hash ^ dhash(p)).bit_count()
+              with Image.open(p) as im:
+                  size = list(im.size)
+              similarity.append({'file': p.name, 'dhashDistance': distance, 'size': size})
+          similarity.sort(key=lambda item: (item['dhashDistance'], item['file']))
+
+          with Image.open(target) as im:
+              target_size = list(im.size)
+          (out / 'similarity.json').write_text(
+              json.dumps({
+                  'target': target_name,
+                  'targetSize': target_size,
+                  'referenceCount': len(files),
+                  'nearestByDHash': similarity,
+              }, indent=2),
+              encoding='utf-8',
+          )
+
+          cell_w, cell_h, label_h = 320, 440, 64
+          cols = 4
+          rows = math.ceil(len(files) / cols)
+          sheet = Image.new('RGB', (cols * cell_w, rows * (cell_h + label_h)), 'white')
+          draw = ImageDraw.Draw(sheet)
+          font = ImageFont.load_default()
+
+          for index, p in enumerate(files):
+              col, row = index % cols, index // cols
+              x, y = col * cell_w, row * (cell_h + label_h)
+              with Image.open(p) as im:
+                  preview = im.convert('RGB')
+                  preview.thumbnail((cell_w - 20, cell_h - 20), Image.Resampling.LANCZOS)
+              px = x + (cell_w - preview.width) // 2
+              py = y + (cell_h - preview.height) // 2
+              sheet.paste(preview, (px, py))
+              border = 'red' if p.name == target_name else 'black'
+              draw.rectangle((x + 2, y + 2, x + cell_w - 3, y + cell_h + label_h - 3), outline=border, width=5 if p.name == target_name else 1)
+              label = ('TARGET\n' if p.name == target_name else '') + p.name
+              draw.multiline_text((x + 8, y + cell_h + 6), label, fill='black', font=font, spacing=2)
+
+          sheet.save(out / 'protected-reference-contact-sheet.jpg', quality=92)
+          print(json.dumps({'target': target_name, 'count': len(files), 'nearest': similarity[:5]}, indent=2))
+          PY
+
+      - name: Upload review-only evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: ref-uuid-classification-${{ github.sha }}
+          path: /tmp/ref-review/
+          if-no-files-found: error
+          retention-days: 7
