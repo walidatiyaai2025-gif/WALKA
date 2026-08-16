@@ -4,8 +4,8 @@ namespace App\Services;
 
 use App\Enums\MediaAssetLifecycle;
 use App\Enums\MediaAssetPurpose;
+use App\Models\CatalogCategory;
 use App\Models\MediaAsset;
-use App\Models\Product;
 use App\Models\SurfaceMediaItem;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Support\Facades\DB;
@@ -14,11 +14,15 @@ use Illuminate\Validation\ValidationException;
 final class SurfaceMediaService
 {
     /**
+     * Home/editorial slot identities are compiled presentation structure.
+     * Category slot identities are derived from Dashboard catalog entities so a
+     * new category never requires an app/backend code allowlist update.
+     *
      * @return array<string, array{label:string,purpose:MediaAssetPurpose,max_items:int,category_id:string|null}>
      */
     public static function slotDefinitions(): array
     {
-        return [
+        $definitions = [
             'home.hero' => [
                 'label' => 'Home Hero',
                 'purpose' => MediaAssetPurpose::Home,
@@ -31,19 +35,22 @@ final class SurfaceMediaService
                 'max_items' => 1,
                 'category_id' => null,
             ],
-            'category:drawer-organization' => [
-                'label' => 'Category · Drawer Organization',
-                'purpose' => MediaAssetPurpose::Category,
-                'max_items' => 1,
-                'category_id' => 'drawer-organization',
-            ],
-            'category:lunch' => [
-                'label' => 'Category · Lunch',
-                'purpose' => MediaAssetPurpose::Category,
-                'max_items' => 1,
-                'category_id' => 'lunch',
-            ],
         ];
+
+        CatalogCategory::query()
+            ->orderBy('sort_order')
+            ->orderBy('id')
+            ->get(['id', 'name'])
+            ->each(function (CatalogCategory $category) use (&$definitions): void {
+                $definitions['category:'.$category->id] = [
+                    'label' => 'Category · '.$category->name,
+                    'purpose' => MediaAssetPurpose::Category,
+                    'max_items' => 1,
+                    'category_id' => $category->id,
+                ];
+            });
+
+        return $definitions;
     }
 
     /**
@@ -164,7 +171,7 @@ final class SurfaceMediaService
         $definitions = self::slotDefinitions();
         if (! array_key_exists($slotKey, $definitions)) {
             throw ValidationException::withMessages([
-                'slot_key' => ['The requested media slot is not part of the compiled WALKA surface allowlist.'],
+                'slot_key' => ['The requested media slot is not part of the current WALKA presentation/catalog contract.'],
             ]);
         }
 
@@ -181,9 +188,9 @@ final class SurfaceMediaService
             return;
         }
 
-        if (! Product::query()->where('category', $categoryId)->exists()) {
+        if (! CatalogCategory::query()->whereKey($categoryId)->exists()) {
             throw ValidationException::withMessages([
-                'slot_key' => ["Category media slot references unknown protected category $categoryId."],
+                'slot_key' => ["Category media slot references unknown Dashboard category $categoryId."],
             ]);
         }
     }
@@ -299,11 +306,13 @@ final class SurfaceMediaService
 
             $result[] = [
                 'media_id' => $asset->id,
+                'position' => (int) $item->position,
                 'semantic_label' => $asset->semantic_label,
                 'canonical' => [
                     'mime' => $derivative->mime,
-                    'width' => $derivative->width,
-                    'height' => $derivative->height,
+                    'bytes' => (int) $derivative->bytes,
+                    'width' => (int) $derivative->width,
+                    'height' => (int) $derivative->height,
                     'sha256' => $derivative->sha256,
                 ],
             ];
