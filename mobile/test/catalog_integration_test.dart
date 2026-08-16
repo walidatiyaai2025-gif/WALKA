@@ -44,7 +44,7 @@ void main() {
     expect(cached, isNull);
   });
 
-  test('catalog controller registers validated selected-variant Amazon URLs', () {
+  test('catalog controller rejects noncanonical remote purchase URLs', () {
     final WalkaCatalogSnapshot bundled = WalkaBundledCatalog.snapshot();
     final List<WalkaCatalogProduct> products = bundled.products.map(
       (WalkaCatalogProduct product) {
@@ -83,11 +83,11 @@ void main() {
 
     expect(
       amazonDrawerOrganizerUri(gray: false).toString(),
-      'https://www.amazon.com/dp/REMOTE-WHITE',
+      'https://www.amazon.com/dp/$walkaDrawerOrganizerWhiteAsin',
     );
     expect(
       amazonDrawerOrganizerUri(gray: true).toString(),
-      'https://www.amazon.com/dp/B0FQN4L2ZD',
+      'https://www.amazon.com/dp/$walkaDrawerOrganizerGrayAsin',
     );
   });
 
