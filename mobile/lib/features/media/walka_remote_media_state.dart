@@ -22,7 +22,9 @@ class WalkaRemoteMediaController extends ChangeNotifier {
   WalkaRemoteMediaSnapshot? get snapshot => _snapshot;
   bool get isLoading => _isLoading;
   bool get hasRemoteMetadata => _snapshot != null &&
-      _snapshot!.source != WalkaRemoteMediaSource.bundled;
+      _snapshot!.source != WalkaRemoteMediaSource.unavailable;
+  bool get isUnavailable =>
+      _snapshot == null || _snapshot!.source == WalkaRemoteMediaSource.unavailable;
 
   List<WalkaRemoteMediaItem> galleryForVariant(String variantId) =>
       _snapshot?.galleryForVariant(variantId) ?? const <WalkaRemoteMediaItem>[];
