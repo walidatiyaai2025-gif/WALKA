@@ -1,0 +1,110 @@
+name: Visual Release · Owner Gate
+
+on:
+  push:
+    branches:
+      - main
+      - 'agent/visual-release-*'
+    paths:
+      - 'docs/ui/PINK_SOURCE_EXTRACTION_CONTRACT.json'
+      - 'docs/ui/PINK_OWNER_VISUAL_ACCEPTANCE.json'
+      - 'docs/ui/GRAY_OWNER_PRESENTATION_DECISION.json'
+      - 'docs/ui/VISUAL_RELEASE_OWNER_ACCEPTANCE.json'
+      - 'docs/ui/PRODUCTION_SOURCE_ADMISSION.json'
+      - 'docs/ui/PRODUCTION_ASSET_PROVENANCE.json'
+      - 'mobile/assets/**'
+      - 'mobile/lib/**'
+      - 'mobile/pubspec.yaml'
+      - 'mobile/tool/verify_production_assets.sh'
+      - 'mobile/tool/verify_production_assets.dart'
+      - 'mobile/tool/verify_visual_release_gate.dart'
+      - 'mobile/tool/verify_gray_owner_presentation_gate.dart'
+      - 'mobile/tool/src/visual_release_gate.dart'
+      - 'mobile/tool/src/gray_owner_presentation_gate.dart'
+      - 'mobile/tool/src/pink_owner_review_gate.dart'
+      - 'mobile/test/visual_release_owner_gate_test.dart'
+      - '.github/workflows/visual-release-owner-gate.yml'
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-owner-release-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Flutter stable
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Get packages
+        working-directory: mobile
+        run: flutter pub get
+
+      - name: Verify combined visual release contract
+        id: visual_release
+        working-directory: mobile
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash tool/verify_production_assets.sh \
+            --report \
+            --root . \
+            --manifest ../docs/ui/PRODUCTION_SOURCE_ADMISSION.json \
+            --json production-asset-readiness.json
+
+          python3 - <<'PY'
+          import json
+          report = json.load(open('visual-release-gate.json'))
+          if not report['contractValid']:
+              for item in report.get('violations', []):
+                  print(f"CONTRACT BLOCKER {item['code']}: {item['message']}")
+              for section in ('pinkOwnerGate', 'grayOwnerGate'):
+                  for item in report.get(section, {}).get('violations', []):
+                      print(f"{section} BLOCKER {item['code']}: {item['message']}")
+              raise SystemExit(1)
+          print(
+              'Visual release contract is internally valid: '
+              f"state={report['state']} stableReady={report['stableReleaseReady']}"
+          )
+          PY
+
+          state="$(python3 -c "import json; print(json.load(open('visual-release-gate.json'))['state'])")"
+          stable_ready="$(python3 -c "import json; print(str(json.load(open('visual-release-gate.json'))['stableReleaseReady']).lower())")"
+          release_blockers="$(python3 -c "import json; print(json.load(open('visual-release-gate.json'))['releaseBlockerCount'])")"
+          report_sha="$(sha256sum visual-release-gate.json | awk '{print $1}')"
+          {
+            echo '### WALKA owner visual release gate'
+            echo
+            echo "- State: **$state**"
+            echo "- Stable publication authorized: **$stable_ready**"
+            echo "- Release blockers: **$release_blockers**"
+            echo "- Report SHA-256: \`$report_sha\`"
+            echo '- Engineering APK builds may remain available while owner decisions are pending; stable publication remains fail-closed.'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Run owner release gate regressions
+        working-directory: mobile
+        run: flutter test test/visual_release_owner_gate_test.dart
+
+      - name: Upload visual release gate evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-release-owner-gate-${{ github.sha }}
+          path: |
+            mobile/runtime-media-admission.json
+            mobile/production-asset-readiness.json
+            mobile/visual-release-gate.json
+          if-no-files-found: error
+          retention-days: 14
