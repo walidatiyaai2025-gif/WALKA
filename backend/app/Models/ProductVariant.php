@@ -16,6 +16,7 @@ final class ProductVariant extends Model
         'id',
         'product_id',
         'color',
+        'swatch_hex',
         'pantone',
         'asin',
         'sort_order',
