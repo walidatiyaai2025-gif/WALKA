@@ -24,9 +24,9 @@ final class UpdateCatalogProductRequest extends FormRequest
             'sort_order' => ['sometimes', 'integer', 'min:0', 'max:65535'],
             'is_visible' => ['sometimes', 'boolean'],
 
-            'id' => ['prohibited'],
-            'category' => ['prohibited'],
-            'variants' => ['prohibited'],
+            'id' => ['missing'],
+            'category' => ['missing'],
+            'variants' => ['missing'],
         ];
     }
 }
