@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "variantId": "drawer-organizer:gray",
+  "assetIssue": 201,
+  "visualBlockerIssue": 230,
+  "currentOwnerSource": {
+    "filename": "IMG-20250919-WA0035.jpg",
+    "presentation": "COLLAPSED",
+    "sourceState": "BLOCKED_FOR_EXPANDED_PARITY"
+  },
+  "allowedDecisions": [
+    "PENDING",
+    "APPROVED_EXPANDED_SOURCE",
+    "APPROVED_COLLAPSED_PRESENTATION"
+  ],
+  "decision": "PENDING",
+  "ownerApproved": false,
+  "approvedSourceFilename": null,
+  "approvedSourceSha256": null,
+  "decisionActor": null,
+  "decidedAt": null,
+  "admissionAuthorized": false,
+  "decisionRule": "Gray may not become an admitted canonical production asset until the owner either approves a faithful real expanded Gray source or explicitly approves a collapsed Gray canonical presentation. Generic recoloring of White or reconstruction of hidden expanded geometry is never authorized.",
+  "stablePublicationAuthorized": false
+}
