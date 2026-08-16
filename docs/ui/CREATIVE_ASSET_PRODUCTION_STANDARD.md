@@ -4,11 +4,14 @@ Status: production standard for ASSET-011..020
 Parent: #209 / #197 / #210  
 Product truth: `docs/PRODUCT_MASTER.md`  
 Visual references: protected `Images/` directory  
-Flutter media contract: `docs/ui/PRODUCT_MEDIA_MANIFEST.md`
+Flutter media contract: `docs/ui/PRODUCT_MEDIA_MANIFEST.md`  
+Normative ASSET-002 export handoff: `docs/ui/CREATIVE_ASSET_EXPORT_SPEC.md`
 
 ## Purpose
 
 This document defines the repeatable production workflow for every WALKA bitmap/vector asset created for the Flutter application. It separates protected UI references, editable creative masters and optimized Flutter exports. Product geometry, facts and approved colors must never be inferred from a mockup when they conflict with `docs/PRODUCT_MASTER.md`.
+
+For primary runtime product cutouts, the executable production-asset validator and `CREATIVE_ASSET_EXPORT_SPEC.md` are authoritative for exact canvas/PNG admission values. Larger dimensions described as source-quality guidance apply to editable source/master artwork, not the canonical Flutter export.
 
 ---
 
@@ -174,14 +177,16 @@ Canonical reusable cutouts must be visually stable when rendered through Flutter
 
 ### Master framing rules
 - Product optical center should sit near canvas center; compensate for asymmetric accessories visually rather than by changing product scale per screen.
-- Default transparent safe padding: **8–12% of canvas width/height** around the visible product where possible.
+- Authoring target transparent padding is **8–12% of canvas width/height** where the real source permits it; the executable runtime minimum is floor(5%) on every side.
 - No product edge may touch the canvas boundary.
 - Preserve complete geometry; do not crop clips, expanded drawer edges, utensils, sauce cup or bag when those elements are part of the selected composition.
 - Sibling variants must use the same export canvas dimensions and comparable visible-product occupancy.
 
-### Primary production target
-- Default long-side target for reusable primary cutout: approximately **1600 px** unless source resolution or measured Flutter usage justifies a smaller size.
-- The application resolver currently bounds decode/cache width; do not bundle unnecessarily huge marketing masters.
+### Source/master vs canonical runtime target
+- Editable source/master artwork should retain native resolution and may use a long side around **1600 px or larger** when supported by the approved source. This is source-quality guidance, not a Flutter runtime dimension.
+- The current canonical primary Flutter export is **exactly 1024×1024 px**, 8-bit RGBA, as enforced by `mobile/tool/src/pav_models.dart` and `png_asset_inspector.dart`.
+- On the 1024 canvas, floor(5%) means a minimum transparent safe margin of **51 px on every side**.
+- The application resolver bounds decode/cache width; never bundle a large marketing/source master in place of the optimized canonical runtime export.
 
 ### Surface-specific derivations
 Generate separate derived assets only when a different crop/composition is genuinely required. Do not duplicate the same bitmap under multiple filenames merely for screen ownership.
@@ -235,15 +240,15 @@ Text belongs in Flutter whenever possible; do not create bitmap text merely to s
 
 ### Initial size budgets
 These are review thresholds, not a license to destroy quality:
-- Primary transparent product cutout: target **≤ 900 KB** each; investigate anything > 1.2 MB.
+- Primary transparent product cutout: target **≤ 900 KB** each; executable hard ceiling **1,258,291 bytes (1.2 MiB)**.
 - Search/category thumbnail derivative, if a distinct derivative is justified: target **≤ 250 KB**.
 - Editorial mobile composite: target **≤ 600 KB**.
 - Editorial desktop/wide composite: target **≤ 900 KB**.
 - Small empty/decorative illustration: target **≤ 180 KB**.
 
 ### Optimization order
-1. Remove unused transparent canvas.
-2. Ensure dimensions match real rendering needs.
+1. Remove unused transparent canvas while retaining the enforceable safe margin.
+2. Ensure dimensions match real rendering needs and the canonical runtime contract.
 3. Lossless PNG optimization for alpha cutouts.
 4. Evaluate WebP for photographic composites.
 5. Compare edge fidelity, product color and material texture before accepting smaller output.
@@ -279,10 +284,12 @@ A production asset is eligible for stable integration only when all applicable i
 - [ ] Approved product color/material appearance preserved.
 - [ ] Editable master is non-destructive.
 - [ ] Alpha edges pass white/ivory/navy inspection.
+- [ ] Runtime PNG is 1024×1024, 8-bit RGBA with sRGB/iCCP metadata.
+- [ ] Runtime perimeter is fully transparent and safe margin is at least 51 px per side.
+- [ ] Runtime primary PNG is at or below the 1.2 MiB hard ceiling.
 - [ ] Canvas/framing matches sibling variants.
 - [ ] No baked unsupported UI text/claims/prices/ratings.
 - [ ] Correct canonical filename/path.
-- [ ] File-size budget checked.
 - [ ] Flutter `BoxFit.contain` presentation checked on relevant surfaces.
 - [ ] Reference-vs-app comparison recorded.
 - [ ] Analyze/tests/release APK remain Green after owner-visible integration.
