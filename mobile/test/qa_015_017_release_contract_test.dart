@@ -79,11 +79,13 @@ void main() {
   test('QA-017 candidate receipt separates implementation and validation commits', () {
     expect(
       workflow,
-      contains("IMPLEMENTATION_SHA: \${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}"),
+      contains(
+        r"IMPLEMENTATION_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}",
+      ),
     );
-    expect(workflow, contains('- Source commit: \\`${IMPLEMENTATION_SHA}\\`'));
-    expect(workflow, contains('- Validation commit: \\`${GITHUB_SHA}\\`'));
-    expect(workflow, contains('- pubspec.lock SHA-256: \\`${DEPENDENCY_LOCK_SHA}\\`'));
+    expect(workflow, contains(r'- Source commit: \`${IMPLEMENTATION_SHA}\`'));
+    expect(workflow, contains(r'- Validation commit: \`${GITHUB_SHA}\`'));
+    expect(workflow, contains(r'- pubspec.lock SHA-256: \`${DEPENDENCY_LOCK_SHA}\`'));
   });
 
   test('QA-017 checked-in verified APK receipt matches file size contract', () {
