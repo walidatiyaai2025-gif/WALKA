@@ -1,0 +1,134 @@
+name: Release Input · Reproducibility Contract
+
+on:
+  push:
+    branches:
+      - main
+      - 'agent/visual-release-release-input-*'
+    paths:
+      - 'mobile/pubspec.yaml'
+      - 'mobile/pubspec.lock'
+      - 'mobile/analysis_options.yaml'
+      - 'mobile/tool/apply_android_branding.sh'
+      - 'docs/ui/RELEASE_TOOLCHAIN_CONTRACT.json'
+      - 'docs/ui/VISUAL_RELEASE_OWNER_ACCEPTANCE.json'
+      - 'mobile/tool/verify_production_assets.sh'
+      - 'mobile/tool/src/visual_release_gate.dart'
+      - '.github/workflows/flutter-preview.yml'
+      - '.github/workflows/visual-release-owner-gate.yml'
+      - '.github/workflows/release-input-contract.yml'
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-release-inputs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup pinned Flutter 3.47.0
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: '3.47.0'
+          cache: true
+
+      - name: Verify toolchain contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          flutter_version="$(flutter --version)"
+          java_version="$(java -version 2>&1)"
+          grep -F 'Flutter 3.47.0' <<<"$flutter_version"
+          grep -F 'Dart 3.13.0' <<<"$flutter_version"
+          grep -E 'version "17\.|openjdk version "17\.' <<<"$java_version"
+          python3 - <<'PY'
+          import json
+          c = json.load(open('docs/ui/RELEASE_TOOLCHAIN_CONTRACT.json'))
+          assert c['schemaVersion'] == 1
+          assert c['flutter']['channel'] == 'stable'
+          assert c['flutter']['version'] == '3.47.0'
+          assert c['flutter']['frameworkRevision'] == '4cf24164269a5ebf0c16a028a00727d0e77bbb05'
+          assert c['flutter']['dartVersion'] == '3.13.0'
+          assert c['java']['distribution'] == 'temurin'
+          assert c['java']['majorVersion'] == 17
+          assert c['dependencyLock']['path'] == 'mobile/pubspec.lock'
+          assert c['dependencyLock']['required'] is True
+          assert c['dependencyLock']['enforceLockfile'] is True
+          PY
+
+      - name: Verify tracked dependency lock
+        id: lock
+        working-directory: mobile
+        shell: bash
+        run: |
+          set -euo pipefail
+          git -C .. ls-files --error-unmatch mobile/pubspec.lock >/dev/null
+          test -s pubspec.lock
+          before="$(sha256sum pubspec.lock | awk '{print $1}')"
+          flutter pub get --enforce-lockfile
+          after="$(sha256sum pubspec.lock | awk '{print $1}')"
+          test "$before" = "$after"
+          git -C .. diff --exit-code -- mobile/pubspec.lock
+          echo "lock_sha=$after" >> "$GITHUB_OUTPUT"
+
+      - name: Verify release input scope is complete
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          toolchain = json.load(open('docs/ui/RELEASE_TOOLCHAIN_CONTRACT.json'))
+          acceptance = json.load(open('docs/ui/VISUAL_RELEASE_OWNER_ACCEPTANCE.json'))
+          expected = [
+              'mobile/lib',
+              'mobile/assets',
+              'mobile/pubspec.yaml',
+              'mobile/pubspec.lock',
+              'mobile/tool/apply_android_branding.sh',
+              'docs/ui/RELEASE_TOOLCHAIN_CONTRACT.json',
+              '.github/workflows/flutter-preview.yml',
+          ]
+          assert toolchain['releaseInputDigestScope'] == expected
+          assert acceptance['releaseInputDigestScope'] == expected
+          PY
+
+      - name: Upload reproducibility diagnostics
+        uses: actions/upload-artifact@v4
+        with:
+          name: walka-release-inputs-${{ github.sha }}
+          path: |
+            mobile/pubspec.lock
+            mobile/analysis_options.yaml
+            docs/ui/RELEASE_TOOLCHAIN_CONTRACT.json
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Summary
+        shell: bash
+        run: |
+          {
+            echo '### WALKA release input reproducibility'
+            echo
+            echo '- Flutter: **3.47.0 (pinned)**'
+            echo '- Dart: **3.13.0**'
+            echo '- Java: **17**'
+            echo "- pubspec.lock SHA-256: \`${{ steps.lock.outputs.lock_sha }}\`"
+            echo '- Dependency resolution is enforced against the committed lockfile.'
+            echo '- Final owner acceptance is invalidated by release-input digest drift.'
+          } >> "$GITHUB_STEP_SUMMARY"

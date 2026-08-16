@@ -7,6 +7,7 @@ void main(List<String> args) {
   String productionReportPath = 'production-asset-readiness.json';
   String? jsonPath;
   String? visualInputDigest;
+  String? releaseInputDigest;
   bool report = false;
   bool enforce = false;
 
@@ -31,6 +32,12 @@ void main(List<String> args) {
           _usage('Missing value after --visual-input-digest');
         }
         visualInputDigest = args[++index];
+        break;
+      case '--release-input-digest':
+        if (index + 1 >= args.length) {
+          _usage('Missing value after --release-input-digest');
+        }
+        releaseInputDigest = args[++index];
         break;
       case '--report':
         report = true;
@@ -63,6 +70,7 @@ void main(List<String> args) {
     mobileRoot: mobileRoot,
     productionReport: productionReport,
     currentVisualInputDigest: visualInputDigest,
+    currentReleaseInputDigest: releaseInputDigest,
   ).audit();
 
   if (result.pinkReport.ownerAccepted &&
@@ -110,8 +118,8 @@ Never _usage(String message) {
   stderr.writeln(
     'Usage: dart run tool/verify_visual_release_gate.dart '
     '[--root <mobile-root>] [--production-report <path>] '
-    '[--visual-input-digest <sha256>] [--json <path>] '
-    '[--report] [--enforce]',
+    '[--visual-input-digest <sha256>] [--release-input-digest <sha256>] '
+    '[--json <path>] [--report] [--enforce]',
   );
   exit(64);
 }
@@ -119,12 +127,13 @@ Never _usage(String message) {
 void _help() {
   stdout.writeln(
     'Validate the combined WALKA visual-release owner gate.\n'
-    '--root <path>                 Mobile project root (default: .)\n'
-    '--production-report <path>    PAV JSON report path\n'
-    '--visual-input-digest <sha>   Deterministic digest for mobile/lib + assets + pubspec\n'
-    '--json <path>                 Write deterministic JSON report\n'
-    '--report                      Print human-readable summary\n'
-    '--enforce                     Exit 1 unless stable publication is fully authorized.\n'
+    '--root <path>                  Mobile project root (default: .)\n'
+    '--production-report <path>     PAV JSON report path\n'
+    '--visual-input-digest <sha>    Digest for mobile/lib + assets + pubspec\n'
+    '--release-input-digest <sha>   Digest for app + lock + branding + toolchain + release workflow\n'
+    '--json <path>                  Write deterministic JSON report\n'
+    '--report                       Print human-readable summary\n'
+    '--enforce                      Exit 1 unless stable publication is fully authorized.\n'
     'Report mode treats truthful PENDING/BLOCKED owner decisions as valid contracts.',
   );
 }

@@ -30,8 +30,12 @@ class VisualReleaseGateReport {
     required this.ownerAccepted,
     required this.currentVisualInputDigest,
     required this.acceptedVisualInputDigest,
+    required this.currentReleaseInputDigest,
+    required this.acceptedReleaseInputDigest,
     required this.acceptedSourceCommit,
     required this.acceptedApkSha256,
+    required this.acceptedWorkflowRunId,
+    required this.acceptedArtifactId,
     required this.stablePublicationAuthorized,
   });
 
@@ -47,8 +51,12 @@ class VisualReleaseGateReport {
   final bool ownerAccepted;
   final String? currentVisualInputDigest;
   final String? acceptedVisualInputDigest;
+  final String? currentReleaseInputDigest;
+  final String? acceptedReleaseInputDigest;
   final String? acceptedSourceCommit;
   final String? acceptedApkSha256;
+  final int? acceptedWorkflowRunId;
+  final int? acceptedArtifactId;
   final bool stablePublicationAuthorized;
 
   int get contractBlockerCount =>
@@ -69,7 +77,7 @@ class VisualReleaseGateReport {
   }
 
   Map<String, Object?> toJson() => <String, Object?>{
-        'schemaVersion': 1,
+        'schemaVersion': 2,
         'state': state,
         'contractValid': contractValid,
         'stableReleaseReady': stableReleaseReady,
@@ -89,8 +97,12 @@ class VisualReleaseGateReport {
           'ownerAccepted': ownerAccepted,
           'currentVisualInputDigest': currentVisualInputDigest,
           'acceptedVisualInputDigest': acceptedVisualInputDigest,
+          'currentReleaseInputDigest': currentReleaseInputDigest,
+          'acceptedReleaseInputDigest': acceptedReleaseInputDigest,
           'acceptedSourceCommit': acceptedSourceCommit,
           'acceptedApkSha256': acceptedApkSha256,
+          'acceptedWorkflowRunId': acceptedWorkflowRunId,
+          'acceptedArtifactId': acceptedArtifactId,
           'stablePublicationAuthorized': stablePublicationAuthorized,
         },
         'violations': violations
@@ -112,11 +124,13 @@ class VisualReleaseGateAuditor {
     required this.mobileRoot,
     required this.productionReport,
     this.currentVisualInputDigest,
+    this.currentReleaseInputDigest,
   });
 
   final Directory mobileRoot;
   final File productionReport;
   final String? currentVisualInputDigest;
+  final String? currentReleaseInputDigest;
 
   static const List<String> requiredScreenGroups = <String>[
     'home',
@@ -140,6 +154,15 @@ class VisualReleaseGateAuditor {
     'mobile/assets',
     'mobile/pubspec.yaml',
   ];
+  static const List<String> releaseDigestScope = <String>[
+    'mobile/lib',
+    'mobile/assets',
+    'mobile/pubspec.yaml',
+    'mobile/pubspec.lock',
+    'mobile/tool/apply_android_branding.sh',
+    'docs/ui/RELEASE_TOOLCHAIN_CONTRACT.json',
+    '.github/workflows/flutter-preview.yml',
+  ];
 
   VisualReleaseGateReport audit() {
     final List<VisualReleaseViolation> violations = <VisualReleaseViolation>[];
@@ -154,6 +177,11 @@ class VisualReleaseGateAuditor {
     final Map<String, dynamic> acceptance = _readJson(
       File('${repo.path}/docs/ui/VISUAL_RELEASE_OWNER_ACCEPTANCE.json'),
       'OWNER-ACCEPTANCE',
+      violations,
+    );
+    final Map<String, dynamic> toolchain = _readJson(
+      File('${repo.path}/docs/ui/RELEASE_TOOLCHAIN_CONTRACT.json'),
+      'TOOLCHAIN',
       violations,
     );
 
@@ -179,8 +207,10 @@ class VisualReleaseGateAuditor {
         'Production ready flag must agree with five-of-five readiness.',
         violations);
 
-    _expect(acceptance['schemaVersion'] == 1, 'ACCEPTANCE-SCHEMA',
-        'Final visual acceptance schemaVersion must remain 1.', violations);
+    _validateToolchain(toolchain, repo, violations);
+
+    _expect(acceptance['schemaVersion'] == 2, 'ACCEPTANCE-SCHEMA',
+        'Final visual acceptance schemaVersion must remain 2.', violations);
     _expect(acceptance['visualBlockerIssue'] == 230, 'ACCEPTANCE-ISSUE',
         'Final visual acceptance must remain tied to blocker #230.', violations);
 
@@ -194,9 +224,12 @@ class VisualReleaseGateAuditor {
         _strings(acceptance['allowedFinalDecisions']);
     _expect(_sameStringSet(allowedDecisions, allowedFinalDecisions.toList()),
         'FINAL-DECISIONS', 'Allowed final-decision set drifted.', violations);
-    final List<String> digestScope = _strings(acceptance['visualInputDigestScope']);
-    _expect(_sameStringList(digestScope, visualDigestScope), 'DIGEST-SCOPE',
+    final List<String> visualScope = _strings(acceptance['visualInputDigestScope']);
+    _expect(_sameStringList(visualScope, visualDigestScope), 'VISUAL-DIGEST-SCOPE',
         'Visual input digest scope drifted.', violations);
+    final List<String> releaseScope = _strings(acceptance['releaseInputDigestScope']);
+    _expect(_sameStringList(releaseScope, releaseDigestScope),
+        'RELEASE-DIGEST-SCOPE', 'Release input digest scope drifted.', violations);
 
     final Map<String, dynamic> rawScreenStates = _map(acceptance['screenGroups']);
     _expect(rawScreenStates.keys.toSet().length == requiredScreenGroups.length &&
@@ -222,22 +255,35 @@ class VisualReleaseGateAuditor {
 
     final bool stableAuthorized =
         acceptance['stablePublicationAuthorized'] == true;
-    final String? acceptedDigest = acceptance['acceptedVisualInputDigest'] as String?;
+    final String? acceptedVisualDigest =
+        acceptance['acceptedVisualInputDigest'] as String?;
+    final String? acceptedReleaseDigest =
+        acceptance['acceptedReleaseInputDigest'] as String?;
     final String? acceptedSourceCommit = acceptance['acceptedSourceCommit'] as String?;
     final String? acceptedApkSha = acceptance['acceptedApkSha256'] as String?;
+    final int? acceptedWorkflowRunId = acceptance['acceptedWorkflowRunId'] as int?;
+    final int? acceptedArtifactId = acceptance['acceptedArtifactId'] as int?;
 
     if (ownerAccepted) {
       for (final String group in requiredScreenGroups) {
         _expect(screenStates[group] == 'PASS', 'OWNER-PASS-$group',
             '$group must be PASS for final owner acceptance.', violations);
       }
-      _expect(_sha256(acceptedDigest), 'ACCEPTED-DIGEST',
+      _expect(_sha256(acceptedVisualDigest), 'ACCEPTED-VISUAL-DIGEST',
           'Final acceptance requires a 64-hex visual input digest.', violations);
+      _expect(_sha256(acceptedReleaseDigest), 'ACCEPTED-RELEASE-DIGEST',
+          'Final acceptance requires a 64-hex release input digest.', violations);
       _expect(_gitSha(acceptedSourceCommit), 'ACCEPTED-SOURCE-COMMIT',
           'Final acceptance requires a 40-hex reviewed source commit.',
           violations);
       _expect(_sha256(acceptedApkSha), 'ACCEPTED-APK-SHA',
           'Final acceptance requires the reviewed APK SHA-256.', violations);
+      _expect(acceptedWorkflowRunId != null && acceptedWorkflowRunId > 0,
+          'ACCEPTED-WORKFLOW-RUN',
+          'Final acceptance requires the reviewed workflow run ID.', violations);
+      _expect(acceptedArtifactId != null && acceptedArtifactId > 0,
+          'ACCEPTED-ARTIFACT',
+          'Final acceptance requires the reviewed APK artifact ID.', violations);
       final Object? actor = acceptance['decisionActor'];
       final Object? decidedAt = acceptance['decidedAt'];
       _expect(actor is String && actor.trim().isNotEmpty, 'DECISION-ACTOR',
@@ -253,14 +299,21 @@ class VisualReleaseGateAuditor {
       _expect(!stableAuthorized, 'PREMATURE-STABLE-AUTH',
           'Stable publication cannot be authorized before final owner acceptance.',
           violations);
-      _expect(acceptedDigest == null, 'PENDING-DIGEST',
+      _expect(acceptedVisualDigest == null, 'PENDING-VISUAL-DIGEST',
           'Non-accepted receipt must not claim an accepted visual digest.',
+          violations);
+      _expect(acceptedReleaseDigest == null, 'PENDING-RELEASE-DIGEST',
+          'Non-accepted receipt must not claim an accepted release digest.',
           violations);
       _expect(acceptedSourceCommit == null, 'PENDING-SOURCE-COMMIT',
           'Non-accepted receipt must not claim an accepted source commit.',
           violations);
       _expect(acceptedApkSha == null, 'PENDING-APK-SHA',
           'Non-accepted receipt must not claim an accepted APK SHA.', violations);
+      _expect(acceptedWorkflowRunId == null, 'PENDING-WORKFLOW-RUN',
+          'Non-accepted receipt must not claim a workflow run.', violations);
+      _expect(acceptedArtifactId == null, 'PENDING-ARTIFACT',
+          'Non-accepted receipt must not claim an APK artifact.', violations);
       _expect(acceptance['decisionActor'] == null, 'PENDING-ACTOR',
           'Non-accepted receipt must not claim a decision actor.', violations);
       _expect(acceptance['decidedAt'] == null, 'PENDING-TIME',
@@ -280,8 +333,13 @@ class VisualReleaseGateAuditor {
     if (ownerAccepted) {
       if (!_sha256(currentVisualInputDigest)) {
         releaseBlockers.add('current-visual-input-digest-unavailable');
-      } else if (currentVisualInputDigest != acceptedDigest) {
+      } else if (currentVisualInputDigest != acceptedVisualDigest) {
         releaseBlockers.add('accepted-visual-input-digest-stale');
+      }
+      if (!_sha256(currentReleaseInputDigest)) {
+        releaseBlockers.add('current-release-input-digest-unavailable');
+      } else if (currentReleaseInputDigest != acceptedReleaseDigest) {
+        releaseBlockers.add('accepted-release-input-digest-stale');
       }
     }
 
@@ -297,11 +355,74 @@ class VisualReleaseGateAuditor {
       finalDecision: finalDecision,
       ownerAccepted: ownerAccepted,
       currentVisualInputDigest: currentVisualInputDigest,
-      acceptedVisualInputDigest: acceptedDigest,
+      acceptedVisualInputDigest: acceptedVisualDigest,
+      currentReleaseInputDigest: currentReleaseInputDigest,
+      acceptedReleaseInputDigest: acceptedReleaseDigest,
       acceptedSourceCommit: acceptedSourceCommit,
       acceptedApkSha256: acceptedApkSha,
+      acceptedWorkflowRunId: acceptedWorkflowRunId,
+      acceptedArtifactId: acceptedArtifactId,
       stablePublicationAuthorized: stableAuthorized,
     );
+  }
+
+  void _validateToolchain(
+    Map<String, dynamic> toolchain,
+    Directory repo,
+    List<VisualReleaseViolation> violations,
+  ) {
+    _expect(toolchain['schemaVersion'] == 1, 'TOOLCHAIN-SCHEMA',
+        'Release toolchain schemaVersion must remain 1.', violations);
+    _expect(toolchain['visualBlockerIssue'] == 230, 'TOOLCHAIN-ISSUE',
+        'Release toolchain contract must remain tied to blocker #230.',
+        violations);
+    final Map<String, dynamic> flutter = _map(toolchain['flutter']);
+    _expect(flutter['channel'] == 'stable', 'TOOLCHAIN-FLUTTER-CHANNEL',
+        'Release Flutter channel must remain stable.', violations);
+    _expect(flutter['version'] == '3.47.0', 'TOOLCHAIN-FLUTTER-VERSION',
+        'Release Flutter version must remain pinned to 3.47.0.', violations);
+    _expect(
+        flutter['frameworkRevision'] ==
+            '4cf24164269a5ebf0c16a028a00727d0e77bbb05',
+        'TOOLCHAIN-FLUTTER-REVISION',
+        'Release Flutter framework revision drifted.',
+        violations);
+    _expect(flutter['dartVersion'] == '3.13.0', 'TOOLCHAIN-DART-VERSION',
+        'Release Dart version must remain 3.13.0.', violations);
+    final Map<String, dynamic> java = _map(toolchain['java']);
+    _expect(java['distribution'] == 'temurin', 'TOOLCHAIN-JAVA-DIST',
+        'Release Java distribution must remain temurin.', violations);
+    _expect(java['majorVersion'] == 17, 'TOOLCHAIN-JAVA-VERSION',
+        'Release Java major version must remain 17.', violations);
+    final Map<String, dynamic> dependencyLock =
+        _map(toolchain['dependencyLock']);
+    _expect(dependencyLock['path'] == 'mobile/pubspec.lock',
+        'DEPENDENCY-LOCK-PATH', 'Dependency lock path drifted.', violations);
+    _expect(dependencyLock['required'] == true, 'DEPENDENCY-LOCK-REQUIRED',
+        'Dependency lock must remain required.', violations);
+    _expect(dependencyLock['enforceLockfile'] == true,
+        'DEPENDENCY-LOCK-ENFORCE',
+        'Release dependency resolution must enforce the lockfile.', violations);
+    _expect(File('${repo.path}/mobile/pubspec.lock').existsSync(),
+        'DEPENDENCY-LOCK-MISSING',
+        'mobile/pubspec.lock must be committed for release reproducibility.',
+        violations);
+    _expect(
+        toolchain['androidBootstrap'] ==
+            'flutter create --platforms=android --project-name walka .',
+        'TOOLCHAIN-ANDROID-BOOTSTRAP',
+        'Android bootstrap recipe drifted.',
+        violations);
+    _expect(toolchain['brandingScript'] == 'mobile/tool/apply_android_branding.sh',
+        'TOOLCHAIN-BRANDING', 'Branding script contract drifted.', violations);
+    _expect(toolchain['releaseBuildCommand'] == 'flutter build apk --release',
+        'TOOLCHAIN-BUILD-COMMAND', 'Release build command drifted.', violations);
+    _expect(
+        _sameStringList(
+            _strings(toolchain['releaseInputDigestScope']), releaseDigestScope),
+        'TOOLCHAIN-RELEASE-SCOPE',
+        'Toolchain release input digest scope drifted.',
+        violations);
   }
 
   Map<String, dynamic> _readJson(

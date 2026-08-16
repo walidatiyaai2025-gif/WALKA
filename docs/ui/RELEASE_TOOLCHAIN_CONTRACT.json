@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "visualBlockerIssue": 230,
+  "flutter": {
+    "channel": "stable",
+    "version": "3.47.0",
+    "frameworkRevision": "4cf24164269a5ebf0c16a028a00727d0e77bbb05",
+    "dartVersion": "3.13.0"
+  },
+  "java": {
+    "distribution": "temurin",
+    "majorVersion": 17
+  },
+  "dependencyLock": {
+    "path": "mobile/pubspec.lock",
+    "required": true,
+    "enforceLockfile": true
+  },
+  "androidBootstrap": "flutter create --platforms=android --project-name walka .",
+  "brandingScript": "mobile/tool/apply_android_branding.sh",
+  "releaseBuildCommand": "flutter build apk --release",
+  "releaseInputDigestScope": [
+    "mobile/lib",
+    "mobile/assets",
+    "mobile/pubspec.yaml",
+    "mobile/pubspec.lock",
+    "mobile/tool/apply_android_branding.sh",
+    "docs/ui/RELEASE_TOOLCHAIN_CONTRACT.json",
+    ".github/workflows/flutter-preview.yml"
+  ],
+  "rule": "Final owner visual acceptance is bound to this deterministic release-input scope. Any dependency lock, app code/media, branding recipe, pinned toolchain contract or release workflow change invalidates the accepted release-input digest until the owner reviews a newly validated APK."
+}

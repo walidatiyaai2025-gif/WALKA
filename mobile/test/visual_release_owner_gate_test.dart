@@ -33,6 +33,8 @@ Future<Directory> _fixture() async {
     'docs/ui/PRODUCTION_ASSET_PROVENANCE.json',
     'docs/ui/GRAY_OWNER_PRESENTATION_DECISION.json',
     'docs/ui/VISUAL_RELEASE_OWNER_ACCEPTANCE.json',
+    'docs/ui/RELEASE_TOOLCHAIN_CONTRACT.json',
+    'mobile/pubspec.lock',
     'mobile/lib/design_system/components/media/walka_product_media_admission.dart',
   ];
   for (final String relative in files) {
@@ -64,12 +66,40 @@ void _writeProductionReport(
   );
 }
 
-VisualReleaseGateReport _audit(Directory root, {String? digest}) =>
+void _acceptOwnerReceipt(Directory root) {
+  final File receiptFile =
+      File('${root.path}/docs/ui/VISUAL_RELEASE_OWNER_ACCEPTANCE.json');
+  final Map<String, dynamic> receipt = _json(receiptFile);
+  final Map<String, dynamic> screens =
+      receipt['screenGroups'] as Map<String, dynamic>;
+  for (final String key in screens.keys) {
+    screens[key] = 'PASS';
+  }
+  receipt['finalDecision'] = 'ACCEPTED';
+  receipt['ownerAccepted'] = true;
+  receipt['acceptedVisualInputDigest'] = _repeat('a', 64);
+  receipt['acceptedReleaseInputDigest'] = _repeat('e', 64);
+  receipt['acceptedSourceCommit'] = _repeat('b', 40);
+  receipt['acceptedApkSha256'] = _repeat('c', 64);
+  receipt['acceptedWorkflowRunId'] = 31946392998;
+  receipt['acceptedArtifactId'] = 9263480800;
+  receipt['decisionActor'] = 'owner';
+  receipt['decidedAt'] = '2026-08-16T12:00:00Z';
+  receipt['stablePublicationAuthorized'] = true;
+  _writeJson(receiptFile, receipt);
+}
+
+VisualReleaseGateReport _audit(
+  Directory root, {
+  String? visualDigest,
+  String? releaseDigest,
+}) =>
     VisualReleaseGateAuditor(
       mobileRoot: Directory('${root.path}/mobile'),
       productionReport:
           File('${root.path}/mobile/production-asset-readiness.json'),
-      currentVisualInputDigest: digest,
+      currentVisualInputDigest: visualDigest,
+      currentReleaseInputDigest: releaseDigest,
     ).audit();
 
 void main() {
@@ -77,8 +107,11 @@ void main() {
     final Directory root = await _fixture();
     addTearDown(() => root.deleteSync(recursive: true));
 
-    final VisualReleaseGateReport report =
-        _audit(root, digest: _repeat('a', 64));
+    final VisualReleaseGateReport report = _audit(
+      root,
+      visualDigest: _repeat('a', 64),
+      releaseDigest: _repeat('e', 64),
+    );
 
     expect(report.contractValid, isTrue, reason: report.prettyJson());
     expect(report.stableReleaseReady, isFalse);
@@ -130,8 +163,11 @@ void main() {
     receipt['stablePublicationAuthorized'] = true;
     _writeJson(receiptFile, receipt);
 
-    final VisualReleaseGateReport report =
-        _audit(root, digest: _repeat('b', 64));
+    final VisualReleaseGateReport report = _audit(
+      root,
+      visualDigest: _repeat('b', 64),
+      releaseDigest: _repeat('e', 64),
+    );
 
     expect(report.contractValid, isFalse);
     expect(
@@ -144,30 +180,80 @@ void main() {
       () async {
     final Directory root = await _fixture();
     addTearDown(() => root.deleteSync(recursive: true));
-    final File receiptFile =
-        File('${root.path}/docs/ui/VISUAL_RELEASE_OWNER_ACCEPTANCE.json');
-    final Map<String, dynamic> receipt = _json(receiptFile);
-    final Map<String, dynamic> screens =
-        receipt['screenGroups'] as Map<String, dynamic>;
-    for (final String key in screens.keys) {
-      screens[key] = 'PASS';
-    }
-    receipt['finalDecision'] = 'ACCEPTED';
-    receipt['ownerAccepted'] = true;
-    receipt['acceptedVisualInputDigest'] = _repeat('a', 64);
-    receipt['acceptedSourceCommit'] = _repeat('b', 40);
-    receipt['acceptedApkSha256'] = _repeat('c', 64);
-    receipt['decisionActor'] = 'owner';
-    receipt['decidedAt'] = '2026-08-16T12:00:00Z';
-    receipt['stablePublicationAuthorized'] = true;
-    _writeJson(receiptFile, receipt);
+    _acceptOwnerReceipt(root);
 
-    final VisualReleaseGateReport report =
-        _audit(root, digest: _repeat('d', 64));
+    final VisualReleaseGateReport report = _audit(
+      root,
+      visualDigest: _repeat('d', 64),
+      releaseDigest: _repeat('e', 64),
+    );
 
     expect(report.contractValid, isTrue, reason: report.prettyJson());
     expect(report.stableReleaseReady, isFalse);
     expect(report.releaseBlockers, contains('accepted-visual-input-digest-stale'));
+    expect(report.releaseBlockers,
+        isNot(contains('accepted-release-input-digest-stale')));
+  });
+
+  test('dependency/build/toolchain drift invalidates accepted release inputs',
+      () async {
+    final Directory root = await _fixture();
+    addTearDown(() => root.deleteSync(recursive: true));
+    _acceptOwnerReceipt(root);
+
+    final VisualReleaseGateReport report = _audit(
+      root,
+      visualDigest: _repeat('a', 64),
+      releaseDigest: _repeat('f', 64),
+    );
+
+    expect(report.contractValid, isTrue, reason: report.prettyJson());
+    expect(report.stableReleaseReady, isFalse);
+    expect(report.releaseBlockers,
+        contains('accepted-release-input-digest-stale'));
+    expect(report.releaseBlockers,
+        isNot(contains('accepted-visual-input-digest-stale')));
+  });
+
+  test('missing dependency lock fails the release contract closed', () async {
+    final Directory root = await _fixture();
+    addTearDown(() => root.deleteSync(recursive: true));
+    File('${root.path}/mobile/pubspec.lock').deleteSync();
+
+    final VisualReleaseGateReport report = _audit(
+      root,
+      visualDigest: _repeat('a', 64),
+      releaseDigest: _repeat('e', 64),
+    );
+
+    expect(report.contractValid, isFalse);
+    expect(
+      report.violations.map((VisualReleaseViolation item) => item.code),
+      contains('DEPENDENCY-LOCK-MISSING'),
+    );
+  });
+
+  test('toolchain release digest scope cannot silently shrink', () async {
+    final Directory root = await _fixture();
+    addTearDown(() => root.deleteSync(recursive: true));
+    final File toolchainFile =
+        File('${root.path}/docs/ui/RELEASE_TOOLCHAIN_CONTRACT.json');
+    final Map<String, dynamic> toolchain = _json(toolchainFile);
+    (toolchain['releaseInputDigestScope'] as List<dynamic>)
+        .remove('mobile/pubspec.lock');
+    _writeJson(toolchainFile, toolchain);
+
+    final VisualReleaseGateReport report = _audit(
+      root,
+      visualDigest: _repeat('a', 64),
+      releaseDigest: _repeat('e', 64),
+    );
+
+    expect(report.contractValid, isFalse);
+    expect(
+      report.violations.map((VisualReleaseViolation item) => item.code),
+      contains('TOOLCHAIN-RELEASE-SCOPE'),
+    );
   });
 
   test('fully reconciled synthetic report is stable-release ready', () {
@@ -211,9 +297,15 @@ void main() {
           'dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd',
       acceptedVisualInputDigest:
           'dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd',
+      currentReleaseInputDigest:
+          'eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
+      acceptedReleaseInputDigest:
+          'eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
       acceptedSourceCommit: 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
       acceptedApkSha256:
           'cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc',
+      acceptedWorkflowRunId: 31946392998,
+      acceptedArtifactId: 9263480800,
       stablePublicationAuthorized: true,
     );
 

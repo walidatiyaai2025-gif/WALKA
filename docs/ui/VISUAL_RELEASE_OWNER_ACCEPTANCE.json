@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "visualBlockerIssue": 230,
   "requiredScreenGroups": [
     "home",
@@ -32,11 +32,23 @@
     "mobile/assets",
     "mobile/pubspec.yaml"
   ],
+  "releaseInputDigestScope": [
+    "mobile/lib",
+    "mobile/assets",
+    "mobile/pubspec.yaml",
+    "mobile/pubspec.lock",
+    "mobile/tool/apply_android_branding.sh",
+    "docs/ui/RELEASE_TOOLCHAIN_CONTRACT.json",
+    ".github/workflows/flutter-preview.yml"
+  ],
   "acceptedVisualInputDigest": null,
+  "acceptedReleaseInputDigest": null,
   "acceptedSourceCommit": null,
   "acceptedApkSha256": null,
+  "acceptedWorkflowRunId": null,
+  "acceptedArtifactId": null,
   "decisionActor": null,
   "decidedAt": null,
-  "acceptanceRule": "Stable owner-visible publication requires explicit owner PASS for every required screen group. Acceptance must record the reviewed APK/source evidence and bind to a deterministic visual-input digest over mobile/lib, mobile/assets and mobile/pubspec.yaml; later changes inside that visual scope invalidate publication until the owner accepts the new digest.",
+  "acceptanceRule": "Stable owner-visible publication requires explicit owner PASS for every required screen group. Acceptance records the exact reviewed APK artifact and binds to deterministic visual and release-input digests. A later change to app code/media, dependency lock, branding recipe, pinned toolchain contract or release workflow invalidates publication until the owner reviews a newly validated APK. APK SHA remains evidence of the reviewed artifact; reproducibility is enforced through the locked release inputs rather than assuming two independent Android builds are byte-identical.",
   "stablePublicationAuthorized": false
 }
