@@ -13,6 +13,7 @@ import '../content/domain/walka_home_layout_content.dart';
 import '../content/domain/walka_mobile_content.dart';
 import '../content/domain/walka_search_presentation_content.dart';
 import '../content/domain/walka_storefront_copy_content.dart';
+import '../favorites/favorites_state.dart';
 import '../media/presentation/walka_resolved_product_remote_media.dart';
 import '../media/presentation/walka_resolved_surface_media.dart';
 
@@ -475,6 +476,7 @@ class _WalkaDynamicProductDetailV140State
   Widget build(BuildContext context) {
     final WalkaCatalogSnapshot catalog = WalkaCatalogScope.of(context).snapshot;
     final WalkaContentController? content = WalkaContentScope.maybeOf(context);
+    final WalkaFavoritesController favorites = WalkaFavoritesScope.of(context);
     final WalkaStorefrontCopyContent? copy = content != null &&
             _isPublishedContent(content.storefrontCopy.source)
         ? content.storefrontCopy.content
@@ -492,6 +494,7 @@ class _WalkaDynamicProductDetailV140State
       (WalkaCatalogVariant variant) => variant.id == _selectedVariantId,
       orElse: () => product.variants.first,
     );
+    final bool isFavorite = favorites.isFavorite(selected.id);
     final Color tone = _swatchColor(selected.swatchHex);
 
     return Scaffold(
@@ -569,6 +572,32 @@ class _WalkaDynamicProductDetailV140State
             const SizedBox(height: 10),
             Text(selected.pantone!, style: WalkaType.body),
           ],
+          const SizedBox(height: 14),
+          if (copy != null)
+            OutlinedButton.icon(
+              key: ValueKey<String>('dynamic-favorite-${selected.id}'),
+              onPressed: () => favorites.toggle(selected.id),
+              icon: Icon(
+                isFavorite ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+              ),
+              label: Text(
+                isFavorite
+                    ? copy.pdpFavoriteRemoveLabel
+                    : copy.pdpFavoriteAddLabel,
+              ),
+            )
+          else
+            Center(
+              child: IconButton.outlined(
+                key: ValueKey<String>('dynamic-favorite-${selected.id}'),
+                onPressed: () => favorites.toggle(selected.id),
+                icon: Icon(
+                  isFavorite
+                      ? Icons.favorite_rounded
+                      : Icons.favorite_border_rounded,
+                ),
+              ),
+            ),
           if (product.features.isNotEmpty) ...<Widget>[
             const SizedBox(height: 24),
             if (copy != null) ...<Widget>[

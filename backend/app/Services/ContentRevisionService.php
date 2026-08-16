@@ -140,6 +140,7 @@ final class ContentRevisionService
         int $revisionToRestore,
         int $expectedRevision,
         string $actorFingerprint,
+        ?callable $payloadTransformer = null,
     ): ContentEntry {
         $this->validateExistingWrite($contentKey, $expectedRevision, $actorFingerprint);
 
@@ -153,6 +154,7 @@ final class ContentRevisionService
             $revisionToRestore,
             $expectedRevision,
             $actorFingerprint,
+            $payloadTransformer,
         ): ContentEntry {
             $entry = ContentEntry::query()
                 ->where('content_key', $contentKey)
@@ -166,12 +168,24 @@ final class ContentRevisionService
                 ->where('revision', $revisionToRestore)
                 ->firstOrFail();
 
-            if ($this->payloadsEqual($entry->draft_payload, $source->payload)) {
+            $restoredPayload = $source->payload;
+            if ($payloadTransformer !== null) {
+                $restoredPayload = $payloadTransformer($restoredPayload);
+                if (! is_array($restoredPayload)) {
+                    throw ValidationException::withMessages([
+                        'payload' => ['The restored content payload transform must return an array.'],
+                    ]);
+                }
+                $restoredPayload = $this->normalizeValue($restoredPayload);
+                $this->assertPayloadSize($restoredPayload);
+            }
+
+            if ($this->payloadsEqual($entry->draft_payload, $restoredPayload)) {
                 return $entry->refresh();
             }
 
             $nextRevision = $entry->revision + 1;
-            $entry->draft_payload = $source->payload;
+            $entry->draft_payload = $restoredPayload;
             $entry->revision = $nextRevision;
             $entry->save();
 
@@ -179,7 +193,7 @@ final class ContentRevisionService
                 entry: $entry,
                 revision: $nextRevision,
                 action: 'draft_restored',
-                payload: $source->payload,
+                payload: $restoredPayload,
                 sourceRevision: $revisionToRestore,
                 actorFingerprint: $actorFingerprint,
             );

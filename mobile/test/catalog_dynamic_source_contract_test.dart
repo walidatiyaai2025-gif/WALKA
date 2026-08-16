@@ -43,6 +43,22 @@ void main() {
     expect(shell, contains('WalkaDynamicFavoritesV140'));
   });
 
+  test('production Favorites uses generic IDs, governed copy and Dashboard media', () {
+    final String favorites = File(
+      'lib/features/storefront/dynamic_favorites_v140.dart',
+    ).readAsStringSync();
+
+    expect(favorites, contains('WalkaResolvedProductRemoteMedia'));
+    expect(favorites, contains('content.storefrontCopy.content'));
+    expect(favorites, isNot(contains('CircleAvatar')));
+    expect(favorites, isNot(contains('drawer-organizer')));
+    expect(favorites, isNot(contains('drawerWhiteId')));
+    expect(favorites, isNot(contains('drawerGrayId')));
+    expect(favorites, isNot(contains('savedDrawerVariants')));
+    expect(favorites, isNot(contains('toggleDrawer')));
+    expect(favorites, isNot(contains('removeDrawer')));
+  });
+
   test('backend runtime repository does not read the bootstrap seed blueprint', () {
     final String backendRepository = File(
       '../backend/app/Repositories/EloquentCatalogRepository.php',
