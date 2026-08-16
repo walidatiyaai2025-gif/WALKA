@@ -35,13 +35,35 @@ Route::prefix('admin')
             Route::get('/catalog', [AdminDashboardController::class, 'catalog'])
                 ->middleware('walka.dashboard.can:catalog.view')
                 ->name('catalog');
+            Route::post('/catalog/categories', [AdminDashboardController::class, 'createCategory'])
+                ->middleware('walka.dashboard.can:catalog.write')
+                ->name('catalog.categories.store');
+            Route::patch('/catalog/categories/{category}', [AdminDashboardController::class, 'updateCategory'])
+                ->middleware('walka.dashboard.can:catalog.write')
+                ->name('catalog.categories.update');
+            Route::delete('/catalog/categories/{category}', [AdminDashboardController::class, 'deleteCategory'])
+                ->middleware('walka.dashboard.can:catalog.write')
+                ->name('catalog.categories.destroy');
+            Route::post('/catalog/products', [AdminDashboardController::class, 'createProduct'])
+                ->middleware('walka.dashboard.can:catalog.write')
+                ->name('catalog.products.store');
             Route::patch('/catalog/products/{product}', [AdminDashboardController::class, 'updateProduct'])
                 ->middleware('walka.dashboard.can:catalog.write')
                 ->name('catalog.products.update');
+            Route::delete('/catalog/products/{product}', [AdminDashboardController::class, 'deleteProduct'])
+                ->middleware('walka.dashboard.can:catalog.write')
+                ->name('catalog.products.destroy');
+            Route::post('/catalog/products/{product}/variants', [AdminDashboardController::class, 'createVariant'])
+                ->middleware('walka.dashboard.can:catalog.write')
+                ->name('catalog.variants.store');
             Route::patch('/catalog/variants/{variant}', [AdminDashboardController::class, 'updateVariant'])
                 ->middleware('walka.dashboard.can:catalog.write')
                 ->where('variant', '.*')
                 ->name('catalog.variants.update');
+            Route::delete('/catalog/variants/{variant}', [AdminDashboardController::class, 'deleteVariant'])
+                ->middleware('walka.dashboard.can:catalog.write')
+                ->where('variant', '.*')
+                ->name('catalog.variants.destroy');
 
             Route::get('/media', [AdminMediaController::class, 'index'])
                 ->middleware('walka.dashboard.can:media.view')
