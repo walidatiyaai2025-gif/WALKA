@@ -20,13 +20,21 @@ final class HomeFeaturedCatalogValidator
 
         $variants = ProductVariant::query()
             ->whereIn('id', $ids)
+            ->where('is_visible', true)
+            ->whereHas('product', function ($query): void {
+                $query->where('is_visible', true)
+                    ->whereHas('categoryEntity', fn ($category) => $category->where('is_visible', true));
+            })
             ->get(['id', 'product_id'])
             ->keyBy('id');
 
         foreach ($ids as $id) {
             if (! $variants->has($id)) {
                 throw ValidationException::withMessages([
-                    'variant_ids' => [sprintf('Unknown WALKA variant ID: %s.', $id)],
+                    'variant_ids' => [sprintf(
+                        'Variant is not visible in the current Dashboard catalog: %s.',
+                        $id,
+                    )],
                 ]);
             }
         }
