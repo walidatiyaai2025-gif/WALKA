@@ -276,10 +276,10 @@ class _WalkaSearchPremiumV123State extends State<WalkaSearchPremiumV123> {
                 const SizedBox(height: 14),
                 WalkaSearchFilters(
                   selectedFamily: _family,
-                  allLabel: presentation.filterLabel('all', 'All'),
+                  allLabel: presentation.filterLabel('all', 'All')!,
                   drawerLabel:
-                      presentation.filterLabel('drawer-organization', 'Drawer'),
-                  lunchLabel: presentation.filterLabel('lunch', 'Lunch'),
+                      presentation.filterLabel('drawer-organization', 'Drawer')!,
+                  lunchLabel: presentation.filterLabel('lunch', 'Lunch')!,
                   onChanged: (WalkaCatalogFamily? family) =>
                       setState(() => _family = family),
                 ),

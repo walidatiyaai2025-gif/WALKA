@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Exceptions\ContentRevisionConflictException;
 use App\Http\Controllers\Controller;
 use App\Models\ContentEntry;
+use App\Services\Content\StorefrontCopyContentDefinition;
 use App\Services\ContentRevisionService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -34,6 +35,12 @@ final class AdminContentController extends Controller
             'content_type' => ['required', 'string', 'max:64', 'regex:/^[a-z][a-z0-9._-]*$/'],
             'payload_json' => ['required', 'string', 'max:70000'],
         ]);
+
+        if ($validated['content_key'] === StorefrontCopyContentDefinition::KEY) {
+            throw ValidationException::withMessages([
+                'content_key' => ['storefront.copy is reserved for the typed Storefront Copy editor.'],
+            ]);
+        }
 
         if (ContentEntry::query()->where('content_key', $validated['content_key'])->exists()) {
             throw ValidationException::withMessages([

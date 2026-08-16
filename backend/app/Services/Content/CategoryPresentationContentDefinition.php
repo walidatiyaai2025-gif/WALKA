@@ -14,32 +14,6 @@ final class CategoryPresentationContentDefinition
     public const SCHEMA_VERSION = 1;
 
     /**
-     * Preserve the released Categories screen as the bundled/default order.
-     * Stable category IDs come from the protected catalog category field.
-     *
-     * @return array<string, mixed>
-     */
-    public static function defaultPayload(): array
-    {
-        return [
-            'categories' => [
-                [
-                    'id' => 'lunch',
-                    'display_name' => 'Lunch Boxes',
-                    'description' => 'Stainless steel lunch systems for organized everyday meals.',
-                    'visible' => true,
-                ],
-                [
-                    'id' => 'drawer-organization',
-                    'display_name' => 'Drawer Organizers',
-                    'description' => 'Expandable organizers designed to bring calm order to drawers.',
-                    'visible' => true,
-                ],
-            ],
-        ];
-    }
-
-    /**
      * @param  array<string, mixed>  $payload
      * @return array{categories: list<array{id: string, display_name: string, description: string, visible: bool}>}
      */

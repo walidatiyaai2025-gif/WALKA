@@ -122,36 +122,47 @@ final class ProductMediaGalleryService
     }
 
     /**
+     * Public media membership follows the same Dashboard visibility boundary as
+     * the public catalog. Hidden categories/products/variants are not leaked and
+     * no compiled product/variant identity set is consulted.
+     *
      * @return list<array<string, mixed>>
      */
     public function publicPayload(): array
     {
         $products = Product::query()
+            ->where('is_visible', true)
+            ->whereHas('categoryEntity', fn ($query) => $query->where('is_visible', true))
             ->with([
-                'variants',
+                'variants' => fn ($query) => $query
+                    ->where('is_visible', true)
+                    ->orderBy('sort_order'),
                 'mediaGalleryItems.mediaAsset.canonicalDerivative',
                 'variants.mediaGalleryItems.mediaAsset.canonicalDerivative',
             ])
             ->orderBy('sort_order')
+            ->orderBy('id')
             ->get();
 
-        return $products->map(function (Product $product): array {
-            $productGallery = $this->serializeGallery($product->mediaGalleryItems);
+        return $products
+            ->filter(fn (Product $product): bool => $product->variants->isNotEmpty())
+            ->map(function (Product $product): array {
+                $productGallery = $this->serializeGallery($product->mediaGalleryItems);
 
-            return [
-                'product_id' => $product->id,
-                'gallery' => $productGallery,
-                'variants' => $product->variants->map(function (ProductVariant $variant) use ($productGallery): array {
-                    $explicit = $this->serializeGallery($variant->mediaGalleryItems);
+                return [
+                    'product_id' => $product->id,
+                    'gallery' => $productGallery,
+                    'variants' => $product->variants->map(function (ProductVariant $variant) use ($productGallery): array {
+                        $explicit = $this->serializeGallery($variant->mediaGalleryItems);
 
-                    return [
-                        'variant_id' => $variant->id,
-                        'gallery_source' => $explicit === [] ? 'product_fallback' : 'variant',
-                        'gallery' => $explicit === [] ? $productGallery : $explicit,
-                    ];
-                })->values()->all(),
-            ];
-        })->values()->all();
+                        return [
+                            'variant_id' => $variant->id,
+                            'gallery_source' => $explicit === [] ? 'product_fallback' : 'variant',
+                            'gallery' => $explicit === [] ? $productGallery : $explicit,
+                        ];
+                    })->values()->all(),
+                ];
+            })->values()->all();
     }
 
     /**
@@ -279,11 +290,13 @@ final class ProductMediaGalleryService
 
             $result[] = [
                 'media_id' => $asset->id,
+                'position' => (int) $item->position,
                 'semantic_label' => $asset->semantic_label,
                 'canonical' => [
                     'mime' => $derivative->mime,
-                    'width' => $derivative->width,
-                    'height' => $derivative->height,
+                    'bytes' => (int) $derivative->bytes,
+                    'width' => (int) $derivative->width,
+                    'height' => (int) $derivative->height,
                     'sha256' => $derivative->sha256,
                 ],
             ];

@@ -36,40 +36,17 @@ class WalkaSearchPresentationContent {
     required this.filterLabels,
   });
 
-  static const Set<String> protectedVariantIds = <String>{
-    'drawer-organizer:white',
-    'drawer-organizer:gray',
-    'lunch-box:blue',
-    'lunch-box:pink',
-    'lunch-box:green',
-  };
-
-  static const Set<String> protectedFilterIds = <String>{
-    'all',
-    'drawer-organization',
-    'lunch',
-  };
-
+  /// Compatibility-only empty value. Production generic Search renders this
+  /// copy only for remote/cache sources.
   static const WalkaSearchPresentationContent bundled =
       WalkaSearchPresentationContent(
-    heading: 'Search WALKA',
-    supportingCopy:
-        'Explore the complete released WALKA catalog by collection, color, or product detail.',
-    placeholder: 'Search organizers, colors, details…',
-    emptyTitle: 'No WALKA matches yet',
-    emptyBody: 'Try another color, collection, or product detail.',
-    featuredVariantIds: <String>[
-      'drawer-organizer:white',
-      'drawer-organizer:gray',
-      'lunch-box:blue',
-      'lunch-box:pink',
-      'lunch-box:green',
-    ],
-    filterLabels: <WalkaSearchFilterLabel>[
-      WalkaSearchFilterLabel(id: 'all', label: 'All'),
-      WalkaSearchFilterLabel(id: 'drawer-organization', label: 'Drawer'),
-      WalkaSearchFilterLabel(id: 'lunch', label: 'Lunch'),
-    ],
+    heading: '',
+    supportingCopy: '',
+    placeholder: '',
+    emptyTitle: '',
+    emptyBody: '',
+    featuredVariantIds: <String>[],
+    filterLabels: <WalkaSearchFilterLabel>[],
   );
 
   final String heading;
@@ -80,7 +57,7 @@ class WalkaSearchPresentationContent {
   final List<String> featuredVariantIds;
   final List<WalkaSearchFilterLabel> filterLabels;
 
-  String filterLabel(String id, String fallback) {
+  String? filterLabel(String id, [String? fallback]) {
     for (final WalkaSearchFilterLabel item in filterLabels) {
       if (item.id == id) return item.label;
     }
@@ -99,8 +76,8 @@ class WalkaSearchPresentationContent {
     }
 
     final Object? variantsValue = json['featured_variant_ids'];
-    if (variantsValue is! List || variantsValue.isEmpty) {
-      throw const FormatException('Search merchandising order is required.');
+    if (variantsValue is! List) {
+      throw const FormatException('Search merchandising order must be a list.');
     }
     final List<String> featuredVariantIds = variantsValue.map((Object? value) {
       if (value is! String ||
@@ -110,13 +87,8 @@ class WalkaSearchPresentationContent {
       }
       return value;
     }).toList(growable: false);
-    final Set<String> variantSet = featuredVariantIds.toSet();
-    if (variantSet.length != featuredVariantIds.length ||
-        variantSet.length != protectedVariantIds.length ||
-        !variantSet.containsAll(protectedVariantIds)) {
-      throw const FormatException(
-        'Search merchandising must preserve the complete protected variant set.',
-      );
+    if (featuredVariantIds.toSet().length != featuredVariantIds.length) {
+      throw const FormatException('Search merchandising variant IDs must be unique.');
     }
 
     final Object? filtersValue = json['filter_labels'];
@@ -131,11 +103,9 @@ class WalkaSearchPresentationContent {
     }).toList(growable: false);
     final Set<String> filterSet =
         filters.map((WalkaSearchFilterLabel item) => item.id).toSet();
-    if (filterSet.length != filters.length ||
-        filterSet.length != protectedFilterIds.length ||
-        !filterSet.containsAll(protectedFilterIds)) {
+    if (filterSet.length != filters.length || !filterSet.contains('all')) {
       throw const FormatException(
-        'Search filters must preserve the complete protected filter set.',
+        'Search filters must be unique and include the stable All filter.',
       );
     }
 

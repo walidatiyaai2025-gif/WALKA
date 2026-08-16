@@ -16,15 +16,25 @@ class _MemorySearchCache implements WalkaSearchPresentationCache {
   }
 }
 
+Map<String, dynamic> _contentJson(String heading) => <String, dynamic>{
+      'heading': heading,
+      'supporting_copy': 'Search the current Dashboard catalog.',
+      'placeholder': 'Search products…',
+      'empty_title': 'No matches',
+      'empty_body': 'Try another product detail.',
+      'featured_variant_ids': <String>['dynamic-product:variant-a'],
+      'filter_labels': <Map<String, String>>[
+        <String, String>{'id': 'all', 'label': 'All'},
+        <String, String>{'id': 'dynamic-category', 'label': 'Dynamic'},
+      ],
+    };
+
 WalkaSearchPresentationPayload _payload({
   required int revision,
   String heading = 'Remote Search',
 }) {
   return WalkaSearchPresentationPayload(
-    content: WalkaSearchPresentationContent.fromJson(<String, dynamic>{
-      ...WalkaSearchPresentationContent.bundled.toJson(),
-      'heading': heading,
-    }),
+    content: WalkaSearchPresentationContent.fromJson(_contentJson(heading)),
     revision: revision,
     publishedAt: DateTime.utc(2026, 8, 13, 4),
   );
@@ -35,10 +45,7 @@ WalkaSearchPresentationSnapshot _cached({
   String heading = 'Cached Search',
 }) {
   return WalkaSearchPresentationSnapshot(
-    content: WalkaSearchPresentationContent.fromJson(<String, dynamic>{
-      ...WalkaSearchPresentationContent.bundled.toJson(),
-      'heading': heading,
-    }),
+    content: WalkaSearchPresentationContent.fromJson(_contentJson(heading)),
     revision: revision,
     publishedAt: DateTime.utc(2026, 8, 13, 3),
     fetchedAt: DateTime.utc(2026, 8, 13, 3, 30),
@@ -47,7 +54,8 @@ WalkaSearchPresentationSnapshot _cached({
 }
 
 void main() {
-  test('valid remote Search content wins and becomes last-known-good', () async {
+  test('valid arbitrary remote Search content wins and becomes last-known-good',
+      () async {
     final _MemorySearchCache cache = _MemorySearchCache();
     final WalkaSearchPresentationRepository repository =
         WalkaSearchPresentationRepository(
@@ -61,6 +69,7 @@ void main() {
     expect(snapshot.source, WalkaContentSource.remote);
     expect(snapshot.revision, 4);
     expect(snapshot.content.heading, 'Remote Search');
+    expect(snapshot.content.featuredVariantIds, <String>['dynamic-product:variant-a']);
     expect(cache.value?.revision, 4);
   });
 
@@ -111,7 +120,8 @@ void main() {
     expect(snapshot.content.heading, 'Cached truth');
   });
 
-  test('no remote and no cache uses bundled complete Search defaults', () async {
+  test('no remote and no cache uses identity-free bundled compatibility state',
+      () async {
     final WalkaSearchPresentationRepository repository =
         WalkaSearchPresentationRepository(cache: _MemorySearchCache());
 
@@ -119,6 +129,7 @@ void main() {
 
     expect(snapshot.source, WalkaContentSource.bundled);
     expect(snapshot.revision, 0);
-    expect(snapshot.content.featuredVariantIds, hasLength(5));
+    expect(snapshot.content.featuredVariantIds, isEmpty);
+    expect(snapshot.content.filterLabels, isEmpty);
   });
 }

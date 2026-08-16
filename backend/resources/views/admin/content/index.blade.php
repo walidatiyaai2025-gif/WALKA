@@ -28,7 +28,7 @@
     <section class="card">
         <p class="eyebrow">LIVE-CONTROLLED MERCHANDISING</p>
         <h2>Featured Products</h2>
-        <p class="muted">Choose approved catalog variants for Home collection/editorial slots.</p>
+        <p class="muted">Choose visible Dashboard catalog variants for Home collection/editorial slots.</p>
         <a class="btn navy section-space" href="{{ route('admin.content.home.featured.edit') }}">Edit Featured →</a>
     </section>
     <section class="card">
@@ -40,14 +40,20 @@
     <section class="card" style="border-color:#d7e4ec;background:linear-gradient(135deg,#ffffff,#f4f8fb)">
         <p class="eyebrow">DISCOVERY CONTROL</p>
         <h2>Categories</h2>
-        <p class="muted">Rename, describe, reorder and show/hide approved Product Master categories.</p>
+        <p class="muted">Rename, describe, reorder and show/hide current Dashboard catalog categories.</p>
         <a class="btn navy section-space" href="{{ route('admin.content.categories.edit') }}">Edit Categories →</a>
     </section>
     <section class="card" style="border-color:#d7e4ec;background:linear-gradient(135deg,#ffffff,#f4f8fb)">
         <p class="eyebrow">SEARCH MERCHANDISING</p>
         <h2>Search</h2>
-        <p class="muted">Edit safe Search copy, filter labels and complete-catalog Featured ordering.</p>
+        <p class="muted">Edit Search copy, filter labels and current-catalog Featured ordering.</p>
         <a class="btn navy section-space" href="{{ route('admin.content.search.edit') }}">Edit Search →</a>
+    </section>
+    <section class="card" style="border-color:#e2d6bd;background:linear-gradient(135deg,#ffffff,#fbf8f1)">
+        <p class="eyebrow">SHARED STOREFRONT COPY</p>
+        <h2>Categories & Product Detail</h2>
+        <p class="muted">Control generic Categories and PDP labels/CTA copy without compiling new customer-facing business strings into the app.</p>
+        <a class="btn primary section-space" href="{{ route('admin.content.storefront.copy.edit') }}">Edit Storefront Copy →</a>
     </section>
 </div>
 
@@ -97,6 +103,8 @@
                                     <a class="btn secondary" href="{{ route('admin.content.categories.edit') }}">Typed editor</a>
                                 @elseif ($entry->content_key === 'search.presentation' && $entry->content_type === 'search.presentation')
                                     <a class="btn secondary" href="{{ route('admin.content.search.edit') }}">Typed editor</a>
+                                @elseif ($entry->content_key === 'storefront.copy' && $entry->content_type === 'storefront.copy')
+                                    <a class="btn secondary" href="{{ route('admin.content.storefront.copy.edit') }}">Typed editor</a>
                                 @else
                                     <a class="btn secondary" href="{{ route('admin.content.show', ['content' => $entry->id]) }}">Open</a>
                                 @endif

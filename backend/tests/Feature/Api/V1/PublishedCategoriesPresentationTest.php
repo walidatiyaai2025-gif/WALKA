@@ -2,7 +2,7 @@
 
 namespace Tests\Feature\Api\V1;
 
-use App\Models\Product;
+use App\Models\CatalogCategory;
 use App\Services\Content\CategoryPresentationContentDefinition;
 use App\Services\ContentRevisionService;
 use Database\Seeders\WalkaCatalogSeeder;
@@ -31,7 +31,7 @@ final class PublishedCategoriesPresentationTest extends TestCase
         $this->service()->saveDraft(
             CategoryPresentationContentDefinition::KEY,
             CategoryPresentationContentDefinition::TYPE,
-            CategoryPresentationContentDefinition::defaultPayload(),
+            $this->currentPayload(),
             0,
             $this->actor,
         );
@@ -93,25 +93,47 @@ final class PublishedCategoriesPresentationTest extends TestCase
             ->assertStatus(304);
     }
 
-    public function test_delivery_fails_closed_if_published_category_set_no_longer_matches_catalog(): void
+    public function test_delivery_fails_closed_if_published_overlay_references_category_that_is_no_longer_public(): void
     {
+        $payload = $this->currentPayload();
         $service = $this->service();
         $service->saveDraft(
             CategoryPresentationContentDefinition::KEY,
             CategoryPresentationContentDefinition::TYPE,
-            CategoryPresentationContentDefinition::defaultPayload(),
+            $payload,
             0,
             $this->actor,
         );
         $service->publish(CategoryPresentationContentDefinition::KEY, 1, $this->actor);
 
-        Product::query()
-            ->where('id', 'drawer-organizer')
-            ->update(['category' => 'changed-protected-category']);
+        CatalogCategory::query()
+            ->whereKey($payload['categories'][0]['id'])
+            ->update(['is_visible' => false]);
 
         $this->getJson('/api/v1/content/categories')
             ->assertStatus(503)
             ->assertJsonPath('error.code', 'content_invalid');
+    }
+
+    /**
+     * @return array{categories:list<array{id:string,display_name:string,description:string,visible:bool}>}
+     */
+    private function currentPayload(): array
+    {
+        return [
+            'categories' => CatalogCategory::query()
+                ->where('is_visible', true)
+                ->orderBy('sort_order')
+                ->orderBy('id')
+                ->get(['id', 'name'])
+                ->map(fn (CatalogCategory $category): array => [
+                    'id' => $category->id,
+                    'display_name' => $category->name,
+                    'description' => $category->name.' presentation.',
+                    'visible' => true,
+                ])
+                ->all(),
+        ];
     }
 
     private function service(): ContentRevisionService

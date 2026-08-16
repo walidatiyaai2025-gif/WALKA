@@ -49,30 +49,10 @@ class WalkaCategoryPresentationItem {
 class WalkaCategoryPresentationContent {
   const WalkaCategoryPresentationContent({required this.categories});
 
-  static const Set<String> protectedCategoryIds = <String>{
-    'lunch',
-    'drawer-organization',
-  };
-
+  /// Empty compatibility value. Production UI treats bundled content as
+  /// unavailable and resolves category names from the dynamic catalog instead.
   static const WalkaCategoryPresentationContent bundled =
-      WalkaCategoryPresentationContent(
-    categories: <WalkaCategoryPresentationItem>[
-      WalkaCategoryPresentationItem(
-        id: 'lunch',
-        displayName: 'Lunch Boxes',
-        description:
-            'Stainless steel lunch systems for organized everyday meals.',
-        visible: true,
-      ),
-      WalkaCategoryPresentationItem(
-        id: 'drawer-organization',
-        displayName: 'Drawer Organizers',
-        description:
-            'Expandable organizers designed to bring calm order to drawers.',
-        visible: true,
-      ),
-    ],
-  );
+      WalkaCategoryPresentationContent(categories: <WalkaCategoryPresentationItem>[]);
 
   final List<WalkaCategoryPresentationItem> categories;
 
@@ -80,6 +60,13 @@ class WalkaCategoryPresentationContent {
       List<WalkaCategoryPresentationItem>.unmodifiable(
         categories.where((WalkaCategoryPresentationItem item) => item.visible),
       );
+
+  WalkaCategoryPresentationItem? itemFor(String categoryId) {
+    for (final WalkaCategoryPresentationItem item in categories) {
+      if (item.id == categoryId) return item;
+    }
+    return null;
+  }
 
   factory WalkaCategoryPresentationContent.fromJson(Map<String, dynamic> json) {
     final Object? categoriesValue = json['categories'];
@@ -101,12 +88,8 @@ class WalkaCategoryPresentationContent {
     final Set<String> ids = categories
         .map((WalkaCategoryPresentationItem item) => item.id)
         .toSet();
-    if (ids.length != categories.length ||
-        ids.length != protectedCategoryIds.length ||
-        !ids.containsAll(protectedCategoryIds)) {
-      throw const FormatException(
-        'Category presentation must preserve the complete protected category set.',
-      );
+    if (ids.length != categories.length) {
+      throw const FormatException('Category presentation IDs must be unique.');
     }
     if (!categories.any((WalkaCategoryPresentationItem item) => item.visible)) {
       throw const FormatException('At least one WALKA category must remain visible.');

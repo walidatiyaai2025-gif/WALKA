@@ -8,31 +8,12 @@ const Set<String> _allowedRemoteMediaMime = <String>{
 
 const int walkaRemoteMediaMaxBytes = 16 * 1024 * 1024;
 const int walkaRemoteProductGalleryMaxItems = 8;
+const String walkaEmptyMediaRevision =
+    '0000000000000000000000000000000000000000000000000000000000000000';
 
-const Map<String, List<String>> walkaSupportedProductVariants =
-    <String, List<String>>{
-  'drawer-organizer': <String>[
-    'drawer-organizer:white',
-    'drawer-organizer:gray',
-  ],
-  'stainless-steel-bento-lunch-box': <String>[
-    'lunch-box:blue',
-    'lunch-box:pink',
-    'lunch-box:green',
-  ],
-};
-
-const Map<String, ({String purpose, String? categoryId})>
-    walkaSupportedRemoteMediaSlots =
-    <String, ({String purpose, String? categoryId})>{
-  'home.hero': (purpose: 'home', categoryId: null),
-  'home.editorial.small_changes': (purpose: 'editorial', categoryId: null),
-  'category:drawer-organization': (
-    purpose: 'category',
-    categoryId: 'drawer-organization',
-  ),
-  'category:lunch': (purpose: 'category', categoryId: 'lunch'),
-};
+final RegExp _entityIdPattern = RegExp(r'^[a-z0-9][a-z0-9-]*$');
+final RegExp _variantIdPattern =
+    RegExp(r'^[a-z0-9][a-z0-9-]*:[a-z0-9][a-z0-9-]*$');
 
 @immutable
 class WalkaRemoteMediaItem {
@@ -57,7 +38,6 @@ class WalkaRemoteMediaItem {
   final String sha256;
 
   String get cacheKey => 'walka-media-$mediaId-$sha256';
-
   String get expectedEtag => '"sha256-$sha256"';
 
   String get fileExtension => switch (mime) {
@@ -147,6 +127,12 @@ class WalkaRemoteProductMediaPayload {
           ),
         );
 
+  factory WalkaRemoteProductMediaPayload.empty() =>
+      WalkaRemoteProductMediaPayload(
+        revisionToken: walkaEmptyMediaRevision,
+        galleriesByVariant: const <String, List<WalkaRemoteMediaItem>>{},
+      );
+
   final String revisionToken;
   final Map<String, List<WalkaRemoteMediaItem>> galleriesByVariant;
 
@@ -160,13 +146,12 @@ class WalkaRemoteProductMediaPayload {
     }
     final String revisionToken = _requiredSha(data, 'revision_token');
     final List<dynamic> products = _requiredList(data, 'products');
-    if (products.length != walkaSupportedProductVariants.length) {
-      throw const FormatException('Product media identity set is incomplete.');
-    }
 
     final Map<String, List<WalkaRemoteMediaItem>> galleries =
         <String, List<WalkaRemoteMediaItem>>{};
     final Set<String> seenProducts = <String>{};
+    final Set<String> seenVariants = <String>{};
+
     for (final Object? rawProduct in products) {
       if (rawProduct is! Map) {
         throw const FormatException('Product media entry must be an object.');
@@ -174,17 +159,21 @@ class WalkaRemoteProductMediaPayload {
       final Map<String, dynamic> product = Map<String, dynamic>.from(rawProduct);
       final String productId =
           _requiredString(product, 'product_id', maxLength: 96);
-      final List<String>? expectedVariants =
-          walkaSupportedProductVariants[productId];
-      if (expectedVariants == null || !seenProducts.add(productId)) {
-        throw const FormatException('Unknown or duplicate product media identity.');
+      if (!_entityIdPattern.hasMatch(productId) || !seenProducts.add(productId)) {
+        throw const FormatException('Unknown-format or duplicate product media identity.');
       }
 
+      // Validate product-level gallery even though the public runtime resolves
+      // the already-reconciled variant gallery supplied by the backend.
+      _parseMediaItems(
+        _requiredList(product, 'gallery'),
+        maxItems: walkaRemoteProductGalleryMaxItems,
+      );
+
       final List<dynamic> variants = _requiredList(product, 'variants');
-      if (variants.length != expectedVariants.length) {
-        throw FormatException('Variant media identity set is incomplete for $productId.');
+      if (variants.isEmpty) {
+        throw FormatException('Visible product $productId has no visible media variants.');
       }
-      final Set<String> seenVariants = <String>{};
       for (final Object? rawVariant in variants) {
         if (rawVariant is! Map) {
           throw const FormatException('Variant media entry must be an object.');
@@ -192,8 +181,8 @@ class WalkaRemoteProductMediaPayload {
         final Map<String, dynamic> variant = Map<String, dynamic>.from(rawVariant);
         final String variantId =
             _requiredString(variant, 'variant_id', maxLength: 96);
-        if (!expectedVariants.contains(variantId) || !seenVariants.add(variantId)) {
-          throw FormatException('Unknown or duplicate variant media identity: $variantId.');
+        if (!_variantIdPattern.hasMatch(variantId) || !seenVariants.add(variantId)) {
+          throw FormatException('Unknown-format or duplicate variant media identity: $variantId.');
         }
         final String source =
             _requiredString(variant, 'gallery_source', maxLength: 32);
@@ -205,12 +194,6 @@ class WalkaRemoteProductMediaPayload {
           maxItems: walkaRemoteProductGalleryMaxItems,
         );
       }
-      if (!setEquals(seenVariants, expectedVariants.toSet())) {
-        throw FormatException('Variant media identity set mismatch for $productId.');
-      }
-    }
-    if (!setEquals(seenProducts, walkaSupportedProductVariants.keys.toSet())) {
-      throw const FormatException('Product media identity set mismatch.');
     }
 
     return WalkaRemoteProductMediaPayload(
@@ -222,8 +205,10 @@ class WalkaRemoteProductMediaPayload {
   Map<String, dynamic> toCacheJson() => <String, dynamic>{
         'revision_token': revisionToken,
         'galleries_by_variant': galleriesByVariant.map(
-          (String key, List<WalkaRemoteMediaItem> value) =>
-              MapEntry(key, value.map((WalkaRemoteMediaItem item) => item.toJson()).toList()),
+          (String key, List<WalkaRemoteMediaItem> value) => MapEntry(
+            key,
+            value.map((WalkaRemoteMediaItem item) => item.toJson()).toList(),
+          ),
         ),
       };
 
@@ -232,24 +217,20 @@ class WalkaRemoteProductMediaPayload {
   ) {
     final String revisionToken = _requiredSha(json, 'revision_token');
     final Map<String, dynamic> raw = _requiredMap(json, 'galleries_by_variant');
-    if (!setEquals(
-        raw.keys.toSet(),
-        walkaSupportedProductVariants.values
-            .expand((List<String> ids) => ids)
-            .toSet())) {
-      throw const FormatException('Cached product media identity set mismatch.');
+    final Map<String, List<WalkaRemoteMediaItem>> galleries =
+        <String, List<WalkaRemoteMediaItem>>{};
+    for (final MapEntry<String, dynamic> entry in raw.entries) {
+      if (!_variantIdPattern.hasMatch(entry.key)) {
+        throw FormatException('Cached product media variant ID is invalid: ${entry.key}.');
+      }
+      galleries[entry.key] = _parseMediaItems(
+        _asList(entry.value, 'cached gallery'),
+        maxItems: walkaRemoteProductGalleryMaxItems,
+      );
     }
     return WalkaRemoteProductMediaPayload(
       revisionToken: revisionToken,
-      galleriesByVariant: raw.map(
-        (String key, Object? value) => MapEntry(
-          key,
-          _parseMediaItems(
-            _asList(value, 'cached gallery'),
-            maxItems: walkaRemoteProductGalleryMaxItems,
-          ),
-        ),
-      ),
+      galleriesByVariant: galleries,
     );
   }
 }
@@ -268,6 +249,11 @@ class WalkaRemoteSurfaceMediaPayload {
           ),
         );
 
+  factory WalkaRemoteSurfaceMediaPayload.empty() => WalkaRemoteSurfaceMediaPayload(
+        revisionToken: walkaEmptyMediaRevision,
+        itemsBySlot: const <String, List<WalkaRemoteMediaItem>>{},
+      );
+
   final String revisionToken;
   final Map<String, List<WalkaRemoteMediaItem>> itemsBySlot;
 
@@ -279,38 +265,27 @@ class WalkaRemoteSurfaceMediaPayload {
     }
     final String revisionToken = _requiredSha(data, 'revision_token');
     final List<dynamic> slots = _requiredList(data, 'slots');
-    if (slots.length != walkaSupportedRemoteMediaSlots.length) {
-      throw const FormatException('Surface media slot set is incomplete.');
-    }
-
     final Map<String, List<WalkaRemoteMediaItem>> itemsBySlot =
         <String, List<WalkaRemoteMediaItem>>{};
+
     for (final Object? rawSlot in slots) {
       if (rawSlot is! Map) {
         throw const FormatException('Surface media slot must be an object.');
       }
       final Map<String, dynamic> slot = Map<String, dynamic>.from(rawSlot);
       final String slotKey = _requiredString(slot, 'slot_key', maxLength: 96);
-      final ({String purpose, String? categoryId})? definition =
-          walkaSupportedRemoteMediaSlots[slotKey];
-      if (definition == null || itemsBySlot.containsKey(slotKey)) {
-        throw const FormatException('Unknown or duplicate surface media slot.');
+      if (itemsBySlot.containsKey(slotKey)) {
+        throw const FormatException('Duplicate surface media slot.');
       }
-      if (_requiredString(slot, 'purpose', maxLength: 32) != definition.purpose) {
-        throw FormatException('Surface media purpose mismatch for $slotKey.');
-      }
-      final Object? categoryId = slot['category_id'];
-      if (categoryId != definition.categoryId) {
-        throw FormatException('Surface media category identity mismatch for $slotKey.');
-      }
+      _validateSurfaceIdentity(
+        slotKey: slotKey,
+        purpose: _requiredString(slot, 'purpose', maxLength: 32),
+        categoryId: slot['category_id'],
+      );
       itemsBySlot[slotKey] = _parseMediaItems(
         _requiredList(slot, 'items'),
         maxItems: 1,
       );
-    }
-    if (!setEquals(
-        itemsBySlot.keys.toSet(), walkaSupportedRemoteMediaSlots.keys.toSet())) {
-      throw const FormatException('Surface media slot identity set mismatch.');
     }
 
     return WalkaRemoteSurfaceMediaPayload(
@@ -322,30 +297,33 @@ class WalkaRemoteSurfaceMediaPayload {
   Map<String, dynamic> toCacheJson() => <String, dynamic>{
         'revision_token': revisionToken,
         'items_by_slot': itemsBySlot.map(
-          (String key, List<WalkaRemoteMediaItem> value) =>
-              MapEntry(key, value.map((WalkaRemoteMediaItem item) => item.toJson()).toList()),
+          (String key, List<WalkaRemoteMediaItem> value) => MapEntry(
+            key,
+            value.map((WalkaRemoteMediaItem item) => item.toJson()).toList(),
+          ),
         ),
       };
 
   factory WalkaRemoteSurfaceMediaPayload.fromCacheJson(Map<String, dynamic> json) {
     final String revisionToken = _requiredSha(json, 'revision_token');
     final Map<String, dynamic> raw = _requiredMap(json, 'items_by_slot');
-    if (!setEquals(raw.keys.toSet(), walkaSupportedRemoteMediaSlots.keys.toSet())) {
-      throw const FormatException('Cached surface media slot set mismatch.');
+    final Map<String, List<WalkaRemoteMediaItem>> items =
+        <String, List<WalkaRemoteMediaItem>>{};
+    for (final MapEntry<String, dynamic> entry in raw.entries) {
+      _validateCachedSurfaceKey(entry.key);
+      items[entry.key] = _parseMediaItems(
+        _asList(entry.value, 'cached slot'),
+        maxItems: 1,
+      );
     }
     return WalkaRemoteSurfaceMediaPayload(
       revisionToken: revisionToken,
-      itemsBySlot: raw.map(
-        (String key, Object? value) => MapEntry(
-          key,
-          _parseMediaItems(_asList(value, 'cached slot'), maxItems: 1),
-        ),
-      ),
+      itemsBySlot: items,
     );
   }
 }
 
-enum WalkaRemoteMediaSource { remote, cache, bundled }
+enum WalkaRemoteMediaSource { remote, cache, unavailable }
 
 @immutable
 class WalkaRemoteMediaSnapshot {
@@ -361,6 +339,14 @@ class WalkaRemoteMediaSnapshot {
   final WalkaRemoteMediaSource source;
   final DateTime fetchedAt;
 
+  factory WalkaRemoteMediaSnapshot.unavailable({DateTime? fetchedAt}) =>
+      WalkaRemoteMediaSnapshot(
+        products: WalkaRemoteProductMediaPayload.empty(),
+        surfaces: WalkaRemoteSurfaceMediaPayload.empty(),
+        source: WalkaRemoteMediaSource.unavailable,
+        fetchedAt: (fetchedAt ?? DateTime.now()).toUtc(),
+      );
+
   List<WalkaRemoteMediaItem> galleryForVariant(String variantId) =>
       products.galleriesByVariant[variantId] ?? const <WalkaRemoteMediaItem>[];
 
@@ -374,6 +360,44 @@ class WalkaRemoteMediaSnapshot {
         surfaces.itemsBySlot[slotKey] ?? const <WalkaRemoteMediaItem>[];
     return items.isEmpty ? null : items.first;
   }
+}
+
+void _validateSurfaceIdentity({
+  required String slotKey,
+  required String purpose,
+  required Object? categoryId,
+}) {
+  if (slotKey == 'home.hero') {
+    if (purpose != 'home' || categoryId != null) {
+      throw const FormatException('Home Hero media identity is invalid.');
+    }
+    return;
+  }
+  if (slotKey == 'home.editorial.small_changes') {
+    if (purpose != 'editorial' || categoryId != null) {
+      throw const FormatException('Home editorial media identity is invalid.');
+    }
+    return;
+  }
+  if (slotKey.startsWith('category:')) {
+    final String id = slotKey.substring('category:'.length);
+    if (!_entityIdPattern.hasMatch(id) || purpose != 'category' || categoryId != id) {
+      throw FormatException('Dynamic category media identity is invalid: $slotKey.');
+    }
+    return;
+  }
+  throw FormatException('Unsupported surface media slot: $slotKey.');
+}
+
+void _validateCachedSurfaceKey(String slotKey) {
+  if (slotKey == 'home.hero' || slotKey == 'home.editorial.small_changes') {
+    return;
+  }
+  if (slotKey.startsWith('category:') &&
+      _entityIdPattern.hasMatch(slotKey.substring('category:'.length))) {
+    return;
+  }
+  throw FormatException('Cached surface media slot is invalid: $slotKey.');
 }
 
 void _validateEnvelope(Map<String, dynamic> root) {

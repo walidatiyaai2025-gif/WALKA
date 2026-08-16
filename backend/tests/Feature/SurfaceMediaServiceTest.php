@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Enums\MediaAssetLifecycle;
 use App\Enums\MediaAssetPurpose;
 use App\Enums\MediaDerivativeKind;
+use App\Models\CatalogCategory;
 use App\Models\MediaAsset;
 use App\Models\Product;
 use App\Models\SurfaceMediaItem;
@@ -34,7 +35,7 @@ final class SurfaceMediaServiceTest extends TestCase
         $this->actor = hash('sha256', 'cms-033-surface-service-test');
     }
 
-    public function test_compiled_slot_registry_is_fixed_and_purpose_bound(): void
+    public function test_structural_slots_plus_dashboard_category_slots_are_purpose_bound(): void
     {
         $definitions = SurfaceMediaService::slotDefinitions();
 
@@ -48,6 +49,15 @@ final class SurfaceMediaServiceTest extends TestCase
         $this->assertSame(MediaAssetPurpose::Editorial, $definitions['home.editorial.small_changes']['purpose']);
         $this->assertSame(MediaAssetPurpose::Category, $definitions['category:lunch']['purpose']);
         $this->assertSame(1, $definitions['home.hero']['max_items']);
+
+        CatalogCategory::query()->create([
+            'id' => 'travel',
+            'name' => 'Travel',
+            'sort_order' => 50,
+            'is_visible' => true,
+            'revision' => 1,
+        ]);
+        $this->assertArrayHasKey('category:travel', SurfaceMediaService::slotDefinitions());
 
         $this->expectException(ValidationException::class);
         $this->surfaceMedia->definition('home.remote-widget-from-server');
@@ -190,16 +200,32 @@ final class SurfaceMediaServiceTest extends TestCase
         }
     }
 
-    public function test_category_slot_revalidates_protected_catalog_identity(): void
+    public function test_category_slot_is_owned_by_category_entity_and_publication_follows_catalog_eligibility(): void
     {
         $asset = $this->admittedAsset('category-lunch', MediaAssetPurpose::Category);
-        Product::query()->where('category', 'lunch')->delete();
 
-        $this->expectException(ValidationException::class);
+        Product::query()->where('category_id', 'lunch')->delete();
+
         $this->surfaceMedia->replace(
             'category:lunch',
             [$asset->id],
             SurfaceMediaService::fingerprint([]),
+            $this->actor,
+        );
+        $this->assertDatabaseHas('surface_media_items', [
+            'slot_key' => 'category:lunch',
+            'media_asset_id' => $asset->id,
+        ]);
+        $this->assertNull(
+            collect($this->surfaceMedia->publicPayload())->firstWhere('slot_key', 'category:lunch'),
+        );
+
+        CatalogCategory::query()->whereKey('lunch')->delete();
+        $this->expectException(ValidationException::class);
+        $this->surfaceMedia->replace(
+            'category:lunch',
+            [$asset->id],
+            SurfaceMediaService::fingerprint([$asset->id]),
             $this->actor,
         );
     }

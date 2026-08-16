@@ -11,31 +11,31 @@ import 'package:walka/features/storefront/categories_cms_v124.dart';
 import 'package:walka/features/storefront/discovery_reference_v123.dart';
 
 void main() {
-  test('category parser preserves protected IDs while allowing order/copy/visibility', () {
+  test('category parser accepts arbitrary safe overlay identities and copy', () {
     final WalkaCategoryPresentationContent content =
         WalkaCategoryPresentationContent.fromJson(<String, dynamic>{
       'categories': <Map<String, dynamic>>[
         <String, dynamic>{
-          'id': 'drawer-organization',
-          'display_name': 'Drawer Edit',
-          'description': 'Calm drawer organization.',
+          'id': 'workspace',
+          'display_name': 'Workspace Edit',
+          'description': 'Calm workspace organization.',
           'visible': true,
         },
         <String, dynamic>{
-          'id': 'lunch',
-          'display_name': 'Lunch Edit',
-          'description': 'Refined lunch organization.',
+          'id': 'travel',
+          'display_name': 'Travel Edit',
+          'description': 'Refined travel organization.',
           'visible': false,
         },
       ],
     });
 
-    expect(content.categories.first.id, 'drawer-organization');
-    expect(content.categories.first.displayName, 'Drawer Edit');
-    expect(content.visibleCategories.single.id, 'drawer-organization');
+    expect(content.categories.first.id, 'workspace');
+    expect(content.categories.first.displayName, 'Workspace Edit');
+    expect(content.visibleCategories.single.id, 'workspace');
   });
 
-  test('category parser rejects missing, unknown, duplicate and all-hidden identities', () {
+  test('category parser rejects malformed, duplicate and all-hidden identities', () {
     Map<String, dynamic> entry(String id, {bool visible = true}) =>
         <String, dynamic>{
           'id': id,
@@ -46,15 +46,14 @@ void main() {
 
     expect(
       () => WalkaCategoryPresentationContent.fromJson(<String, dynamic>{
-        'categories': <Map<String, dynamic>>[entry('lunch')],
+        'categories': <Map<String, dynamic>>[],
       }),
       throwsFormatException,
     );
     expect(
       () => WalkaCategoryPresentationContent.fromJson(<String, dynamic>{
         'categories': <Map<String, dynamic>>[
-          entry('lunch'),
-          entry('unknown-category'),
+          entry('invalid category id'),
         ],
       }),
       throwsFormatException,
@@ -62,8 +61,8 @@ void main() {
     expect(
       () => WalkaCategoryPresentationContent.fromJson(<String, dynamic>{
         'categories': <Map<String, dynamic>>[
-          entry('lunch'),
-          entry('lunch'),
+          entry('travel'),
+          entry('travel'),
         ],
       }),
       throwsFormatException,
@@ -71,8 +70,8 @@ void main() {
     expect(
       () => WalkaCategoryPresentationContent.fromJson(<String, dynamic>{
         'categories': <Map<String, dynamic>>[
-          entry('lunch', visible: false),
-          entry('drawer-organization', visible: false),
+          entry('travel', visible: false),
+          entry('workspace', visible: false),
         ],
       }),
       throwsFormatException,
@@ -97,7 +96,7 @@ void main() {
     expect(cache.value?.revision, 7);
   });
 
-  test('offline uses category cache and first run falls back to bundled presentation', () async {
+  test('offline uses category cache and first run has no compiled overlay identities', () async {
     final _MemoryCategoryCache cache = _MemoryCategoryCache(
       value: _snapshot(revision: 4, content: _customPresentation()),
     );
@@ -116,8 +115,8 @@ void main() {
       remoteLoader: () async => throw StateError('offline'),
     ).load();
     expect(bundled.source, WalkaContentSource.bundled);
-    expect(bundled.content.categories.length, 2);
-    expect(bundled.content.categories.first.id, 'lunch');
+    expect(bundled.content.categories, isEmpty);
+    expect(bundled.content.visibleCategories, isEmpty);
   });
 
   test('older or divergent same-revision category payload cannot replace LKG', () async {

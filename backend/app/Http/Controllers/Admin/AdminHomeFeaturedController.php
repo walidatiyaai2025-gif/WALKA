@@ -5,12 +5,15 @@ namespace App\Http\Controllers\Admin;
 use App\Exceptions\ContentRevisionConflictException;
 use App\Http\Controllers\Controller;
 use App\Models\ContentEntry;
+use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Services\Content\HomeFeaturedCatalogValidator;
 use App\Services\Content\HomeFeaturedContentDefinition;
 use App\Services\ContentRevisionService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 final class AdminHomeFeaturedController extends Controller
@@ -29,7 +32,7 @@ final class AdminHomeFeaturedController extends Controller
         if ($entry === null) {
             $payload = $this->catalogValidator->validate(
                 HomeFeaturedContentDefinition::validateAndNormalize(
-                    HomeFeaturedContentDefinition::defaultPayload(),
+                    $this->dashboardBootstrapPayload(),
                 ),
             );
             $entry = $this->content->saveDraft(
@@ -55,11 +58,7 @@ final class AdminHomeFeaturedController extends Controller
             'published' => $entry->published_payload === null
                 ? null
                 : HomeFeaturedContentDefinition::validateAndNormalize($entry->published_payload),
-            'variants' => ProductVariant::query()
-                ->with('product:id,name')
-                ->orderBy('product_id')
-                ->orderBy('sort_order')
-                ->get(),
+            'variants' => $this->visibleVariants(),
         ]);
     }
 
@@ -123,7 +122,7 @@ final class AdminHomeFeaturedController extends Controller
 
         return redirect()
             ->route('admin.content.home.featured.edit')
-            ->with('status', 'Featured merchandising published. Compatible clients can use the new approved stable variant membership without a new app build.');
+            ->with('status', 'Featured merchandising published. Compatible clients can use the new Dashboard-selected variants without a new app build.');
     }
 
     public function restore(Request $request): RedirectResponse
@@ -151,6 +150,60 @@ final class AdminHomeFeaturedController extends Controller
         return redirect()
             ->route('admin.content.home.featured.edit')
             ->with('status', 'Historical featured membership restored into a new private draft. Review it before publishing.');
+    }
+
+    /**
+     * Choose an initial owner-editable Home selection from current Dashboard
+     * truth only: the first visible variant from the first two visible product
+     * families, with the first selected variant as the editorial default.
+     *
+     * @return array{collection_variant_ids:list<string>,editorial_variant_id:string}
+     */
+    private function dashboardBootstrapPayload(): array
+    {
+        $products = $this->visibleProducts();
+        if ($products->count() < 2) {
+            throw ValidationException::withMessages([
+                'collection_variant_ids' => [
+                    'Home Featured requires at least two visible Dashboard product families with visible variants.',
+                ],
+            ]);
+        }
+
+        $collection = $products
+            ->take(2)
+            ->map(fn (Product $product): string => (string) $product->variants->firstOrFail()->id)
+            ->values()
+            ->all();
+
+        return [
+            'collection_variant_ids' => $collection,
+            'editorial_variant_id' => $collection[0],
+        ];
+    }
+
+    /** @return Collection<int, Product> */
+    private function visibleProducts(): Collection
+    {
+        return Product::query()
+            ->where('is_visible', true)
+            ->whereHas('categoryEntity', fn ($query) => $query->where('is_visible', true))
+            ->whereHas('variants', fn ($query) => $query->where('is_visible', true))
+            ->with(['variants' => fn ($query) => $query
+                ->where('is_visible', true)
+                ->orderBy('sort_order')
+                ->orderBy('id')])
+            ->orderBy('sort_order')
+            ->orderBy('id')
+            ->get();
+    }
+
+    /** @return Collection<int, ProductVariant> */
+    private function visibleVariants(): Collection
+    {
+        return $this->visibleProducts()
+            ->flatMap(fn (Product $product): Collection => $product->variants)
+            ->values();
     }
 
     private function entry(): ContentEntry

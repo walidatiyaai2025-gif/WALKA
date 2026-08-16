@@ -26,7 +26,6 @@ class WalkaResolvedSurfaceMedia extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (!walkaSupportedRemoteMediaSlots.containsKey(slotKey)) return fallback;
     final WalkaRemoteMediaItem? item =
         WalkaRemoteMediaScope.maybeOf(context)?.firstForSlot(slotKey);
     if (item == null) return fallback;

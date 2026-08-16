@@ -2,7 +2,7 @@
 
 namespace App\Services\Content;
 
-use App\Models\Product;
+use App\Models\CatalogCategory;
 use App\Models\ProductVariant;
 use Illuminate\Validation\ValidationException;
 
@@ -22,49 +22,47 @@ final class SearchPresentationCatalogValidator
      */
     public function validate(array $payload): array
     {
-        $releasedVariantIds = ProductVariant::query()
+        $visibleVariantIds = ProductVariant::query()
+            ->where('is_visible', true)
+            ->whereHas('product', function ($query): void {
+                $query->where('is_visible', true)
+                    ->whereHas('categoryEntity', fn ($category) => $category->where('is_visible', true));
+            })
             ->pluck('id')
-            ->map(fn (string $id): string => $id)
-            ->sort()
-            ->values()
             ->all();
 
-        $configuredVariantIds = collect($payload['featured_variant_ids'])
-            ->sort()
-            ->values()
-            ->all();
-
-        if ($configuredVariantIds !== $releasedVariantIds) {
+        $unknownVariants = array_values(array_diff(
+            $payload['featured_variant_ids'],
+            $visibleVariantIds,
+        ));
+        if ($unknownVariants !== []) {
             throw ValidationException::withMessages([
-                'featured_variant_ids' => [
-                    'Search merchandising must contain every released variant exactly once; ordering may change but catalog membership may not.',
-                ],
+                'featured_variant_ids' => [sprintf(
+                    'Search merchandising contains variants that are not visible in the Dashboard catalog: %s.',
+                    implode(', ', $unknownVariants),
+                )],
             ]);
         }
 
-        $releasedCategoryIds = Product::query()
-            ->pluck('category')
-            ->filter(fn (mixed $category): bool => is_string($category) && $category !== '')
-            ->unique()
-            ->sort()
-            ->values()
-            ->all();
-
-        $expectedFilterIds = collect(['all', ...$releasedCategoryIds])
-            ->sort()
-            ->values()
-            ->all();
-        $configuredFilterIds = collect($payload['filter_labels'])
+        $visibleCategoryIds = CatalogCategory::query()
+            ->where('is_visible', true)
             ->pluck('id')
-            ->sort()
-            ->values()
             ->all();
-
-        if ($configuredFilterIds !== $expectedFilterIds) {
+        $allowedFilterIds = ['all', ...$visibleCategoryIds];
+        $configuredFilterIds = array_column($payload['filter_labels'], 'id');
+        $unknownFilters = array_values(array_diff($configuredFilterIds, $allowedFilterIds));
+        if ($unknownFilters !== []) {
             throw ValidationException::withMessages([
-                'filter_labels' => [
-                    'Search filter labels must cover only the current protected catalog categories plus the All filter.',
-                ],
+                'filter_labels' => [sprintf(
+                    'Search filter labels contain categories that are not visible in the Dashboard catalog: %s.',
+                    implode(', ', $unknownFilters),
+                )],
+            ]);
+        }
+
+        if (! in_array('all', $configuredFilterIds, true)) {
+            throw ValidationException::withMessages([
+                'filter_labels' => ['Search presentation must include the stable All filter.'],
             ]);
         }
 

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\CatalogCategory;
 use App\Models\ContentEntry;
 use Database\Seeders\WalkaCatalogSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -25,24 +26,28 @@ final class AdminCategoryPresentationControllerTest extends TestCase
         ];
     }
 
-    public function test_editor_is_protected_and_bootstraps_released_category_order(): void
+    public function test_editor_is_protected_and_bootstraps_current_dashboard_category_order(): void
     {
         $this->get('/admin/content/categories')->assertRedirect(route('admin.login'));
 
         $this->withSession($this->session)
             ->get(route('admin.content.categories.edit'))
             ->assertOk()
-            ->assertSee('Categories')
-            ->assertSee('drawer-organization')
-            ->assertSee('lunch');
+            ->assertSee('Categories');
 
         $entry = ContentEntry::query()
             ->where('content_key', 'categories.presentation')
             ->firstOrFail();
+        $expectedIds = CatalogCategory::query()
+            ->where('is_visible', true)
+            ->orderBy('sort_order')
+            ->orderBy('id')
+            ->pluck('id')
+            ->all();
+
         $this->assertSame(1, $entry->revision);
         $this->assertNull($entry->published_revision);
-        $this->assertSame('lunch', $entry->draft_payload['categories'][0]['id']);
-        $this->assertSame('drawer-organization', $entry->draft_payload['categories'][1]['id']);
+        $this->assertSame($expectedIds, array_column($entry->draft_payload['categories'], 'id'));
     }
 
     public function test_owner_can_reorder_rename_hide_and_publish_without_changing_membership(): void

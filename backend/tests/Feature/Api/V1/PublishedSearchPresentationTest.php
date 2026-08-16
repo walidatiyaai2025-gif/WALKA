@@ -2,6 +2,8 @@
 
 namespace Tests\Feature\Api\V1;
 
+use App\Models\CatalogCategory;
+use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Services\Content\SearchPresentationContentDefinition;
 use App\Services\ContentRevisionService;
@@ -31,7 +33,7 @@ final class PublishedSearchPresentationTest extends TestCase
         $this->service()->saveDraft(
             SearchPresentationContentDefinition::KEY,
             SearchPresentationContentDefinition::TYPE,
-            SearchPresentationContentDefinition::defaultPayload(),
+            $this->currentPayload(),
             0,
             $this->actor,
         );
@@ -39,9 +41,9 @@ final class PublishedSearchPresentationTest extends TestCase
         $this->getJson('/api/v1/content/search')->assertNotFound();
     }
 
-    public function test_public_search_is_versioned_allowlisted_and_complete(): void
+    public function test_public_search_is_versioned_allowlisted_and_catalog_driven(): void
     {
-        $payload = SearchPresentationContentDefinition::defaultPayload();
+        $payload = $this->currentPayload();
         $payload['heading'] = 'Find WALKA';
         $payload['internal_note'] = 'never-public';
         $payload['target_url'] = 'https://example.invalid';
@@ -61,9 +63,10 @@ final class PublishedSearchPresentationTest extends TestCase
             ->assertJsonPath('data.key', 'search.presentation')
             ->assertJsonPath('data.schema_version', 1)
             ->assertJsonPath('data.revision', 2)
-            ->assertJsonPath('data.payload.heading', 'Find WALKA')
-            ->assertJsonCount(5, 'data.payload.featured_variant_ids')
-            ->assertJsonCount(3, 'data.payload.filter_labels');
+            ->assertJsonPath('data.payload.heading', 'Find WALKA');
+
+        $this->assertCount(count($payload['featured_variant_ids']), $response->json('data.payload.featured_variant_ids'));
+        $this->assertCount(count($payload['filter_labels']), $response->json('data.payload.filter_labels'));
 
         $raw = $response->getContent();
         $this->assertStringNotContainsString('internal_note', $raw);
@@ -79,21 +82,62 @@ final class PublishedSearchPresentationTest extends TestCase
 
     public function test_delivery_fails_closed_if_published_merchandising_no_longer_matches_catalog(): void
     {
+        $payload = $this->currentPayload();
         $service = $this->service();
         $service->saveDraft(
             SearchPresentationContentDefinition::KEY,
             SearchPresentationContentDefinition::TYPE,
-            SearchPresentationContentDefinition::defaultPayload(),
+            $payload,
             0,
             $this->actor,
         );
         $service->publish(SearchPresentationContentDefinition::KEY, 1, $this->actor);
 
-        ProductVariant::query()->where('id', 'lunch-box:green')->delete();
+        ProductVariant::query()->whereKey($payload['featured_variant_ids'][0])->delete();
 
         $this->getJson('/api/v1/content/search')
             ->assertStatus(503)
             ->assertJsonPath('error.code', 'content_invalid');
+    }
+
+    /** @return array<string, mixed> */
+    private function currentPayload(): array
+    {
+        $products = Product::query()
+            ->where('is_visible', true)
+            ->whereHas('categoryEntity', fn ($query) => $query->where('is_visible', true))
+            ->whereHas('variants', fn ($query) => $query->where('is_visible', true))
+            ->with(['variants' => fn ($query) => $query
+                ->where('is_visible', true)
+                ->orderBy('sort_order')
+                ->orderBy('id')])
+            ->orderBy('sort_order')
+            ->orderBy('id')
+            ->get();
+
+        $categories = CatalogCategory::query()
+            ->where('is_visible', true)
+            ->whereHas('products', fn ($query) => $query
+                ->where('is_visible', true)
+                ->whereHas('variants', fn ($variants) => $variants->where('is_visible', true)))
+            ->orderBy('sort_order')
+            ->orderBy('id')
+            ->get(['id', 'name']);
+
+        return [
+            ...SearchPresentationContentDefinition::defaultCopy(),
+            'featured_variant_ids' => $products
+                ->flatMap(fn (Product $product) => $product->variants->pluck('id'))
+                ->values()
+                ->all(),
+            'filter_labels' => [
+                ['id' => 'all', 'label' => 'All'],
+                ...$categories->map(fn (CatalogCategory $category): array => [
+                    'id' => $category->id,
+                    'label' => $category->name,
+                ])->all(),
+            ],
+        ];
     }
 
     private function service(): ContentRevisionService

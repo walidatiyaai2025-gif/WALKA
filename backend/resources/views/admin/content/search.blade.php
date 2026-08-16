@@ -13,7 +13,7 @@
     <div>
         <p class="eyebrow">SEARCH / DISCOVERY</p>
         <h1>Search presentation</h1>
-        <p class="lead">Control safe Search copy, filter labels and the default featured ordering. Released catalog membership, query matching and product facts remain compiled/protected.</p>
+        <p class="lead">Control Search copy, filter labels and default merchandising order. Product, Variant and Category membership comes from the current Dashboard Catalog automatically.</p>
     </div>
     <a class="btn secondary" href="{{ route('admin.content.index') }}">← Mobile content</a>
 </div>
@@ -21,7 +21,7 @@
 <div class="grid metrics">
     <div class="card metric"><div class="metric-label">Stable key</div><div class="metric-value" style="font-size:18px">search.presentation</div><div class="metric-note">Typed schema v1</div></div>
     <div class="card metric"><div class="metric-label">Draft revision</div><div class="metric-value">{{ $entry->revision }}</div><div class="metric-note">Concurrency protected</div></div>
-    <div class="card metric"><div class="metric-label">Released variants</div><div class="metric-value">{{ count($draft['featured_variant_ids']) }}</div><div class="metric-note">Complete set required</div></div>
+    <div class="card metric"><div class="metric-label">Visible variants</div><div class="metric-value">{{ count($draft['featured_variant_ids']) }}</div><div class="metric-note">Generated from Dashboard Catalog</div></div>
     <div class="card metric"><div class="metric-label">Live revision</div><div class="metric-value">{{ $entry->published_revision ?? '—' }}</div><div class="metric-note">{{ ! $hasPublished ? 'Not published' : ($hasChanges ? 'Draft differs' : 'Current') }}</div></div>
 </div>
 
@@ -59,16 +59,16 @@
 
             <div class="section-space">
                 <p class="eyebrow">DEFAULT FEATURED ORDER</p>
-                <p class="muted">Every released variant must remain present exactly once. This only changes the default Featured order; query results stay complete.</p>
+                <p class="muted">Current visible Dashboard variants are offered automatically and newly-created variants append without a code change. This order affects default merchandising only; Search matching still uses the complete visible Catalog.</p>
                 @foreach ($draft['featured_variant_ids'] as $index => $variantId)
                     @php($variant = $variants[$variantId] ?? null)
                     <div class="card" style="background:#f8fafb;border-color:#dbe4ea;margin-top:12px">
                         <input type="hidden" name="variants[{{ $index }}][id]" value="{{ $variantId }}">
                         <div class="status-row">
                             <div>
-                                <small>LOCKED VARIANT ID</small>
+                                <small>DASHBOARD VARIANT ID</small>
                                 <strong><code>{{ $variantId }}</code></strong>
-                                <div class="muted">{{ $variant?->product?->name ?? 'Released product' }} · {{ $variant?->color ?? '' }}</div>
+                                <div class="muted">{{ $variant?->product?->name ?? 'Dashboard product' }} · {{ $variant?->color ?? '' }}</div>
                             </div>
                             <div class="field" style="min-width:120px">
                                 <label for="position_{{ $index }}">Position</label>
@@ -85,11 +85,11 @@
 
             <div class="section-space">
                 <p class="eyebrow">FILTER LABELS</p>
-                <p class="muted">Filter IDs remain locked to the protected catalog; only their customer-facing labels can change.</p>
+                <p class="muted">Category filters are generated from the current visible Dashboard Categories. This editor changes their customer-facing labels; it does not invent or delete Catalog identities.</p>
                 @foreach ($draft['filter_labels'] as $index => $filter)
                     <div class="grid two" style="margin-top:12px">
                         <div class="field">
-                            <label>Locked filter ID</label>
+                            <label>Dashboard filter ID</label>
                             <input value="{{ $filter['id'] }}" disabled>
                             <input type="hidden" name="filter_labels[{{ $index }}][id]" value="{{ $filter['id'] }}">
                         </div>
@@ -130,8 +130,8 @@
             </ol>
         </div>
         <div class="locked section-space">
-            <small>Protected boundary</small>
-            <strong>Search matching, complete released catalog membership, Product Master facts, ASIN/Pantone identity and Amazon handoff are not editable here.</strong>
+            <small>Governed boundary</small>
+            <strong>Search matching and Product/Variant/Category facts are governed by Dashboard Catalog. ASIN, Pantone and Amazon routing remain edited at their governed Catalog/commerce sources, not in Search presentation.</strong>
         </div>
         <form method="post" action="{{ route('admin.content.search.publish') }}" class="section-space">
             @csrf

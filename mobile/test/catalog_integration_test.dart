@@ -66,8 +66,8 @@ void main() {
     await tester.pump();
     await tester.enterText(find.byType(TextField), 'emerald');
     await tester.pump();
-    expect(find.text('1 product'), findsOneWidget);
     expect(find.text('Desk Kit Pro'), findsOneWidget);
+    expect(find.text('Travel Mug'), findsNothing);
     await tester.tap(find.text('Desk Kit Pro'));
     await tester.pumpAndSettle();
     expect(find.byType(WalkaDynamicProductDetailV140), findsOneWidget);
@@ -75,7 +75,7 @@ void main() {
 
     await tester.tap(find.widgetWithText(ChoiceChip, 'Emerald'));
     await tester.pump();
-    expect(find.text('ASIN B012345672'), findsOneWidget);
+    expect(find.text('B012345672'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
