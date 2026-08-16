@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\AdminCatalogController;
 use App\Http\Controllers\Admin\AdminCategoryPresentationController;
 use App\Http\Controllers\Admin\AdminContentController;
 use App\Http\Controllers\Admin\AdminDashboardController;
@@ -32,35 +33,35 @@ Route::prefix('admin')
                 ->middleware('walka.dashboard.can:dashboard.view')
                 ->name('dashboard');
 
-            Route::get('/catalog', [AdminDashboardController::class, 'catalog'])
+            Route::get('/catalog', [AdminCatalogController::class, 'index'])
                 ->middleware('walka.dashboard.can:catalog.view')
                 ->name('catalog');
-            Route::post('/catalog/categories', [AdminDashboardController::class, 'createCategory'])
+            Route::post('/catalog/categories', [AdminCatalogController::class, 'createCategory'])
                 ->middleware('walka.dashboard.can:catalog.write')
                 ->name('catalog.categories.store');
-            Route::patch('/catalog/categories/{category}', [AdminDashboardController::class, 'updateCategory'])
+            Route::patch('/catalog/categories/{category}', [AdminCatalogController::class, 'updateCategory'])
                 ->middleware('walka.dashboard.can:catalog.write')
                 ->name('catalog.categories.update');
-            Route::delete('/catalog/categories/{category}', [AdminDashboardController::class, 'deleteCategory'])
+            Route::delete('/catalog/categories/{category}', [AdminCatalogController::class, 'deleteCategory'])
                 ->middleware('walka.dashboard.can:catalog.write')
                 ->name('catalog.categories.destroy');
-            Route::post('/catalog/products', [AdminDashboardController::class, 'createProduct'])
+            Route::post('/catalog/products', [AdminCatalogController::class, 'createProduct'])
                 ->middleware('walka.dashboard.can:catalog.write')
                 ->name('catalog.products.store');
-            Route::patch('/catalog/products/{product}', [AdminDashboardController::class, 'updateProduct'])
+            Route::patch('/catalog/products/{product}', [AdminCatalogController::class, 'updateProduct'])
                 ->middleware('walka.dashboard.can:catalog.write')
                 ->name('catalog.products.update');
-            Route::delete('/catalog/products/{product}', [AdminDashboardController::class, 'deleteProduct'])
+            Route::delete('/catalog/products/{product}', [AdminCatalogController::class, 'deleteProduct'])
                 ->middleware('walka.dashboard.can:catalog.write')
                 ->name('catalog.products.destroy');
-            Route::post('/catalog/products/{product}/variants', [AdminDashboardController::class, 'createVariant'])
+            Route::post('/catalog/products/{product}/variants', [AdminCatalogController::class, 'createVariant'])
                 ->middleware('walka.dashboard.can:catalog.write')
                 ->name('catalog.variants.store');
-            Route::patch('/catalog/variants/{variant}', [AdminDashboardController::class, 'updateVariant'])
+            Route::patch('/catalog/variants/{variant}', [AdminCatalogController::class, 'updateVariant'])
                 ->middleware('walka.dashboard.can:catalog.write')
                 ->where('variant', '.*')
                 ->name('catalog.variants.update');
-            Route::delete('/catalog/variants/{variant}', [AdminDashboardController::class, 'deleteVariant'])
+            Route::delete('/catalog/variants/{variant}', [AdminCatalogController::class, 'deleteVariant'])
                 ->middleware('walka.dashboard.can:catalog.write')
                 ->where('variant', '.*')
                 ->name('catalog.variants.destroy');
