@@ -75,7 +75,7 @@ void main() {
 
     await tester.tap(find.widgetWithText(ChoiceChip, 'Emerald'));
     await tester.pump();
-    expect(find.text('ASIN B012345672'), findsOneWidget);
+    expect(find.text('B012345672'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
