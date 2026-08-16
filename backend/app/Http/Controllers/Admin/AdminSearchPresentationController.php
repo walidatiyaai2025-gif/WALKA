@@ -213,13 +213,13 @@ final class AdminSearchPresentationController extends Controller
             ->filter(fn (mixed $id): bool => is_string($id) && $variantIds->contains($id))
             ->values();
         foreach ($variantIds as $variantId) {
-            if (! $existingVariantIds->contains($variantId)) {
+            if ($existingVariantIds->contains($variantId) === false) {
                 $existingVariantIds->push($variantId);
             }
         }
 
         $categories = $this->visibleCategories();
-        $allowedFilterIds = collect(['all', ...$categories->pluck('id')->all()]);
+        $allowedFilterIds = collect(array_merge(['all'], $categories->pluck('id')->all()));
         $existingFilters = collect($existing['filter_labels'] ?? [])
             ->filter(fn (mixed $filter): bool => is_array($filter)
                 && is_string($filter['id'] ?? null)
@@ -240,12 +240,14 @@ final class AdminSearchPresentationController extends Controller
             ]);
         }
 
-        return [
-            ...SearchPresentationContentDefinition::defaultCopy(),
-            ...array_intersect_key($existing, SearchPresentationContentDefinition::defaultCopy()),
-            'featured_variant_ids' => $existingVariantIds->all(),
-            'filter_labels' => $filters->all(),
-        ];
+        return array_merge(
+            SearchPresentationContentDefinition::defaultCopy(),
+            array_intersect_key($existing, SearchPresentationContentDefinition::defaultCopy()),
+            [
+                'featured_variant_ids' => $existingVariantIds->all(),
+                'filter_labels' => $filters->all(),
+            ],
+        );
     }
 
     /**
