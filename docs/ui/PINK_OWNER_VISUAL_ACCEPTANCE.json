@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "variantId": "lunch-box:pink",
+  "candidateSha256": "755ead90e98b51f2fd732c267c01671ffa776d59624565b7521bd4c4ac3f1776",
+  "status": "PENDING",
+  "ownerAccepted": false,
+  "decisionActor": null,
+  "decidedAt": null,
+  "requiredReviewStages": [
+    "surfaceWhite",
+    "surfaceIvory",
+    "surfaceNavy",
+    "downscale96",
+    "downscale160",
+    "downscale240",
+    "downscale384",
+    "geometryPreserved",
+    "bakedUiExcluded",
+    "referenceVsCandidate"
+  ],
+  "review": {
+    "surfaceWhite": "PENDING",
+    "surfaceIvory": "PENDING",
+    "surfaceNavy": "PENDING",
+    "downscale96": "PENDING",
+    "downscale160": "PENDING",
+    "downscale240": "PENDING",
+    "downscale384": "PENDING",
+    "geometryPreserved": "PENDING",
+    "bakedUiExcluded": "PENDING",
+    "referenceVsCandidate": "PENDING"
+  },
+  "acceptanceRule": "Only an explicit owner ACCEPTED decision for this exact candidate SHA may authorize a later provenance/runtime admission change. CI automation may verify evidence but cannot set, infer, or substitute for owner acceptance.",
+  "stablePublicationAuthorized": false
+}
