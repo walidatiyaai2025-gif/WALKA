@@ -19,6 +19,7 @@ final class ProductVariant extends Model
         'pantone',
         'asin',
         'sort_order',
+        'is_visible',
         'revision',
     ];
 
@@ -26,6 +27,7 @@ final class ProductVariant extends Model
     {
         return [
             'sort_order' => 'integer',
+            'is_visible' => 'boolean',
             'revision' => 'integer',
         ];
     }
