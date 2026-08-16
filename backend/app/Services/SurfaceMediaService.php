@@ -123,7 +123,17 @@ final class SurfaceMediaService
      */
     public function publicPayload(): array
     {
+        // All definitions remain valid for Admin custody and stored-assignment
+        // integrity. Public delivery filters category slots by current Dashboard
+        // visibility so hiding a category hides its media atomically with the
+        // catalog without deleting the assignment/history.
         $definitions = self::slotDefinitions();
+        $visibleCategoryIds = CatalogCategory::query()
+            ->where('is_visible', true)
+            ->pluck('id')
+            ->all();
+        $visibleCategorySet = array_fill_keys($visibleCategoryIds, true);
+
         $itemsBySlot = SurfaceMediaItem::query()
             ->with('mediaAsset.canonicalDerivative')
             ->orderBy('position')
@@ -142,12 +152,16 @@ final class SurfaceMediaService
         $payload = [];
         foreach ($definitions as $slotKey => $definition) {
             $this->assertCategoryIdentity($definition);
-            $slotItems = $itemsBySlot->get($slotKey, collect());
+            $categoryId = $definition['category_id'];
+            if ($categoryId !== null && ! isset($visibleCategorySet[$categoryId])) {
+                continue;
+            }
 
+            $slotItems = $itemsBySlot->get($slotKey, collect());
             $payload[] = [
                 'slot_key' => $slotKey,
                 'purpose' => $definition['purpose']->value,
-                'category_id' => $definition['category_id'],
+                'category_id' => $categoryId,
                 'items' => $this->serializeItems($slotItems, $definition['purpose']),
             ];
         }
