@@ -28,6 +28,27 @@ void main() {
     expect(workflow, contains('if-no-files-found: error'));
   });
 
+  test('QA-016 Android bootstrap cannot silently change validated dependencies', () {
+    final int bootstrap = workflow.indexOf('- name: Generate Android runner');
+    final int reconcile = workflow.indexOf(
+      '- name: Reconcile locked dependencies after Android bootstrap',
+    );
+    final int branding = workflow.indexOf('- name: Apply WALKA Android branding');
+    final int build = workflow.indexOf('- name: Build installable release APK');
+
+    expect(bootstrap, greaterThan(-1));
+    expect(reconcile, greaterThan(bootstrap));
+    expect(branding, greaterThan(reconcile));
+    expect(build, greaterThan(branding));
+    expect(workflow, contains('git restore --source=HEAD -- pubspec.lock'));
+    expect(workflow, contains('flutter pub get --enforce-lockfile'));
+    expect(workflow, contains('EXPECTED_LOCK_SHA'));
+    expect(
+      workflow,
+      contains('git diff --exit-code -- pubspec.yaml pubspec.lock analysis_options.yaml'),
+    );
+  });
+
   test('QA-017 stable-main publication is guarded and publishes evidence', () {
     const String enforce =
         '- name: Enforce production and owner visual release before stable publication';
@@ -53,6 +74,16 @@ void main() {
     expect(workflow, contains('RELEASE_TOOLCHAIN_CONTRACT.json'));
     expect(workflow, contains('pubspec.lock'));
     expect(workflow, contains('git push origin HEAD:main'));
+  });
+
+  test('QA-017 candidate receipt separates implementation and validation commits', () {
+    expect(
+      workflow,
+      contains("IMPLEMENTATION_SHA: \${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}"),
+    );
+    expect(workflow, contains('- Source commit: \\`${IMPLEMENTATION_SHA}\\`'));
+    expect(workflow, contains('- Validation commit: \\`${GITHUB_SHA}\\`'));
+    expect(workflow, contains('- pubspec.lock SHA-256: \\`${DEPENDENCY_LOCK_SHA}\\`'));
   });
 
   test('QA-017 checked-in verified APK receipt matches file size contract', () {
