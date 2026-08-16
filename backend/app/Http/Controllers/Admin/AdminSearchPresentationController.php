@@ -4,13 +4,16 @@ namespace App\Http\Controllers\Admin;
 
 use App\Exceptions\ContentRevisionConflictException;
 use App\Http\Controllers\Controller;
+use App\Models\CatalogCategory;
 use App\Models\ContentEntry;
+use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Services\Content\SearchPresentationCatalogValidator;
 use App\Services\Content\SearchPresentationContentDefinition;
 use App\Services\ContentRevisionService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
@@ -30,7 +33,7 @@ final class AdminSearchPresentationController extends Controller
         if ($entry === null) {
             $payload = $this->catalogValidator->validate(
                 SearchPresentationContentDefinition::validateAndNormalize(
-                    SearchPresentationContentDefinition::defaultPayload(),
+                    $this->editablePayload(SearchPresentationContentDefinition::defaultCopy()),
                 ),
             );
             $entry = $this->content->saveDraft(
@@ -49,14 +52,16 @@ final class AdminSearchPresentationController extends Controller
         );
 
         $entry->load(['revisions' => fn ($query) => $query->orderByDesc('revision')]);
-        $draft = SearchPresentationContentDefinition::validateAndNormalize($entry->draft_payload);
+        $storedDraft = SearchPresentationContentDefinition::validateAndNormalize($entry->draft_payload);
+        $draft = SearchPresentationContentDefinition::validateAndNormalize(
+            $this->editablePayload($storedDraft),
+        );
         $published = $entry->published_payload === null
             ? null
             : SearchPresentationContentDefinition::validateAndNormalize($entry->published_payload);
 
-        $variants = ProductVariant::query()
-            ->with('product')
-            ->get()
+        $variants = $this->visibleProducts()
+            ->flatMap(fn (Product $product): Collection => $product->variants)
             ->keyBy('id');
 
         return view('admin.content.search', [
@@ -182,6 +187,98 @@ final class AdminSearchPresentationController extends Controller
         return redirect()
             ->route('admin.content.search.edit')
             ->with('status', 'Historical Search presentation restored into a private draft. Review it before publishing.');
+    }
+
+    /**
+     * Merge the optional CMS merchandising overlay with the current visible
+     * Dashboard catalog. Existing order/labels win; newly-created entities append
+     * in catalog order. No current Product, Variant, or Category IDs are compiled.
+     *
+     * @param  array<string, mixed>  $existing
+     * @return array<string, mixed>
+     */
+    private function editablePayload(array $existing): array
+    {
+        $products = $this->visibleProducts();
+        $variantIds = $products
+            ->flatMap(fn (Product $product): Collection => $product->variants->pluck('id'))
+            ->values();
+        if ($variantIds->isEmpty()) {
+            throw ValidationException::withMessages([
+                'featured_variant_ids' => ['Create and show at least one Dashboard variant before editing Search presentation.'],
+            ]);
+        }
+
+        $existingVariantIds = collect($existing['featured_variant_ids'] ?? [])
+            ->filter(fn (mixed $id): bool => is_string($id) && $variantIds->contains($id))
+            ->values();
+        foreach ($variantIds as $variantId) {
+            if (! $existingVariantIds->contains($variantId)) {
+                $existingVariantIds->push($variantId);
+            }
+        }
+
+        $categories = $this->visibleCategories();
+        $allowedFilterIds = collect(['all', ...$categories->pluck('id')->all()]);
+        $existingFilters = collect($existing['filter_labels'] ?? [])
+            ->filter(fn (mixed $filter): bool => is_array($filter)
+                && is_string($filter['id'] ?? null)
+                && $allowedFilterIds->contains($filter['id']))
+            ->keyBy('id');
+
+        $filters = collect([[
+            'id' => 'all',
+            'label' => (string) (($existingFilters->get('all')['label'] ?? null) ?: 'All'),
+        ]]);
+        foreach ($categories as $category) {
+            $saved = $existingFilters->get($category->id);
+            $filters->push([
+                'id' => $category->id,
+                'label' => is_array($saved) && trim((string) ($saved['label'] ?? '')) !== ''
+                    ? trim((string) $saved['label'])
+                    : $category->name,
+            ]);
+        }
+
+        return [
+            ...SearchPresentationContentDefinition::defaultCopy(),
+            ...array_intersect_key($existing, SearchPresentationContentDefinition::defaultCopy()),
+            'featured_variant_ids' => $existingVariantIds->all(),
+            'filter_labels' => $filters->all(),
+        ];
+    }
+
+    /**
+     * @return Collection<int, Product>
+     */
+    private function visibleProducts(): Collection
+    {
+        return Product::query()
+            ->where('is_visible', true)
+            ->whereHas('categoryEntity', fn ($query) => $query->where('is_visible', true))
+            ->whereHas('variants', fn ($query) => $query->where('is_visible', true))
+            ->with(['variants' => fn ($query) => $query
+                ->where('is_visible', true)
+                ->orderBy('sort_order')
+                ->orderBy('id')])
+            ->orderBy('sort_order')
+            ->orderBy('id')
+            ->get();
+    }
+
+    /**
+     * @return Collection<int, CatalogCategory>
+     */
+    private function visibleCategories(): Collection
+    {
+        return CatalogCategory::query()
+            ->where('is_visible', true)
+            ->whereHas('products', fn ($query) => $query
+                ->where('is_visible', true)
+                ->whereHas('variants', fn ($variants) => $variants->where('is_visible', true)))
+            ->orderBy('sort_order')
+            ->orderBy('id')
+            ->get(['id', 'name']);
     }
 
     private function entry(): ContentEntry
