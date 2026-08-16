@@ -2,7 +2,7 @@
 
 namespace Tests\Feature\Api\V1;
 
-use App\Models\Product;
+use App\Models\CatalogCategory;
 use App\Services\Content\CategoryPresentationContentDefinition;
 use App\Services\ContentRevisionService;
 use Database\Seeders\WalkaCatalogSeeder;
@@ -93,7 +93,7 @@ final class PublishedCategoriesPresentationTest extends TestCase
             ->assertStatus(304);
     }
 
-    public function test_delivery_fails_closed_if_published_category_set_no_longer_matches_catalog(): void
+    public function test_delivery_fails_closed_if_published_overlay_references_category_that_is_no_longer_public(): void
     {
         $service = $this->service();
         $service->saveDraft(
@@ -105,9 +105,9 @@ final class PublishedCategoriesPresentationTest extends TestCase
         );
         $service->publish(CategoryPresentationContentDefinition::KEY, 1, $this->actor);
 
-        Product::query()
-            ->where('id', 'drawer-organizer')
-            ->update(['category' => 'changed-protected-category']);
+        CatalogCategory::query()
+            ->whereKey('drawer-organization')
+            ->update(['is_visible' => false]);
 
         $this->getJson('/api/v1/content/categories')
             ->assertStatus(503)
