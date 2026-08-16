@@ -33,7 +33,7 @@ return new class extends Migration
             $publishedNeedsUpgrade = $published !== null
                 && $this->needsUpgrade($published, $defaults);
 
-            if (! $draftNeedsUpgrade && ! $publishedNeedsUpgrade) {
+            if ($draftNeedsUpgrade === false && $publishedNeedsUpgrade === false) {
                 return;
             }
 
@@ -99,10 +99,6 @@ return new class extends Migration
         // Intentionally irreversible: content revision history is append-only.
     }
 
-    /**
-     * @param  mixed  $value
-     * @return array<string, mixed>
-     */
     private function decodePayload(mixed $value): array
     {
         if (is_array($value)) {
@@ -112,9 +108,6 @@ return new class extends Migration
         return json_decode((string) $value, true, 512, JSON_THROW_ON_ERROR);
     }
 
-    /**
-     * @param  array<string, mixed>  $payload
-     */
     private function encodePayload(array $payload): string
     {
         return json_encode(
@@ -123,14 +116,10 @@ return new class extends Migration
         );
     }
 
-    /**
-     * @param  array<string, mixed>  $payload
-     * @param  array<string, string>  $defaults
-     */
     private function needsUpgrade(array $payload, array $defaults): bool
     {
         foreach (array_keys($defaults) as $key) {
-            if (! array_key_exists($key, $payload)) {
+            if (array_key_exists($key, $payload) === false) {
                 return true;
             }
         }
