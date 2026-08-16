@@ -44,7 +44,8 @@ final class CommerceMapService
         int $expectedRevision,
         string $actorFingerprint,
         ?string $reason = null,
-    ): ContentEntry {
+    ): ContentEntry
+    {
         $entry = $this->entry();
         $source = ContentRevision::query()
             ->where('content_entry_id', $entry->id)

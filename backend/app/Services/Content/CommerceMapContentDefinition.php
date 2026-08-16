@@ -7,7 +7,9 @@ use Illuminate\Validation\ValidationException;
 final class CommerceMapContentDefinition
 {
     public const KEY = 'commerce.map';
+
     public const TYPE = 'commerce.map';
+
     public const SCHEMA_VERSION = 1;
 
     /** @var array<string, string> */
@@ -119,6 +121,7 @@ final class CommerceMapContentDefinition
         if (! isset(self::MARKET_HOSTS[$market])) {
             self::fail('region_market', 'Region market is not an approved Amazon market.');
         }
+
         return $market;
     }
 
@@ -133,6 +136,7 @@ final class CommerceMapContentDefinition
         if (strlen($value) > 160) {
             self::fail("mappings.$index.$field", ucfirst(str_replace('_', ' ', $field)).' is too long.');
         }
+
         return $value;
     }
 
@@ -143,6 +147,7 @@ final class CommerceMapContentDefinition
         if (preg_match('/^[a-z][a-z0-9._-]{1,63}$/', $value) !== 1) {
             self::fail("mappings.$index.$field", 'Key must be a stable lowercase machine key.');
         }
+
         return $value;
     }
 
@@ -165,6 +170,7 @@ final class CommerceMapContentDefinition
         }
         $normalized = array_values(array_unique($normalized));
         sort($normalized);
+
         return $normalized;
     }
 
@@ -182,6 +188,7 @@ final class CommerceMapContentDefinition
         if ($reference !== null && (! is_string($reference) || trim($reference) === '' || strlen(trim($reference)) > 160)) {
             self::fail("mappings.$index.trace.reference", 'Trace reference must be null or a non-empty string up to 160 characters.');
         }
+
         return [
             'source' => trim($source),
             'reference' => $reference === null ? null : trim($reference),
