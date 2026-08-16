@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "visualBlockerIssue": 230,
+  "requiredScreenGroups": [
+    "home",
+    "discovery",
+    "pdp",
+    "favorites",
+    "account_about"
+  ],
+  "screenGroups": {
+    "home": "PENDING",
+    "discovery": "PENDING",
+    "pdp": "PENDING",
+    "favorites": "PENDING",
+    "account_about": "PENDING"
+  },
+  "allowedScreenStates": [
+    "PENDING",
+    "PASS",
+    "BLOCKED"
+  ],
+  "finalDecision": "PENDING",
+  "ownerAccepted": false,
+  "acceptedSourceCommit": null,
+  "acceptedApkSha256": null,
+  "decisionActor": null,
+  "decidedAt": null,
+  "acceptanceRule": "Stable owner-visible publication requires explicit owner PASS for every required screen group and must be bound to the exact validated source commit and APK SHA-256. CI may validate the receipt but cannot infer, set, or replace owner acceptance.",
+  "stablePublicationAuthorized": false
+}
