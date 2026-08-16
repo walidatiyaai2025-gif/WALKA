@@ -84,4 +84,16 @@ final class DynamicPresentationSourceTest extends TestCase
             collect($lunch['variants'])->pluck('variant_id')->all(),
         );
     }
+
+    public function test_hidden_category_media_slot_is_not_publicly_published(): void
+    {
+        CatalogCategory::query()->whereKey('lunch')->update(['is_visible' => false]);
+
+        $slots = $this->getJson('/api/v1/media/surfaces')
+            ->assertOk()
+            ->json('data.slots');
+
+        $this->assertNull(collect($slots)->firstWhere('slot_key', 'category:lunch'));
+        $this->assertNotNull(collect($slots)->firstWhere('slot_key', 'home.hero'));
+    }
 }
