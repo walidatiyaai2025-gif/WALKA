@@ -114,10 +114,11 @@ final class AdminStorefrontCopyController extends Controller
                 revisionToRestore: (int) $validated['source_revision'],
                 expectedRevision: (int) $validated['revision'],
                 actorFingerprint: $this->actorFingerprint($request),
-                payloadTransformer: static fn (array $payload): array =>
-                    StorefrontCopyContentDefinition::validateAndNormalize(
+                payloadTransformer: static function (array $payload): array {
+                    return StorefrontCopyContentDefinition::validateAndNormalize(
                         StorefrontCopyContentDefinition::editableFields($payload),
-                    ),
+                    );
+                },
             );
         } catch (ContentRevisionConflictException) {
             return redirect()
