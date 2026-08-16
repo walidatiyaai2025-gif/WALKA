@@ -26,13 +26,13 @@ final class CommerceMapContentDefinition
     }
 
     /**
-     * @param array<string, mixed> $payload
+     * @param  array<string, mixed>  $payload
      * @return array{mappings: list<array<string, mixed>>}
      */
     public static function validateAndNormalize(array $payload): array
     {
         $mappings = $payload['mappings'] ?? null;
-        if (! is_array($mappings) || ! array_is_list($mappings)) {
+        if (is_array($mappings) === false || array_is_list($mappings) === false) {
             self::fail('mappings', 'Commerce mappings must be an ordered list.');
         }
         if (count($mappings) > 100) {
@@ -42,7 +42,7 @@ final class CommerceMapContentDefinition
         $normalized = [];
         $seen = [];
         foreach ($mappings as $index => $mapping) {
-            if (! is_array($mapping)) {
+            if (is_array($mapping) === false) {
                 self::fail("mappings.$index", 'Each commerce mapping must be an object.');
             }
 
@@ -52,7 +52,7 @@ final class CommerceMapContentDefinition
             }
 
             $market = strtoupper(self::requiredString($mapping, 'region_market', $index));
-            if (! isset(self::MARKET_HOSTS[$market])) {
+            if (isset(self::MARKET_HOSTS[$market]) === false) {
                 self::fail("mappings.$index.region_market", 'Region market is not an approved Amazon market.');
             }
 
@@ -62,7 +62,7 @@ final class CommerceMapContentDefinition
             }
 
             $variantRevision = $mapping['variant_revision'] ?? null;
-            if (! is_int($variantRevision) || $variantRevision < 1) {
+            if (is_int($variantRevision) === false || $variantRevision < 1) {
                 self::fail("mappings.$index.variant_revision", 'Variant revision must be a positive integer.');
             }
 
@@ -70,7 +70,7 @@ final class CommerceMapContentDefinition
             $disclosureKey = self::machineKey($mapping, 'disclosure_key', $index);
             $entitlements = self::entitlements($mapping['entitlements'] ?? null, $index);
             $active = $mapping['active'] ?? null;
-            if (! is_bool($active)) {
+            if (is_bool($active) === false) {
                 self::fail("mappings.$index.active", 'Active must be a boolean.');
             }
 
@@ -108,7 +108,7 @@ final class CommerceMapContentDefinition
     {
         $market = strtoupper(trim($market));
         $asin = strtoupper(trim($asin));
-        if (! isset(self::MARKET_HOSTS[$market]) || preg_match('/^[A-Z0-9]{10}$/', $asin) !== 1) {
+        if (isset(self::MARKET_HOSTS[$market]) === false || preg_match('/^[A-Z0-9]{10}$/', $asin) !== 1) {
             self::fail('destination', 'Cannot build an Amazon destination from an unapproved market or malformed ASIN.');
         }
 
@@ -118,18 +118,18 @@ final class CommerceMapContentDefinition
     public static function normalizeMarket(string $market): string
     {
         $market = strtoupper(trim($market));
-        if (! isset(self::MARKET_HOSTS[$market])) {
+        if (isset(self::MARKET_HOSTS[$market]) === false) {
             self::fail('region_market', 'Region market is not an approved Amazon market.');
         }
 
         return $market;
     }
 
-    /** @param array<string, mixed> $mapping */
+    /** @param  array<string, mixed>  $mapping */
     private static function requiredString(array $mapping, string $field, int $index): string
     {
         $value = $mapping[$field] ?? null;
-        if (! is_string($value) || trim($value) === '') {
+        if (is_string($value) === false || trim($value) === '') {
             self::fail("mappings.$index.$field", ucfirst(str_replace('_', ' ', $field)).' is required.');
         }
         $value = trim($value);
@@ -140,7 +140,7 @@ final class CommerceMapContentDefinition
         return $value;
     }
 
-    /** @param array<string, mixed> $mapping */
+    /** @param  array<string, mixed>  $mapping */
     private static function machineKey(array $mapping, string $field, int $index): string
     {
         $value = self::requiredString($mapping, $field, $index);
@@ -154,12 +154,12 @@ final class CommerceMapContentDefinition
     /** @return list<string> */
     private static function entitlements(mixed $value, int $index): array
     {
-        if (! is_array($value) || ! array_is_list($value) || $value === [] || count($value) > 8) {
+        if (is_array($value) === false || array_is_list($value) === false || $value === [] || count($value) > 8) {
             self::fail("mappings.$index.entitlements", 'Entitlements must contain between 1 and 8 stable keys.');
         }
         $normalized = [];
         foreach ($value as $entitlementIndex => $entitlement) {
-            if (! is_string($entitlement)) {
+            if (is_string($entitlement) === false) {
                 self::fail("mappings.$index.entitlements.$entitlementIndex", 'Entitlement must be a string.');
             }
             $entitlement = trim($entitlement);
@@ -177,15 +177,15 @@ final class CommerceMapContentDefinition
     /** @return array{source: string, reference: string|null} */
     private static function trace(mixed $value, int $index): array
     {
-        if (! is_array($value)) {
+        if (is_array($value) === false) {
             self::fail("mappings.$index.trace", 'Trace metadata is required.');
         }
         $source = $value['source'] ?? null;
         $reference = $value['reference'] ?? null;
-        if (! is_string($source) || preg_match('/^[a-z][a-z0-9._-]{1,63}$/', trim($source)) !== 1) {
+        if (is_string($source) === false || preg_match('/^[a-z][a-z0-9._-]{1,63}$/', trim($source)) !== 1) {
             self::fail("mappings.$index.trace.source", 'Trace source must be a stable lowercase machine key.');
         }
-        if ($reference !== null && (! is_string($reference) || trim($reference) === '' || strlen(trim($reference)) > 160)) {
+        if ($reference !== null && (is_string($reference) === false || trim($reference) === '' || strlen(trim($reference)) > 160)) {
             self::fail("mappings.$index.trace.reference", 'Trace reference must be null or a non-empty string up to 160 characters.');
         }
 

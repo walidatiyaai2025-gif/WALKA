@@ -10,12 +10,19 @@ use JsonException;
 
 final class CommerceMapService
 {
-    public function __construct(
-        private readonly ContentRevisionService $content,
-        private readonly GovernedContentPayloadService $governance,
-    ) {}
+    private readonly ContentRevisionService $content;
 
-    /** @param array<string, mixed> $payload */
+    private readonly GovernedContentPayloadService $governance;
+
+    public function __construct(
+        ContentRevisionService $content,
+        GovernedContentPayloadService $governance,
+    ) {
+        $this->content = $content;
+        $this->governance = $governance;
+    }
+
+    /** @param  array<string, mixed>  $payload */
     public function saveDraft(array $payload, int $expectedRevision, string $actorFingerprint): ContentEntry
     {
         return $this->content->saveDraft(
@@ -44,8 +51,7 @@ final class CommerceMapService
         int $expectedRevision,
         string $actorFingerprint,
         ?string $reason = null,
-    ): ContentEntry
-    {
+    ): ContentEntry {
         $entry = $this->entry();
         $source = ContentRevision::query()
             ->where('content_entry_id', $entry->id)
@@ -119,7 +125,7 @@ final class CommerceMapService
     }
 
     /**
-     * @param array<string, mixed> $payload
+     * @param  array<string, mixed>  $payload
      * @return array{mappings: list<array<string, mixed>>}
      */
     public function validateAgainstCatalog(array $payload): array
@@ -130,7 +136,7 @@ final class CommerceMapService
         return $validated;
     }
 
-    /** @param array{mappings: list<array<string, mixed>>} $payload */
+    /** @param  array{mappings: list<array<string, mixed>>}  $payload */
     public function verification(array $payload, int $publishedRevision): array
     {
         try {
