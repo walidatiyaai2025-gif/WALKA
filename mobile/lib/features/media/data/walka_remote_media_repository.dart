@@ -30,25 +30,23 @@ class WalkaRemoteMediaRepository {
     final WalkaRemoteSurfaceMediaPayload? remoteSurfaces =
         await _tryRemoteSurfaces(cachedSurfaces);
 
-    final WalkaRemoteProductMediaPayload products = remoteProducts ??
-        cachedProducts ??
-        _bundledProducts();
-    final WalkaRemoteSurfaceMediaPayload surfaces = remoteSurfaces ??
-        cachedSurfaces ??
-        _bundledSurfaces();
+    final WalkaRemoteProductMediaPayload? products =
+        remoteProducts ?? cachedProducts;
+    final WalkaRemoteSurfaceMediaPayload? surfaces =
+        remoteSurfaces ?? cachedSurfaces;
+
+    if (products == null && surfaces == null) {
+      return WalkaRemoteMediaSnapshot.unavailable(fetchedAt: _clock());
+    }
 
     final bool bothRemote = remoteProducts != null && remoteSurfaces != null;
-    final bool anyRemote = remoteProducts != null || remoteSurfaces != null;
-    final bool anyCache = cachedProducts != null || cachedSurfaces != null;
     final WalkaRemoteMediaSource source = bothRemote
         ? WalkaRemoteMediaSource.remote
-        : (anyRemote || anyCache)
-            ? WalkaRemoteMediaSource.cache
-            : WalkaRemoteMediaSource.bundled;
+        : WalkaRemoteMediaSource.cache;
 
     return WalkaRemoteMediaSnapshot(
-      products: products,
-      surfaces: surfaces,
+      products: products ?? WalkaRemoteProductMediaPayload.empty(),
+      surfaces: surfaces ?? WalkaRemoteSurfaceMediaPayload.empty(),
       source: source,
       fetchedAt: _clock().toUtc(),
     );
@@ -73,7 +71,7 @@ class WalkaRemoteMediaRepository {
       try {
         await _cache.writeProducts(remote);
       } on Object {
-        // Valid remote metadata remains usable if persistence is unavailable.
+        // A valid remote snapshot remains usable if local persistence fails.
       }
       return remote;
     } on Object {
@@ -100,7 +98,7 @@ class WalkaRemoteMediaRepository {
       try {
         await _cache.writeSurfaces(remote);
       } on Object {
-        // Valid remote metadata remains usable if persistence is unavailable.
+        // A valid remote snapshot remains usable if local persistence fails.
       }
       return remote;
     } on Object {
@@ -135,30 +133,4 @@ class WalkaRemoteMediaRepository {
         remoteRevision == cachedRevision &&
         jsonEncode(remote) != jsonEncode(cached);
   }
-
-  WalkaRemoteProductMediaPayload _bundledProducts() {
-    final Map<String, List<WalkaRemoteMediaItem>> empty =
-        <String, List<WalkaRemoteMediaItem>>{};
-    for (final String id in walkaSupportedProductVariants.values
-        .expand((List<String> ids) => ids)) {
-      empty[id] = const <WalkaRemoteMediaItem>[];
-    }
-    return WalkaRemoteProductMediaPayload(
-      revisionToken: _bundledRevision,
-      galleriesByVariant: empty,
-    );
-  }
-
-  WalkaRemoteSurfaceMediaPayload _bundledSurfaces() {
-    return WalkaRemoteSurfaceMediaPayload(
-      revisionToken: _bundledRevision,
-      itemsBySlot: <String, List<WalkaRemoteMediaItem>>{
-        for (final String key in walkaSupportedRemoteMediaSlots.keys)
-          key: const <WalkaRemoteMediaItem>[],
-      },
-    );
-  }
 }
-
-const String _bundledRevision =
-    '0000000000000000000000000000000000000000000000000000000000000000';
