@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Admin\UpdateCatalogProductRequest;
 use App\Http\Requests\Api\V1\Admin\UpdateCatalogVariantRequest;
+use App\Models\CatalogCategory;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Services\CatalogAuthoringService;
@@ -18,21 +19,25 @@ final class CatalogAdminController extends Controller
     public function index(): JsonResponse
     {
         $products = Product::query()
-            ->with('variants')
+            ->with(['categoryEntity', 'variants'])
             ->orderBy('sort_order')
+            ->orderBy('id')
             ->get();
-
-        if ($products->isEmpty()) {
-            return response()->json([
-                'error' => [
-                    'code' => 'catalog_unavailable',
-                    'message' => 'WALKA catalog is not seeded.',
-                ],
-            ], 503);
-        }
 
         return response()->json([
             'data' => $products->map(fn (Product $product): array => $this->product($product))->values(),
+            'categories' => CatalogCategory::query()
+                ->orderBy('sort_order')
+                ->orderBy('id')
+                ->get()
+                ->map(fn (CatalogCategory $category): array => [
+                    'id' => $category->id,
+                    'name' => $category->name,
+                    'sort_order' => $category->sort_order,
+                    'is_visible' => $category->is_visible,
+                    'revision' => $category->revision,
+                ])
+                ->values(),
             'meta' => $this->meta(),
         ]);
     }
@@ -85,9 +90,12 @@ final class CatalogAdminController extends Controller
         return [
             'id' => $product->id,
             'name' => $product->name,
-            'category' => $product->category,
+            'category_id' => $product->category_id ?? $product->category,
+            'category_name' => $product->categoryEntity?->name,
             'features' => $product->features ?? [],
             'facts' => $product->facts ?? [],
+            'sort_order' => $product->sort_order,
+            'is_visible' => $product->is_visible,
             'revision' => $product->revision,
             'updated_at' => $product->updated_at?->toISOString(),
             'variants' => $product->variants->map(fn (ProductVariant $variant): array => $this->variant($variant))->values(),
@@ -100,8 +108,11 @@ final class CatalogAdminController extends Controller
             'id' => $variant->id,
             'product_id' => $variant->product_id,
             'color' => $variant->color,
+            'swatch_hex' => $variant->swatch_hex,
             'pantone' => $variant->pantone,
             'asin' => $variant->asin,
+            'sort_order' => $variant->sort_order,
+            'is_visible' => $variant->is_visible,
             'revision' => $variant->revision,
             'updated_at' => $variant->updated_at?->toISOString(),
         ];
@@ -113,17 +124,11 @@ final class CatalogAdminController extends Controller
             'release' => config('walka.release'),
             'api_version' => config('walka.api_version'),
             'authoring' => [
-                'product_fields' => ['name', 'features'],
-                'variant_fields' => ['color'],
-                'locked_fields' => [
-                    'id',
-                    'product_id',
-                    'category',
-                    'facts',
-                    'asin',
-                    'pantone',
-                    'sort_order',
-                ],
+                'category_fields' => ['name', 'sort_order', 'is_visible'],
+                'product_fields' => ['name', 'category_id', 'features', 'facts', 'sort_order', 'is_visible'],
+                'variant_fields' => ['color', 'swatch_hex', 'pantone', 'asin', 'sort_order', 'is_visible'],
+                'immutable_after_create' => ['id', 'product_id'],
+                'source_of_truth' => 'database',
             ],
         ];
     }
