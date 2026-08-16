@@ -10,6 +10,7 @@ on:
       - 'agent/ops-*'
       - 'agent/pav-*'
       - 'agent/vsurf-*'
+      - 'agent/visual-release-*'
     paths-ignore:
       - 'Last verified APK/**'
   pull_request:
@@ -41,24 +42,41 @@ jobs:
           BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
         run: bash mobile/tool/guard_protected_reference_masters.sh "$BASE_SHA"
 
-      - name: Setup Java
+      - name: Setup Java 17
         uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '17'
 
-      - name: Setup Flutter stable
+      - name: Setup pinned Flutter 3.47.0
         uses: subosito/flutter-action@v2
         with:
           channel: stable
+          flutter-version: '3.47.0'
           cache: true
 
-      - name: Flutter version
-        run: flutter --version
+      - name: Verify pinned toolchain
+        shell: bash
+        run: |
+          set -euo pipefail
+          flutter_version="$(flutter --version)"
+          java_version="$(java -version 2>&1)"
+          printf '%s\n' "$flutter_version"
+          printf '%s\n' "$java_version"
+          grep -F 'Flutter 3.47.0' <<<"$flutter_version"
+          grep -F 'Dart 3.13.0' <<<"$flutter_version"
+          grep -E 'version "17\.|openjdk version "17\.' <<<"$java_version"
 
-      - name: Get packages
+      - name: Get locked packages
+        id: dependencies
         working-directory: mobile
-        run: flutter pub get
+        shell: bash
+        run: |
+          set -euo pipefail
+          flutter pub get --enforce-lockfile
+          lock_sha="$(sha256sum pubspec.lock | awk '{print $1}')"
+          git diff --exit-code -- pubspec.yaml pubspec.lock analysis_options.yaml
+          echo "lock_sha=$lock_sha" >> "$GITHUB_OUTPUT"
 
       - name: Analyze
         working-directory: mobile
@@ -126,12 +144,18 @@ jobs:
           warning_count="$(python3 -c "import json; print(json.load(open('$report'))['warningCount'])")"
           state="$(python3 -c "import json; print(json.load(open('$report'))['state'])")"
           report_sha="$(sha256sum "$report" | awk '{print $1}')"
+          visual_input_digest="$(python3 -c "import json; print(json.load(open('visual-release-gate.json'))['ownerScreenAcceptance']['currentVisualInputDigest'])")"
+          release_input_digest="$(python3 -c "import json; print(json.load(open('visual-release-gate.json'))['ownerScreenAcceptance']['currentReleaseInputDigest'])")"
+          visual_release_state="$(python3 -c "import json; print(json.load(open('visual-release-gate.json'))['state'])")"
           echo "ready=$ready" >> "$GITHUB_OUTPUT"
           echo "ready_count=$ready_count" >> "$GITHUB_OUTPUT"
           echo "blocker_count=$blocker_count" >> "$GITHUB_OUTPUT"
           echo "warning_count=$warning_count" >> "$GITHUB_OUTPUT"
           echo "state=$state" >> "$GITHUB_OUTPUT"
           echo "report_sha=$report_sha" >> "$GITHUB_OUTPUT"
+          echo "visual_input_digest=$visual_input_digest" >> "$GITHUB_OUTPUT"
+          echo "release_input_digest=$release_input_digest" >> "$GITHUB_OUTPUT"
+          echo "visual_release_state=$visual_release_state" >> "$GITHUB_OUTPUT"
           {
             echo '### WALKA production asset readiness'
             echo
@@ -140,6 +164,9 @@ jobs:
             echo "- Ready variants: **${ready_count}/5**"
             echo "- Blockers: **$blocker_count**"
             echo "- Warnings: **$warning_count**"
+            echo "- Visual release gate state: **$visual_release_state**"
+            echo "- Visual input digest: \`$visual_input_digest\`"
+            echo "- Release input digest: \`$release_input_digest\`"
             echo "- Readiness report SHA-256: \`$report_sha\`"
             echo '- Canonical variants: Drawer White, Drawer Gray, Lunch Blue, Lunch Pink, Lunch Green'
             echo
@@ -158,7 +185,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: production-asset-readiness-${{ github.sha }}
-          path: mobile/production-asset-readiness.json
+          path: |
+            mobile/production-asset-readiness.json
+            mobile/visual-release-gate.json
           if-no-files-found: error
           retention-days: 14
 
@@ -172,12 +201,34 @@ jobs:
             mobile/flutter-test.log
             mobile/owner-visible-media-surface-report.json
             mobile/production-asset-readiness.json
+            mobile/visual-release-gate.json
           if-no-files-found: warn
           retention-days: 7
 
       - name: Generate Android runner
         working-directory: mobile
         run: flutter create --platforms=android --project-name walka .
+
+      - name: Reconcile locked dependencies after Android bootstrap
+        working-directory: mobile
+        shell: bash
+        env:
+          EXPECTED_LOCK_SHA: ${{ steps.dependencies.outputs.lock_sha }}
+        run: |
+          set -euo pipefail
+          git diff --exit-code -- pubspec.yaml analysis_options.yaml
+          current_lock_sha="$(sha256sum pubspec.lock | awk '{print $1}')"
+          if [[ "$current_lock_sha" != "$EXPECTED_LOCK_SHA" ]]; then
+            echo "Android bootstrap changed pubspec.lock ($current_lock_sha); restoring the validated lock $EXPECTED_LOCK_SHA."
+            git restore --source=HEAD -- pubspec.lock
+          fi
+          flutter pub get --enforce-lockfile
+          final_lock_sha="$(sha256sum pubspec.lock | awk '{print $1}')"
+          if [[ "$final_lock_sha" != "$EXPECTED_LOCK_SHA" ]]; then
+            echo "Dependency lock mismatch after reconciliation: expected $EXPECTED_LOCK_SHA, got $final_lock_sha." >&2
+            exit 1
+          fi
+          git diff --exit-code -- pubspec.yaml pubspec.lock analysis_options.yaml
 
       - name: Apply WALKA Android branding
         working-directory: mobile
@@ -193,6 +244,11 @@ jobs:
         env:
           PRODUCTION_ASSETS_READY: ${{ steps.production_assets.outputs.ready }}
           PRODUCTION_ASSET_REPORT_SHA: ${{ steps.production_assets.outputs.report_sha }}
+          VISUAL_INPUT_DIGEST: ${{ steps.production_assets.outputs.visual_input_digest }}
+          RELEASE_INPUT_DIGEST: ${{ steps.production_assets.outputs.release_input_digest }}
+          VISUAL_RELEASE_STATE: ${{ steps.production_assets.outputs.visual_release_state }}
+          DEPENDENCY_LOCK_SHA: ${{ steps.dependencies.outputs.lock_sha }}
+          IMPLEMENTATION_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
         run: |
           set -euo pipefail
 
@@ -203,6 +259,12 @@ jobs:
 
           if [[ ! -f "$source_apk" ]]; then
             echo "Expected release APK not found: $source_apk" >&2
+            exit 1
+          fi
+
+          current_lock_sha="$(sha256sum mobile/pubspec.lock | awk '{print $1}')"
+          if [[ "$current_lock_sha" != "$DEPENDENCY_LOCK_SHA" ]]; then
+            echo "Staged dependency lock drifted: expected $DEPENDENCY_LOCK_SHA, got $current_lock_sha." >&2
             exit 1
           fi
 
@@ -230,6 +292,10 @@ jobs:
           mkdir -p stable-apk-stage
           cp "$source_apk" stable-apk-stage/WALKA-latest.apk
           cp mobile/production-asset-readiness.json stable-apk-stage/production-asset-readiness.json
+          cp mobile/visual-release-gate.json stable-apk-stage/visual-release-gate.json
+          cp docs/ui/VISUAL_RELEASE_OWNER_ACCEPTANCE.json stable-apk-stage/VISUAL_RELEASE_OWNER_ACCEPTANCE.json
+          cp docs/ui/RELEASE_TOOLCHAIN_CONTRACT.json stable-apk-stage/RELEASE_TOOLCHAIN_CONTRACT.json
+          cp mobile/pubspec.lock stable-apk-stage/pubspec.lock
 
           apk_sha="$(sha256sum stable-apk-stage/WALKA-latest.apk | awk '{print $1}')"
           app_version="$(awk '/^version:/ {print $2; exit}' mobile/pubspec.yaml)"
@@ -245,17 +311,26 @@ jobs:
           # WALKA Last Verified APK Receipt
 
           - App version: \`${app_version}\`
-          - Source commit: \`${GITHUB_SHA}\`
+          - Source commit: \`${IMPLEMENTATION_SHA}\`
+          - Validation commit: \`${GITHUB_SHA}\`
           - Workflow run: \`${GITHUB_RUN_ID}\`
           - Workflow run number: \`${GITHUB_RUN_NUMBER}\`
+          - Flutter: \`3.47.0\`
+          - Dart: \`3.13.0\`
+          - Java major: \`17\`
           - APK type: \`${apk_type}\`
           - APK bytes: \`${apk_bytes}\`
           - APK SHA-256: \`${apk_sha}\`
+          - pubspec.lock SHA-256: \`${DEPENDENCY_LOCK_SHA}\`
+          - Visual input digest: \`${VISUAL_INPUT_DIGEST}\`
+          - Release input digest: \`${RELEASE_INPUT_DIGEST}\`
           - Production asset readiness: \`${asset_state}\`
           - Production asset report SHA-256: \`${PRODUCTION_ASSET_REPORT_SHA}\`
+          - Visual release gate state: \`${VISUAL_RELEASE_STATE}\`
           - Built UTC: \`${built_utc}\`
-          - Validation: Flutter Analyze + full Flutter Test suite + Android release APK build succeeded before this receipt was generated.
-          - Publication rule: stable \`Last verified APK\` is updated only when production asset enforcement passes and the validated main commit is still current.
+          - Validation: pinned Flutter dependency lock + Flutter Analyze + full Flutter Test suite + Android release APK build succeeded before this receipt was generated.
+          - Publication rule: stable \`Last verified APK\` is updated only when the production/owner visual release enforcement passes and the validated main commit is still current.
+          - Owner-review binding: APK SHA identifies the reviewed artifact; stable acceptance is also bound to deterministic visual and release-input digests so later build-input drift fails closed.
           - Intended use: installable WALKA test build; this is not a Play Store signing receipt.
           EOF_RECEIPT
 
@@ -263,6 +338,9 @@ jobs:
           echo "apk_bytes=${apk_bytes}" >> "$GITHUB_OUTPUT"
           echo "apk_type=${apk_type}" >> "$GITHUB_OUTPUT"
           echo "app_version=${app_version}" >> "$GITHUB_OUTPUT"
+          echo "lock_sha=${DEPENDENCY_LOCK_SHA}" >> "$GITHUB_OUTPUT"
+          echo "implementation_sha=${IMPLEMENTATION_SHA}" >> "$GITHUB_OUTPUT"
+          echo "validation_sha=${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
 
       - name: Upload installable APK candidate
         uses: actions/upload-artifact@v4
@@ -272,10 +350,14 @@ jobs:
             stable-apk-stage/WALKA-latest.apk
             stable-apk-stage/VERIFIED_BUILD.md
             stable-apk-stage/production-asset-readiness.json
+            stable-apk-stage/visual-release-gate.json
+            stable-apk-stage/VISUAL_RELEASE_OWNER_ACCEPTANCE.json
+            stable-apk-stage/RELEASE_TOOLCHAIN_CONTRACT.json
+            stable-apk-stage/pubspec.lock
           if-no-files-found: error
           retention-days: 14
 
-      - name: Enforce production product assets before stable publication
+      - name: Enforce production and owner visual release before stable publication
         id: production_asset_enforce
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         continue-on-error: true
@@ -283,12 +365,14 @@ jobs:
         shell: bash
         run: bash tool/verify_production_assets.sh --enforce --root . --manifest ../docs/ui/PRODUCTION_SOURCE_ADMISSION.json --json production-asset-readiness-enforce.json
 
-      - name: Upload production asset enforcement diagnostics
+      - name: Upload stable publication enforcement diagnostics
         if: github.event_name == 'push' && github.ref == 'refs/heads/main' && steps.production_asset_enforce.outcome == 'failure'
         uses: actions/upload-artifact@v4
         with:
           name: production-asset-enforcement-block-${{ github.sha }}
-          path: mobile/production-asset-readiness-enforce.json
+          path: |
+            mobile/production-asset-readiness-enforce.json
+            mobile/visual-release-gate-enforce.json
           if-no-files-found: error
           retention-days: 14
 
@@ -307,7 +391,7 @@ jobs:
             echo "Main advanced to $remote_main while this run was executing; stale APK publication is skipped."
           fi
 
-      - name: Publish latest verified APK to main
+      - name: Publish latest verified APK and release evidence to main
         if: steps.main_guard.outputs.publish == 'true'
         shell: bash
         run: |
@@ -316,13 +400,18 @@ jobs:
           mkdir -p 'Last verified APK'
           cp stable-apk-stage/WALKA-latest.apk 'Last verified APK/WALKA-latest.apk'
           cp stable-apk-stage/VERIFIED_BUILD.md 'Last verified APK/VERIFIED_BUILD.md'
+          cp stable-apk-stage/production-asset-readiness.json 'Last verified APK/production-asset-readiness.json'
+          cp stable-apk-stage/visual-release-gate.json 'Last verified APK/visual-release-gate.json'
+          cp stable-apk-stage/VISUAL_RELEASE_OWNER_ACCEPTANCE.json 'Last verified APK/VISUAL_RELEASE_OWNER_ACCEPTANCE.json'
+          cp stable-apk-stage/RELEASE_TOOLCHAIN_CONTRACT.json 'Last verified APK/RELEASE_TOOLCHAIN_CONTRACT.json'
+          cp stable-apk-stage/pubspec.lock 'Last verified APK/pubspec.lock'
 
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add 'Last verified APK/WALKA-latest.apk' 'Last verified APK/VERIFIED_BUILD.md'
+          git add 'Last verified APK/'
 
           if git diff --cached --quiet; then
-            echo 'Verified APK files are already current; no repository commit required.'
+            echo 'Verified APK and release evidence are already current; no repository commit required.'
             exit 0
           fi
 

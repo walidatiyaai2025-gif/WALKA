@@ -10,11 +10,14 @@ on:
       - 'docs/ui/PINK_OWNER_VISUAL_ACCEPTANCE.json'
       - 'docs/ui/GRAY_OWNER_PRESENTATION_DECISION.json'
       - 'docs/ui/VISUAL_RELEASE_OWNER_ACCEPTANCE.json'
+      - 'docs/ui/RELEASE_TOOLCHAIN_CONTRACT.json'
       - 'docs/ui/PRODUCTION_SOURCE_ADMISSION.json'
       - 'docs/ui/PRODUCTION_ASSET_PROVENANCE.json'
       - 'mobile/assets/**'
       - 'mobile/lib/**'
       - 'mobile/pubspec.yaml'
+      - 'mobile/pubspec.lock'
+      - 'mobile/tool/apply_android_branding.sh'
       - 'mobile/tool/verify_production_assets.sh'
       - 'mobile/tool/verify_production_assets.dart'
       - 'mobile/tool/verify_visual_release_gate.dart'
@@ -23,6 +26,7 @@ on:
       - 'mobile/tool/src/gray_owner_presentation_gate.dart'
       - 'mobile/tool/src/pink_owner_review_gate.dart'
       - 'mobile/test/visual_release_owner_gate_test.dart'
+      - '.github/workflows/flutter-preview.yml'
       - '.github/workflows/visual-release-owner-gate.yml'
   pull_request:
     branches:
@@ -41,15 +45,32 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
 
-      - name: Setup Flutter stable
+      - name: Setup Java 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup pinned Flutter 3.47.0
         uses: subosito/flutter-action@v2
         with:
           channel: stable
+          flutter-version: '3.47.0'
           cache: true
 
-      - name: Get packages
+      - name: Verify pinned toolchain
+        shell: bash
+        run: |
+          set -euo pipefail
+          flutter_version="$(flutter --version)"
+          java_version="$(java -version 2>&1)"
+          grep -F 'Flutter 3.47.0' <<<"$flutter_version"
+          grep -F 'Dart 3.13.0' <<<"$flutter_version"
+          grep -E 'version "17\.|openjdk version "17\.' <<<"$java_version"
+
+      - name: Get locked packages
         working-directory: mobile
-        run: flutter pub get
+        run: flutter pub get --enforce-lockfile
 
       - name: Verify combined visual release contract
         id: visual_release
@@ -82,6 +103,8 @@ jobs:
           state="$(python3 -c "import json; print(json.load(open('visual-release-gate.json'))['state'])")"
           stable_ready="$(python3 -c "import json; print(str(json.load(open('visual-release-gate.json'))['stableReleaseReady']).lower())")"
           release_blockers="$(python3 -c "import json; print(json.load(open('visual-release-gate.json'))['releaseBlockerCount'])")"
+          visual_digest="$(python3 -c "import json; print(json.load(open('visual-release-gate.json'))['ownerScreenAcceptance']['currentVisualInputDigest'])")"
+          release_digest="$(python3 -c "import json; print(json.load(open('visual-release-gate.json'))['ownerScreenAcceptance']['currentReleaseInputDigest'])")"
           report_sha="$(sha256sum visual-release-gate.json | awk '{print $1}')"
           {
             echo '### WALKA owner visual release gate'
@@ -89,6 +112,8 @@ jobs:
             echo "- State: **$state**"
             echo "- Stable publication authorized: **$stable_ready**"
             echo "- Release blockers: **$release_blockers**"
+            echo "- Visual input digest: \`$visual_digest\`"
+            echo "- Release input digest: \`$release_digest\`"
             echo "- Report SHA-256: \`$report_sha\`"
             echo '- Engineering APK builds may remain available while owner decisions are pending; stable publication remains fail-closed.'
           } >> "$GITHUB_STEP_SUMMARY"
@@ -106,5 +131,7 @@ jobs:
             mobile/runtime-media-admission.json
             mobile/production-asset-readiness.json
             mobile/visual-release-gate.json
+            docs/ui/RELEASE_TOOLCHAIN_CONTRACT.json
+            mobile/pubspec.lock
           if-no-files-found: error
           retention-days: 14

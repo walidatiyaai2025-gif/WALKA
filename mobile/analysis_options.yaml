@@ -1,6 +1,12 @@
 analyzer:
   exclude:
     - build/**
+    - android/**
+    - ios/**
+    - web/**
+    - windows/**
+    - macos/**
+    - linux/**
   errors:
     # UI-001 contains one intentionally decorative prototype field that will be
     # removed when the real product imagery is mapped in UI-002.

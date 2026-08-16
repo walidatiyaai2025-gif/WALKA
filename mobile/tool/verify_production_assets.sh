@@ -42,14 +42,27 @@ fi
 
 dart run tool/verify_production_assets.dart "$mode" "$@"
 
-# The PAV binary/source gate is necessary but no longer sufficient for stable
-# owner-visible publication. Bind the final release decision to explicit Pink
-# visual acceptance, an explicit Gray source/presentation decision, final
-# per-screen owner acceptance, and a deterministic digest of owner-visible
-# Flutter inputs. Report mode remains Green while those decisions are honestly
-# PENDING/BLOCKED; enforce mode fails until every release condition is satisfied.
+# Stable owner-visible publication is bound to two deterministic scopes:
+# - visual inputs: owner-visible Flutter code/media/product manifest;
+# - release inputs: visual inputs plus dependency lock, branding/build recipe,
+#   pinned toolchain contract and the release workflow itself.
+# APK SHA remains the reviewed-artifact receipt; independent Android rebuilds
+# are not assumed to be byte-for-byte reproducible.
 visual_input_digest="$(
   git -C .. ls-tree -r HEAD -- mobile/lib mobile/assets mobile/pubspec.yaml \
+    | LC_ALL=C sort \
+    | sha256sum \
+    | awk '{print $1}'
+)"
+release_input_digest="$(
+  git -C .. ls-tree -r HEAD -- \
+    mobile/lib \
+    mobile/assets \
+    mobile/pubspec.yaml \
+    mobile/pubspec.lock \
+    mobile/tool/apply_android_branding.sh \
+    docs/ui/RELEASE_TOOLCHAIN_CONTRACT.json \
+    .github/workflows/flutter-preview.yml \
     | LC_ALL=C sort \
     | sha256sum \
     | awk '{print $1}'
@@ -60,6 +73,7 @@ if [[ "$mode" == '--enforce' ]]; then
     --root "$root_path" \
     --production-report "$json_path" \
     --visual-input-digest "$visual_input_digest" \
+    --release-input-digest "$release_input_digest" \
     --json visual-release-gate-enforce.json \
     --report \
     --enforce
@@ -68,6 +82,7 @@ else
     --root "$root_path" \
     --production-report "$json_path" \
     --visual-input-digest "$visual_input_digest" \
+    --release-input-digest "$release_input_digest" \
     --json visual-release-gate.json \
     --report
 fi
