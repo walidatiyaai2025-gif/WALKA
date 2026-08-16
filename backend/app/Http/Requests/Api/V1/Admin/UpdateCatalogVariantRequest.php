@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Api\V1\Admin;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 final class UpdateCatalogVariantRequest extends FormRequest
 {
@@ -18,7 +19,13 @@ final class UpdateCatalogVariantRequest extends FormRequest
             'color' => ['sometimes', 'filled', 'string', 'max:80'],
             'swatch_hex' => ['sometimes', 'nullable', 'regex:/^#[0-9A-Fa-f]{6}$/'],
             'pantone' => ['sometimes', 'nullable', 'string', 'max:80'],
-            'asin' => ['sometimes', 'string', 'size:10', 'regex:/^[A-Za-z0-9]{10}$/'],
+            'asin' => [
+                'sometimes',
+                'string',
+                'size:10',
+                'regex:/^[A-Za-z0-9]{10}$/',
+                Rule::unique('product_variants', 'asin')->ignore((string) $this->route('variant'), 'id'),
+            ],
             'sort_order' => ['sometimes', 'integer', 'min:0', 'max:65535'],
             'is_visible' => ['sometimes', 'boolean'],
 
