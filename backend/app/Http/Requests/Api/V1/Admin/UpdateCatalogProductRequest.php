@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Api\V1\Admin;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 final class UpdateCatalogProductRequest extends FormRequest
 {
@@ -15,15 +16,17 @@ final class UpdateCatalogProductRequest extends FormRequest
     {
         return [
             'revision' => ['required', 'integer', 'min:1'],
-            'name' => ['required_without:features', 'filled', 'string', 'max:160'],
-            'features' => ['required_without:name', 'array', 'max:20'],
+            'name' => ['sometimes', 'filled', 'string', 'max:160'],
+            'category_id' => ['sometimes', 'string', Rule::exists('catalog_categories', 'id')],
+            'features' => ['sometimes', 'array', 'max:20'],
             'features.*' => ['filled', 'string', 'max:180'],
+            'facts' => ['sometimes', 'array'],
+            'sort_order' => ['sometimes', 'integer', 'min:0', 'max:65535'],
+            'is_visible' => ['sometimes', 'boolean'],
 
-            'id' => ['prohibited'],
-            'category' => ['prohibited'],
-            'facts' => ['prohibited'],
-            'sort_order' => ['prohibited'],
-            'variants' => ['prohibited'],
+            'id' => ['missing'],
+            'category' => ['missing'],
+            'variants' => ['missing'],
         ];
     }
 }

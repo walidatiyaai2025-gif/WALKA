@@ -3,6 +3,7 @@
 namespace Tests\Feature\Api\V1;
 
 use App\Models\CatalogAudit;
+use App\Models\CatalogCategory;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use Database\Seeders\WalkaCatalogSeeder;
@@ -23,24 +24,46 @@ final class CatalogAdminAuthoringTest extends TestCase
         $this->seed(WalkaCatalogSeeder::class);
     }
 
-    public function test_admin_can_author_mutable_product_copy_and_public_catalog_reflects_it(): void
+    public function test_admin_can_author_dynamic_product_fields_and_public_catalog_reflects_them(): void
     {
+        CatalogCategory::query()->create([
+            'id' => 'workspace',
+            'name' => 'Workspace',
+            'is_visible' => true,
+            'sort_order' => 9,
+            'revision' => 1,
+        ]);
+
         $response = $this->withToken(self::TOKEN)
             ->patchJson('/api/v1/admin/catalog/products/drawer-organizer', [
                 'revision' => 1,
-                'name' => 'WALKA Expandable Drawer Organizer',
-                'features' => ['8 compartments', 'Expandable', 'Non-slip base'],
+                'name' => 'WALKA Dynamic Drawer Organizer',
+                'category_id' => 'workspace',
+                'features' => ['Dashboard feature', 'Another feature'],
+                'facts' => ['dashboard_fact' => 'dynamic'],
+                'sort_order' => 17,
+                'is_visible' => true,
             ])
             ->assertOk()
             ->assertJsonPath('data.revision', 2)
-            ->assertJsonPath('data.name', 'WALKA Expandable Drawer Organizer');
+            ->assertJsonPath('data.name', 'WALKA Dynamic Drawer Organizer')
+            ->assertJsonPath('data.category_id', 'workspace')
+            ->assertJsonPath('data.facts.dashboard_fact', 'dynamic')
+            ->assertJsonPath('data.sort_order', 17)
+            ->assertJsonPath('data.is_visible', true);
 
         $this->assertSame(2, $response->json('data.revision'));
 
         $this->getJson('/api/v1/catalog')
             ->assertOk()
-            ->assertJsonPath('data.0.id', 'drawer-organizer')
-            ->assertJsonPath('data.0.name', 'WALKA Expandable Drawer Organizer')
+            ->assertJsonFragment([
+                'id' => 'drawer-organizer',
+                'name' => 'WALKA Dynamic Drawer Organizer',
+                'category' => 'workspace',
+            ])
+            ->assertJsonFragment([
+                'dashboard_fact' => 'dynamic',
+            ])
             ->assertJsonMissingPath('data.0.revision');
 
         $this->assertSame(1, CatalogAudit::query()->count());
@@ -51,63 +74,78 @@ final class CatalogAdminAuthoringTest extends TestCase
         $this->assertSame(2, $audit->to_revision);
         $this->assertSame(hash('sha256', self::TOKEN), $audit->actor_fingerprint);
         $this->assertNotSame(self::TOKEN, $audit->actor_fingerprint);
-        $this->assertArrayHasKey('name', $audit->changes);
+        $this->assertArrayHasKey('category_id', $audit->changes);
+        $this->assertArrayHasKey('facts', $audit->changes);
     }
 
-    public function test_admin_can_author_variant_display_color_without_changing_commerce_identity(): void
+    public function test_admin_can_author_dynamic_variant_color_and_commerce_fields(): void
     {
         $this->withToken(self::TOKEN)
             ->patchJson('/api/v1/admin/catalog/variants/lunch-box%3Ablue', [
                 'revision' => 1,
-                'color' => 'WALKA Blue',
+                'color' => 'Ocean',
+                'swatch_hex' => '#123ABC',
+                'asin' => 'b012345679',
+                'pantone' => 'PANTONE DYNAMIC U',
+                'sort_order' => 11,
+                'is_visible' => true,
             ])
             ->assertOk()
             ->assertJsonPath('data.id', 'lunch-box:blue')
-            ->assertJsonPath('data.color', 'WALKA Blue')
-            ->assertJsonPath('data.asin', 'B0FQN4L8MW')
-            ->assertJsonPath('data.pantone', 'PANTONE 4155 U')
+            ->assertJsonPath('data.color', 'Ocean')
+            ->assertJsonPath('data.swatch_hex', '#123ABC')
+            ->assertJsonPath('data.asin', 'B012345679')
+            ->assertJsonPath('data.pantone', 'PANTONE DYNAMIC U')
+            ->assertJsonPath('data.sort_order', 11)
+            ->assertJsonPath('data.is_visible', true)
             ->assertJsonPath('data.revision', 2);
 
-        $this->assertSame('B0FQN4L8MW', ProductVariant::query()->findOrFail('lunch-box:blue')->asin);
-        $this->assertSame('PANTONE 4155 U', ProductVariant::query()->findOrFail('lunch-box:blue')->pantone);
+        $variant = ProductVariant::query()->findOrFail('lunch-box:blue');
+        $this->assertSame('Ocean', $variant->color);
+        $this->assertSame('#123ABC', $variant->swatch_hex);
+        $this->assertSame('B012345679', $variant->asin);
+        $this->assertSame('PANTONE DYNAMIC U', $variant->pantone);
     }
 
-    public function test_product_patch_requires_at_least_one_authorable_field(): void
+    public function test_revision_only_product_patch_is_a_safe_noop_without_audit(): void
     {
+        $before = Product::query()->findOrFail('drawer-organizer')->toArray();
+
         $this->withToken(self::TOKEN)
             ->patchJson('/api/v1/admin/catalog/products/drawer-organizer', [
                 'revision' => 1,
             ])
-            ->assertUnprocessable()
-            ->assertJsonValidationErrors(['name', 'features']);
+            ->assertOk()
+            ->assertJsonPath('data.revision', 1);
 
+        $after = Product::query()->findOrFail('drawer-organizer')->toArray();
+        $this->assertSame($before['name'], $after['name']);
+        $this->assertSame($before['revision'], $after['revision']);
         $this->assertSame(0, CatalogAudit::query()->count());
     }
 
-    public function test_product_master_and_stable_identity_fields_are_explicitly_prohibited(): void
+    public function test_only_stable_entity_keys_and_legacy_category_alias_are_prohibited_on_patch(): void
     {
         $this->withToken(self::TOKEN)
             ->patchJson('/api/v1/admin/catalog/products/drawer-organizer', [
                 'revision' => 1,
-                'name' => 'Attempted mutation',
-                'category' => 'unsafe-category',
-                'facts' => ['product_weight_lb' => 9.9],
+                'id' => 'replacement-id',
+                'category' => 'legacy-alias',
+                'variants' => [],
             ])
             ->assertUnprocessable()
-            ->assertJsonValidationErrors(['category', 'facts']);
+            ->assertJsonValidationErrors(['id', 'category', 'variants']);
 
         $this->withToken(self::TOKEN)
             ->patchJson('/api/v1/admin/catalog/variants/lunch-box%3Ablue', [
                 'revision' => 1,
-                'color' => 'Attempted mutation',
-                'asin' => 'B000000000',
-                'pantone' => 'PANTONE 0000 U',
+                'id' => 'replacement-variant',
+                'product_id' => 'replacement-product',
+                'purchase_url' => 'https://example.com/not-authoritative',
             ])
             ->assertUnprocessable()
-            ->assertJsonValidationErrors(['asin', 'pantone']);
+            ->assertJsonValidationErrors(['id', 'product_id', 'purchase_url']);
 
-        $this->assertSame('B0FQN4L8MW', ProductVariant::query()->findOrFail('lunch-box:blue')->asin);
-        $this->assertArrayNotHasKey('product_weight_lb', Product::query()->findOrFail('drawer-organizer')->facts);
         $this->assertSame(0, CatalogAudit::query()->count());
     }
 
@@ -154,20 +192,34 @@ final class CatalogAdminAuthoringTest extends TestCase
         $this->assertStringNotContainsString(self::TOKEN, json_encode($payload, JSON_THROW_ON_ERROR));
     }
 
-    public function test_product_master_seed_reconciliation_preserves_authored_copy_but_restores_locked_fields(): void
+    public function test_bootstrap_seed_does_not_restore_or_overwrite_dashboard_authored_fields(): void
     {
+        CatalogCategory::query()->create([
+            'id' => 'dashboard-category',
+            'name' => 'Dashboard Category',
+            'is_visible' => true,
+            'sort_order' => 0,
+            'revision' => 1,
+        ]);
+
         $product = Product::query()->findOrFail('drawer-organizer');
-        $product->name = 'Authored name';
-        $product->features = ['Authored feature'];
-        $product->facts = ['unsafe' => true];
-        $product->category = 'unsafe-category';
+        $product->name = 'Dashboard Authored Name';
+        $product->features = ['Dashboard feature'];
+        $product->facts = ['dashboard' => true];
+        $product->category = 'dashboard-category';
+        $product->category_id = 'dashboard-category';
+        $product->sort_order = 41;
+        $product->is_visible = false;
         $product->revision = 7;
         $product->save();
 
         $variant = ProductVariant::query()->findOrFail('lunch-box:blue');
-        $variant->color = 'Authored Blue';
-        $variant->asin = 'B000000000';
-        $variant->pantone = 'PANTONE 0000 U';
+        $variant->color = 'Dashboard Ocean';
+        $variant->swatch_hex = '#654321';
+        $variant->asin = 'B012345679';
+        $variant->pantone = 'PANTONE DASHBOARD U';
+        $variant->sort_order = 31;
+        $variant->is_visible = false;
         $variant->revision = 4;
         $variant->save();
 
@@ -176,15 +228,21 @@ final class CatalogAdminAuthoringTest extends TestCase
         $product->refresh();
         $variant->refresh();
 
-        $this->assertSame('Authored name', $product->name);
-        $this->assertSame(['Authored feature'], $product->features);
-        $this->assertSame('drawer-organization', $product->category);
-        $this->assertArrayNotHasKey('unsafe', $product->facts);
+        $this->assertSame('Dashboard Authored Name', $product->name);
+        $this->assertSame(['Dashboard feature'], $product->features);
+        $this->assertSame(['dashboard' => true], $product->facts);
+        $this->assertSame('dashboard-category', $product->category);
+        $this->assertSame('dashboard-category', $product->category_id);
+        $this->assertSame(41, $product->sort_order);
+        $this->assertFalse($product->is_visible);
         $this->assertSame(7, $product->revision);
 
-        $this->assertSame('Authored Blue', $variant->color);
-        $this->assertSame('B0FQN4L8MW', $variant->asin);
-        $this->assertSame('PANTONE 4155 U', $variant->pantone);
+        $this->assertSame('Dashboard Ocean', $variant->color);
+        $this->assertSame('#654321', $variant->swatch_hex);
+        $this->assertSame('B012345679', $variant->asin);
+        $this->assertSame('PANTONE DASHBOARD U', $variant->pantone);
+        $this->assertSame(31, $variant->sort_order);
+        $this->assertFalse($variant->is_visible);
         $this->assertSame(4, $variant->revision);
     }
 }

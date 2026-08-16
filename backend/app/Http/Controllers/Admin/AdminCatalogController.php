@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Admin;
 
 use App\Exceptions\CatalogRevisionConflictException;
 use App\Http\Controllers\Controller;
-use App\Models\CatalogAudit;
 use App\Models\CatalogCategory;
 use App\Models\Product;
 use App\Models\ProductVariant;
@@ -13,100 +12,23 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use JsonException;
 
-final class AdminDashboardController extends Controller
+final class AdminCatalogController extends Controller
 {
     public function __construct(private readonly CatalogAuthoringService $authoring) {}
 
-    public function loginForm(Request $request): View|RedirectResponse
+    public function index(): View
     {
-        if ($request->session()->get('walka_admin_dashboard_authenticated') === true) {
-            return redirect()->route('admin.dashboard');
-        }
-
-        return view('admin.login', [
-            'configured' => $this->dashboardIsConfigured(),
-        ]);
-    }
-
-    public function authenticate(Request $request): RedirectResponse
-    {
-        $validated = $request->validate([
-            'username' => ['required', 'string', 'max:80'],
-            'password' => ['required', 'string', 'max:500'],
-        ]);
-
-        if (! $this->dashboardIsConfigured()) {
-            return back()
-                ->withInput($request->only('username'))
-                ->withErrors(['password' => 'Dashboard authentication is not configured on this server.']);
-        }
-
-        $configuredUsername = (string) config('walka.dashboard_username', 'admin');
-        $configuredPassword = (string) config('walka.dashboard_password', '');
-
-        $usernameMatches = hash_equals($configuredUsername, (string) $validated['username']);
-        $passwordMatches = hash_equals($configuredPassword, (string) $validated['password']);
-
-        if (! $usernameMatches || ! $passwordMatches) {
-            return back()
-                ->withInput($request->only('username'))
-                ->withErrors(['password' => 'Invalid WALKA Admin credentials.']);
-        }
-
-        $request->session()->regenerate();
-        $request->session()->put('walka_admin_dashboard_authenticated', true);
-        $request->session()->put('walka_admin_dashboard_username', $configuredUsername);
-        $request->session()->put(
-            'walka_admin_dashboard_actor',
-            hash('sha256', 'dashboard|'.$configuredUsername.'|'.$request->session()->getId()),
-        );
-
-        return redirect()->intended(route('admin.dashboard'));
-    }
-
-    public function logout(Request $request): RedirectResponse
-    {
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
-
-        return redirect()->route('admin.login');
-    }
-
-    public function dashboard(): View
-    {
-        $products = Product::query()->get();
-        $variants = ProductVariant::query()->get();
-        $recentAudits = CatalogAudit::query()->latest('created_at')->limit(6)->get();
-
-        return view('admin.dashboard', [
-            'productCount' => $products->count(),
-            'variantCount' => $variants->count(),
-            'categoryCount' => CatalogCategory::query()->count(),
-            'auditCount' => CatalogAudit::query()->count(),
-            'recentAudits' => $recentAudits,
-            'release' => (string) config('walka.release'),
-            'apiVersion' => (string) config('walka.api_version'),
-            'purchaseMode' => (string) config('walka.purchase_mode'),
-            'adminApiConfigured' => strlen((string) config('walka.admin_token', '')) >= 32,
-            'catalogReady' => $products->isNotEmpty(),
-        ]);
-    }
-
-    public function catalog(): View
-    {
-        $categories = CatalogCategory::query()->orderBy('sort_order')->orderBy('id')->get();
-        $products = Product::query()
-            ->with(['categoryEntity', 'variants'])
-            ->orderBy('sort_order')
-            ->orderBy('id')
-            ->get();
-
         return view('admin.catalog', [
-            'categories' => $categories,
-            'products' => $products,
+            'categories' => CatalogCategory::query()->orderBy('sort_order')->orderBy('id')->get(),
+            'products' => Product::query()
+                ->with(['categoryEntity', 'variants'])
+                ->orderBy('sort_order')
+                ->orderBy('id')
+                ->get(),
         ]);
     }
 
@@ -125,7 +47,7 @@ final class AdminDashboardController extends Controller
             'is_visible' => $request->boolean('is_visible'),
         ], $this->actorFingerprint($request));
 
-        return $this->catalogRedirect('Category created.');
+        return $this->done('Category created.');
     }
 
     public function updateCategory(Request $request, string $category): RedirectResponse
@@ -151,7 +73,7 @@ final class AdminDashboardController extends Controller
             return $this->revisionConflict('category');
         }
 
-        return $this->catalogRedirect('Category saved.');
+        return $this->done('Category saved.');
     }
 
     public function deleteCategory(Request $request, string $category): RedirectResponse
@@ -168,7 +90,7 @@ final class AdminDashboardController extends Controller
             return $this->revisionConflict('category');
         }
 
-        return $this->catalogRedirect('Category deleted.');
+        return $this->done('Category deleted.');
     }
 
     public function createProduct(Request $request): RedirectResponse
@@ -180,7 +102,7 @@ final class AdminDashboardController extends Controller
             ...$this->productAttributes($request, $validated),
         ], $this->actorFingerprint($request));
 
-        return $this->catalogRedirect('Product created. Add one or more colors/variants below it.');
+        return $this->done('Product created. Add one or more colors/variants below it.');
     }
 
     public function updateProduct(Request $request, string $product): RedirectResponse
@@ -201,7 +123,7 @@ final class AdminDashboardController extends Controller
             return $this->revisionConflict('product');
         }
 
-        return $this->catalogRedirect('Product saved and published to the catalog API.');
+        return $this->done('Product saved and published to the catalog API.');
     }
 
     public function deleteProduct(Request $request, string $product): RedirectResponse
@@ -218,7 +140,7 @@ final class AdminDashboardController extends Controller
             return $this->revisionConflict('product');
         }
 
-        return $this->catalogRedirect('Product and its variants deleted.');
+        return $this->done('Product and its variants deleted.');
     }
 
     public function createVariant(Request $request, string $product): RedirectResponse
@@ -227,27 +149,36 @@ final class AdminDashboardController extends Controller
         $validated = $request->validate([
             'variant_key' => ['required', 'string', 'max:60', 'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/'],
             'color' => ['required', 'filled', 'string', 'max:80'],
+            'swatch_hex' => ['nullable', 'regex:/^#[0-9A-Fa-f]{6}$/'],
             'pantone' => ['nullable', 'string', 'max:80'],
-            'asin' => ['required', 'string', 'size:10', 'regex:/^[A-Z0-9]{10}$/', Rule::unique('product_variants', 'asin')],
+            'asin' => ['required', 'string', 'size:10', 'regex:/^[A-Za-z0-9]{10}$/'],
             'sort_order' => ['required', 'integer', 'min:0', 'max:65535'],
         ]);
 
-        $variantId = $product.':'.$validated['variant_key'];
-        $request->validate([
-            'variant_key' => [Rule::unique('product_variants', 'id')->where(fn ($query) => $query->where('id', $variantId))],
-        ]);
+        $variantId = $product.':'.(string) $validated['variant_key'];
+        if (ProductVariant::query()->whereKey($variantId)->exists()) {
+            throw ValidationException::withMessages([
+                'variant_key' => 'That color/variant key already exists for this product.',
+            ]);
+        }
+
+        $asin = strtoupper((string) $validated['asin']);
+        if (ProductVariant::query()->where('asin', $asin)->exists()) {
+            throw ValidationException::withMessages(['asin' => 'That ASIN is already assigned to another variant.']);
+        }
 
         $this->authoring->createVariant([
             'id' => $variantId,
             'product_id' => $product,
             'color' => (string) $validated['color'],
+            'swatch_hex' => $this->normalizedHex($validated['swatch_hex'] ?? null),
             'pantone' => $this->nullableTrimmed($validated['pantone'] ?? null),
-            'asin' => strtoupper((string) $validated['asin']),
+            'asin' => $asin,
             'sort_order' => (int) $validated['sort_order'],
             'is_visible' => $request->boolean('is_visible'),
         ], $this->actorFingerprint($request));
 
-        return $this->catalogRedirect('Color/variant created.');
+        return $this->done('Color/variant created.');
     }
 
     public function updateVariant(Request $request, string $variant): RedirectResponse
@@ -256,18 +187,28 @@ final class AdminDashboardController extends Controller
         $validated = $request->validate([
             'revision' => ['required', 'integer', 'min:1'],
             'color' => ['required', 'filled', 'string', 'max:80'],
+            'swatch_hex' => ['nullable', 'regex:/^#[0-9A-Fa-f]{6}$/'],
             'pantone' => ['nullable', 'string', 'max:80'],
-            'asin' => ['required', 'string', 'size:10', 'regex:/^[A-Z0-9]{10}$/', Rule::unique('product_variants', 'asin')->ignore($current->id, 'id')],
+            'asin' => ['required', 'string', 'size:10', 'regex:/^[A-Za-z0-9]{10}$/'],
             'sort_order' => ['required', 'integer', 'min:0', 'max:65535'],
         ]);
+
+        $asin = strtoupper((string) $validated['asin']);
+        if (ProductVariant::query()
+            ->where('asin', $asin)
+            ->where('id', '!=', $current->id)
+            ->exists()) {
+            throw ValidationException::withMessages(['asin' => 'That ASIN is already assigned to another variant.']);
+        }
 
         try {
             $this->authoring->updateVariant(
                 variantId: $variant,
                 attributes: [
                     'color' => (string) $validated['color'],
+                    'swatch_hex' => $this->normalizedHex($validated['swatch_hex'] ?? null),
                     'pantone' => $this->nullableTrimmed($validated['pantone'] ?? null),
-                    'asin' => strtoupper((string) $validated['asin']),
+                    'asin' => $asin,
                     'sort_order' => (int) $validated['sort_order'],
                     'is_visible' => $request->boolean('is_visible'),
                 ],
@@ -278,7 +219,7 @@ final class AdminDashboardController extends Controller
             return $this->revisionConflict('variant');
         }
 
-        return $this->catalogRedirect('Color/variant saved and published to the catalog API.');
+        return $this->done('Color/variant saved and published to the catalog API.');
     }
 
     public function deleteVariant(Request $request, string $variant): RedirectResponse
@@ -295,14 +236,7 @@ final class AdminDashboardController extends Controller
             return $this->revisionConflict('variant');
         }
 
-        return $this->catalogRedirect('Color/variant deleted.');
-    }
-
-    public function audits(): View
-    {
-        return view('admin.audits', [
-            'audits' => CatalogAudit::query()->latest('created_at')->limit(100)->get(),
-        ]);
+        return $this->done('Color/variant deleted.');
     }
 
     private function productRules(bool $create): array
@@ -323,7 +257,9 @@ final class AdminDashboardController extends Controller
     {
         $features = $this->featuresFromTextarea((string) ($validated['features_text'] ?? ''));
         if ($features->count() > 20 || $features->contains(fn (string $feature): bool => mb_strlen($feature) > 180)) {
-            abort(422, 'Use at most 20 feature lines, maximum 180 characters each.');
+            throw ValidationException::withMessages([
+                'features_text' => 'Use at most 20 feature lines, maximum 180 characters each.',
+            ]);
         }
 
         return [
@@ -346,31 +282,14 @@ final class AdminDashboardController extends Controller
         try {
             $decoded = json_decode($value, true, 64, JSON_THROW_ON_ERROR);
         } catch (JsonException) {
-            abort(422, 'Product facts must be valid JSON.');
+            throw ValidationException::withMessages(['facts_json' => 'Product facts must be valid JSON.']);
         }
 
         if (! is_array($decoded) || ($decoded !== [] && array_is_list($decoded))) {
-            abort(422, 'Product facts must be a JSON object.');
+            throw ValidationException::withMessages(['facts_json' => 'Product facts must be a JSON object.']);
         }
 
         return $decoded;
-    }
-
-    private function dashboardIsConfigured(): bool
-    {
-        $username = trim((string) config('walka.dashboard_username', ''));
-        $password = (string) config('walka.dashboard_password', '');
-
-        return $username !== '' && strlen($password) >= 12;
-    }
-
-    private function actorFingerprint(Request $request): string
-    {
-        $fingerprint = (string) $request->session()->get('walka_admin_dashboard_actor', '');
-
-        return $fingerprint !== ''
-            ? $fingerprint
-            : hash('sha256', 'dashboard|'.$request->session()->getId());
     }
 
     /** @return Collection<int, string> */
@@ -389,15 +308,29 @@ final class AdminDashboardController extends Controller
         return $trimmed === '' ? null : $trimmed;
     }
 
-    private function catalogRedirect(string $status): RedirectResponse
+    private function normalizedHex(mixed $value): ?string
+    {
+        $hex = $this->nullableTrimmed($value);
+
+        return $hex === null ? null : strtoupper($hex);
+    }
+
+    private function actorFingerprint(Request $request): string
+    {
+        $fingerprint = (string) $request->session()->get('walka_admin_dashboard_actor', '');
+
+        return $fingerprint !== '' ? $fingerprint : hash('sha256', 'dashboard|'.$request->session()->getId());
+    }
+
+    private function done(string $status): RedirectResponse
     {
         return redirect()->route('admin.catalog')->with('status', $status);
     }
 
     private function revisionConflict(string $target): RedirectResponse
     {
-        return redirect()
-            ->route('admin.catalog')
-            ->withErrors(['revision' => "This {$target} changed in another session. Reloaded current values; review and save again."]);
+        return redirect()->route('admin.catalog')->withErrors([
+            'revision' => "This {$target} changed in another session. Reloaded current values; review and save again.",
+        ]);
     }
 }

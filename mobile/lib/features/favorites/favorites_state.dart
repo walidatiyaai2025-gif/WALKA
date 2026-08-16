@@ -3,7 +3,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 abstract interface class WalkaFavoritesStore {
   Future<Set<String>> readFavoriteIds();
-
   Future<void> writeFavoriteIds(Set<String> ids);
 }
 
@@ -21,9 +20,7 @@ class SharedPreferencesWalkaFavoritesStore implements WalkaFavoritesStore {
     final SharedPreferences preferences = await SharedPreferences.getInstance();
     final List<String> values = ids.toList()..sort();
     final bool saved = await preferences.setStringList(storageKey, values);
-    if (!saved) {
-      throw StateError('Unable to persist WALKA favorites.');
-    }
+    if (!saved) throw StateError('Unable to persist WALKA favorites.');
   }
 }
 
@@ -38,15 +35,9 @@ class WalkaFavoritesController extends ChangeNotifier {
   bool _isLoaded = false;
 
   bool get isLoaded => _isLoaded;
+  Set<String> get favoriteIds => Set<String>.unmodifiable(_favoriteIds);
 
-  List<bool> get savedDrawerVariants => <bool>[
-        if (_favoriteIds.contains(drawerWhiteId)) false,
-        if (_favoriteIds.contains(drawerGrayId)) true,
-      ];
-
-  bool isDrawerFavorite({required bool gray}) {
-    return _favoriteIds.contains(_drawerId(gray: gray));
-  }
+  bool isFavorite(String variantId) => _favoriteIds.contains(variantId);
 
   Future<void> load() async {
     try {
@@ -58,33 +49,34 @@ class WalkaFavoritesController extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<bool> toggleDrawer({required bool gray}) async {
-    final String id = _drawerId(gray: gray);
+  Future<bool> toggle(String variantId) async {
     final Set<String> before = Set<String>.from(_favoriteIds);
-
-    if (_favoriteIds.contains(id)) {
-      _favoriteIds.remove(id);
-    } else {
-      _favoriteIds.add(id);
-    }
-
+    if (!_favoriteIds.add(variantId)) _favoriteIds.remove(variantId);
     return _persistOrRollback(before);
   }
 
-  Future<bool> removeDrawer({required bool gray}) async {
-    final String id = _drawerId(gray: gray);
-    if (!_favoriteIds.contains(id)) {
-      return true;
-    }
-
+  Future<bool> remove(String variantId) async {
+    if (!_favoriteIds.contains(variantId)) return true;
     final Set<String> before = Set<String>.from(_favoriteIds);
-    _favoriteIds.remove(id);
+    _favoriteIds.remove(variantId);
     return _persistOrRollback(before);
   }
 
-  String _drawerId({required bool gray}) {
-    return gray ? drawerGrayId : drawerWhiteId;
-  }
+  // Compatibility adapters for legacy product-specific surfaces. Production
+  // dynamic pages use the generic variant-ID methods above.
+  List<bool> get savedDrawerVariants => <bool>[
+        if (_favoriteIds.contains(drawerWhiteId)) false,
+        if (_favoriteIds.contains(drawerGrayId)) true,
+      ];
+
+  bool isDrawerFavorite({required bool gray}) =>
+      isFavorite(gray ? drawerGrayId : drawerWhiteId);
+
+  Future<bool> toggleDrawer({required bool gray}) =>
+      toggle(gray ? drawerGrayId : drawerWhiteId);
+
+  Future<bool> removeDrawer({required bool gray}) =>
+      remove(gray ? drawerGrayId : drawerWhiteId);
 
   Future<bool> _persistOrRollback(Set<String> before) async {
     notifyListeners();

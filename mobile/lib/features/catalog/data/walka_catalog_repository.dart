@@ -1,7 +1,14 @@
 import '../../../core/api/walka_api_client.dart';
 import '../domain/walka_catalog.dart';
-import 'walka_bundled_catalog.dart';
 import 'walka_catalog_cache.dart';
+
+class WalkaCatalogUnavailableException implements Exception {
+  const WalkaCatalogUnavailableException();
+
+  @override
+  String toString() =>
+      'WALKA catalog is unavailable: no valid remote or last-known-good snapshot.';
+}
 
 class WalkaCatalogRepository {
   WalkaCatalogRepository({
@@ -23,7 +30,7 @@ class WalkaCatalogRepository {
     final WalkaCatalogSnapshot? cachedSnapshot = await _tryCache();
     if (cachedSnapshot != null) return cachedSnapshot;
 
-    return WalkaBundledCatalog.snapshot(fetchedAt: _clock());
+    throw const WalkaCatalogUnavailableException();
   }
 
   Future<WalkaCatalogSnapshot?> _tryRemote() async {
@@ -44,6 +51,7 @@ class WalkaCatalogRepository {
 
       final WalkaCatalogSnapshot snapshot = WalkaCatalogSnapshot(
         config: config,
+        categories: payload.categories,
         products: payload.products,
         source: WalkaCatalogSource.remote,
         fetchedAt: _clock().toUtc(),

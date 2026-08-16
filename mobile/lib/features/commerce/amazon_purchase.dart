@@ -2,12 +2,6 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../catalog/domain/walka_catalog.dart';
 
-const String walkaDrawerOrganizerWhiteAsin = 'B0FQN4DCTG';
-const String walkaDrawerOrganizerGrayAsin = 'B0FQN4L2ZD';
-const String walkaLunchBoxBlueAsin = 'B0FQN4L8MW';
-const String walkaLunchBoxPinkAsin = 'B0FQN3W4SF';
-const String walkaLunchBoxGreenAsin = 'B0GPZNKF9F';
-
 enum WalkaAmazonLunchVariant { blue, pink, green }
 
 abstract final class WalkaAmazonPurchaseRegistry {
@@ -28,34 +22,29 @@ abstract final class WalkaAmazonPurchaseRegistry {
 
   static Uri? uriForVariant(String variantId) => _purchaseUris[variantId];
 
+  static Uri requireUriForVariant(String variantId) {
+    final Uri? uri = uriForVariant(variantId);
+    if (uri == null) {
+      throw StateError(
+        'No validated Dashboard purchase URL is loaded for variant $variantId.',
+      );
+    }
+    return uri;
+  }
+
   static void clearForTesting() {
     _purchaseUris = <String, Uri>{};
   }
 }
 
 Uri amazonDrawerOrganizerUri({required bool gray}) {
-  final String variantId = gray
-      ? 'drawer-organizer:gray'
-      : 'drawer-organizer:white';
-  final Uri? catalogUri = WalkaAmazonPurchaseRegistry.uriForVariant(variantId);
-  if (catalogUri != null) return catalogUri;
-
-  final String asin = gray
-      ? walkaDrawerOrganizerGrayAsin
-      : walkaDrawerOrganizerWhiteAsin;
-  return Uri.https('www.amazon.com', '/dp/$asin');
+  return WalkaAmazonPurchaseRegistry.requireUriForVariant(
+    gray ? 'drawer-organizer:gray' : 'drawer-organizer:white',
+  );
 }
 
 Future<bool> openDrawerOrganizerOnAmazon({required bool gray}) {
   return openAmazonPurchaseUri(amazonDrawerOrganizerUri(gray: gray));
-}
-
-String amazonLunchBoxAsin(WalkaAmazonLunchVariant variant) {
-  return switch (variant) {
-    WalkaAmazonLunchVariant.blue => walkaLunchBoxBlueAsin,
-    WalkaAmazonLunchVariant.pink => walkaLunchBoxPinkAsin,
-    WalkaAmazonLunchVariant.green => walkaLunchBoxGreenAsin,
-  };
 }
 
 String _lunchVariantId(WalkaAmazonLunchVariant variant) {
@@ -66,12 +55,21 @@ String _lunchVariantId(WalkaAmazonLunchVariant variant) {
   };
 }
 
-Uri amazonLunchBoxUri(WalkaAmazonLunchVariant variant) {
-  final Uri? catalogUri = WalkaAmazonPurchaseRegistry.uriForVariant(
+String amazonLunchBoxAsin(WalkaAmazonLunchVariant variant) {
+  final Uri uri = WalkaAmazonPurchaseRegistry.requireUriForVariant(
     _lunchVariantId(variant),
   );
-  return catalogUri ??
-      Uri.https('www.amazon.com', '/dp/${amazonLunchBoxAsin(variant)}');
+  final List<String> segments = uri.pathSegments;
+  if (segments.length < 2 || segments[segments.length - 2] != 'dp') {
+    throw StateError('Loaded Dashboard purchase URL does not contain an ASIN.');
+  }
+  return segments.last;
+}
+
+Uri amazonLunchBoxUri(WalkaAmazonLunchVariant variant) {
+  return WalkaAmazonPurchaseRegistry.requireUriForVariant(
+    _lunchVariantId(variant),
+  );
 }
 
 Future<bool> openLunchBoxOnAmazon(WalkaAmazonLunchVariant variant) {

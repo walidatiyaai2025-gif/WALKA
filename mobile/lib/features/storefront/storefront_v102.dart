@@ -5,10 +5,11 @@ import '../../design_system/walka_shell.dart';
 import '../../design_system/walka_theme.dart';
 import '../catalog/catalog_state.dart';
 import 'account_about_reference_v131.dart';
-import 'favorites_reference_v131.dart';
+import 'dynamic_favorites_v140.dart';
 import 'storefront_resilient_v130.dart';
 
-/// API-002 connected storefront entry surface with premium reusable shell.
+/// API-connected storefront shell. Catalog-bearing destinations resolve only
+/// from the validated Dashboard/DB/API snapshot.
 class WalkaStorefrontSplashV102 extends StatelessWidget {
   const WalkaStorefrontSplashV102({super.key});
 
@@ -103,7 +104,7 @@ class _WalkaStorefrontShellV102State extends State<WalkaStorefrontShellV102> {
       WalkaCategoriesPremiumV130(
         onSearch: () => _select(WalkaShellDestination.search),
       ),
-      WalkaFavoritesReferenceV131(
+      WalkaDynamicFavoritesV140(
         onExplore: () => _select(WalkaShellDestination.categories),
       ),
       WalkaAccountReferenceV131(

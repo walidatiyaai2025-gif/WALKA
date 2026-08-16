@@ -7,12 +7,22 @@ import 'data/walka_catalog_repository.dart';
 import 'domain/walka_catalog.dart';
 
 class WalkaCatalogController extends ChangeNotifier {
-  WalkaCatalogController({WalkaCatalogRepository? repository})
-      : _repository = repository,
-        _snapshot = walkaPresentationSnapshot(WalkaBundledCatalog.snapshot()),
-        _isLoading = repository != null {
-    WalkaAmazonPurchaseRegistry.replaceFromSnapshot(_snapshot);
-  }
+  WalkaCatalogController({
+    WalkaCatalogRepository? repository,
+    WalkaCatalogSnapshot? initialSnapshot,
+  })  : _repository = repository,
+        _snapshot = walkaPresentationSnapshot(
+          initialSnapshot ??
+              (repository == null ? presentationInitialSnapshotFactory?.call() : null) ??
+              WalkaBundledCatalog.snapshot(),
+        ),
+        _isLoading = repository != null;
+
+  /// Test/presentation dependency injection only. Production does not assign
+  /// this hook, so repository-backed runtime controllers still start empty and
+  /// can load only Remote -> Last-Known-Good cache.
+  @visibleForTesting
+  static WalkaCatalogSnapshot Function()? presentationInitialSnapshotFactory;
 
   /// Side-effect-free base constructor for a presentation-only delegating
   /// controller. It intentionally does not touch the global Amazon registry.
@@ -31,8 +41,10 @@ class WalkaCatalogController extends ChangeNotifier {
   bool get canRefresh => _repository != null;
   bool get isOffline => _snapshot.source != WalkaCatalogSource.remote;
   bool get isUsingCache => _snapshot.source == WalkaCatalogSource.cache;
-  bool get isUsingBundledFallback =>
-      _snapshot.source == WalkaCatalogSource.bundled;
+  bool get isUnavailable => !_snapshot.isAvailable;
+
+  @Deprecated('Bundled catalog entities were removed; use isUnavailable.')
+  bool get isUsingBundledFallback => false;
 
   Future<void> load() async {
     final WalkaCatalogRepository? repository = _repository;
@@ -46,13 +58,19 @@ class WalkaCatalogController extends ChangeNotifier {
 
     _isLoading = true;
     notifyListeners();
-    final WalkaCatalogSnapshot next = walkaPresentationSnapshot(
-      await repository.load(),
-    );
-    _snapshot = next;
-    WalkaAmazonPurchaseRegistry.replaceFromSnapshot(next);
-    _isLoading = false;
-    notifyListeners();
+    try {
+      final WalkaCatalogSnapshot next = walkaPresentationSnapshot(
+        await repository.load(),
+      );
+      _snapshot = next;
+      WalkaAmazonPurchaseRegistry.replaceFromSnapshot(next);
+    } on WalkaCatalogUnavailableException {
+      // Keep a previously validated LKG snapshot if one is already active.
+      // Initial empty state remains unavailable instead of inventing products.
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
   }
 }
 

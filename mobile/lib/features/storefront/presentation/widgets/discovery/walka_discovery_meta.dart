@@ -40,7 +40,8 @@ class WalkaDiscoverySourceBadge extends StatelessWidget {
     final String label = switch (source) {
       WalkaCatalogSource.remote => 'LIVE CATALOG',
       WalkaCatalogSource.cache => 'SAVED CATALOG',
-      WalkaCatalogSource.bundled => 'BUILT-IN CATALOG',
+      WalkaCatalogSource.unavailable => 'CATALOG UNAVAILABLE',
+      WalkaCatalogSource.bundled => 'CATALOG UNAVAILABLE',
     };
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
@@ -75,10 +76,10 @@ class WalkaDiscoveryCatalogStatus extends StatelessWidget {
       label = 'Updating WALKA catalog…';
       icon = Icons.sync_rounded;
     } else if (controller.snapshot.source == WalkaCatalogSource.cache) {
-      label = 'Offline · showing the last saved WALKA catalog';
+      label = 'Offline · showing the last validated Dashboard catalog';
       icon = Icons.cloud_off_outlined;
     } else {
-      label = 'Offline · showing the built-in WALKA catalog';
+      label = 'Catalog unavailable · no built-in products are substituted';
       icon = Icons.inventory_2_outlined;
     }
     return Container(

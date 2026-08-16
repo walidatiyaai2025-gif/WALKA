@@ -4,12 +4,9 @@ import '../../design_system/walka_motion.dart';
 import '../../design_system/walka_theme.dart';
 import '../catalog/catalog_state.dart';
 
-enum WalkaCatalogFeedbackKind { loading, cache, bundled }
+enum WalkaCatalogFeedbackKind { loading, cache, unavailable }
 
 /// One catalog resilience surface shared by Home, Search and Categories.
-///
-/// Refresh never blocks the product UI: the current validated snapshot remains
-/// browsable while this banner communicates where the visible data came from.
 class WalkaCatalogStatusBanner extends StatelessWidget {
   const WalkaCatalogStatusBanner({
     required this.controller,
@@ -21,7 +18,7 @@ class WalkaCatalogStatusBanner extends StatelessWidget {
   static WalkaCatalogFeedbackKind kindFor(WalkaCatalogController controller) {
     if (controller.isLoading) return WalkaCatalogFeedbackKind.loading;
     if (controller.isUsingCache) return WalkaCatalogFeedbackKind.cache;
-    return WalkaCatalogFeedbackKind.bundled;
+    return WalkaCatalogFeedbackKind.unavailable;
   }
 
   @override
@@ -68,7 +65,6 @@ class WalkaCatalogStatusBanner extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.fromLTRB(12, 10, 10, 11),
                 child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: <Widget>[
                     Container(
                       width: 34,
@@ -77,36 +73,16 @@ class WalkaCatalogStatusBanner extends StatelessWidget {
                         color: const Color(0xFFF2E9CF),
                         borderRadius: BorderRadius.circular(11),
                       ),
-                      child: Icon(
-                        copy.icon,
-                        size: 17,
-                        color: WalkaColors.navy,
-                      ),
+                      child: Icon(copy.icon, size: 17, color: WalkaColors.navy),
                     ),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: <Widget>[
-                          Text(
-                            copy.title,
-                            style: const TextStyle(
-                              color: WalkaColors.navy,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w900,
-                              height: 1.2,
-                            ),
-                          ),
+                          Text(copy.title, style: const TextStyle(color: WalkaColors.navy, fontSize: 11, fontWeight: FontWeight.w900, height: 1.2)),
                           const SizedBox(height: 3),
-                          Text(
-                            copy.body,
-                            style: const TextStyle(
-                              color: WalkaColors.muted,
-                              fontSize: 10,
-                              fontWeight: FontWeight.w600,
-                              height: 1.35,
-                            ),
-                          ),
+                          Text(copy.body, style: const TextStyle(color: WalkaColors.muted, fontSize: 10, fontWeight: FontWeight.w600, height: 1.35)),
                         ],
                       ),
                     ),
@@ -116,14 +92,7 @@ class WalkaCatalogStatusBanner extends StatelessWidget {
                         child: TextButton(
                           key: const ValueKey<String>('walka-catalog-retry'),
                           onPressed: controller.load,
-                          child: const Text(
-                            'RETRY',
-                            style: TextStyle(
-                              fontSize: 9,
-                              fontWeight: FontWeight.w900,
-                              letterSpacing: 0.7,
-                            ),
-                          ),
+                          child: const Text('RETRY', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, letterSpacing: 0.7)),
                         ),
                       ),
                     ],
@@ -142,29 +111,24 @@ _CatalogFeedbackCopy _copyFor(WalkaCatalogFeedbackKind kind) {
   return switch (kind) {
     WalkaCatalogFeedbackKind.loading => const _CatalogFeedbackCopy(
         title: 'Refreshing the WALKA catalog',
-        body: 'Keep browsing while we check for the latest verified catalog.',
+        body: 'Checking the Dashboard catalog for the latest products and colors.',
         icon: Icons.sync_rounded,
       ),
     WalkaCatalogFeedbackKind.cache => const _CatalogFeedbackCopy(
         title: 'Offline · saved catalog',
-        body: 'Showing the last validated WALKA catalog stored on this device.',
+        body: 'Showing the last validated Dashboard catalog stored on this device.',
         icon: Icons.cloud_off_outlined,
       ),
-    WalkaCatalogFeedbackKind.bundled => const _CatalogFeedbackCopy(
-        title: 'Offline · built-in catalog',
-        body: 'Showing WALKA’s validated built-in catalog until connectivity returns.',
+    WalkaCatalogFeedbackKind.unavailable => const _CatalogFeedbackCopy(
+        title: 'Catalog temporarily unavailable',
+        body: 'No validated Dashboard catalog is available on this device yet.',
         icon: Icons.inventory_2_outlined,
       ),
   };
 }
 
 class _CatalogFeedbackCopy {
-  const _CatalogFeedbackCopy({
-    required this.title,
-    required this.body,
-    required this.icon,
-  });
-
+  const _CatalogFeedbackCopy({required this.title, required this.body, required this.icon});
   final String title;
   final String body;
   final IconData icon;

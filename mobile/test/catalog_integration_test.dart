@@ -3,12 +3,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:walka/design_system/walka_theme.dart';
 import 'package:walka/features/catalog/catalog_state.dart';
-import 'package:walka/features/catalog/data/walka_bundled_catalog.dart';
 import 'package:walka/features/catalog/data/walka_catalog_cache.dart';
+import 'package:walka/features/catalog/data/walka_catalog_repository.dart';
 import 'package:walka/features/catalog/domain/walka_catalog.dart';
 import 'package:walka/features/commerce/amazon_purchase.dart';
-import 'package:walka/features/products/product_experience_v100.dart';
-import 'package:walka/features/storefront/storefront_catalog_v120.dart';
+import 'package:walka/features/storefront/dynamic_catalog_v140.dart';
 
 void main() {
   setUp(() {
@@ -16,160 +15,173 @@ void main() {
     WalkaAmazonPurchaseRegistry.clearForTesting();
   });
 
-  test('SharedPreferences cache round-trips the normalized catalog snapshot',
-      () async {
-    final SharedPreferencesWalkaCatalogCache cache =
-        SharedPreferencesWalkaCatalogCache();
-    final WalkaCatalogSnapshot bundled = WalkaBundledCatalog.snapshot(
-      fetchedAt: DateTime.utc(2026, 8, 10),
-    );
-
-    await cache.write(bundled);
+  test('SharedPreferences cache round-trips arbitrary Dashboard catalog', () async {
+    final SharedPreferencesWalkaCatalogCache cache = SharedPreferencesWalkaCatalogCache();
+    final WalkaCatalogSnapshot source = _dynamicCatalog();
+    await cache.write(source);
     final WalkaCatalogSnapshot? cached = await cache.read();
-
     expect(cached, isNotNull);
     expect(cached!.source, WalkaCatalogSource.cache);
-    expect(cached.variants.length, 5);
-    expect(cached.variantById('lunch-box:pink')?.asin, 'B0FQN3W4SF');
+    expect(cached.categories.map((item) => item.id), <String>['workspace', 'travel']);
+    expect(cached.productById('desk-kit')?.name, 'Desk Kit Pro');
+    expect(cached.variantById('desk-kit:emerald')?.asin, 'B012345672');
+    expect(cached.variantById('desk-kit:emerald')?.swatchHex, '#228855');
   });
 
   test('corrupted SharedPreferences cache is ignored', () async {
     SharedPreferences.setMockInitialValues(<String, Object>{
       SharedPreferencesWalkaCatalogCache.storageKey: '{not-json',
     });
-
-    final WalkaCatalogSnapshot? cached =
-        await SharedPreferencesWalkaCatalogCache().read();
-
-    expect(cached, isNull);
+    expect(await SharedPreferencesWalkaCatalogCache().read(), isNull);
   });
 
-  test('catalog controller registers validated selected-variant Amazon URLs', () {
-    final WalkaCatalogSnapshot bundled = WalkaBundledCatalog.snapshot();
-    final List<WalkaCatalogProduct> products = bundled.products.map(
-      (WalkaCatalogProduct product) {
-        if (product.id != 'drawer-organizer') return product;
-        return WalkaCatalogProduct(
-          id: product.id,
-          name: product.name,
-          category: product.category,
-          features: product.features,
-          facts: product.facts,
-          variants: product.variants.map((WalkaCatalogVariant variant) {
-            if (variant.id != 'drawer-organizer:white') return variant;
-            return WalkaCatalogVariant(
-              id: variant.id,
-              color: variant.color,
-              asin: variant.asin,
-              purchaseUrl: 'https://www.amazon.com/dp/REMOTE-WHITE',
-            );
-          }).toList(growable: false),
-        );
-      },
-    ).toList(growable: false);
-    final WalkaCatalogSnapshot remote = WalkaCatalogSnapshot(
-      config: bundled.config,
-      products: products,
-      source: WalkaCatalogSource.remote,
-      fetchedAt: DateTime.utc(2026, 8, 10),
-    );
-
-    WalkaAmazonPurchaseRegistry.replaceFromSnapshot(remote);
-
+  test('purchase registry follows arbitrary selected Dashboard variants', () {
+    WalkaAmazonPurchaseRegistry.replaceFromSnapshot(_dynamicCatalog());
     expect(
-      amazonDrawerOrganizerUri(gray: false).toString(),
-      'https://www.amazon.com/dp/REMOTE-WHITE',
+      WalkaAmazonPurchaseRegistry.requireUriForVariant('desk-kit:emerald'),
+      Uri.parse('https://www.amazon.com/dp/B012345672'),
     );
     expect(
-      amazonDrawerOrganizerUri(gray: true).toString(),
-      'https://www.amazon.com/dp/B0FQN4L2ZD',
+      WalkaAmazonPurchaseRegistry.requireUriForVariant('travel-mug:sand'),
+      Uri.parse('https://www.amazon.com/dp/B012345673'),
     );
   });
 
-  testWidgets('connected Search uses repository catalog and opens final PDP',
+  testWidgets('dynamic Search uses arbitrary catalog and opens generic PDP',
       (WidgetTester tester) async {
     tester.view.physicalSize = const Size(390, 844);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
+    final WalkaCatalogController controller = await _loadedController();
+    addTearDown(controller.dispose);
 
-    final WalkaCatalogController controller = WalkaCatalogController();
-    await controller.load();
-
-    await tester.pumpWidget(
-      WalkaCatalogScope(
-        controller: controller,
-        child: MaterialApp(
-          theme: buildWalkaTheme(),
-          home: const Scaffold(body: WalkaSearchV120()),
-        ),
+    await tester.pumpWidget(WalkaCatalogScope(
+      controller: controller,
+      child: MaterialApp(
+        theme: buildWalkaTheme(),
+        home: const Scaffold(body: WalkaDynamicSearchV140()),
       ),
-    );
+    ));
     await tester.pump();
-
-    await tester.enterText(find.byType(TextField), 'green');
+    await tester.enterText(find.byType(TextField), 'emerald');
     await tester.pump();
-
-    expect(find.text('1 result'), findsOneWidget);
-    expect(find.text('Green'), findsOneWidget);
-    expect(find.text('Large Stainless Steel Bento Lunch Box'), findsOneWidget);
-
-    await tester.tap(find.text('Large Stainless Steel Bento Lunch Box'));
+    expect(find.text('1 product'), findsOneWidget);
+    expect(find.text('Desk Kit Pro'), findsOneWidget);
+    await tester.tap(find.text('Desk Kit Pro'));
     await tester.pumpAndSettle();
+    expect(find.byType(WalkaDynamicProductDetailV140), findsOneWidget);
+    expect(find.text('Emerald'), findsWidgets);
 
-    expect(find.byType(WalkaLunchProductDetailV100), findsOneWidget);
-    expect(find.textContaining('Green · PANTONE 6198 U'), findsOneWidget);
+    await tester.tap(find.widgetWithText(ChoiceChip, 'Emerald'));
+    await tester.pump();
+    expect(find.text('ASIN B012345672'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('connected Categories exposes all five stable variants',
+  testWidgets('dynamic Categories renders Dashboard categories and products',
       (WidgetTester tester) async {
     tester.view.physicalSize = const Size(390, 844);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
+    final WalkaCatalogController controller = await _loadedController();
+    addTearDown(controller.dispose);
+    await tester.pumpWidget(WalkaCatalogScope(
+      controller: controller,
+      child: MaterialApp(
+        theme: buildWalkaTheme(),
+        home: const Scaffold(body: WalkaDynamicCategoriesV140()),
+      ),
+    ));
+    await tester.pump();
+    expect(find.text('Workspace Essentials'), findsOneWidget);
+    expect(find.text('Travel Gear'), findsOneWidget);
+    expect(find.text('Desk Kit Pro'), findsOneWidget);
+    expect(find.text('Travel Mug'), findsOneWidget);
+    expect(find.text('Blue'), findsNothing);
+    expect(find.text('Pink'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+}
 
-    final WalkaCatalogController controller = WalkaCatalogController();
-    await controller.load();
-    final List<WalkaCatalogViewItem> items = walkaCatalogViewItems(
-      controller.snapshot,
-    );
+Future<WalkaCatalogController> _loadedController() async {
+  final WalkaCatalogController controller = WalkaCatalogController(
+    repository: WalkaCatalogRepository(
+      cache: _MemoryCatalogCache(
+        snapshot: _dynamicCatalog().asSource(WalkaCatalogSource.cache),
+      ),
+    ),
+  );
+  await controller.load();
+  return controller;
+}
 
-    expect(
-      items.map((WalkaCatalogViewItem item) => item.variantId).toList(),
-      <String>[
-        'drawer-organizer:white',
-        'drawer-organizer:gray',
-        'lunch-box:blue',
-        'lunch-box:pink',
-        'lunch-box:green',
+WalkaCatalogSnapshot _dynamicCatalog() => WalkaCatalogSnapshot(
+  config: const WalkaStorefrontConfig(
+    brand: 'WALKA',
+    release: 'dynamic-test',
+    apiVersion: 'v1',
+    purchaseMode: 'amazon_redirect',
+  ),
+  categories: const <WalkaCatalogCategory>[
+    WalkaCatalogCategory(id: 'workspace', name: 'Workspace Essentials', sortOrder: 0),
+    WalkaCatalogCategory(id: 'travel', name: 'Travel Gear', sortOrder: 1),
+  ],
+  products: const <WalkaCatalogProduct>[
+    WalkaCatalogProduct(
+      id: 'desk-kit',
+      name: 'Desk Kit Pro',
+      category: 'workspace',
+      features: <String>['Modular organization'],
+      facts: <String, dynamic>{'material': 'Dashboard value'},
+      variants: <WalkaCatalogVariant>[
+        WalkaCatalogVariant(
+          id: 'desk-kit:midnight',
+          color: 'Midnight',
+          asin: 'B012345671',
+          swatchHex: '#102030',
+          purchaseUrl: 'https://www.amazon.com/dp/B012345671',
+        ),
+        WalkaCatalogVariant(
+          id: 'desk-kit:emerald',
+          color: 'Emerald',
+          asin: 'B012345672',
+          swatchHex: '#228855',
+          purchaseUrl: 'https://www.amazon.com/dp/B012345672',
+        ),
       ],
-    );
-    expect(
-      items.map((WalkaCatalogViewItem item) => item.variant).toSet(),
-      <String>{'White', 'Gray', 'Blue', 'Pink', 'Green'},
-    );
-    expect(items.first.title, 'Expandable Drawer Organizer');
-    expect(items.last.title, 'Large Stainless Steel Bento Lunch Box');
-
-    await tester.pumpWidget(
-      WalkaCatalogScope(
-        controller: controller,
-        child: MaterialApp(
-          theme: buildWalkaTheme(),
-          home: const Scaffold(body: WalkaCategoriesV120()),
+    ),
+    WalkaCatalogProduct(
+      id: 'travel-mug',
+      name: 'Travel Mug',
+      category: 'travel',
+      features: <String>['Insulated'],
+      facts: <String, dynamic>{'capacity_ml': 500},
+      variants: <WalkaCatalogVariant>[
+        WalkaCatalogVariant(
+          id: 'travel-mug:sand',
+          color: 'Sand',
+          asin: 'B012345673',
+          swatchHex: '#C9B79C',
+          purchaseUrl: 'https://www.amazon.com/dp/B012345673',
         ),
-      ),
-    );
-    await tester.pump();
+      ],
+    ),
+  ],
+  source: WalkaCatalogSource.remote,
+  fetchedAt: DateTime.utc(2026, 8, 16),
+);
 
-    expect(find.textContaining('5 current sellable variants'), findsOneWidget);
-    expect(find.byType(CustomScrollView), findsOneWidget);
-
-    await tester.drag(find.byType(CustomScrollView), const Offset(0, -700));
-    await tester.pumpAndSettle();
-
-    expect(find.byType(CustomScrollView), findsOneWidget);
-    expect(tester.takeException(), isNull);
-  });
+class _MemoryCatalogCache implements WalkaCatalogCache {
+  _MemoryCatalogCache({this.snapshot});
+  WalkaCatalogSnapshot? snapshot;
+  @override
+  Future<void> clear() async => snapshot = null;
+  @override
+  Future<WalkaCatalogSnapshot?> read() async => snapshot;
+  @override
+  Future<void> write(WalkaCatalogSnapshot value) async {
+    snapshot = value.asSource(WalkaCatalogSource.cache);
+  }
 }

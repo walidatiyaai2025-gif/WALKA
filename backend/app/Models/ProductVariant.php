@@ -16,9 +16,11 @@ final class ProductVariant extends Model
         'id',
         'product_id',
         'color',
+        'swatch_hex',
         'pantone',
         'asin',
         'sort_order',
+        'is_visible',
         'revision',
     ];
 
@@ -26,6 +28,7 @@ final class ProductVariant extends Model
     {
         return [
             'sort_order' => 'integer',
+            'is_visible' => 'boolean',
             'revision' => 'integer',
         ];
     }

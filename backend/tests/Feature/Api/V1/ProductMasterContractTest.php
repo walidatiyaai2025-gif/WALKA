@@ -2,7 +2,9 @@
 
 namespace Tests\Feature\Api\V1;
 
+use App\Models\CatalogCategory;
 use App\Models\Product;
+use App\Models\ProductVariant;
 use Database\Seeders\WalkaCatalogSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -11,7 +13,7 @@ final class ProductMasterContractTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_database_catalog_is_bound_to_the_verified_repository_product_master(): void
+    public function test_repository_product_master_remains_a_verified_bootstrap_reference(): void
     {
         $masterPath = base_path('../docs/PRODUCT_MASTER.md');
 
@@ -25,13 +27,6 @@ final class ProductMasterContractTest extends TestCase
             'Outer body: food-grade PP',
             'stainless sauce cup with lid',
             'SUS304 stainless tray: dishwasher safe; not microwave safe.',
-            'Lid and silicone gasket: dishwasher safe on the top rack; not microwave safe.',
-            'PP outer body: microwave safe only after removing the stainless tray, lid, and silicone gasket.',
-            'Secure Lock | Helps Prevent Spills',
-            'SPILL-RESISTANT DESIGN',
-            'Best suited for dry meals & snacks.',
-            'Not intended for liquids. Best for dry & semi-wet foods.',
-            'Carry upright.',
             'PANTONE 4155 U',
             'PANTONE 9242 U',
             'PANTONE 6198 U',
@@ -48,27 +43,58 @@ final class ProductMasterContractTest extends TestCase
         $this->assertArrayNotHasKey('packaging_in', $drawer->facts);
         $this->assertSame('Food-grade PP', $lunch->facts['outer_body']);
         $this->assertSame(
-            'Dishwasher safe; not microwave safe.',
-            $lunch->facts['care']['sus304_tray'],
-        );
-        $this->assertSame(
-            'Dishwasher safe on the top rack; not microwave safe.',
-            $lunch->facts['care']['lid_and_gasket'],
-        );
-        $this->assertSame(
-            'Microwave safe only after removing the stainless tray, lid, and silicone gasket.',
-            $lunch->facts['care']['pp_outer_body'],
-        );
-        $this->assertSame([
-            'Secure Lock | Helps Prevent Spills',
-            'SPILL-RESISTANT DESIGN',
-            'Best suited for dry meals & snacks.',
-            'Not intended for liquids. Best for dry & semi-wet foods.',
-            'Carry upright.',
-        ], $lunch->facts['usage_language']);
-        $this->assertSame(
             ['PANTONE 4155 U', 'PANTONE 9242 U', 'PANTONE 6198 U'],
             $lunch->variants->pluck('pantone')->all(),
         );
+    }
+
+    public function test_product_master_does_not_limit_runtime_database_membership_or_authoring(): void
+    {
+        $this->seed(WalkaCatalogSeeder::class);
+
+        CatalogCategory::query()->create([
+            'id' => 'dashboard-category',
+            'name' => 'Dashboard Category',
+            'is_visible' => true,
+            'sort_order' => 90,
+            'revision' => 1,
+        ]);
+        Product::query()->create([
+            'id' => 'dashboard-product',
+            'name' => 'Dashboard Product',
+            'category' => 'dashboard-category',
+            'category_id' => 'dashboard-category',
+            'features' => ['Created outside the bootstrap master'],
+            'facts' => ['dashboard_owned' => true],
+            'sort_order' => 0,
+            'is_visible' => true,
+            'revision' => 1,
+        ]);
+        ProductVariant::query()->create([
+            'id' => 'dashboard-product:custom',
+            'product_id' => 'dashboard-product',
+            'color' => 'Custom',
+            'swatch_hex' => '#123456',
+            'pantone' => 'OWNER MANAGED',
+            'asin' => 'B012345675',
+            'sort_order' => 0,
+            'is_visible' => true,
+            'revision' => 1,
+        ]);
+
+        $this->getJson('/api/v1/catalog')
+            ->assertOk()
+            ->assertJsonFragment([
+                'id' => 'dashboard-product',
+                'name' => 'Dashboard Product',
+                'category' => 'dashboard-category',
+            ])
+            ->assertJsonFragment([
+                'id' => 'dashboard-product:custom',
+                'color' => 'Custom',
+                'swatch_hex' => '#123456',
+                'pantone' => 'OWNER MANAGED',
+                'asin' => 'B012345675',
+            ]);
     }
 }

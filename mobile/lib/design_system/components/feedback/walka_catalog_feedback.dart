@@ -10,9 +10,7 @@ enum WalkaCatalogFeedbackKind {
   offline,
 }
 
-/// Presentation-only feedback for catalog loading and fallback states.
-///
-/// Networking, repository state and retry behavior remain caller-owned.
+/// Presentation-only feedback for catalog loading and availability states.
 class WalkaCatalogFeedback extends StatelessWidget {
   const WalkaCatalogFeedback({
     required this.kind,
@@ -34,25 +32,25 @@ class WalkaCatalogFeedback extends StatelessWidget {
   String get _title => title ?? switch (kind) {
         WalkaCatalogFeedbackKind.loading => 'Refreshing catalog',
         WalkaCatalogFeedbackKind.cached => 'Showing saved catalog',
-        WalkaCatalogFeedbackKind.bundledFallback => 'Showing built-in catalog',
+        WalkaCatalogFeedbackKind.bundledFallback => 'Catalog unavailable',
         WalkaCatalogFeedbackKind.offline => 'Catalog is offline',
       };
 
   String get _body => body ?? switch (kind) {
         WalkaCatalogFeedbackKind.loading =>
-          'The latest catalog data is being checked.',
+          'The latest Dashboard catalog data is being checked.',
         WalkaCatalogFeedbackKind.cached =>
-          'Saved catalog data is available while the latest version is unavailable.',
+          'The last validated Dashboard catalog is available while the latest version is unavailable.',
         WalkaCatalogFeedbackKind.bundledFallback =>
-          'The app is using its verified built-in catalog until refreshed data is available.',
+          'No remote or last-known-good Dashboard catalog is available. No built-in products are substituted.',
         WalkaCatalogFeedbackKind.offline =>
-          'Catalog refresh is unavailable right now. Existing app content remains available.',
+          'Catalog refresh is unavailable right now.',
       };
 
   IconData get _icon => switch (kind) {
         WalkaCatalogFeedbackKind.loading => Icons.sync_rounded,
         WalkaCatalogFeedbackKind.cached => Icons.inventory_2_outlined,
-        WalkaCatalogFeedbackKind.bundledFallback => Icons.offline_bolt_outlined,
+        WalkaCatalogFeedbackKind.bundledFallback => Icons.inventory_2_outlined,
         WalkaCatalogFeedbackKind.offline => Icons.cloud_off_outlined,
       };
 
