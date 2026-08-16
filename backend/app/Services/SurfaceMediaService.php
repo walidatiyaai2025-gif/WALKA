@@ -123,16 +123,18 @@ final class SurfaceMediaService
      */
     public function publicPayload(): array
     {
-        // All definitions remain valid for Admin custody and stored-assignment
-        // integrity. Public delivery filters category slots by current Dashboard
-        // visibility so hiding a category hides its media atomically with the
-        // catalog without deleting the assignment/history.
+        // All category definitions remain valid for Admin custody/history. Public
+        // delivery follows the exact catalog membership rule: category visible,
+        // with at least one visible product that has at least one visible variant.
         $definitions = self::slotDefinitions();
-        $visibleCategoryIds = CatalogCategory::query()
+        $publicCategoryIds = CatalogCategory::query()
             ->where('is_visible', true)
+            ->whereHas('products', fn ($query) => $query
+                ->where('is_visible', true)
+                ->whereHas('variants', fn ($variants) => $variants->where('is_visible', true)))
             ->pluck('id')
             ->all();
-        $visibleCategorySet = array_fill_keys($visibleCategoryIds, true);
+        $publicCategorySet = array_fill_keys($publicCategoryIds, true);
 
         $itemsBySlot = SurfaceMediaItem::query()
             ->with('mediaAsset.canonicalDerivative')
@@ -153,7 +155,7 @@ final class SurfaceMediaService
         foreach ($definitions as $slotKey => $definition) {
             $this->assertCategoryIdentity($definition);
             $categoryId = $definition['category_id'];
-            if ($categoryId !== null && ! isset($visibleCategorySet[$categoryId])) {
+            if ($categoryId !== null && ! isset($publicCategorySet[$categoryId])) {
                 continue;
             }
 
