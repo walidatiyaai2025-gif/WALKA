@@ -3,7 +3,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:walka/design_system/walka_motion.dart';
 import 'package:walka/design_system/walka_theme.dart';
 import 'package:walka/features/catalog/catalog_state.dart';
-import 'package:walka/features/catalog/data/walka_bundled_catalog.dart';
 import 'package:walka/features/catalog/data/walka_catalog_cache.dart';
 import 'package:walka/features/catalog/data/walka_catalog_repository.dart';
 import 'package:walka/features/catalog/domain/walka_catalog.dart';
@@ -60,12 +59,13 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('cache and bundled fallbacks expose distinct recovery feedback',
+  testWidgets('cache and unavailable states expose distinct recovery feedback',
       (WidgetTester tester) async {
-    final WalkaCatalogSnapshot bundled = WalkaBundledCatalog.snapshot();
     final WalkaCatalogController cached = WalkaCatalogController(
       repository: WalkaCatalogRepository(
-        cache: _MemoryCatalogCache(snapshot: bundled),
+        cache: _MemoryCatalogCache(
+          snapshot: _dynamicSnapshot().asSource(WalkaCatalogSource.cache),
+        ),
       ),
     );
     addTearDown(cached.dispose);
@@ -83,26 +83,27 @@ void main() {
     expect(find.byKey(const ValueKey<String>('walka-catalog-retry')), findsOneWidget);
     expect(tester.takeException(), isNull);
 
-    final WalkaCatalogController fallback = WalkaCatalogController(
+    final WalkaCatalogController unavailable = WalkaCatalogController(
       repository: WalkaCatalogRepository(cache: _MemoryCatalogCache()),
     );
-    addTearDown(fallback.dispose);
-    await fallback.load();
+    addTearDown(unavailable.dispose);
+    await unavailable.load();
 
     await tester.pumpWidget(
       _app(
-        controller: fallback,
-        child: WalkaCatalogStatusBanner(controller: fallback),
+        controller: unavailable,
+        child: WalkaCatalogStatusBanner(controller: unavailable),
       ),
     );
 
-    expect(fallback.isUsingBundledFallback, isTrue);
-    expect(find.text('Offline · built-in catalog'), findsOneWidget);
+    expect(unavailable.isUnavailable, isTrue);
+    expect(unavailable.isUsingBundledFallback, isFalse);
+    expect(find.text('Catalog temporarily unavailable'), findsOneWidget);
     expect(find.byKey(const ValueKey<String>('walka-catalog-retry')), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('V130 state surface masks duplicate legacy status only',
+  testWidgets('V130 state surface never renders catalog child while unavailable',
       (WidgetTester tester) async {
     final WalkaCatalogController controller = WalkaCatalogController();
     addTearDown(controller.dispose);
@@ -117,19 +118,20 @@ void main() {
     );
 
     expect(
-      find.byKey(const ValueKey<String>('walka-catalog-status-bundled')),
+      find.byKey(const ValueKey<String>('walka-catalog-status-unavailable')),
       findsOneWidget,
     );
     expect(
-      find.text('loading:false offline:false source:bundled'),
+      find.byKey(const ValueKey<String>('walka-catalog-unavailable')),
       findsOneWidget,
     );
+    expect(find.byType(_CatalogProbe), findsNothing);
     expect(controller.isOffline, isTrue);
-    expect(controller.snapshot.source, WalkaCatalogSource.bundled);
+    expect(controller.snapshot.source, WalkaCatalogSource.unavailable);
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('public shell stays usable at 320x568 and 1.3x text scale',
+  testWidgets('public shell stays usable when catalog is unavailable',
       (WidgetTester tester) async {
     tester.view.physicalSize = const Size(320, 568);
     tester.view.devicePixelRatio = 1;
@@ -162,8 +164,7 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.text('Refreshing the WALKA catalog'), findsNothing);
-    expect(find.text('Offline · built-in catalog'), findsOneWidget);
+    expect(find.text('Catalog temporarily unavailable'), findsOneWidget);
     expect(find.text('Home'), findsOneWidget);
     expect(find.text('Search'), findsOneWidget);
     expect(find.text('Categories'), findsOneWidget);
@@ -179,7 +180,7 @@ void main() {
 
     navigation = tester.widget<NavigationBar>(find.byType(NavigationBar));
     expect(navigation.selectedIndex, 1);
-    expect(find.text('Offline · built-in catalog'), findsOneWidget);
+    expect(find.text('Catalog temporarily unavailable'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -237,6 +238,40 @@ Widget _app({
   );
 }
 
+WalkaCatalogSnapshot _dynamicSnapshot() {
+  return WalkaCatalogSnapshot(
+    config: const WalkaStorefrontConfig(
+      brand: 'WALKA',
+      release: 'dynamic-test',
+      apiVersion: 'v1',
+      purchaseMode: 'amazon_redirect',
+    ),
+    categories: const <WalkaCatalogCategory>[
+      WalkaCatalogCategory(id: 'workspace', name: 'Workspace', sortOrder: 0),
+    ],
+    products: const <WalkaCatalogProduct>[
+      WalkaCatalogProduct(
+        id: 'desk-kit',
+        name: 'Desk Kit',
+        category: 'workspace',
+        features: <String>['Dashboard managed'],
+        facts: <String, dynamic>{},
+        variants: <WalkaCatalogVariant>[
+          WalkaCatalogVariant(
+            id: 'desk-kit:midnight',
+            color: 'Midnight',
+            asin: 'B012345678',
+            swatchHex: '#102030',
+            purchaseUrl: 'https://www.amazon.com/dp/B012345678',
+          ),
+        ],
+      ),
+    ],
+    source: WalkaCatalogSource.remote,
+    fetchedAt: DateTime.utc(2026, 8, 16),
+  );
+}
+
 class _CatalogProbe extends StatelessWidget {
   const _CatalogProbe();
 
@@ -266,7 +301,7 @@ class _MemoryCatalogCache implements WalkaCatalogCache {
 
   @override
   Future<void> write(WalkaCatalogSnapshot value) async {
-    snapshot = value;
+    snapshot = value.asSource(WalkaCatalogSource.cache);
   }
 }
 
