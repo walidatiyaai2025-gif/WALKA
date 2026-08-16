@@ -7,7 +7,9 @@ import 'package:walka/features/catalog/data/walka_catalog_cache.dart';
 import 'package:walka/features/catalog/data/walka_catalog_repository.dart';
 import 'package:walka/features/catalog/domain/walka_catalog.dart';
 import 'package:walka/features/commerce/amazon_purchase.dart';
+import 'package:walka/features/favorites/favorites_state.dart';
 import 'package:walka/features/storefront/dynamic_catalog_v140.dart';
+import 'package:walka/features/storefront/dynamic_favorites_v140.dart';
 
 void main() {
   setUp(() {
@@ -47,20 +49,27 @@ void main() {
     );
   });
 
-  testWidgets('dynamic Search uses arbitrary catalog and opens generic PDP',
+  testWidgets('dynamic Search opens generic PDP and favorites selected variant',
       (WidgetTester tester) async {
     tester.view.physicalSize = const Size(390, 844);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
     final WalkaCatalogController controller = await _loadedController();
+    final WalkaFavoritesController favorites =
+        WalkaFavoritesController(_MemoryFavoritesStore());
+    await favorites.load();
     addTearDown(controller.dispose);
+    addTearDown(favorites.dispose);
 
-    await tester.pumpWidget(WalkaCatalogScope(
-      controller: controller,
-      child: MaterialApp(
-        theme: buildWalkaTheme(),
-        home: const Scaffold(body: WalkaDynamicSearchV140()),
+    await tester.pumpWidget(WalkaFavoritesScope(
+      controller: favorites,
+      child: WalkaCatalogScope(
+        controller: controller,
+        child: MaterialApp(
+          theme: buildWalkaTheme(),
+          home: const Scaffold(body: WalkaDynamicSearchV140()),
+        ),
       ),
     ));
     await tester.pump();
@@ -76,6 +85,71 @@ void main() {
     await tester.tap(find.widgetWithText(ChoiceChip, 'Emerald'));
     await tester.pump();
     expect(find.text('B012345672'), findsOneWidget);
+    expect(favorites.isFavorite('desk-kit:emerald'), isFalse);
+
+    await tester.tap(
+      find.byKey(const ValueKey<String>('dynamic-favorite-desk-kit:emerald')),
+    );
+    await tester.pump();
+    expect(favorites.isFavorite('desk-kit:emerald'), isTrue);
+
+    await tester.tap(find.widgetWithText(ChoiceChip, 'Midnight'));
+    await tester.pump();
+    expect(
+      find.byKey(const ValueKey<String>('dynamic-favorite-desk-kit:midnight')),
+      findsOneWidget,
+    );
+    expect(favorites.isFavorite('desk-kit:midnight'), isFalse);
+    expect(favorites.isFavorite('desk-kit:emerald'), isTrue);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('dynamic Favorites hides stale IDs and uses unavailable media fallback',
+      (WidgetTester tester) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final WalkaCatalogController controller = await _loadedController();
+    final WalkaFavoritesController favorites = WalkaFavoritesController(
+      _MemoryFavoritesStore(
+        initial: <String>{'desk-kit:emerald', 'removed-product:legacy'},
+      ),
+    );
+    await favorites.load();
+    addTearDown(controller.dispose);
+    addTearDown(favorites.dispose);
+
+    await tester.pumpWidget(WalkaFavoritesScope(
+      controller: favorites,
+      child: WalkaCatalogScope(
+        controller: controller,
+        child: MaterialApp(
+          theme: buildWalkaTheme(),
+          home: Scaffold(
+            body: WalkaDynamicFavoritesV140(onExplore: () {}),
+          ),
+        ),
+      ),
+    ));
+    await tester.pump();
+
+    expect(favorites.favoriteIds, contains('removed-product:legacy'));
+    expect(find.text('Desk Kit Pro'), findsOneWidget);
+    expect(find.text('Emerald'), findsOneWidget);
+    expect(find.byIcon(Icons.image_not_supported_outlined), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey<String>('favorite-remove-desk-kit:emerald')),
+      findsOneWidget,
+    );
+
+    await tester.tap(
+      find.byKey(const ValueKey<String>('favorite-remove-desk-kit:emerald')),
+    );
+    await tester.pump();
+    expect(favorites.isFavorite('desk-kit:emerald'), isFalse);
+    expect(favorites.favoriteIds, contains('removed-product:legacy'));
+    expect(find.text('Desk Kit Pro'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 
@@ -183,5 +257,20 @@ class _MemoryCatalogCache implements WalkaCatalogCache {
   @override
   Future<void> write(WalkaCatalogSnapshot value) async {
     snapshot = value.asSource(WalkaCatalogSource.cache);
+  }
+}
+
+class _MemoryFavoritesStore implements WalkaFavoritesStore {
+  _MemoryFavoritesStore({Set<String>? initial})
+      : _ids = Set<String>.from(initial ?? const <String>{});
+
+  Set<String> _ids;
+
+  @override
+  Future<Set<String>> readFavoriteIds() async => Set<String>.from(_ids);
+
+  @override
+  Future<void> writeFavoriteIds(Set<String> ids) async {
+    _ids = Set<String>.from(ids);
   }
 }
