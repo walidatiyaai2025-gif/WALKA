@@ -10,6 +10,9 @@ import '../tool/src/visual_release_gate.dart';
 Map<String, dynamic> _json(File file) =>
     jsonDecode(file.readAsStringSync()) as Map<String, dynamic>;
 
+String _repeat(String value, int count) =>
+    List<String>.filled(count, value).join();
+
 void _writeJson(File file, Map<String, dynamic> value) {
   file.parent.createSync(recursive: true);
   file.writeAsStringSync('${const JsonEncoder.withIndent('  ').convert(value)}\n');
@@ -75,7 +78,7 @@ void main() {
     addTearDown(() => root.deleteSync(recursive: true));
 
     final VisualReleaseGateReport report =
-        _audit(root, digest: 'a' * 64);
+        _audit(root, digest: _repeat('a', 64));
 
     expect(report.contractValid, isTrue, reason: report.prettyJson());
     expect(report.stableReleaseReady, isFalse);
@@ -128,7 +131,7 @@ void main() {
     _writeJson(receiptFile, receipt);
 
     final VisualReleaseGateReport report =
-        _audit(root, digest: 'b' * 64);
+        _audit(root, digest: _repeat('b', 64));
 
     expect(report.contractValid, isFalse);
     expect(
@@ -151,16 +154,16 @@ void main() {
     }
     receipt['finalDecision'] = 'ACCEPTED';
     receipt['ownerAccepted'] = true;
-    receipt['acceptedVisualInputDigest'] = 'a' * 64;
-    receipt['acceptedSourceCommit'] = 'b' * 40;
-    receipt['acceptedApkSha256'] = 'c' * 64;
+    receipt['acceptedVisualInputDigest'] = _repeat('a', 64);
+    receipt['acceptedSourceCommit'] = _repeat('b', 40);
+    receipt['acceptedApkSha256'] = _repeat('c', 64);
     receipt['decisionActor'] = 'owner';
     receipt['decidedAt'] = '2026-08-16T12:00:00Z';
     receipt['stablePublicationAuthorized'] = true;
     _writeJson(receiptFile, receipt);
 
     final VisualReleaseGateReport report =
-        _audit(root, digest: 'd' * 64);
+        _audit(root, digest: _repeat('d', 64));
 
     expect(report.contractValid, isTrue, reason: report.prettyJson());
     expect(report.stableReleaseReady, isFalse);
@@ -170,8 +173,8 @@ void main() {
   test('fully reconciled synthetic report is stable-release ready', () {
     final PinkOwnerReviewReport pink = PinkOwnerReviewReport(
       violations: const <PinkOwnerReviewViolation>[],
-      reviewCandidateSha256: 'a' * 64,
-      receiptCandidateSha256: 'a' * 64,
+      reviewCandidateSha256: _repeat('a', 64),
+      receiptCandidateSha256: _repeat('a', 64),
       ownerStatus: 'ACCEPTED',
       ownerAccepted: true,
       provenanceState: 'ADMITTED',
