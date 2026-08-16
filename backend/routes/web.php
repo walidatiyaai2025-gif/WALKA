@@ -12,6 +12,7 @@ use App\Http\Controllers\Admin\AdminMediaController;
 use App\Http\Controllers\Admin\AdminMediaGalleryController;
 use App\Http\Controllers\Admin\AdminMediaReplacementController;
 use App\Http\Controllers\Admin\AdminSearchPresentationController;
+use App\Http\Controllers\Admin\AdminStorefrontCopyController;
 use App\Http\Controllers\Admin\AdminSurfaceMediaController;
 use Illuminate\Support\Facades\Route;
 
@@ -183,6 +184,19 @@ Route::prefix('admin')
             Route::post('/content/search/restore', [AdminSearchPresentationController::class, 'restore'])
                 ->middleware('walka.dashboard.can:content.restore')
                 ->name('content.search.restore');
+
+            Route::get('/content/storefront', [AdminStorefrontCopyController::class, 'edit'])
+                ->middleware('walka.dashboard.can:content.view')
+                ->name('content.storefront.copy.edit');
+            Route::patch('/content/storefront', [AdminStorefrontCopyController::class, 'update'])
+                ->middleware('walka.dashboard.can:content.write')
+                ->name('content.storefront.copy.update');
+            Route::post('/content/storefront/publish', [AdminStorefrontCopyController::class, 'publish'])
+                ->middleware('walka.dashboard.can:content.publish')
+                ->name('content.storefront.copy.publish');
+            Route::post('/content/storefront/restore', [AdminStorefrontCopyController::class, 'restore'])
+                ->middleware('walka.dashboard.can:content.restore')
+                ->name('content.storefront.copy.restore');
 
             Route::get('/content/{content}', [AdminContentController::class, 'show'])
                 ->middleware('walka.dashboard.can:content.view')
