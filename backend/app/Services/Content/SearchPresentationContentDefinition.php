@@ -14,28 +14,19 @@ final class SearchPresentationContentDefinition
     public const SCHEMA_VERSION = 1;
 
     /**
-     * @return array<string, mixed>
+     * Safe copy defaults contain presentation text only. Catalog identities are
+     * supplied by the current Dashboard catalog and must never live here.
+     *
+     * @return array{heading:string,supporting_copy:string,placeholder:string,empty_title:string,empty_body:string}
      */
-    public static function defaultPayload(): array
+    public static function defaultCopy(): array
     {
         return [
             'heading' => 'Search WALKA',
-            'supporting_copy' => 'Explore the complete released WALKA catalog by collection, color, or product detail.',
-            'placeholder' => 'Search organizers, colors, details…',
+            'supporting_copy' => 'Explore the WALKA catalog by collection, color, or product detail.',
+            'placeholder' => 'Search products, colors, details…',
             'empty_title' => 'No WALKA matches yet',
-            'empty_body' => 'Try another color, collection, or product detail.',
-            'featured_variant_ids' => [
-                'drawer-organizer:white',
-                'drawer-organizer:gray',
-                'lunch-box:blue',
-                'lunch-box:pink',
-                'lunch-box:green',
-            ],
-            'filter_labels' => [
-                ['id' => 'all', 'label' => 'All'],
-                ['id' => 'drawer-organization', 'label' => 'Drawer'],
-                ['id' => 'lunch', 'label' => 'Lunch'],
-            ],
+            'empty_body' => 'Try another collection, color, or product detail.',
         ];
     }
 
@@ -72,7 +63,7 @@ final class SearchPresentationContentDefinition
         $variantIds = $payload['featured_variant_ids'] ?? null;
         if (! is_array($variantIds) || ! array_is_list($variantIds) || $variantIds === []) {
             throw ValidationException::withMessages([
-                'featured_variant_ids' => ['Search merchandising must contain an ordered released-variant list.'],
+                'featured_variant_ids' => ['Search merchandising must contain at least one visible Dashboard variant.'],
             ]);
         }
 
@@ -94,7 +85,7 @@ final class SearchPresentationContentDefinition
         $filterLabels = $payload['filter_labels'] ?? null;
         if (! is_array($filterLabels) || ! array_is_list($filterLabels) || $filterLabels === []) {
             throw ValidationException::withMessages([
-                'filter_labels' => ['Search presentation must contain the approved filter-label set.'],
+                'filter_labels' => ['Search presentation must contain at least the structural All filter.'],
             ]);
         }
 
