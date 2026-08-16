@@ -14,7 +14,7 @@
     <div>
         <p class="eyebrow">DISCOVERY PRESENTATION</p>
         <h1>Categories</h1>
-        <p class="lead">Control customer-facing category names, descriptions, order and visibility while stable Product Master category IDs and product membership remain locked.</p>
+        <p class="lead">Control customer-facing category names, descriptions, order and discovery visibility. Category identities and product membership come from the current Dashboard Catalog, and newly-created visible categories appear here automatically.</p>
     </div>
     <a class="btn secondary" href="{{ route('admin.content.index') }}">← Mobile content</a>
 </div>
@@ -30,7 +30,7 @@
     <section class="card">
         <p class="eyebrow">PRIVATE DRAFT</p>
         <h2>Category presentation</h2>
-        <p class="muted">Position controls discovery order. Hiding a category removes it only from the Categories/Collections discovery surface; Search remains complete. Category membership cannot be edited here.</p>
+        <p class="muted">Position controls discovery order. Hiding a category removes it only from the Categories/Collections discovery surface; Catalog membership itself is managed in Catalog.</p>
 
         <form method="post" action="{{ route('admin.content.categories.update') }}" class="stack section-space">
             @csrf
@@ -43,9 +43,9 @@
                     <input type="hidden" name="categories[{{ $index }}][visible]" value="0">
                     <div class="status-row">
                         <div>
-                            <small>LOCKED CATEGORY ID</small>
+                            <small>CATALOG CATEGORY ID</small>
                             <strong><code>{{ $category['id'] }}</code></strong>
-                            <div class="muted">{{ $productCounts[$category['id']] ?? 0 }} released variants derive membership from Product Master.</div>
+                            <div class="muted">{{ $productCounts[$category['id']] ?? 0 }} public products currently derive from the Dashboard Catalog.</div>
                         </div>
                         <label style="display:flex;align-items:center;gap:8px;font-weight:800">
                             <input type="checkbox" name="categories[{{ $index }}][visible]" value="1" @checked((bool) old('categories.'.$index.'.visible', $category['visible']))>
@@ -83,7 +83,7 @@
         <h2>Published-style order</h2>
         <div class="stack section-space">
             @foreach ($draft['categories'] as $index => $category)
-                <div style="padding:16px;border-radius:18px;background:{{ $category['id'] === 'lunch' ? '#EAF1E8' : '#F1E6CF' }};opacity:{{ $category['visible'] ? '1' : '.52' }}">
+                <div style="padding:16px;border-radius:18px;background:#F7F4EC;opacity:{{ $category['visible'] ? '1' : '.52' }}">
                     <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start">
                         <div>
                             <small style="font-weight:900;color:#D4AF37;letter-spacing:.8px">POSITION {{ $index + 1 }}</small>
@@ -97,8 +97,8 @@
         </div>
 
         <div class="locked section-space">
-            <small>Protected boundary</small>
-            <strong>Stable IDs and product-to-category membership come from Product Master. This editor cannot move products, alter ASIN/Pantone facts, inject URLs, HTML or executable UI.</strong>
+            <small>Catalog boundary</small>
+            <strong>Stable category IDs and product-to-category membership come from Dashboard Catalog. This editor controls presentation only and cannot inject URLs, HTML or executable UI.</strong>
         </div>
 
         <form method="post" action="{{ route('admin.content.categories.publish') }}" class="section-space">
