@@ -32,17 +32,17 @@ class WalkaAccountV102 extends StatelessWidget {
               _MenuRow(
                 icon: Icons.auto_stories_outlined,
                 title: data.story.title,
-                onTap: () => _push(context, WalkaStoryV102(page: data.story)),
+                onTap: () => _push(context, const WalkaStoryV102()),
               ),
               _MenuRow(
                 icon: Icons.help_outline_rounded,
                 title: data.faq.title,
-                onTap: () => _push(context, WalkaFaqV102(page: data.faq)),
+                onTap: () => _push(context, const WalkaFaqV102()),
               ),
               _MenuRow(
                 icon: Icons.mail_outline_rounded,
                 title: data.contact.title,
-                onTap: () => _push(context, WalkaContactV102(page: data.contact)),
+                onTap: () => _push(context, const WalkaContactV102()),
               ),
             ],
           ),
@@ -52,15 +52,12 @@ class WalkaAccountV102 extends StatelessWidget {
               _MenuRow(
                 icon: Icons.storefront_outlined,
                 title: data.amazonStore.title,
-                onTap: () => _push(
-                  context,
-                  WalkaAmazonStoreV102(page: data.amazonStore),
-                ),
+                onTap: () => _push(context, const WalkaAmazonStoreV102()),
               ),
               _MenuRow(
                 icon: Icons.public_rounded,
                 title: data.social.title,
-                onTap: () => _push(context, WalkaSocialV102(page: data.social)),
+                onTap: () => _push(context, const WalkaSocialV102()),
               ),
             ],
           ),
@@ -72,13 +69,16 @@ class WalkaAccountV102 extends StatelessWidget {
                 title: data.privacy.title,
                 onTap: () => _push(
                   context,
-                  WalkaLegalV102(page: data.privacy),
+                  const WalkaLegalV102(type: WalkaLegalTypeV102.privacy),
                 ),
               ),
               _MenuRow(
                 icon: Icons.description_outlined,
                 title: data.terms.title,
-                onTap: () => _push(context, WalkaLegalV102(page: data.terms)),
+                onTap: () => _push(
+                  context,
+                  const WalkaLegalV102(type: WalkaLegalTypeV102.terms),
+                ),
               ),
             ],
           ),
@@ -89,31 +89,33 @@ class WalkaAccountV102 extends StatelessWidget {
 }
 
 class WalkaStoryV102 extends StatelessWidget {
-  const WalkaStoryV102({required this.page, super.key});
-  final _TextPage page;
-
-  @override
-  Widget build(BuildContext context) => _InfoScaffold(
-        title: page.title,
-        eyebrow: page.eyebrow,
-        intro: page.body,
-        children: const <Widget>[],
-      );
-}
-
-class WalkaFaqV102 extends StatelessWidget {
-  WalkaFaqV102({_FaqPage? page, super.key}) : page = page;
-  final _FaqPage? page;
+  const WalkaStoryV102({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final _FaqPage? resolved = page ?? _publishedInformation(context)?.faq;
-    if (resolved == null) return const _InformationUnavailable();
+    final _TextPage? page = _publishedInformation(context)?.story;
+    if (page == null) return const _InformationUnavailable();
     return _InfoScaffold(
-      title: resolved.title,
-      eyebrow: resolved.eyebrow,
-      intro: resolved.intro,
-      children: resolved.items
+      title: page.title,
+      eyebrow: page.eyebrow,
+      intro: page.body,
+      children: const <Widget>[],
+    );
+  }
+}
+
+class WalkaFaqV102 extends StatelessWidget {
+  const WalkaFaqV102({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final _FaqPage? page = _publishedInformation(context)?.faq;
+    if (page == null) return const _InformationUnavailable();
+    return _InfoScaffold(
+      title: page.title,
+      eyebrow: page.eyebrow,
+      intro: page.intro,
+      children: page.items
           .map(
             (_FaqItem item) => Card(
               margin: const EdgeInsets.only(bottom: 10),
@@ -141,34 +143,32 @@ class WalkaFaqV102 extends StatelessWidget {
 }
 
 class WalkaContactV102 extends StatelessWidget {
-  WalkaContactV102({_LinksPage? page, super.key}) : page = page;
-  final _LinksPage? page;
+  const WalkaContactV102({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final _LinksPage? resolved = page ?? _publishedInformation(context)?.contact;
-    if (resolved == null) return const _InformationUnavailable();
-    return _LinksScaffold(page: resolved);
+    final _LinksPage? page = _publishedInformation(context)?.contact;
+    if (page == null) return const _InformationUnavailable();
+    return _LinksScaffold(page: page);
   }
 }
 
 class WalkaAmazonStoreV102 extends StatelessWidget {
-  WalkaAmazonStoreV102({_ActionPage? page, super.key}) : page = page;
-  final _ActionPage? page;
+  const WalkaAmazonStoreV102({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final _ActionPage? resolved = page ?? _publishedInformation(context)?.amazonStore;
-    if (resolved == null) return const _InformationUnavailable();
+    final _ActionPage? page = _publishedInformation(context)?.amazonStore;
+    if (page == null) return const _InformationUnavailable();
     return _InfoScaffold(
-      title: resolved.title,
-      eyebrow: resolved.eyebrow,
-      intro: resolved.body,
+      title: page.title,
+      eyebrow: page.eyebrow,
+      intro: page.body,
       children: <Widget>[
         FilledButton.icon(
-          onPressed: () => _openExternal(context, resolved.url),
+          onPressed: () => _openExternal(context, page.url),
           icon: const Icon(Icons.north_east_rounded),
-          label: Text(resolved.label),
+          label: Text(page.label),
         ),
       ],
     );
@@ -176,41 +176,35 @@ class WalkaAmazonStoreV102 extends StatelessWidget {
 }
 
 class WalkaSocialV102 extends StatelessWidget {
-  WalkaSocialV102({_LinksPage? page, super.key}) : page = page;
-  final _LinksPage? page;
+  const WalkaSocialV102({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final _LinksPage? resolved = page ?? _publishedInformation(context)?.social;
-    if (resolved == null) return const _InformationUnavailable();
-    return _LinksScaffold(page: resolved);
+    final _LinksPage? page = _publishedInformation(context)?.social;
+    if (page == null) return const _InformationUnavailable();
+    return _LinksScaffold(page: page);
   }
 }
 
 enum WalkaLegalTypeV102 { privacy, terms }
 
 class WalkaLegalV102 extends StatelessWidget {
-  WalkaLegalV102({
-    _LegalPage? page,
-    WalkaLegalTypeV102? type,
-    super.key,
-  })  : page = page,
-        type = type;
+  const WalkaLegalV102({required this.type, super.key});
 
-  final _LegalPage? page;
-  final WalkaLegalTypeV102? type;
+  final WalkaLegalTypeV102 type;
 
   @override
   Widget build(BuildContext context) {
     final _InformationData? data = _publishedInformation(context);
-    final _LegalPage? resolved = page ??
-        (type == WalkaLegalTypeV102.terms ? data?.terms : data?.privacy);
-    if (resolved == null) return const _InformationUnavailable();
+    final _LegalPage? page = type == WalkaLegalTypeV102.terms
+        ? data?.terms
+        : data?.privacy;
+    if (page == null) return const _InformationUnavailable();
     return _InfoScaffold(
-      title: resolved.title,
-      eyebrow: resolved.eyebrow,
-      intro: resolved.intro,
-      children: resolved.sections
+      title: page.title,
+      eyebrow: page.eyebrow,
+      intro: page.intro,
+      children: page.sections
           .map(
             (_LegalSectionData section) => Padding(
               padding: const EdgeInsets.only(bottom: 18),
@@ -361,7 +355,11 @@ class _InformationUnavailable extends StatelessWidget {
       body: Center(
         child: content?.isLoading == true
             ? const CircularProgressIndicator()
-            : const Icon(Icons.cloud_off_rounded, size: 34, color: WalkaColors.muted),
+            : const Icon(
+                Icons.cloud_off_rounded,
+                size: 34,
+                color: WalkaColors.muted,
+              ),
       ),
     );
   }
@@ -418,7 +416,7 @@ class _InformationData {
 
   factory _InformationData.fromJsonString(String source) {
     final Object? decoded = jsonDecode(source);
-    if (decoded is! Map) throw const FormatException('Information must be an object.');
+    if (decoded is! Map) throw const FormatException('Invalid information.');
     final Map<String, dynamic> json = Map<String, dynamic>.from(decoded);
     return _InformationData(
       account: _AccountPage.fromJson(_map(json, 'account')),
@@ -434,10 +432,15 @@ class _InformationData {
 }
 
 class _AccountPage {
-  const _AccountPage({required this.eyebrow, required this.title, required this.body});
+  const _AccountPage({
+    required this.eyebrow,
+    required this.title,
+    required this.body,
+  });
   final String eyebrow;
   final String title;
   final String body;
+
   factory _AccountPage.fromJson(Map<String, dynamic> json) => _AccountPage(
         eyebrow: _string(json, 'eyebrow'),
         title: _string(json, 'title'),
@@ -446,10 +449,15 @@ class _AccountPage {
 }
 
 class _TextPage {
-  const _TextPage({required this.title, required this.eyebrow, required this.body});
+  const _TextPage({
+    required this.title,
+    required this.eyebrow,
+    required this.body,
+  });
   final String title;
   final String eyebrow;
   final String body;
+
   factory _TextPage.fromJson(Map<String, dynamic> json) => _TextPage(
         title: _string(json, 'title'),
         eyebrow: _string(json, 'eyebrow'),
@@ -458,16 +466,24 @@ class _TextPage {
 }
 
 class _FaqPage {
-  const _FaqPage({required this.title, required this.eyebrow, required this.intro, required this.items});
+  const _FaqPage({
+    required this.title,
+    required this.eyebrow,
+    required this.intro,
+    required this.items,
+  });
   final String title;
   final String eyebrow;
   final String intro;
   final List<_FaqItem> items;
+
   factory _FaqPage.fromJson(Map<String, dynamic> json) => _FaqPage(
         title: _string(json, 'title'),
         eyebrow: _string(json, 'eyebrow'),
         intro: _string(json, 'intro'),
-        items: _list(json, 'items').map((Object item) => _FaqItem.fromJson(_asMap(item))).toList(growable: false),
+        items: _list(json, 'items')
+            .map((Object item) => _FaqItem.fromJson(_asMap(item)))
+            .toList(growable: false),
       );
 }
 
@@ -475,6 +491,7 @@ class _FaqItem {
   const _FaqItem({required this.question, required this.answer});
   final String question;
   final String answer;
+
   factory _FaqItem.fromJson(Map<String, dynamic> json) => _FaqItem(
         question: _string(json, 'question'),
         answer: _string(json, 'answer'),
@@ -482,25 +499,39 @@ class _FaqItem {
 }
 
 class _LinksPage {
-  const _LinksPage({required this.title, required this.eyebrow, required this.intro, required this.links});
+  const _LinksPage({
+    required this.title,
+    required this.eyebrow,
+    required this.intro,
+    required this.links,
+  });
   final String title;
   final String eyebrow;
   final String intro;
   final List<_ExternalLink> links;
+
   factory _LinksPage.fromJson(Map<String, dynamic> json) => _LinksPage(
         title: _string(json, 'title'),
         eyebrow: _string(json, 'eyebrow'),
         intro: _string(json, 'intro'),
-        links: _list(json, 'links').map((Object item) => _ExternalLink.fromJson(_asMap(item))).toList(growable: false),
+        links: _list(json, 'links')
+            .map((Object item) => _ExternalLink.fromJson(_asMap(item)))
+            .toList(growable: false),
       );
 }
 
 class _ExternalLink {
-  const _ExternalLink({required this.title, required this.body, required this.label, required this.url});
+  const _ExternalLink({
+    required this.title,
+    required this.body,
+    required this.label,
+    required this.url,
+  });
   final String title;
   final String body;
   final String label;
   final Uri url;
+
   factory _ExternalLink.fromJson(Map<String, dynamic> json) => _ExternalLink(
         title: _string(json, 'title'),
         body: _string(json, 'body'),
@@ -510,12 +541,19 @@ class _ExternalLink {
 }
 
 class _ActionPage {
-  const _ActionPage({required this.title, required this.eyebrow, required this.body, required this.label, required this.url});
+  const _ActionPage({
+    required this.title,
+    required this.eyebrow,
+    required this.body,
+    required this.label,
+    required this.url,
+  });
   final String title;
   final String eyebrow;
   final String body;
   final String label;
   final Uri url;
+
   factory _ActionPage.fromJson(Map<String, dynamic> json) => _ActionPage(
         title: _string(json, 'title'),
         eyebrow: _string(json, 'eyebrow'),
@@ -526,16 +564,24 @@ class _ActionPage {
 }
 
 class _LegalPage {
-  const _LegalPage({required this.title, required this.eyebrow, required this.intro, required this.sections});
+  const _LegalPage({
+    required this.title,
+    required this.eyebrow,
+    required this.intro,
+    required this.sections,
+  });
   final String title;
   final String eyebrow;
   final String intro;
   final List<_LegalSectionData> sections;
+
   factory _LegalPage.fromJson(Map<String, dynamic> json) => _LegalPage(
         title: _string(json, 'title'),
         eyebrow: _string(json, 'eyebrow'),
         intro: _string(json, 'intro'),
-        sections: _list(json, 'sections').map((Object item) => _LegalSectionData.fromJson(_asMap(item))).toList(growable: false),
+        sections: _list(json, 'sections')
+            .map((Object item) => _LegalSectionData.fromJson(_asMap(item)))
+            .toList(growable: false),
       );
 }
 
@@ -543,13 +589,16 @@ class _LegalSectionData {
   const _LegalSectionData({required this.title, required this.body});
   final String title;
   final String body;
-  factory _LegalSectionData.fromJson(Map<String, dynamic> json) => _LegalSectionData(
+
+  factory _LegalSectionData.fromJson(Map<String, dynamic> json) =>
+      _LegalSectionData(
         title: _string(json, 'title'),
         body: _string(json, 'body'),
       );
 }
 
-Map<String, dynamic> _map(Map<String, dynamic> json, String key) => _asMap(json[key]);
+Map<String, dynamic> _map(Map<String, dynamic> json, String key) =>
+    _asMap(json[key]);
 
 Map<String, dynamic> _asMap(Object? value) {
   if (value is! Map) throw const FormatException('Expected object.');
@@ -558,20 +607,22 @@ Map<String, dynamic> _asMap(Object? value) {
 
 List<Object> _list(Map<String, dynamic> json, String key) {
   final Object? value = json[key];
-  if (value is! List || value.isEmpty) throw FormatException('Invalid $key list.');
+  if (value is! List || value.isEmpty) throw FormatException('Invalid $key.');
   return List<Object>.from(value);
 }
 
 String _string(Map<String, dynamic> json, String key) {
   final Object? value = json[key];
-  if (value is! String || value.trim().isEmpty) throw FormatException('Invalid $key.');
+  if (value is! String || value.trim().isEmpty) {
+    throw FormatException('Invalid $key.');
+  }
   return value.trim();
 }
 
 Uri _httpsUri(Map<String, dynamic> json, String key) {
   final Uri? uri = Uri.tryParse(_string(json, key));
   if (uri == null || uri.scheme != 'https' || uri.host.isEmpty) {
-    throw FormatException('Invalid $key URL.');
+    throw FormatException('Invalid $key.');
   }
   return uri;
 }
