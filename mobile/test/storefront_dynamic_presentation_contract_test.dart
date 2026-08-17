@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  test('production media contract contains no compiled product or category identities', () {
+  test('remote media contract contains no compiled product or category identities', () {
     final String media = File(
       'lib/features/media/domain/walka_remote_media.dart',
     ).readAsStringSync();
@@ -28,7 +28,7 @@ void main() {
     expect(media, contains('WalkaRemoteMediaSource { remote, cache, unavailable }'));
   });
 
-  test('generic storefront resolves dashboard content and verified media', () {
+  test('generic storefront resolves published CMS content and verified remote media', () {
     final String storefront = File(
       'lib/features/storefront/dynamic_catalog_v140.dart',
     ).readAsStringSync();
@@ -41,6 +41,7 @@ void main() {
     expect(storefront, contains('content.homeBanner'));
     expect(storefront, contains('WalkaResolvedProductRemoteMedia'));
     expect(storefront, contains("slotKey: 'category:\${category.id}'"));
+    expect(storefront, contains('_isPublishedContent'));
 
     for (final String forbidden in <String>[
       'DASHBOARD CATALOG',
@@ -51,7 +52,10 @@ void main() {
       "const Text('Colors'",
       "const Text('Features'",
       "const Text('Details'",
-      'Icons.inventory_2_outlined',
+      'WalkaPdpLayoutContent.bundled',
+      'catalog.products.take(3)',
+      'assets/products/',
+      'Image.asset(',
     ]) {
       expect(storefront, isNot(contains(forbidden)), reason: forbidden);
     }
