@@ -1,0 +1,374 @@
+name: Resume Backend Production Deploy
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/deploy-backend-production-retry.yml'
+
+permissions:
+  contents: read
+
+env:
+  BACKEND_SOURCE_SHA: 38b6f6d9623a0c0816734989e706795a829844f7
+  RELEASE_ID: 38b6f6d9623a
+  API_URL: https://api.walkastore.com
+
+concurrency:
+  group: walka-backend-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment:
+      name: production
+      url: https://api.walkastore.com
+    steps:
+      - name: Install FTPS client
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends lftp >/dev/null
+
+      - name: Create protected resume bridge
+        shell: bash
+        run: |
+          set -euo pipefail
+          token="$(openssl rand -hex 32)"
+          bridge=".walka-resume-$(openssl rand -hex 12).php"
+          echo "::add-mask::$token"
+          printf '%s' "$token" > /tmp/walka-deploy-token
+          printf '%s' "$bridge" > /tmp/walka-deploy-name
+          cat > /tmp/walka-deploy.php <<'PHP'
+          <?php
+          declare(strict_types=1);
+          set_time_limit(240);
+          ignore_user_abort(true);
+          header('Content-Type: application/json; charset=utf-8');
+          header('Cache-Control: no-store');
+
+          $expectedToken = trim((string) @file_get_contents(__DIR__ . '/.walka-deploy-token'));
+          $providedToken = (string) ($_SERVER['HTTP_X_WALKA_DEPLOY_TOKEN'] ?? '');
+          if ($expectedToken === '' || !hash_equals($expectedToken, $providedToken)) {
+              http_response_code(404);
+              echo json_encode(['ok' => false]);
+              exit;
+          }
+
+          $expectedSha = '__SOURCE_SHA__';
+          $release = '__RELEASE__';
+          $home = '/home/solscool';
+          $target = $home . '/walka_backend';
+          $public = $home . '/public_html/api.walkastore.com';
+          $stage = $home . '/walka_backend_stage_' . $release;
+          $backup = $home . '/walka_backend_backup_' . $release;
+          $failed = $home . '/walka_backend_failed_' . $release;
+          $publicBuild = $public . '/build';
+          $publicBuildStage = $public . '/build_stage_' . $release;
+          $publicBuildBackup = $public . '/build_backup_' . $release;
+          $php = '/opt/cpanel/ea-php84/root/usr/bin/php';
+          $lock = fopen(__DIR__ . '/.walka-deploy.lock', 'c');
+          if ($lock === false || !flock($lock, LOCK_EX | LOCK_NB)) {
+              http_response_code(409);
+              echo json_encode(['ok' => false, 'error' => 'deployment_already_running']);
+              exit;
+          }
+
+          function removeTree(string $path): void {
+              if (!file_exists($path) && !is_link($path)) return;
+              if (is_file($path) || is_link($path)) {
+                  if (!@unlink($path)) throw new RuntimeException('Unable to remove file: ' . $path);
+                  return;
+              }
+              $items = scandir($path);
+              if ($items === false) throw new RuntimeException('Unable to list: ' . $path);
+              foreach ($items as $item) {
+                  if ($item === '.' || $item === '..') continue;
+                  removeTree($path . '/' . $item);
+              }
+              if (!@rmdir($path)) throw new RuntimeException('Unable to remove directory: ' . $path);
+          }
+
+          function copyTree(string $source, string $destination): void {
+              if (is_link($source)) {
+                  $linkTarget = readlink($source);
+                  if ($linkTarget === false || !@symlink($linkTarget, $destination)) throw new RuntimeException('Unable to copy symlink');
+                  return;
+              }
+              if (is_file($source)) {
+                  $parent = dirname($destination);
+                  if (!is_dir($parent) && !@mkdir($parent, 0755, true) && !is_dir($parent)) throw new RuntimeException('Unable to create parent');
+                  if (!@copy($source, $destination)) throw new RuntimeException('Unable to copy file: ' . $source);
+                  return;
+              }
+              if (!is_dir($source)) throw new RuntimeException('Source missing: ' . $source);
+              if (!is_dir($destination) && !@mkdir($destination, 0755, true) && !is_dir($destination)) throw new RuntimeException('Unable to create destination');
+              $items = scandir($source);
+              if ($items === false) throw new RuntimeException('Unable to list source');
+              foreach ($items as $item) {
+                  if ($item === '.' || $item === '..') continue;
+                  copyTree($source . '/' . $item, $destination . '/' . $item);
+              }
+          }
+
+          function makeWritable(string $path): void {
+              if (!file_exists($path)) return;
+              if (is_file($path)) { @chmod($path, 0664); return; }
+              @chmod($path, 0775);
+              $items = scandir($path);
+              if ($items === false) return;
+              foreach ($items as $item) {
+                  if ($item === '.' || $item === '..') continue;
+                  makeWritable($path . '/' . $item);
+              }
+          }
+
+          function runCommand(array $command, string $cwd, int $timeoutSeconds = 150): array {
+              $descriptors = [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']];
+              $process = proc_open($command, $descriptors, $pipes, $cwd, null, ['bypass_shell' => true]);
+              if (!is_resource($process)) throw new RuntimeException('Unable to start command');
+              fclose($pipes[0]);
+              stream_set_blocking($pipes[1], false);
+              stream_set_blocking($pipes[2], false);
+              $stdout = '';
+              $stderr = '';
+              $started = microtime(true);
+              $status = ['exitcode' => -1];
+              while (true) {
+                  $stdout .= (string) stream_get_contents($pipes[1]);
+                  $stderr .= (string) stream_get_contents($pipes[2]);
+                  $status = proc_get_status($process);
+                  if (!$status['running']) break;
+                  if ((microtime(true) - $started) > $timeoutSeconds) {
+                      proc_terminate($process, 15);
+                      throw new RuntimeException('Command timed out');
+                  }
+                  usleep(100000);
+              }
+              $stdout .= (string) stream_get_contents($pipes[1]);
+              $stderr .= (string) stream_get_contents($pipes[2]);
+              fclose($pipes[1]);
+              fclose($pipes[2]);
+              $exitCode = proc_close($process);
+              if ($exitCode === -1) $exitCode = (int) ($status['exitcode'] ?? -1);
+              $output = trim($stdout . ($stderr === '' ? '' : "\n" . $stderr));
+              if ($exitCode !== 0) throw new RuntimeException('Command failed (' . $exitCode . '): ' . substr($output, 0, 5000));
+              return ['exit' => $exitCode, 'output' => substr($output, 0, 5000)];
+          }
+
+          $appSwapped = false;
+          $buildSwapped = false;
+          try {
+              if (!is_file($php) || !is_executable($php)) throw new RuntimeException('cPanel PHP 8.4 CLI is unavailable');
+              $phpVersion = runCommand([$php, '-r', 'echo PHP_VERSION;'], __DIR__, 15)['output'];
+              if (version_compare($phpVersion, '8.4.1', '<')) throw new RuntimeException('PHP 8.4 CLI requirement not met');
+              foreach ([$target . '/artisan', $target . '/.env', $target . '/vendor/autoload.php', $public . '/index.php'] as $required) {
+                  if (!is_file($required)) throw new RuntimeException('Required live production file missing: ' . $required);
+              }
+              foreach ([$stage . '/artisan', $stage . '/vendor/autoload.php', $stage . '/bootstrap/app.php', $stage . '/public/build/manifest.json', $stage . '/.walka-source-sha'] as $required) {
+                  if (!is_file($required)) throw new RuntimeException('Required staging file missing: ' . $required);
+              }
+              $sourceSha = trim((string) file_get_contents($stage . '/.walka-source-sha'));
+              if (!hash_equals($expectedSha, $sourceSha)) throw new RuntimeException('Staging source SHA mismatch');
+              if (!is_writable($target) || !is_writable($public)) throw new RuntimeException('Production paths are not writable');
+
+              if (!copy($target . '/.env', $stage . '/.env')) throw new RuntimeException('Unable to refresh production env in staging');
+              if (is_dir($stage . '/storage')) removeTree($stage . '/storage');
+              copyTree($target . '/storage', $stage . '/storage');
+              makeWritable($stage . '/storage');
+              makeWritable($stage . '/bootstrap/cache');
+              if (file_exists($publicBuildStage) || is_link($publicBuildStage)) removeTree($publicBuildStage);
+              copyTree($stage . '/public/build', $publicBuildStage);
+
+              $migrate = runCommand([$php, $stage . '/artisan', 'migrate', '--force', '--no-interaction', '--no-ansi'], $stage, 150);
+              runCommand([$php, $stage . '/artisan', 'optimize:clear', '--no-ansi'], $stage, 90);
+              runCommand([$php, $stage . '/artisan', 'config:cache', '--no-ansi'], $stage, 90);
+              runCommand([$php, $stage . '/artisan', 'route:cache', '--no-ansi'], $stage, 90);
+              runCommand([$php, $stage . '/artisan', 'view:cache', '--no-ansi'], $stage, 90);
+              $precheck = runCommand([$php, $stage . '/artisan', 'walka:production-check', '--no-ansi'], $stage, 120);
+
+              if (file_exists($backup) || is_link($backup)) removeTree($backup);
+              if (!rename($target, $backup)) throw new RuntimeException('Unable to backup current backend');
+              if (!rename($stage, $target)) {
+                  @rename($backup, $target);
+                  throw new RuntimeException('Unable to activate staged backend; live backend restored');
+              }
+              $appSwapped = true;
+
+              if (file_exists($publicBuildBackup) || is_link($publicBuildBackup)) removeTree($publicBuildBackup);
+              if (file_exists($publicBuild) || is_link($publicBuild)) {
+                  if (!rename($publicBuild, $publicBuildBackup)) throw new RuntimeException('Unable to backup public build assets');
+              }
+              if (!rename($publicBuildStage, $publicBuild)) {
+                  if (file_exists($publicBuildBackup)) @rename($publicBuildBackup, $publicBuild);
+                  throw new RuntimeException('Unable to activate public build assets');
+              }
+              $buildSwapped = true;
+              if (is_file($target . '/public/favicon.ico')) @copy($target . '/public/favicon.ico', $public . '/favicon.ico');
+              if (is_file($target . '/public/robots.txt')) @copy($target . '/public/robots.txt', $public . '/robots.txt');
+              if (function_exists('opcache_reset')) @opcache_reset();
+              $postcheck = runCommand([$php, $target . '/artisan', 'walka:production-check', '--no-ansi'], $target, 120);
+
+              echo json_encode([
+                  'ok' => true,
+                  'release' => $release,
+                  'source_sha' => trim((string) file_get_contents($target . '/.walka-source-sha')),
+                  'php_cli' => $phpVersion,
+                  'backup' => basename($backup),
+                  'public_build_backup' => is_dir($publicBuildBackup) ? basename($publicBuildBackup) : null,
+                  'migration_output' => $migrate['output'],
+                  'precheck' => $precheck['output'],
+                  'postcheck' => $postcheck['output'],
+              ], JSON_UNESCAPED_SLASHES);
+          } catch (Throwable $e) {
+              if ($appSwapped) {
+                  try {
+                      if ($buildSwapped && (file_exists($publicBuildBackup) || is_link($publicBuildBackup))) {
+                          if (file_exists($publicBuild) || is_link($publicBuild)) removeTree($publicBuild);
+                          @rename($publicBuildBackup, $publicBuild);
+                      }
+                      if (file_exists($target) || is_link($target)) @rename($target, $failed);
+                      if (file_exists($backup) || is_link($backup)) @rename($backup, $target);
+                      if (function_exists('opcache_reset')) @opcache_reset();
+                  } catch (Throwable) {}
+              }
+              http_response_code(500);
+              echo json_encode([
+                  'ok' => false,
+                  'release' => $release,
+                  'error' => substr($e->getMessage(), 0, 6000),
+                  'rolled_back_code' => $appSwapped,
+              ], JSON_UNESCAPED_SLASHES);
+          } finally {
+              if (is_resource($lock)) { @flock($lock, LOCK_UN); @fclose($lock); }
+          }
+          PHP
+          sed -i \
+            -e "s/__SOURCE_SHA__/$BACKEND_SOURCE_SHA/g" \
+            -e "s/__RELEASE__/$RELEASE_ID/g" \
+            /tmp/walka-deploy.php
+
+      - name: Upload resume bridge over FTPS
+        shell: bash
+        env:
+          FTP_HOST: ftp.50sols.com
+          FTP_USER: mobile@walkastore.com
+          FTP_PASSWORD: ${{ secrets.CPANEL_FTP_PASSWORD }}
+        run: |
+          set -euo pipefail
+          bridge="$(cat /tmp/walka-deploy-name)"
+          lftp -u "$FTP_USER","$FTP_PASSWORD" -p 21 "$FTP_HOST" -e "
+            set cmd:fail-exit yes;
+            set ftp:ssl-force true;
+            set ftp:ssl-protect-data true;
+            set ssl:verify-certificate yes;
+            set ssl:check-hostname no;
+            set ftp:passive-mode true;
+            set net:max-retries 2;
+            set net:timeout 20;
+            put /tmp/walka-deploy.php -o $bridge;
+            put /tmp/walka-deploy-token -o .walka-deploy-token;
+            bye;
+          "
+
+      - name: Resume staged production deployment
+        shell: bash
+        run: |
+          set -euo pipefail
+          bridge="$(cat /tmp/walka-deploy-name)"
+          token="$(cat /tmp/walka-deploy-token)"
+          http_code="$(curl --silent --show-error \
+            --resolve mobile.walkastore.com:443:65.21.208.232 \
+            --max-time 220 \
+            -H "X-WALKA-Deploy-Token: $token" \
+            -o /tmp/walka-deploy-response.json \
+            -w '%{http_code}' \
+            "https://mobile.walkastore.com/$bridge")"
+          echo "Deployment bridge HTTP: $http_code"
+          jq . /tmp/walka-deploy-response.json
+          test "$http_code" = "200"
+          jq -e --arg sha "$BACKEND_SOURCE_SHA" '.ok == true and .source_sha == $sha and (.php_cli | startswith("8.4."))' /tmp/walka-deploy-response.json >/dev/null
+
+      - name: Production smoke tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --location --max-time 20 "$API_URL/api/v1/health" -o /tmp/health.json
+          jq . /tmp/health.json
+          jq -e '.data.status == "ok" and .data.service == "walka-api"' /tmp/health.json >/dev/null
+
+          curl --fail --silent --show-error --location --max-time 25 "$API_URL/api/v1/catalog" -o /tmp/catalog.json
+          jq -e '.data != null' /tmp/catalog.json >/dev/null
+
+          storefront_code="$(curl --silent --show-error --location --max-time 25 -o /tmp/storefront.json -w '%{http_code}' "$API_URL/api/v1/content/storefront")"
+          echo "Storefront content HTTP: $storefront_code"
+          if [[ "$storefront_code" = "200" ]]; then
+            jq -e '.data.payload.information_json | type == "string" and length > 10' /tmp/storefront.json >/dev/null
+            echo 'Dynamic information_json is published and readable.'
+          elif [[ "$storefront_code" != "404" ]]; then
+            cat /tmp/storefront.json
+            exit 1
+          fi
+
+          related_code="$(curl --silent --show-error --location --max-time 25 -o /tmp/related.json -w '%{http_code}' "$API_URL/api/v1/content/related-products")"
+          echo "Related products HTTP: $related_code"
+          if [[ "$related_code" != "200" && "$related_code" != "404" ]]; then
+            cat /tmp/related.json
+            exit 1
+          fi
+
+      - name: Write deployment receipt
+        if: success()
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p deployment-receipt
+          cat > deployment-receipt/BACKEND_PRODUCTION_DEPLOYMENT.txt <<EOF
+          WALKA Backend Production Deployment
+          source_sha=$BACKEND_SOURCE_SHA
+          workflow_sha=$GITHUB_SHA
+          php_cli=/opt/cpanel/ea-php84/root/usr/bin/php
+          target=/home/solscool/walka_backend
+          public_root=/home/solscool/public_html/api.walkastore.com
+          api_url=$API_URL
+          deployed_at_utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+          EOF
+          cp /tmp/walka-deploy-response.json deployment-receipt/server-response.json
+          cp /tmp/health.json deployment-receipt/health.json
+
+      - name: Upload deployment receipt
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: walka-backend-production-${{ env.BACKEND_SOURCE_SHA }}
+          path: deployment-receipt/
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Cleanup public resume bridge
+        if: always()
+        shell: bash
+        env:
+          FTP_HOST: ftp.50sols.com
+          FTP_USER: mobile@walkastore.com
+          FTP_PASSWORD: ${{ secrets.CPANEL_FTP_PASSWORD }}
+        run: |
+          set +e
+          bridge="$(cat /tmp/walka-deploy-name 2>/dev/null)"
+          timeout 60 lftp -u "$FTP_USER","$FTP_PASSWORD" -p 21 "$FTP_HOST" -e "
+            set ftp:ssl-force true;
+            set ftp:ssl-protect-data true;
+            set ssl:verify-certificate yes;
+            set ssl:check-hostname no;
+            set ftp:passive-mode true;
+            set net:max-retries 1;
+            set net:timeout 15;
+            rm -f $bridge;
+            rm -f .walka-deploy-token;
+            rm -f .walka-deploy.lock;
+            bye;
+          "
+          exit 0
