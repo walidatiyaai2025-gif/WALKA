@@ -18,6 +18,8 @@ import 'features/content/data/walka_home_hero_cache.dart';
 import 'features/content/data/walka_home_hero_repository.dart';
 import 'features/content/data/walka_home_layout_cache.dart';
 import 'features/content/data/walka_home_layout_repository.dart';
+import 'features/content/data/walka_pdp_layout_cache.dart';
+import 'features/content/data/walka_pdp_layout_repository.dart';
 import 'features/content/data/walka_search_presentation_cache.dart';
 import 'features/content/data/walka_search_presentation_repository.dart';
 import 'features/content/data/walka_storefront_copy_cache.dart';
@@ -37,12 +39,8 @@ Future<void> main() async {
   );
   await favoritesController.load();
 
-  const WalkaApiSettings apiSettings = WalkaApiSettings(
-    baseUrl: WalkaApiSettings.environmentBaseUrl,
-  );
-  final WalkaApiClient? apiClient = apiSettings.isConfigured
-      ? WalkaApiClient(settings: apiSettings)
-      : null;
+  const WalkaApiSettings apiSettings = WalkaApiSettings(baseUrl: WalkaApiSettings.environmentBaseUrl);
+  final WalkaApiClient? apiClient = apiSettings.isConfigured ? WalkaApiClient(settings: apiSettings) : null;
   final WalkaCatalogController catalogController = WalkaCatalogController(
     repository: WalkaCatalogRepository(
       cache: SharedPreferencesWalkaCatalogCache(),
@@ -78,9 +76,12 @@ Future<void> main() async {
       cache: SharedPreferencesWalkaStorefrontCopyCache(),
       remoteLoader: apiClient?.fetchStorefrontCopy,
     ),
+    pdpLayoutRepository: WalkaPdpLayoutRepository(
+      cache: SharedPreferencesWalkaPdpLayoutCache(),
+      remoteLoader: apiClient?.fetchPdpLayout,
+    ),
   );
-  final WalkaRemoteMediaController remoteMediaController =
-      WalkaRemoteMediaController(
+  final WalkaRemoteMediaController remoteMediaController = WalkaRemoteMediaController(
     repository: WalkaRemoteMediaRepository(
       cache: SharedPreferencesWalkaRemoteMediaCache(),
       productLoader: apiClient?.fetchProductMedia,
@@ -121,10 +122,8 @@ class WalkaApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final WalkaCatalogController resolvedCatalog =
-        catalogController ?? WalkaCatalogController();
-    final WalkaContentController resolvedContent =
-        contentController ?? WalkaContentController();
+    final WalkaCatalogController resolvedCatalog = catalogController ?? WalkaCatalogController();
+    final WalkaContentController resolvedContent = contentController ?? WalkaContentController();
 
     Widget app = WalkaCatalogScope(
       controller: resolvedCatalog,
@@ -143,9 +142,6 @@ class WalkaApp extends StatelessWidget {
       app = WalkaRemoteMediaScope(controller: resolvedRemote, child: app);
     }
 
-    return WalkaContentScope(
-      controller: resolvedContent,
-      child: app,
-    );
+    return WalkaContentScope(controller: resolvedContent, child: app);
   }
 }
