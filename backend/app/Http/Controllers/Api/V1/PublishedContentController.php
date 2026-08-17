@@ -139,8 +139,8 @@ final class PublishedContentController extends Controller
     }
 
     /**
-     * @param callable(array<string, mixed>): array<string, mixed> $normalize
-     * @param callable(array<string, mixed>): array<string, mixed>|null $extraMeta
+     * @param  callable(array<string, mixed>): array<string, mixed>       $normalize
+     * @param  callable(array<string, mixed>): array<string, mixed>|null  $extraMeta
      */
     private function publishedResponse(
         Request $request,
@@ -152,7 +152,8 @@ final class PublishedContentController extends Controller
         string $invalidMessage,
         callable $normalize,
         ?callable $extraMeta = null,
-    ): JsonResponse|Response {
+    ): JsonResponse|Response
+    {
         $entry = ContentEntry::query()
             ->where('content_key', $key)
             ->where('content_type', $type)
