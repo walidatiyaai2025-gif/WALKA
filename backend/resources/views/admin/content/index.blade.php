@@ -15,6 +15,7 @@
     <section class="card"><p class="eyebrow">SEARCH MERCHANDISING</p><h2>Search</h2><p class="muted">Edit Search copy, filter labels and Featured ordering.</p><a class="btn navy section-space" href="{{ route('admin.content.search.edit') }}">Edit Search →</a></section>
     <section class="card"><p class="eyebrow">SHARED STOREFRONT COPY</p><h2>Categories & Product Detail</h2><p class="muted">Control generic storefront labels and CTA copy.</p><a class="btn primary section-space" href="{{ route('admin.content.storefront.copy.edit') }}">Edit Storefront Copy →</a></section>
     <section class="card" style="border-color:#d9cfb6;background:linear-gradient(135deg,#ffffff,#fbf8f1)"><p class="eyebrow">PDP COMPOSITION</p><h2>Product Detail Layout</h2><p class="muted">Reorder the eight approved PDP sections and hide only optional Usage/Editorial presentation.</p><a class="btn primary section-space" href="{{ route('admin.content.pdp.layout.edit') }}">Edit PDP Layout →</a></section>
+    <section class="card" style="border-color:#d9cfb6;background:linear-gradient(135deg,#ffffff,#fbf8f1)"><p class="eyebrow">PDP MERCHANDISING</p><h2>Related Products</h2><p class="muted">Choose up to four visible dynamic catalog products to recommend on each PDP.</p><a class="btn navy section-space" href="{{ route('admin.content.pdp.related-products.edit') }}">Edit Related Products →</a></section>
 </div>
 
 <div class="grid two section-space">
@@ -32,6 +33,7 @@
 @elseif ($entry->content_key === 'search.presentation' && $entry->content_type === 'search.presentation')<a class="btn secondary" href="{{ route('admin.content.search.edit') }}">Typed editor</a>
 @elseif ($entry->content_key === 'storefront.copy' && $entry->content_type === 'storefront.copy')<a class="btn secondary" href="{{ route('admin.content.storefront.copy.edit') }}">Typed editor</a>
 @elseif ($entry->content_key === 'pdp.layout' && $entry->content_type === 'pdp.layout')<a class="btn secondary" href="{{ route('admin.content.pdp.layout.edit') }}">Typed editor</a>
+@elseif ($entry->content_key === 'pdp.related_products' && $entry->content_type === 'pdp.related_products')<a class="btn secondary" href="{{ route('admin.content.pdp.related-products.edit') }}">Typed editor</a>
 @else<a class="btn secondary" href="{{ route('admin.content.show', ['content' => $entry->id]) }}">Open</a>@endif
 </td></tr>@endforeach
 </tbody></table></div>@endif

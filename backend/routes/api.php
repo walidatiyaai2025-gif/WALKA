@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\V1\ConfigController;
 use App\Http\Controllers\Api\V1\HealthController;
 use App\Http\Controllers\Api\V1\ProductMediaGalleryController;
 use App\Http\Controllers\Api\V1\PublishedContentController;
+use App\Http\Controllers\Api\V1\PublishedRelatedProductsController;
 use App\Http\Controllers\Api\V1\SurfaceMediaController;
 use Illuminate\Support\Facades\Route;
 
@@ -28,6 +29,7 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
     Route::get('/content/search', [PublishedContentController::class, 'search'])->name('content.search');
     Route::get('/content/storefront', [PublishedContentController::class, 'storefront'])->name('content.storefront');
     Route::get('/content/pdp-layout', [PublishedContentController::class, 'pdpLayout'])->name('content.pdp-layout');
+    Route::get('/content/related-products', PublishedRelatedProductsController::class)->name('content.related-products');
 
     Route::prefix('admin/catalog')
         ->middleware('catalog.admin')
