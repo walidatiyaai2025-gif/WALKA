@@ -16,6 +16,7 @@ final readonly class ProductData
         public array $features,
         public array $facts,
         public array $variants,
+        public ?string $shortDescription = null,
     ) {}
 
     /**
@@ -25,7 +26,8 @@ final readonly class ProductData
      *   category: string,
      *   features: list<string>,
      *   facts: array<string, mixed>,
-     *   variants: list<array{id: string, color: string, asin: string, pantone?: string|null}>
+     *   variants: list<array{id: string, color: string, asin: string, pantone?: string|null, swatch_hex?: string|null}>,
+     *   short_description?: string|null
      * } $data
      */
     public static function fromArray(array $data): self
@@ -42,9 +44,11 @@ final readonly class ProductData
                     color: $variant['color'],
                     asin: $variant['asin'],
                     pantone: $variant['pantone'] ?? null,
+                    swatchHex: $variant['swatch_hex'] ?? null,
                 ),
                 $data['variants'],
             ),
+            shortDescription: $data['short_description'] ?? null,
         );
     }
 
@@ -53,9 +57,10 @@ final readonly class ProductData
      *   id: string,
      *   name: string,
      *   category: string,
+     *   short_description: string|null,
      *   features: list<string>,
      *   facts: array<string, mixed>,
-     *   variants: list<array{id: string, color: string, asin: string, pantone: string|null, purchase_url: string}>
+     *   variants: list<array{id: string, color: string, asin: string, pantone: string|null, swatch_hex: string|null, purchase_url: string}>
      * }
      */
     public function toArray(): array
@@ -64,6 +69,7 @@ final readonly class ProductData
             'id' => $this->id,
             'name' => $this->name,
             'category' => $this->category,
+            'short_description' => $this->shortDescription,
             'features' => $this->features,
             'facts' => $this->facts,
             'variants' => array_map(
