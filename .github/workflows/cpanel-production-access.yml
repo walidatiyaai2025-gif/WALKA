@@ -16,7 +16,7 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  document-root-probe:
+  php84-cli-probe:
     runs-on: ubuntu-latest
     timeout-minutes: 6
     environment: production
@@ -26,7 +26,7 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y --no-install-recommends lftp >/dev/null
 
-      - name: Create protected document-root probe
+      - name: Create protected PHP CLI probe
         shell: bash
         run: |
           set -euo pipefail
@@ -40,41 +40,59 @@ jobs:
           declare(strict_types=1);
           header('Content-Type: application/json; charset=utf-8');
           header('Cache-Control: no-store');
-          $expected = trim((string) file_get_contents(__DIR__ . '/.walka-probe-token'));
+          $expected = trim((string) @file_get_contents(__DIR__ . '/.walka-probe-token'));
           $provided = (string) ($_SERVER['HTTP_X_WALKA_DEPLOY_TOKEN'] ?? '');
           if ($expected === '' || !hash_equals($expected, $provided)) {
               http_response_code(404);
               echo json_encode(['ok' => false]);
               exit;
           }
-          $target = '/home/solscool/walka_backend';
-          $public = '/home/solscool/public_html/api.walkastore.com';
-          $apiIndex = is_file($public . '/index.php') ? (string) file_get_contents($public . '/index.php') : '';
-          $backendIndex = is_file($target . '/public/index.php') ? (string) file_get_contents($target . '/public/index.php') : '';
-          $safeLines = [];
-          foreach (preg_split('/\R/', $apiIndex) ?: [] as $line) {
-              if (preg_match('/walka_backend|vendor\/autoload|bootstrap\/app|maintenance/i', $line)) {
-                  $safeLines[] = trim($line);
+          $candidates = [
+              '/opt/cpanel/ea-php84/root/usr/bin/php',
+              '/usr/local/bin/ea-php84',
+              '/usr/bin/ea-php84',
+              '/usr/local/cpanel/3rdparty/bin/php',
+              '/usr/bin/php',
+          ];
+          $results = [];
+          foreach ($candidates as $candidate) {
+              $entry = [
+                  'path' => $candidate,
+                  'exists' => is_file($candidate),
+                  'executable' => is_executable($candidate),
+                  'version' => null,
+                  'exit' => null,
+              ];
+              if ($entry['executable'] && function_exists('proc_open')) {
+                  $descriptors = [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']];
+                  $process = @proc_open([$candidate, '-r', 'echo PHP_VERSION;'], $descriptors, $pipes, __DIR__, null, ['bypass_shell' => true]);
+                  if (is_resource($process)) {
+                      fclose($pipes[0]);
+                      $stdout = stream_get_contents($pipes[1]);
+                      $stderr = stream_get_contents($pipes[2]);
+                      fclose($pipes[1]);
+                      fclose($pipes[2]);
+                      $exit = proc_close($process);
+                      $entry['exit'] = $exit;
+                      if ($exit === 0) $entry['version'] = trim((string) $stdout);
+                      elseif ($stderr !== '') $entry['error'] = substr(trim((string) $stderr), 0, 300);
+                  }
+              }
+              $results[] = $entry;
+          }
+          $selected = null;
+          foreach ($results as $entry) {
+              if ($entry['exit'] === 0 && is_string($entry['version']) && version_compare($entry['version'], '8.4.1', '>=')) {
+                  $selected = $entry['path'];
+                  break;
               }
           }
-          $publicEntries = [];
-          foreach (scandir($public) ?: [] as $entry) {
-              if ($entry === '.' || $entry === '..') continue;
-              $publicEntries[] = [
-                  'name' => $entry,
-                  'type' => is_link($public . '/' . $entry) ? 'link' : (is_dir($public . '/' . $entry) ? 'dir' : 'file'),
-              ];
-          }
           echo json_encode([
-              'ok' => true,
-              'api_index_sha256' => hash('sha256', $apiIndex),
-              'backend_index_sha256' => hash('sha256', $backendIndex),
-              'same_index' => hash('sha256', $apiIndex) === hash('sha256', $backendIndex),
-              'api_index_bindings' => $safeLines,
-              'public_entries' => $publicEntries,
-              'ziparchive' => class_exists('ZipArchive'),
-              'proc_open' => function_exists('proc_open'),
-              'disk_free_mb' => (int) floor(disk_free_space('/home/solscool') / 1024 / 1024),
+              'ok' => $selected !== null,
+              'web_php' => PHP_VERSION,
+              'php_binary' => PHP_BINARY,
+              'selected' => $selected,
+              'candidates' => $results,
           ], JSON_UNESCAPED_SLASHES);
           PHP
 
@@ -109,12 +127,12 @@ jobs:
           token="$(cat /tmp/walka-probe-token)"
           response="$(curl --silent --show-error --fail \
             --resolve mobile.walkastore.com:443:65.21.208.232 \
-            --max-time 20 \
+            --max-time 25 \
             -H "X-WALKA-Deploy-Token: $token" \
             "https://mobile.walkastore.com/$name")"
           printf '%s\n' "$response" | jq .
           printf '%s' "$response" > /tmp/walka-probe-response.json
-          jq -e '.ok == true and .disk_free_mb > 256' /tmp/walka-probe-response.json >/dev/null
+          jq -e '.ok == true and (.selected | type == "string")' /tmp/walka-probe-response.json >/dev/null
 
       - name: Remove one-shot probe
         if: always()
