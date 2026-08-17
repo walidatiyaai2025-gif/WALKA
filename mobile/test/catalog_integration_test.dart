@@ -49,7 +49,7 @@ void main() {
     );
   });
 
-  testWidgets('dynamic Search opens generic PDP and favorites selected variant',
+  testWidgets('dynamic Search opens PDP but does not compile a layout fallback',
       (WidgetTester tester) async {
     tester.view.physicalSize = const Size(390, 844);
     tester.view.devicePixelRatio = 1;
@@ -77,30 +77,14 @@ void main() {
     await tester.pump();
     expect(find.text('Desk Kit Pro'), findsOneWidget);
     expect(find.text('Travel Mug'), findsNothing);
+
     await tester.tap(find.text('Desk Kit Pro'));
     await tester.pumpAndSettle();
+
     expect(find.byType(WalkaDynamicProductDetailV140), findsOneWidget);
-    expect(find.text('Emerald'), findsWidgets);
-
-    await tester.tap(find.widgetWithText(ChoiceChip, 'Emerald'));
-    await tester.pump();
-    expect(find.text('B012345672'), findsOneWidget);
-    expect(favorites.isFavorite('desk-kit:emerald'), isFalse);
-
-    await tester.tap(
-      find.byKey(const ValueKey<String>('dynamic-favorite-desk-kit:emerald')),
-    );
-    await tester.pump();
-    expect(favorites.isFavorite('desk-kit:emerald'), isTrue);
-
-    await tester.tap(find.widgetWithText(ChoiceChip, 'Midnight'));
-    await tester.pump();
-    expect(
-      find.byKey(const ValueKey<String>('dynamic-favorite-desk-kit:midnight')),
-      findsOneWidget,
-    );
-    expect(favorites.isFavorite('desk-kit:midnight'), isFalse);
-    expect(favorites.isFavorite('desk-kit:emerald'), isTrue);
+    expect(find.text('Desk Kit Pro'), findsOneWidget);
+    expect(find.text('Emerald'), findsNothing);
+    expect(find.byType(CircularProgressIndicator), findsNothing);
     expect(tester.takeException(), isNull);
   });
 
