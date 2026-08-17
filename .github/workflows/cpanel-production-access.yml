@@ -31,10 +31,10 @@ jobs:
         env:
           SSH_HOST: server11.hhost.host
           SSH_USER: solscool
-          SSH_PASSWORD: ${{ secrets.CPANEL_FTP_PASSWORD }}
+          SSHPASS: ${{ secrets.CPANEL_FTP_PASSWORD }}
         run: |
           set -euo pipefail
-          [[ -n "${SSH_PASSWORD:-}" ]] || { echo 'Missing CPANEL_FTP_PASSWORD' >&2; exit 1; }
+          [[ -n "${SSHPASS:-}" ]] || { echo 'Missing CPANEL_FTP_PASSWORD' >&2; exit 1; }
           timeout 25 sshpass -e ssh \
             -o PreferredAuthentications=password \
             -o PubkeyAuthentication=no \
