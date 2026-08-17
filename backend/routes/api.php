@@ -15,25 +15,19 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
     Route::get('/health', HealthController::class)->name('health');
     Route::get('/config', ConfigController::class)->name('config');
     Route::get('/catalog', CatalogController::class)->name('catalog');
-    Route::get('/media/product-galleries', ProductMediaGalleryController::class)
-        ->name('media.product-galleries');
+    Route::get('/media/product-galleries', ProductMediaGalleryController::class)->name('media.product-galleries');
     Route::get('/media/surfaces', SurfaceMediaController::class)->name('media.surfaces');
     Route::get('/media/assets/{mediaAsset}/canonical', CanonicalMediaController::class)
         ->where('mediaAsset', '[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26}')
         ->name('media.assets.canonical');
     Route::get('/content/home', [PublishedContentController::class, 'home'])->name('content.home');
-    Route::get('/content/home-layout', [PublishedContentController::class, 'homeLayout'])
-        ->name('content.home-layout');
-    Route::get('/content/home-featured', [PublishedContentController::class, 'homeFeatured'])
-        ->name('content.home-featured');
-    Route::get('/content/home-banner', [PublishedContentController::class, 'homeBanner'])
-        ->name('content.home-banner');
-    Route::get('/content/categories', [PublishedContentController::class, 'categories'])
-        ->name('content.categories');
-    Route::get('/content/search', [PublishedContentController::class, 'search'])
-        ->name('content.search');
-    Route::get('/content/storefront', [PublishedContentController::class, 'storefront'])
-        ->name('content.storefront');
+    Route::get('/content/home-layout', [PublishedContentController::class, 'homeLayout'])->name('content.home-layout');
+    Route::get('/content/home-featured', [PublishedContentController::class, 'homeFeatured'])->name('content.home-featured');
+    Route::get('/content/home-banner', [PublishedContentController::class, 'homeBanner'])->name('content.home-banner');
+    Route::get('/content/categories', [PublishedContentController::class, 'categories'])->name('content.categories');
+    Route::get('/content/search', [PublishedContentController::class, 'search'])->name('content.search');
+    Route::get('/content/storefront', [PublishedContentController::class, 'storefront'])->name('content.storefront');
+    Route::get('/content/pdp-layout', [PublishedContentController::class, 'pdpLayout'])->name('content.pdp-layout');
 
     Route::prefix('admin/catalog')
         ->middleware('catalog.admin')
@@ -41,9 +35,7 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
         ->group(function (): void {
             Route::get('/', [CatalogAdminController::class, 'index'])->name('index');
             Route::get('/audits', [CatalogAuditController::class, 'index'])->name('audits.index');
-            Route::patch('/products/{product}', [CatalogAdminController::class, 'updateProduct'])
-                ->name('products.update');
-            Route::patch('/variants/{variant}', [CatalogAdminController::class, 'updateVariant'])
-                ->name('variants.update');
+            Route::patch('/products/{product}', [CatalogAdminController::class, 'updateProduct'])->name('products.update');
+            Route::patch('/variants/{variant}', [CatalogAdminController::class, 'updateVariant'])->name('variants.update');
         });
 });
