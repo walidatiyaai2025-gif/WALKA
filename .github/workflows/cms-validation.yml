@@ -43,7 +43,7 @@ jobs:
 
   flutter:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 35
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -64,14 +64,54 @@ jobs:
           channel: stable
           flutter-version: '3.47.0'
           cache: true
-      - name: Analyze and test
+      - name: Resolve Flutter dependencies
+        working-directory: mobile
+        shell: bash
+        run: flutter pub get --enforce-lockfile
+      - name: Analyze
+        id: flutter_analyze
+        continue-on-error: true
         working-directory: mobile
         shell: bash
         run: |
+          mkdir -p ../cms-ci
+          set +e
+          flutter analyze 2>&1 | tee ../cms-ci/flutter-analyze.log
+          status=${PIPESTATUS[0]}
+          echo "$status" > ../cms-ci/flutter-analyze.status
+          exit "$status"
+      - name: Test
+        id: flutter_test
+        if: always()
+        continue-on-error: true
+        working-directory: mobile
+        shell: bash
+        run: |
+          mkdir -p ../cms-ci
+          set +e
+          timeout --signal=TERM 180s flutter test --reporter expanded 2>&1 | tee ../cms-ci/flutter-test.log
+          status=${PIPESTATUS[0]}
+          echo "$status" > ../cms-ci/flutter-test.status
+          exit "$status"
+      - name: Upload Flutter diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: walka-cms-flutter-diagnostics-${{ github.sha }}
+          path: cms-ci/
+          if-no-files-found: error
+          retention-days: 14
+      - name: Enforce Flutter quality gate
+        if: always()
+        shell: bash
+        run: |
           set -euo pipefail
-          flutter pub get --enforce-lockfile
-          flutter analyze
-          timeout --signal=TERM 180s flutter test --reporter expanded
+          analyze_status="$(cat cms-ci/flutter-analyze.status 2>/dev/null || echo 99)"
+          test_status="$(cat cms-ci/flutter-test.status 2>/dev/null || echo 99)"
+          echo "flutter analyze status: $analyze_status"
+          echo "flutter test status: $test_status"
+          test "$analyze_status" = "0"
+          test "$test_status" = "0"
       - name: Generate Android runner
         working-directory: mobile
         run: flutter create --platforms=android --project-name walka .
@@ -88,23 +128,31 @@ jobs:
       - name: Build release APK
         working-directory: mobile
         run: flutter build apk --release
-      - name: Verify no bundled product media
+      - name: Build release AAB
+        working-directory: mobile
+        run: flutter build appbundle --release
+      - name: Verify release artifacts contain no bundled product media
         shell: bash
         run: |
           set -euo pipefail
           apk='mobile/build/app/outputs/flutter-apk/app-release.apk'
-          if unzip -Z1 "$apk" | grep -E 'flutter_assets/assets/products/(drawer|lunch)/.*\.(png|jpe?g|webp)$'; then
-            echo 'Bundled product media found in APK.' >&2
-            exit 1
-          fi
-          mkdir -p cms-apk
-          cp "$apk" cms-apk/WALKA-latest.apk
-          sha256sum cms-apk/WALKA-latest.apk > cms-apk/WALKA-latest.apk.sha256
-          printf 'version=%s\nsource=%s\n' "$(awk '/^version:/ {print $2; exit}' mobile/pubspec.yaml)" "$GITHUB_SHA" > cms-apk/BUILD.txt
-      - name: Upload installable APK
+          aab='mobile/build/app/outputs/bundle/release/app-release.aab'
+          for artifact in "$apk" "$aab"; do
+            if unzip -Z1 "$artifact" | grep -E 'flutter_assets/assets/products/(drawer|lunch)/.*\.(png|jpe?g|webp)$'; then
+              echo "Bundled product media found in $artifact." >&2
+              exit 1
+            fi
+          done
+          mkdir -p cms-release
+          cp "$apk" cms-release/WALKA-latest.apk
+          cp "$aab" cms-release/WALKA-latest.aab
+          sha256sum cms-release/WALKA-latest.apk > cms-release/WALKA-latest.apk.sha256
+          sha256sum cms-release/WALKA-latest.aab > cms-release/WALKA-latest.aab.sha256
+          printf 'version=%s\nsource=%s\n' "$(awk '/^version:/ {print $2; exit}' mobile/pubspec.yaml)" "$GITHUB_SHA" > cms-release/BUILD.txt
+      - name: Upload release artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: walka-cms-installable-${{ github.sha }}
-          path: cms-apk/
+          name: walka-cms-release-${{ github.sha }}
+          path: cms-release/
           if-no-files-found: error
           retention-days: 14
