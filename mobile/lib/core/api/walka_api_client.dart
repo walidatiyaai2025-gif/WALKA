@@ -10,6 +10,7 @@ import '../../features/content/domain/walka_home_featured_content.dart';
 import '../../features/content/domain/walka_home_layout_content.dart';
 import '../../features/content/domain/walka_mobile_content.dart';
 import '../../features/content/domain/walka_pdp_layout_content.dart';
+import '../../features/content/domain/walka_related_products_content.dart';
 import '../../features/content/domain/walka_search_presentation_content.dart';
 import '../../features/content/domain/walka_storefront_copy_content.dart';
 import '../../features/media/domain/walka_remote_media.dart';
@@ -136,6 +137,7 @@ class WalkaApiClient implements WalkaCatalogRemoteDataSource {
   Future<WalkaSearchPresentationPayload> fetchSearchPresentation() async => WalkaSearchPresentationPayload.fromApiJson(await _getJson('/api/v1/content/search'));
   Future<WalkaStorefrontCopyPayload> fetchStorefrontCopy() async => WalkaStorefrontCopyPayload.fromApiJson(await _getJson('/api/v1/content/storefront'));
   Future<WalkaPdpLayoutPayload> fetchPdpLayout() async => WalkaPdpLayoutPayload.fromApiJson(await _getJson('/api/v1/content/pdp-layout'));
+  Future<WalkaRelatedProductsPayload> fetchRelatedProducts() async => WalkaRelatedProductsPayload.fromApiJson(await _getJson('/api/v1/content/related-products'));
   Future<WalkaRemoteProductMediaPayload> fetchProductMedia() async => WalkaRemoteProductMediaPayload.fromApiJson(await _getJson('/api/v1/media/product-galleries'));
   Future<WalkaRemoteSurfaceMediaPayload> fetchSurfaceMedia() async => WalkaRemoteSurfaceMediaPayload.fromApiJson(await _getJson('/api/v1/media/surfaces'));
 
