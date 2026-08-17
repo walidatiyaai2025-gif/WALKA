@@ -16,29 +16,37 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  ssh-probe:
+  api-ip-probe:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     environment: production
     steps:
-      - name: Install SSH password client
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y --no-install-recommends sshpass >/dev/null
-
-      - name: Verify shell access without changing production
+      - name: Verify cPanel UAPI by server IP
         shell: bash
         env:
-          SSH_HOST: server11.hhost.host
-          SSH_USER: solscool
-          SSHPASS: ${{ secrets.CPANEL_FTP_PASSWORD }}
+          CPANEL_API_TOKEN: ${{ secrets.CPANEL_API_TOKEN }}
+          CPANEL_USER: solscool
         run: |
           set -euo pipefail
-          [[ -n "${SSHPASS:-}" ]] || { echo 'Missing CPANEL_FTP_PASSWORD' >&2; exit 1; }
-          timeout 25 sshpass -e ssh \
-            -o PreferredAuthentications=password \
-            -o PubkeyAuthentication=no \
-            -o StrictHostKeyChecking=accept-new \
-            -o ConnectTimeout=12 \
-            "${SSH_USER}@${SSH_HOST}" \
-            'printf "WALKA_SSH_OK\n"; pwd; php -r '\''echo PHP_VERSION, PHP_EOL;'\'''
+          [[ -n "${CPANEL_API_TOKEN:-}" ]] || { echo 'Missing CPANEL_API_TOKEN' >&2; exit 1; }
+          body="$(mktemp)"
+          status="$(curl --insecure --silent --show-error \
+            --connect-timeout 12 \
+            --max-time 25 \
+            --header "Authorization: cpanel ${CPANEL_USER}:${CPANEL_API_TOKEN}" \
+            --header 'Accept: application/json' \
+            --output "$body" \
+            --write-out '%{http_code}' \
+            'https://65.21.208.232:2083/execute/Fileman/list_files?dir=public_html%2Fapi.walkastore.com&show_hidden=0' || true)"
+          echo "HTTP ${status}"
+          if jq -e '.result.status == 1' "$body" >/dev/null 2>&1; then
+            echo 'cPanel UAPI reachable by direct server IP.'
+            exit 0
+          fi
+          if jq -e . "$body" >/dev/null 2>&1; then
+            jq -c '{result:{status:.result.status,errors:.result.errors,messages:.result.messages}}' "$body"
+          else
+            title="$(grep -oEi '<title[^>]*>[^<]*</title>' "$body" | head -1 || true)"
+            echo "Non-JSON response: ${title:-no HTML title}"
+          fi
+          exit 1
