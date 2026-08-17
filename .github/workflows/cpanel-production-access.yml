@@ -16,9 +16,9 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  backend-layout-inspect:
+  server-side-probe:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 6
     environment: production
     steps:
       - name: Install lftp
@@ -26,7 +26,46 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y --no-install-recommends lftp >/dev/null
 
-      - name: Inspect backend layout without reading secrets
+      - name: Create protected one-shot probe locally
+        id: probe
+        shell: bash
+        run: |
+          set -euo pipefail
+          token="$(openssl rand -hex 32)"
+          name=".walka-probe-$(openssl rand -hex 10).php"
+          echo "::add-mask::$token"
+          printf '%s' "$token" > /tmp/walka-probe-token
+          printf '%s' "$name" > /tmp/walka-probe-name
+          cat > /tmp/walka-probe.php <<'PHP'
+          <?php
+          declare(strict_types=1);
+          header('Content-Type: application/json; charset=utf-8');
+          header('Cache-Control: no-store');
+          $expected = trim((string) file_get_contents(__DIR__ . '/.walka-probe-token'));
+          $provided = (string) ($_SERVER['HTTP_X_WALKA_DEPLOY_TOKEN'] ?? '');
+          if ($expected === '' || !hash_equals($expected, $provided)) {
+              http_response_code(404);
+              echo json_encode(['ok' => false]);
+              exit;
+          }
+          $target = '/home/solscool/walka_backend';
+          $public = '/home/solscool/public_html/api.walkastore.com';
+          echo json_encode([
+              'ok' => true,
+              'php' => PHP_VERSION,
+              'bridge_dir' => __DIR__,
+              'backend_dir' => is_dir($target),
+              'backend_artisan' => is_file($target . '/artisan'),
+              'backend_env' => is_file($target . '/.env'),
+              'backend_vendor' => is_file($target . '/vendor/autoload.php'),
+              'backend_writable' => is_writable($target),
+              'api_public_dir' => is_dir($public),
+              'api_public_index' => is_file($public . '/index.php'),
+              'api_public_writable' => is_writable($public),
+          ], JSON_UNESCAPED_SLASHES);
+          PHP
+
+      - name: Upload probe and token over FTPS
         shell: bash
         env:
           FTP_HOST: ftp.50sols.com
@@ -34,9 +73,7 @@ jobs:
           FTP_PASSWORD: ${{ secrets.CPANEL_FTP_PASSWORD }}
         run: |
           set -euo pipefail
-          [[ -n "${FTP_PASSWORD:-}" ]] || { echo 'Missing CPANEL_FTP_PASSWORD' >&2; exit 1; }
-          rm -rf /tmp/walka-backend-inspect
-          mkdir -p /tmp/walka-backend-inspect
+          name="$(cat /tmp/walka-probe-name)"
           lftp -u "$FTP_USER","$FTP_PASSWORD" -p 21 "$FTP_HOST" -e "
             set cmd:fail-exit yes;
             set ftp:ssl-force true;
@@ -46,23 +83,38 @@ jobs:
             set ftp:passive-mode true;
             set net:max-retries 1;
             set net:timeout 15;
-            echo '--- backend root ---';
-            cls -la backend;
-            echo '--- backend public ---';
-            cls -la backend/public;
-            echo '--- backend database migrations tail ---';
-            cls -1 backend/database/migrations | tail -20;
-            get backend/composer.json -o /tmp/walka-backend-inspect/composer.json;
-            get backend/public/index.php -o /tmp/walka-backend-inspect/index.php;
+            put /tmp/walka-probe.php -o $name;
+            put /tmp/walka-probe-token -o .walka-probe-token;
             bye;
           "
-          echo '--- backend identity ---'
-          jq -r '{name,description,type,require}' /tmp/walka-backend-inspect/composer.json
-          echo '--- public index require paths ---'
-          grep -E "require|autoload|bootstrap" /tmp/walka-backend-inspect/index.php || true
-          echo '--- production env presence only ---'
+
+      - name: Invoke probe through cPanel vhost
+        shell: bash
+        run: |
+          set -euo pipefail
+          name="$(cat /tmp/walka-probe-name)"
+          token="$(cat /tmp/walka-probe-token)"
+          response="$(curl --silent --show-error --fail \
+            --resolve mobile.walkastore.com:443:65.21.208.232 \
+            --max-time 20 \
+            -H "X-WALKA-Deploy-Token: $token" \
+            "https://mobile.walkastore.com/$name")"
+          printf '%s\n' "$response" | jq .
+          printf '%s' "$response" > /tmp/walka-probe-response.json
+          jq -e '.ok == true and .backend_dir == true and .backend_artisan == true and .backend_env == true and .api_public_dir == true and .api_public_index == true' /tmp/walka-probe-response.json >/dev/null
+
+      - name: Remove one-shot probe
+        if: always()
+        shell: bash
+        env:
+          FTP_HOST: ftp.50sols.com
+          FTP_USER: mobile@walkastore.com
+          FTP_PASSWORD: ${{ secrets.CPANEL_FTP_PASSWORD }}
+        run: |
           set +e
-          timeout 20 lftp -u "$FTP_USER","$FTP_PASSWORD" -p 21 "$FTP_HOST" -e "
+          name="$(cat /tmp/walka-probe-name 2>/dev/null)"
+          [[ -n "$name" ]] || exit 0
+          timeout 30 lftp -u "$FTP_USER","$FTP_PASSWORD" -p 21 "$FTP_HOST" -e "
             set ftp:ssl-force true;
             set ftp:ssl-protect-data true;
             set ssl:verify-certificate yes;
@@ -70,17 +122,8 @@ jobs:
             set ftp:passive-mode true;
             set net:max-retries 1;
             set net:timeout 10;
-            cls -la backend/.env;
+            rm -f $name;
+            rm -f .walka-probe-token;
             bye;
-          " >/tmp/env-presence.txt 2>&1
-          env_status=$?
-          set -e
-          if [[ "$env_status" = 0 ]]; then echo 'backend/.env exists'; else echo 'backend/.env absent or inaccessible'; fi
-
-      - name: Probe public API identity
-        shell: bash
-        run: |
-          set -euo pipefail
-          curl --fail --silent --show-error --location --max-time 20 \
-            https://api.walkastore.com/api/v1/health | tee /tmp/health.json
-          jq -e '.status == "ok" and .service == "walka-api"' /tmp/health.json >/dev/null
+          "
+          exit 0
