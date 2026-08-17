@@ -1,0 +1,92 @@
+name: cPanel Production Access
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/cpanel-production-access.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: walka-cpanel-production-access
+  cancel-in-progress: false
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: production
+    steps:
+      - name: Setup Python browser client
+        run: python -m pip install --disable-pip-version-check --quiet selenium requests
+
+      - name: Pass WAF and verify cPanel UAPI
+        shell: bash
+        env:
+          CPANEL_API_TOKEN: ${{ secrets.CPANEL_API_TOKEN }}
+          CPANEL_USER: solscool
+        run: |
+          set -euo pipefail
+          [[ -n "${CPANEL_API_TOKEN:-}" ]] || { echo 'Missing CPANEL_API_TOKEN' >&2; exit 1; }
+          cat > /tmp/cpanel_probe.py <<'PY'
+          import json
+          import os
+          import time
+          from selenium import webdriver
+          from selenium.webdriver.chrome.options import Options
+
+          user = os.environ['CPANEL_USER']
+          token = os.environ['CPANEL_API_TOKEN']
+          hosts = ['server11.hhost.host', '50sols.com']
+
+          opts = Options()
+          opts.add_argument('--headless=new')
+          opts.add_argument('--no-sandbox')
+          opts.add_argument('--disable-dev-shm-usage')
+          opts.add_argument('--ignore-certificate-errors')
+          opts.add_argument('--window-size=1280,800')
+          opts.set_capability('acceptInsecureCerts', True)
+
+          last = None
+          for host in hosts:
+              driver = webdriver.Chrome(options=opts)
+              try:
+                  driver.execute_cdp_cmd('Network.enable', {})
+                  driver.execute_cdp_cmd('Network.setExtraHTTPHeaders', {
+                      'headers': {
+                          'Authorization': f'cpanel {user}:{token}',
+                          'User-Agent': 'Mozilla/5.0 WALKA-Production-Deployment/2.0'
+                      }
+                  })
+                  url = f'https://{host}:2083/execute/Fileman/list_files?dir=public_html/api.walkastore.com&show_hidden=0'
+                  driver.get(url)
+                  for _ in range(6):
+                      time.sleep(5)
+                      body = driver.find_element('tag name', 'body').text.strip()
+                      if body.startswith('{'):
+                          data = json.loads(body)
+                          status = data.get('result', {}).get('status')
+                          print(f'cPanel UAPI reachable via {host}: status={status}')
+                          if status == 1:
+                              with open('/tmp/cpanel-host.txt', 'w', encoding='utf-8') as f:
+                                  f.write(host)
+                              raise SystemExit(0)
+                          last = body[:500]
+                          break
+                      driver.refresh()
+                  else:
+                      last = driver.title
+              except SystemExit:
+                  raise
+              except Exception as exc:
+                  last = f'{type(exc).__name__}: {exc}'
+              finally:
+                  driver.quit()
+          print(f'No cPanel UAPI JSON response. Last diagnostic: {last}')
+          raise SystemExit(1)
+          PY
+          python /tmp/cpanel_probe.py
