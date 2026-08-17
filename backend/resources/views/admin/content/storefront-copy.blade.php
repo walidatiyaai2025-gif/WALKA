@@ -8,7 +8,7 @@
     <div>
         <p class="eyebrow">LIVE-CONTROLLED COPY</p>
         <h1>Storefront copy</h1>
-        <p class="lead">Control generic Categories, Favorites, and Product Detail labels from the Dashboard. Draft changes remain private until Publish.</p>
+        <p class="lead">Control storefront labels plus Account, FAQ, Contact, Privacy, Terms and official destinations. Draft changes remain private until Publish.</p>
     </div>
 </div>
 
@@ -47,6 +47,14 @@
             <div class="field"><label for="pdp_favorite_add_label">Favorite add label</label><input id="pdp_favorite_add_label" name="pdp_favorite_add_label" maxlength="80" required value="{{ old('pdp_favorite_add_label', $draft['pdp_favorite_add_label']) }}"></div>
             <div class="field"><label for="pdp_favorite_remove_label">Favorite remove label</label><input id="pdp_favorite_remove_label" name="pdp_favorite_remove_label" maxlength="80" required value="{{ old('pdp_favorite_remove_label', $draft['pdp_favorite_remove_label']) }}"></div>
         </div>
+
+        <h2 class="section-space">Account, FAQ & legal information</h2>
+        <p class="muted">This JSON is the live source for Our Story, FAQ, Contact, Amazon Store, Social, Privacy and Terms. HTTPS destinations and required page structures are validated before save/publish.</p>
+        <div class="field">
+            <label for="information_json">Information JSON</label>
+            <textarea id="information_json" name="information_json" maxlength="30000" rows="28" required style="font-family:monospace">{{ old('information_json', $draft['information_json']) }}</textarea>
+        </div>
+
         <button class="btn navy" type="submit">Save private draft</button>
     </form>
 </section>

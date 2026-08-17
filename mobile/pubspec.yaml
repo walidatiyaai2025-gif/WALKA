@@ -1,7 +1,7 @@
 name: walka
 description: WALKA premium mobile storefront prototype.
 publish_to: none
-version: 1.2.0+120
+version: 1.2.0+121
 
 environment:
   sdk: '>=3.4.0 <4.0.0'
@@ -24,5 +24,3 @@ flutter:
   uses-material-design: true
   assets:
     - assets/branding/walka_logo.svg
-    - assets/products/drawer/
-    - assets/products/lunch/

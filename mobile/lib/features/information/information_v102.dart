@@ -1,57 +1,47 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../design_system/walka_theme.dart';
-import '../lifestyle/lifestyle_v4.dart' show WalkaAboutV4;
-
-const String _amazonStoreUrl =
-    'https://www.amazon.com/stores/walkabrand/page/97D69007-E4C8-4FC1-8EBB-45C24A1FEB7C';
-const String _instagramUrl = 'https://www.instagram.com/walkabrands/';
-const String _websiteUrl = 'https://walkastore.com';
+import '../content/content_state.dart';
+import '../content/domain/walka_mobile_content.dart';
+import '../content/domain/walka_storefront_copy_content.dart';
 
 class WalkaAccountV102 extends StatelessWidget {
   const WalkaAccountV102({super.key});
 
-  void _push(BuildContext context, Widget screen) {
-    Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => screen));
-  }
-
   @override
   Widget build(BuildContext context) {
+    final _InformationData? data = _publishedInformation(context);
+    if (data == null) return const _InformationUnavailable();
+
     return SafeArea(
       bottom: false,
       child: ListView(
         padding: const EdgeInsets.fromLTRB(20, 18, 20, 42),
         children: <Widget>[
-          const _Wordmark(),
-          const SizedBox(height: 24),
-          const Text('WALKA', style: WalkaType.eyebrow),
+          Text(data.account.eyebrow, style: WalkaType.eyebrow),
           const SizedBox(height: 8),
-          const Text('Account & information', style: WalkaType.sectionTitle),
+          Text(data.account.title, style: WalkaType.sectionTitle),
           const SizedBox(height: 9),
-          const Text(
-            'Brand story, verified product help, legal presentation and official WALKA destinations.',
-            style: WalkaType.body,
-          ),
+          Text(data.account.body, style: WalkaType.body),
           const SizedBox(height: 24),
           _MenuCard(
             children: <Widget>[
               _MenuRow(
                 icon: Icons.auto_stories_outlined,
-                title: 'Our Story',
-                subtitle: 'The thinking behind calmer everyday organization.',
-                onTap: () => _push(context, const WalkaAboutV4()),
+                title: data.story.title,
+                onTap: () => _push(context, const WalkaStoryV102()),
               ),
               _MenuRow(
                 icon: Icons.help_outline_rounded,
-                title: 'FAQ',
-                subtitle: 'Verified product care, use and purchasing guidance.',
+                title: data.faq.title,
                 onTap: () => _push(context, const WalkaFaqV102()),
               ),
               _MenuRow(
                 icon: Icons.mail_outline_rounded,
-                title: 'Contact Us',
-                subtitle: 'Support routes for WALKA and Amazon orders.',
+                title: data.contact.title,
                 onTap: () => _push(context, const WalkaContactV102()),
               ),
             ],
@@ -61,14 +51,12 @@ class WalkaAccountV102 extends StatelessWidget {
             children: <Widget>[
               _MenuRow(
                 icon: Icons.storefront_outlined,
-                title: 'Amazon Store',
-                subtitle: 'Official WALKA purchase destination.',
+                title: data.amazonStore.title,
                 onTap: () => _push(context, const WalkaAmazonStoreV102()),
               ),
               _MenuRow(
                 icon: Icons.public_rounded,
-                title: 'Follow WALKA',
-                subtitle: 'Website and Instagram destinations.',
+                title: data.social.title,
                 onTap: () => _push(context, const WalkaSocialV102()),
               ),
             ],
@@ -78,8 +66,7 @@ class WalkaAccountV102 extends StatelessWidget {
             children: <Widget>[
               _MenuRow(
                 icon: Icons.shield_outlined,
-                title: 'Privacy',
-                subtitle: 'Current local-data model and external handoffs.',
+                title: data.privacy.title,
                 onTap: () => _push(
                   context,
                   const WalkaLegalV102(type: WalkaLegalTypeV102.privacy),
@@ -87,18 +74,11 @@ class WalkaAccountV102 extends StatelessWidget {
               ),
               _MenuRow(
                 icon: Icons.description_outlined,
-                title: 'Terms',
-                subtitle: 'Product discovery and marketplace boundaries.',
+                title: data.terms.title,
                 onTap: () => _push(
                   context,
                   const WalkaLegalV102(type: WalkaLegalTypeV102.terms),
                 ),
-              ),
-              _MenuRow(
-                icon: Icons.info_outline_rounded,
-                title: 'App Information',
-                subtitle: 'WALKA visual freeze · version 1.0.0',
-                onTap: () => _push(context, const WalkaAppInfoV102()),
               ),
             ],
           ),
@@ -108,53 +88,56 @@ class WalkaAccountV102 extends StatelessWidget {
   }
 }
 
+class WalkaStoryV102 extends StatelessWidget {
+  const WalkaStoryV102({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final _TextPage? page = _publishedInformation(context)?.story;
+    if (page == null) return const _InformationUnavailable();
+    return _InfoScaffold(
+      title: page.title,
+      eyebrow: page.eyebrow,
+      intro: page.body,
+      children: const <Widget>[],
+    );
+  }
+}
+
 class WalkaFaqV102 extends StatelessWidget {
   const WalkaFaqV102({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return const _InfoScaffold(
-      title: 'Frequently Asked Questions',
-      eyebrow: 'VERIFIED PRODUCT HELP',
-      intro:
-          'These answers follow the WALKA Product Master used by the release UI and regression tests.',
-      children: <Widget>[
-        _FaqTile(
-          question: 'Is the lunch box leakproof?',
-          answer:
-              'WALKA does not make a full leakproof claim. Secure Lock helps prevent spills. Use the lunch box for dry & semi-wet foods, not liquids, and carry it upright.',
-        ),
-        _FaqTile(
-          question: 'What is the lunch box made from?',
-          answer:
-              'Food sits in a SUS304 stainless-steel tray. The outer body is food-grade PP. The lid uses four clips with a silicone gasket.',
-        ),
-        _FaqTile(
-          question: 'What can go in the dishwasher?',
-          answer:
-              'The SUS304 stainless-steel tray is dishwasher safe. The lid and silicone gasket are dishwasher safe on the top rack.',
-        ),
-        _FaqTile(
-          question: 'What can go in the microwave?',
-          answer:
-              'The stainless-steel tray, lid and silicone gasket are not microwave safe. Microwave only the PP outer body after removing all three.',
-        ),
-        _FaqTile(
-          question: 'What comes with the lunch box?',
-          answer:
-              'The set includes the lunch box, insulated carry bag, stainless sauce cup with lid, spoon and fork.',
-        ),
-        _FaqTile(
-          question: 'How wide does the drawer organizer expand?',
-          answer:
-              'The organizer is 13 × 15 × 2 inches when closed and expands up to 22.4 inches wide. It has eight compartments and a non-slip base.',
-        ),
-        _FaqTile(
-          question: 'Where do I purchase WALKA products?',
-          answer:
-              'Product purchase buttons open the selected official WALKA listing on Amazon. The app does not run an in-app cart, checkout or payment flow.',
-        ),
-      ],
+    final _FaqPage? page = _publishedInformation(context)?.faq;
+    if (page == null) return const _InformationUnavailable();
+    return _InfoScaffold(
+      title: page.title,
+      eyebrow: page.eyebrow,
+      intro: page.intro,
+      children: page.items
+          .map(
+            (_FaqItem item) => Card(
+              margin: const EdgeInsets.only(bottom: 10),
+              child: ExpansionTile(
+                title: Text(
+                  item.question,
+                  style: const TextStyle(
+                    color: WalkaColors.navy,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                children: <Widget>[
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(item.answer, style: WalkaType.body),
+                  ),
+                ],
+              ),
+            ),
+          )
+          .toList(growable: false),
     );
   }
 }
@@ -164,36 +147,9 @@ class WalkaContactV102 extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _InfoScaffold(
-      title: 'Contact Us',
-      eyebrow: 'SUPPORT',
-      intro:
-          'Choose the route that matches your question. Marketplace order, delivery, return and payment support remains with Amazon.',
-      children: <Widget>[
-        const _Notice(
-          icon: Icons.shopping_bag_outlined,
-          title: 'Amazon order support',
-          body:
-              'Use your Amazon account for an existing marketplace order so the request stays connected to the correct transaction.',
-        ),
-        const SizedBox(height: 12),
-        _ExternalCard(
-          icon: Icons.language_rounded,
-          title: 'WALKA website',
-          body: 'Brand and product information at walkastore.com.',
-          label: 'OPEN WEBSITE',
-          onTap: () => _openExternal(context, Uri.parse(_websiteUrl)),
-        ),
-        const SizedBox(height: 12),
-        _ExternalCard(
-          icon: Icons.camera_alt_outlined,
-          title: 'Instagram',
-          body: 'Follow @walkabrands for WALKA product and brand updates.',
-          label: 'OPEN INSTAGRAM',
-          onTap: () => _openExternal(context, Uri.parse(_instagramUrl)),
-        ),
-      ],
-    );
+    final _LinksPage? page = _publishedInformation(context)?.contact;
+    if (page == null) return const _InformationUnavailable();
+    return _LinksScaffold(page: page);
   }
 }
 
@@ -202,46 +158,17 @@ class WalkaAmazonStoreV102 extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final _ActionPage? page = _publishedInformation(context)?.amazonStore;
+    if (page == null) return const _InformationUnavailable();
     return _InfoScaffold(
-      title: 'Amazon Store',
-      eyebrow: 'SHOP WALKA',
-      intro:
-          'Discover products in WALKA, then continue to Amazon for marketplace availability and purchase.',
+      title: page.title,
+      eyebrow: page.eyebrow,
+      intro: page.body,
       children: <Widget>[
-        Container(
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            color: WalkaColors.navy,
-            borderRadius: BorderRadius.circular(28),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              const Text('WALKA', style: TextStyle(
-                color: Colors.white,
-                fontSize: 22,
-                fontWeight: FontWeight.w900,
-                letterSpacing: 5,
-              )),
-              const SizedBox(height: 18),
-              const Text(
-                'The official WALKA collection on Amazon.',
-                style: TextStyle(
-                  fontFamily: 'serif',
-                  color: Colors.white,
-                  fontSize: 28,
-                  height: 1.08,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(height: 22),
-              ElevatedButton.icon(
-                onPressed: () => _openExternal(context, Uri.parse(_amazonStoreUrl)),
-                icon: const Icon(Icons.north_east_rounded, size: 17),
-                label: const Text('OPEN AMAZON STORE'),
-              ),
-            ],
-          ),
+        FilledButton.icon(
+          onPressed: () => _openExternal(context, page.url),
+          icon: const Icon(Icons.north_east_rounded),
+          label: Text(page.label),
         ),
       ],
     );
@@ -253,36 +180,9 @@ class WalkaSocialV102 extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _InfoScaffold(
-      title: 'Follow WALKA',
-      eyebrow: 'OFFICIAL DESTINATIONS',
-      intro: 'Continue the WALKA brand experience outside the app.',
-      children: <Widget>[
-        _ExternalCard(
-          icon: Icons.camera_alt_outlined,
-          title: '@walkabrands',
-          body: 'Product stories and WALKA updates.',
-          label: 'OPEN INSTAGRAM',
-          onTap: () => _openExternal(context, Uri.parse(_instagramUrl)),
-        ),
-        const SizedBox(height: 12),
-        _ExternalCard(
-          icon: Icons.language_rounded,
-          title: 'walkastore.com',
-          body: 'Official WALKA web destination.',
-          label: 'OPEN WEBSITE',
-          onTap: () => _openExternal(context, Uri.parse(_websiteUrl)),
-        ),
-        const SizedBox(height: 12),
-        _ExternalCard(
-          icon: Icons.storefront_outlined,
-          title: 'WALKA on Amazon',
-          body: 'Official Amazon brand storefront.',
-          label: 'OPEN AMAZON',
-          onTap: () => _openExternal(context, Uri.parse(_amazonStoreUrl)),
-        ),
-      ],
-    );
+    final _LinksPage? page = _publishedInformation(context)?.social;
+    if (page == null) return const _InformationUnavailable();
+    return _LinksScaffold(page: page);
   }
 }
 
@@ -295,104 +195,84 @@ class WalkaLegalV102 extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool privacy = type == WalkaLegalTypeV102.privacy;
+    final _InformationData? data = _publishedInformation(context);
+    final _LegalPage? page = type == WalkaLegalTypeV102.terms
+        ? data?.terms
+        : data?.privacy;
+    if (page == null) return const _InformationUnavailable();
     return _InfoScaffold(
-      title: privacy ? 'Privacy' : 'Terms',
-      eyebrow: 'LEGAL PRESENTATION',
-      intro: privacy
-          ? 'Current app behavior before backend integration.'
-          : 'Current product-discovery and marketplace boundaries.',
-      children: <Widget>[
-        if (privacy) ...const <Widget>[
-          _LegalSection(
-            number: '01',
-            title: 'Favorites',
-            body:
-                'Drawer Organizer favorites are stored locally on this device in the current release.',
-          ),
-          _LegalSection(
-            number: '02',
-            title: 'Search',
-            body:
-                'Current product search runs locally in Flutter and is not connected to a remote WALKA search service.',
-          ),
-          _LegalSection(
-            number: '03',
-            title: 'External purchase',
-            body:
-                'Buy on Amazon opens Amazon externally. Amazon handles marketplace account, order and payment data under its own policies.',
-          ),
-        ] else ...const <Widget>[
-          _LegalSection(
-            number: '01',
-            title: 'Product discovery',
-            body:
-                'WALKA presents product information and discovery. Marketplace price, availability, delivery and final transaction terms are determined on Amazon.',
-          ),
-          _LegalSection(
-            number: '02',
-            title: 'Product guidance',
-            body:
-                'Use products according to the verified care and usage guidance shown in the app and applicable marketplace listing.',
-          ),
-          _LegalSection(
-            number: '03',
-            title: 'External destinations',
-            body:
-                'Amazon, WALKA web and social links open services outside this app and subject to their respective terms.',
-          ),
-        ],
-        const SizedBox(height: 8),
-        const _Notice(
-          icon: Icons.gavel_outlined,
-          title: 'Legal review required before store publication',
-          body:
-              'This is the visual presentation layer. Final jurisdiction-specific legal wording should be reviewed before public production release.',
-        ),
-      ],
+      title: page.title,
+      eyebrow: page.eyebrow,
+      intro: page.intro,
+      children: page.sections
+          .map(
+            (_LegalSectionData section) => Padding(
+              padding: const EdgeInsets.only(bottom: 18),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(
+                    section.title,
+                    style: const TextStyle(
+                      color: WalkaColors.navy,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(section.body, style: WalkaType.body),
+                ],
+              ),
+            ),
+          )
+          .toList(growable: false),
     );
   }
 }
 
-class WalkaAppInfoV102 extends StatelessWidget {
-  const WalkaAppInfoV102({super.key});
+class _LinksScaffold extends StatelessWidget {
+  const _LinksScaffold({required this.page});
+  final _LinksPage page;
 
   @override
-  Widget build(BuildContext context) {
-    return const _InfoScaffold(
-      title: 'App Information',
-      eyebrow: 'WALKA MOBILE',
-      intro: 'Design-first visual freeze before backend integration.',
-      children: <Widget>[
-        _Metric(label: 'Version', value: '1.0.0'),
-        _Metric(label: 'Platform', value: 'Flutter · Android / iOS'),
-        _Metric(label: 'Purchase model', value: 'Amazon handoff'),
-        _Metric(label: 'Favorites', value: 'Stored on device'),
-        _Metric(label: 'Current catalog', value: '5 sellable variants'),
-        SizedBox(height: 22),
-        _Notice(
-          icon: Icons.verified_outlined,
-          title: 'Visual freeze',
-          body:
-              '1.0.0 is the approved design baseline. Backend work should extend this experience rather than replace the completed visual architecture.',
-        ),
-      ],
-    );
-  }
-}
-
-Future<void> _openExternal(BuildContext context, Uri uri) async {
-  bool opened = false;
-  try {
-    opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
-  } catch (_) {
-    opened = false;
-  }
-
-  if (!context.mounted || opened) return;
-  ScaffoldMessenger.of(context).showSnackBar(
-    const SnackBar(content: Text('This destination could not be opened.')),
-  );
+  Widget build(BuildContext context) => _InfoScaffold(
+        title: page.title,
+        eyebrow: page.eyebrow,
+        intro: page.intro,
+        children: page.links
+            .map(
+              (_ExternalLink link) => Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(18),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Text(
+                          link.title,
+                          style: const TextStyle(
+                            color: WalkaColors.navy,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                        const SizedBox(height: 7),
+                        Text(link.body, style: WalkaType.body),
+                        const SizedBox(height: 10),
+                        TextButton.icon(
+                          onPressed: () => _openExternal(context, link.url),
+                          icon: const Icon(Icons.north_east_rounded, size: 17),
+                          label: Text(link.label),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            )
+            .toList(growable: false),
+      );
 }
 
 class _InfoScaffold extends StatelessWidget {
@@ -409,43 +289,22 @@ class _InfoScaffold extends StatelessWidget {
   final List<Widget> children;
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const _Wordmark()),
-      body: SafeArea(
-        top: false,
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(20, 14, 20, 42),
+  Widget build(BuildContext context) => Scaffold(
+        backgroundColor: WalkaColors.ivory,
+        appBar: AppBar(title: Text(title)),
+        body: ListView(
+          padding: const EdgeInsets.fromLTRB(20, 22, 20, 42),
           children: <Widget>[
             Text(eyebrow, style: WalkaType.eyebrow),
             const SizedBox(height: 8),
             Text(title, style: WalkaType.sectionTitle),
-            const SizedBox(height: 10),
+            const SizedBox(height: 9),
             Text(intro, style: WalkaType.body),
-            const SizedBox(height: 26),
+            if (children.isNotEmpty) const SizedBox(height: 24),
             ...children,
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _Wordmark extends StatelessWidget {
-  const _Wordmark();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Text(
-      'WALKA',
-      style: TextStyle(
-        color: WalkaColors.navy,
-        fontSize: 18,
-        fontWeight: FontWeight.w900,
-        letterSpacing: 3.8,
-      ),
-    );
-  }
+      );
 }
 
 class _MenuCard extends StatelessWidget {
@@ -453,260 +312,317 @@ class _MenuCard extends StatelessWidget {
   final List<Widget> children;
 
   @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.white,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(22),
-        side: const BorderSide(color: WalkaColors.line),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Column(children: children),
-    );
-  }
+  Widget build(BuildContext context) => Card(
+        margin: EdgeInsets.zero,
+        child: Column(children: children),
+      );
 }
 
 class _MenuRow extends StatelessWidget {
   const _MenuRow({
     required this.icon,
     required this.title,
-    required this.subtitle,
     required this.onTap,
   });
 
   final IconData icon;
   final String title;
-  final String subtitle;
   final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      onTap: onTap,
-      contentPadding: const EdgeInsets.fromLTRB(16, 8, 12, 8),
-      leading: Container(
-        width: 42,
-        height: 42,
-        decoration: BoxDecoration(
-          color: WalkaColors.surface,
-          borderRadius: BorderRadius.circular(13),
+  Widget build(BuildContext context) => ListTile(
+        leading: Icon(icon),
+        title: Text(
+          title,
+          style: const TextStyle(
+            color: WalkaColors.navy,
+            fontWeight: FontWeight.w800,
+          ),
         ),
-        child: Icon(icon, color: WalkaColors.navy, size: 21),
-      ),
-      title: Text(title, style: const TextStyle(
-        color: WalkaColors.navy,
-        fontSize: 12,
-        fontWeight: FontWeight.w800,
-      )),
-      subtitle: Padding(
-        padding: const EdgeInsets.only(top: 4),
-        child: Text(subtitle, style: const TextStyle(
-          color: WalkaColors.muted,
-          fontSize: 10,
-          height: 1.35,
-        )),
-      ),
-      trailing: const Icon(
-        Icons.arrow_forward_ios_rounded,
-        color: WalkaColors.gold,
-        size: 14,
+        trailing: const Icon(Icons.chevron_right_rounded),
+        onTap: onTap,
+      );
+}
+
+class _InformationUnavailable extends StatelessWidget {
+  const _InformationUnavailable();
+
+  @override
+  Widget build(BuildContext context) {
+    final WalkaContentController? content = WalkaContentScope.maybeOf(context);
+    return Scaffold(
+      backgroundColor: WalkaColors.ivory,
+      body: Center(
+        child: content?.isLoading == true
+            ? const CircularProgressIndicator()
+            : const Icon(
+                Icons.cloud_off_rounded,
+                size: 34,
+                color: WalkaColors.muted,
+              ),
       ),
     );
   }
 }
 
-class _FaqTile extends StatelessWidget {
-  const _FaqTile({required this.question, required this.answer});
+void _push(BuildContext context, Widget screen) {
+  Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => screen));
+}
 
+Future<void> _openExternal(BuildContext context, Uri uri) async {
+  final bool opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+  if (!opened && context.mounted) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Icon(Icons.link_off_rounded)),
+    );
+  }
+}
+
+_InformationData? _publishedInformation(BuildContext context) {
+  final WalkaContentController? controller = WalkaContentScope.maybeOf(context);
+  if (controller == null) return null;
+  final WalkaStorefrontCopySnapshot snapshot = controller.storefrontCopy;
+  if (snapshot.source != WalkaContentSource.remote &&
+      snapshot.source != WalkaContentSource.cache) {
+    return null;
+  }
+  try {
+    return _InformationData.fromJsonString(snapshot.content.informationJson);
+  } on Object {
+    return null;
+  }
+}
+
+class _InformationData {
+  const _InformationData({
+    required this.account,
+    required this.story,
+    required this.faq,
+    required this.contact,
+    required this.amazonStore,
+    required this.social,
+    required this.privacy,
+    required this.terms,
+  });
+
+  final _AccountPage account;
+  final _TextPage story;
+  final _FaqPage faq;
+  final _LinksPage contact;
+  final _ActionPage amazonStore;
+  final _LinksPage social;
+  final _LegalPage privacy;
+  final _LegalPage terms;
+
+  factory _InformationData.fromJsonString(String source) {
+    final Object? decoded = jsonDecode(source);
+    if (decoded is! Map) throw const FormatException('Invalid information.');
+    final Map<String, dynamic> json = Map<String, dynamic>.from(decoded);
+    return _InformationData(
+      account: _AccountPage.fromJson(_map(json, 'account')),
+      story: _TextPage.fromJson(_map(json, 'story')),
+      faq: _FaqPage.fromJson(_map(json, 'faq')),
+      contact: _LinksPage.fromJson(_map(json, 'contact')),
+      amazonStore: _ActionPage.fromJson(_map(json, 'amazon_store')),
+      social: _LinksPage.fromJson(_map(json, 'social')),
+      privacy: _LegalPage.fromJson(_map(json, 'privacy')),
+      terms: _LegalPage.fromJson(_map(json, 'terms')),
+    );
+  }
+}
+
+class _AccountPage {
+  const _AccountPage({
+    required this.eyebrow,
+    required this.title,
+    required this.body,
+  });
+  final String eyebrow;
+  final String title;
+  final String body;
+
+  factory _AccountPage.fromJson(Map<String, dynamic> json) => _AccountPage(
+        eyebrow: _string(json, 'eyebrow'),
+        title: _string(json, 'title'),
+        body: _string(json, 'body'),
+      );
+}
+
+class _TextPage {
+  const _TextPage({
+    required this.title,
+    required this.eyebrow,
+    required this.body,
+  });
+  final String title;
+  final String eyebrow;
+  final String body;
+
+  factory _TextPage.fromJson(Map<String, dynamic> json) => _TextPage(
+        title: _string(json, 'title'),
+        eyebrow: _string(json, 'eyebrow'),
+        body: _string(json, 'body'),
+      );
+}
+
+class _FaqPage {
+  const _FaqPage({
+    required this.title,
+    required this.eyebrow,
+    required this.intro,
+    required this.items,
+  });
+  final String title;
+  final String eyebrow;
+  final String intro;
+  final List<_FaqItem> items;
+
+  factory _FaqPage.fromJson(Map<String, dynamic> json) => _FaqPage(
+        title: _string(json, 'title'),
+        eyebrow: _string(json, 'eyebrow'),
+        intro: _string(json, 'intro'),
+        items: _list(json, 'items')
+            .map((Object item) => _FaqItem.fromJson(_asMap(item)))
+            .toList(growable: false),
+      );
+}
+
+class _FaqItem {
+  const _FaqItem({required this.question, required this.answer});
   final String question;
   final String answer;
 
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: WalkaColors.line),
-      ),
-      child: ExpansionTile(
-        shape: const Border(),
-        collapsedShape: const Border(),
-        title: Text(question, style: const TextStyle(
-          color: WalkaColors.navy,
-          fontSize: 12,
-          fontWeight: FontWeight.w800,
-        )),
-        childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-        children: <Widget>[Text(answer, style: WalkaType.body)],
-      ),
-    );
-  }
+  factory _FaqItem.fromJson(Map<String, dynamic> json) => _FaqItem(
+        question: _string(json, 'question'),
+        answer: _string(json, 'answer'),
+      );
 }
 
-class _ExternalCard extends StatelessWidget {
-  const _ExternalCard({
-    required this.icon,
+class _LinksPage {
+  const _LinksPage({
+    required this.title,
+    required this.eyebrow,
+    required this.intro,
+    required this.links,
+  });
+  final String title;
+  final String eyebrow;
+  final String intro;
+  final List<_ExternalLink> links;
+
+  factory _LinksPage.fromJson(Map<String, dynamic> json) => _LinksPage(
+        title: _string(json, 'title'),
+        eyebrow: _string(json, 'eyebrow'),
+        intro: _string(json, 'intro'),
+        links: _list(json, 'links')
+            .map((Object item) => _ExternalLink.fromJson(_asMap(item)))
+            .toList(growable: false),
+      );
+}
+
+class _ExternalLink {
+  const _ExternalLink({
     required this.title,
     required this.body,
     required this.label,
-    required this.onTap,
+    required this.url,
   });
-
-  final IconData icon;
   final String title;
   final String body;
   final String label;
-  final VoidCallback onTap;
+  final Uri url;
 
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: WalkaColors.line),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Icon(icon, color: WalkaColors.gold, size: 25),
-          const SizedBox(height: 12),
-          Text(title, style: const TextStyle(
-            color: WalkaColors.navy,
-            fontSize: 15,
-            fontWeight: FontWeight.w800,
-          )),
-          const SizedBox(height: 7),
-          Text(body, style: WalkaType.body),
-          const SizedBox(height: 15),
-          OutlinedButton.icon(
-            onPressed: onTap,
-            icon: const Icon(Icons.north_east_rounded, size: 16),
-            label: Text(label),
-          ),
-        ],
-      ),
-    );
-  }
+  factory _ExternalLink.fromJson(Map<String, dynamic> json) => _ExternalLink(
+        title: _string(json, 'title'),
+        body: _string(json, 'body'),
+        label: _string(json, 'label'),
+        url: _httpsUri(json, 'url'),
+      );
 }
 
-class _Notice extends StatelessWidget {
-  const _Notice({required this.icon, required this.title, required this.body});
-
-  final IconData icon;
-  final String title;
-  final String body;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFFF9E8),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: WalkaColors.gold.withValues(alpha: 0.4)),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Icon(icon, color: WalkaColors.gold, size: 22),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Text(title, style: const TextStyle(
-                  color: WalkaColors.navy,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w800,
-                )),
-                const SizedBox(height: 6),
-                Text(body, style: WalkaType.body),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _LegalSection extends StatelessWidget {
-  const _LegalSection({
-    required this.number,
+class _ActionPage {
+  const _ActionPage({
     required this.title,
+    required this.eyebrow,
     required this.body,
+    required this.label,
+    required this.url,
   });
+  final String title;
+  final String eyebrow;
+  final String body;
+  final String label;
+  final Uri url;
 
-  final String number;
+  factory _ActionPage.fromJson(Map<String, dynamic> json) => _ActionPage(
+        title: _string(json, 'title'),
+        eyebrow: _string(json, 'eyebrow'),
+        body: _string(json, 'body'),
+        label: _string(json, 'label'),
+        url: _httpsUri(json, 'url'),
+      );
+}
+
+class _LegalPage {
+  const _LegalPage({
+    required this.title,
+    required this.eyebrow,
+    required this.intro,
+    required this.sections,
+  });
+  final String title;
+  final String eyebrow;
+  final String intro;
+  final List<_LegalSectionData> sections;
+
+  factory _LegalPage.fromJson(Map<String, dynamic> json) => _LegalPage(
+        title: _string(json, 'title'),
+        eyebrow: _string(json, 'eyebrow'),
+        intro: _string(json, 'intro'),
+        sections: _list(json, 'sections')
+            .map((Object item) => _LegalSectionData.fromJson(_asMap(item)))
+            .toList(growable: false),
+      );
+}
+
+class _LegalSectionData {
+  const _LegalSectionData({required this.title, required this.body});
   final String title;
   final String body;
 
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 22),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          SizedBox(
-            width: 44,
-            child: Text(number, style: const TextStyle(
-              color: WalkaColors.gold,
-              fontSize: 12,
-              fontWeight: FontWeight.w900,
-            )),
-          ),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Text(title, style: const TextStyle(
-                  color: WalkaColors.navy,
-                  fontSize: 15,
-                  fontWeight: FontWeight.w800,
-                )),
-                const SizedBox(height: 7),
-                Text(body, style: WalkaType.body),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  factory _LegalSectionData.fromJson(Map<String, dynamic> json) =>
+      _LegalSectionData(
+        title: _string(json, 'title'),
+        body: _string(json, 'body'),
+      );
 }
 
-class _Metric extends StatelessWidget {
-  const _Metric({required this.label, required this.value});
+Map<String, dynamic> _map(Map<String, dynamic> json, String key) =>
+    _asMap(json[key]);
 
-  final String label;
-  final String value;
+Map<String, dynamic> _asMap(Object? value) {
+  if (value is! Map) throw const FormatException('Expected object.');
+  return Map<String, dynamic>.from(value);
+}
 
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 15),
-      decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: WalkaColors.line)),
-      ),
-      child: Row(
-        children: <Widget>[
-          Expanded(child: Text(label, style: const TextStyle(
-            color: WalkaColors.muted,
-            fontSize: 11,
-          ))),
-          const SizedBox(width: 20),
-          Flexible(child: Text(value, textAlign: TextAlign.right, style: const TextStyle(
-            color: WalkaColors.navy,
-            fontSize: 11,
-            fontWeight: FontWeight.w800,
-          ))),
-        ],
-      ),
-    );
+List<Object> _list(Map<String, dynamic> json, String key) {
+  final Object? value = json[key];
+  if (value is! List || value.isEmpty) throw FormatException('Invalid $key.');
+  return List<Object>.from(value);
+}
+
+String _string(Map<String, dynamic> json, String key) {
+  final Object? value = json[key];
+  if (value is! String || value.trim().isEmpty) {
+    throw FormatException('Invalid $key.');
   }
+  return value.trim();
+}
+
+Uri _httpsUri(Map<String, dynamic> json, String key) {
+  final Uri? uri = Uri.tryParse(_string(json, key));
+  if (uri == null || uri.scheme != 'https' || uri.host.isEmpty) {
+    throw FormatException('Invalid $key.');
+  }
+  return uri;
 }

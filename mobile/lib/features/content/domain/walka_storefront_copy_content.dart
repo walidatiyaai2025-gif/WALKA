@@ -18,6 +18,7 @@ class WalkaStorefrontCopyContent {
     required this.pdpAsinLabel,
     required this.pdpFavoriteAddLabel,
     required this.pdpFavoriteRemoveLabel,
+    required this.informationJson,
   });
 
   static const WalkaStorefrontCopyContent bundled = WalkaStorefrontCopyContent(
@@ -37,6 +38,7 @@ class WalkaStorefrontCopyContent {
     pdpAsinLabel: '',
     pdpFavoriteAddLabel: '',
     pdpFavoriteRemoveLabel: '',
+    informationJson: '',
   );
 
   final String categoriesHeading;
@@ -55,6 +57,7 @@ class WalkaStorefrontCopyContent {
   final String pdpAsinLabel;
   final String pdpFavoriteAddLabel;
   final String pdpFavoriteRemoveLabel;
+  final String informationJson;
 
   factory WalkaStorefrontCopyContent.fromJson(Map<String, dynamic> json) {
     String requiredString(String key, int maxLength) {
@@ -84,6 +87,7 @@ class WalkaStorefrontCopyContent {
       pdpAsinLabel: requiredString('pdp_asin_label', 40),
       pdpFavoriteAddLabel: requiredString('pdp_favorite_add_label', 80),
       pdpFavoriteRemoveLabel: requiredString('pdp_favorite_remove_label', 80),
+      informationJson: requiredString('information_json', 30000),
     );
   }
 
@@ -104,6 +108,7 @@ class WalkaStorefrontCopyContent {
         'pdp_asin_label': pdpAsinLabel,
         'pdp_favorite_add_label': pdpFavoriteAddLabel,
         'pdp_favorite_remove_label': pdpFavoriteRemoveLabel,
+        'information_json': informationJson,
       };
 }
 
@@ -188,7 +193,7 @@ class WalkaStorefrontCopySnapshot {
       );
 
   Map<String, dynamic> toCacheJson() => <String, dynamic>{
-        'cache_schema': 1,
+        'cache_schema': 2,
         'revision': revision,
         'published_at': publishedAt?.toIso8601String(),
         'fetched_at': fetchedAt.toIso8601String(),
@@ -196,7 +201,7 @@ class WalkaStorefrontCopySnapshot {
       };
 
   factory WalkaStorefrontCopySnapshot.fromCacheJson(Map<String, dynamic> json) {
-    if (json['cache_schema'] != 1) {
+    if (json['cache_schema'] != 2) {
       throw const FormatException('Unsupported Storefront copy cache schema.');
     }
     final Object? revisionValue = json['revision'];

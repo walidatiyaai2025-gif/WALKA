@@ -57,10 +57,7 @@ class WalkaDynamicHomeV140 extends StatelessWidget {
     final List<WalkaCatalogProduct> featuredProducts =
         _featuredProducts(catalog, featured);
     final List<WalkaHomeSectionId> sectionOrder = layout == null
-        ? const <WalkaHomeSectionId>[
-            WalkaHomeSectionId.hero,
-            WalkaHomeSectionId.collection,
-          ]
+        ? const <WalkaHomeSectionId>[]
         : layout.visibleSections
             .map((WalkaHomeSectionConfig section) => section.id)
             .toList(growable: false);
@@ -110,6 +107,11 @@ class WalkaDynamicHomeV140 extends StatelessWidget {
             onShopAll: onShopAll,
             onSearch: onSearch,
           ),
+        if (layout == null && content?.isLoading == true)
+          const Padding(
+            padding: EdgeInsets.only(top: 48),
+            child: Center(child: CircularProgressIndicator()),
+          ),
       ],
     );
   }
@@ -152,14 +154,13 @@ class WalkaDynamicHomeV140 extends StatelessWidget {
           const SizedBox(height: 22),
         ];
       case WalkaHomeSectionId.collection:
-        final WalkaHomeSectionConfig? config = _sectionConfig(
-          layout,
-          WalkaHomeSectionId.collection,
-        );
+        final WalkaHomeSectionConfig? config =
+            _sectionConfig(layout, WalkaHomeSectionId.collection);
+        if (config == null) return const <Widget>[];
         return <Widget>[
-          if (config?.eyebrow case final String eyebrow)
+          if (config.eyebrow case final String eyebrow)
             Text(eyebrow, style: WalkaType.eyebrow),
-          if (config?.title case final String title) ...<Widget>[
+          if (config.title case final String title) ...<Widget>[
             const SizedBox(height: 7),
             Text(title, style: WalkaType.sectionTitle),
           ],
@@ -185,10 +186,8 @@ class WalkaDynamicHomeV140 extends StatelessWidget {
           const SizedBox(height: 22),
         ];
       case WalkaHomeSectionId.smallChanges:
-        final WalkaHomeSectionConfig? config = _sectionConfig(
-          layout,
-          WalkaHomeSectionId.smallChanges,
-        );
+        final WalkaHomeSectionConfig? config =
+            _sectionConfig(layout, WalkaHomeSectionId.smallChanges);
         if (config == null) return const <Widget>[];
         return <Widget>[
           WalkaResolvedSurfaceMedia(
@@ -214,7 +213,6 @@ class WalkaDynamicHomeV140 extends StatelessWidget {
 
 class WalkaDynamicCategoriesV140 extends StatelessWidget {
   const WalkaDynamicCategoriesV140({this.onSearch, super.key});
-
   final VoidCallback? onSearch;
 
   @override
@@ -238,9 +236,7 @@ class WalkaDynamicCategoriesV140 extends StatelessWidget {
         Row(
           children: <Widget>[
             if (copy != null)
-              Expanded(
-                child: Text(copy.categoriesHeading, style: WalkaType.sectionTitle),
-              )
+              Expanded(child: Text(copy.categoriesHeading, style: WalkaType.sectionTitle))
             else
               const Spacer(),
             if (onSearch != null)
@@ -461,7 +457,6 @@ void openWalkaDynamicProduct(BuildContext context, String productId) {
 
 class WalkaDynamicProductDetailV140 extends StatefulWidget {
   const WalkaDynamicProductDetailV140({required this.productId, super.key});
-
   final String productId;
 
   @override
@@ -482,15 +477,31 @@ class _WalkaDynamicProductDetailV140State
             _isPublishedContent(content.storefrontCopy.source)
         ? content.storefrontCopy.content
         : null;
-    final WalkaPdpLayoutContent layout = content != null &&
+    final WalkaPdpLayoutContent? layout = content != null &&
             _isPublishedContent(content.pdpLayout.source)
         ? content.pdpLayout.content
-        : WalkaPdpLayoutContent.bundled;
+        : null;
     final WalkaCatalogProduct? product = catalog.productById(widget.productId);
+
     if (product == null || product.variants.isEmpty) {
       return Scaffold(
         body: SafeArea(
-          child: Center(child: Text(copy?.pdpUnavailable ?? catalog.config.brand)),
+          child: Center(
+            child: copy == null
+                ? const Icon(Icons.inventory_2_outlined, color: WalkaColors.muted)
+                : Text(copy.pdpUnavailable),
+          ),
+        ),
+      );
+    }
+    if (layout == null) {
+      return Scaffold(
+        backgroundColor: WalkaColors.ivory,
+        appBar: AppBar(title: Text(product.name)),
+        body: Center(
+          child: content?.isLoading == true
+              ? const CircularProgressIndicator()
+              : const Icon(Icons.cloud_off_rounded, color: WalkaColors.muted),
         ),
       );
     }
@@ -501,7 +512,6 @@ class _WalkaDynamicProductDetailV140State
     );
     final bool isFavorite = favorites.isFavorite(selected.id);
     final Color tone = _swatchColor(selected.swatchHex);
-
     final List<Widget> sections = <Widget>[];
     for (final WalkaPdpSectionConfig section in layout.visibleSections) {
       sections.addAll(
@@ -608,7 +618,13 @@ class _WalkaDynamicProductDetailV140State
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 if (copy != null) ...<Widget>[
-                  Text(copy.pdpColorsLabel, style: const TextStyle(color: WalkaColors.navy, fontWeight: FontWeight.w900)),
+                  Text(
+                    copy.pdpColorsLabel,
+                    style: const TextStyle(
+                      color: WalkaColors.navy,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
                   const SizedBox(height: 9),
                 ],
                 Wrap(
@@ -633,7 +649,8 @@ class _WalkaDynamicProductDetailV140State
                           Text(variant.color),
                         ],
                       ),
-                      onSelected: (_) => setState(() => _selectedVariantId = variant.id),
+                      onSelected: (_) =>
+                          setState(() => _selectedVariantId = variant.id),
                     );
                   }).toList(growable: false),
                 ),
@@ -646,15 +663,27 @@ class _WalkaDynamicProductDetailV140State
                   OutlinedButton.icon(
                     key: ValueKey<String>('dynamic-favorite-${selected.id}'),
                     onPressed: () => favorites.toggle(selected.id),
-                    icon: Icon(isFavorite ? Icons.favorite_rounded : Icons.favorite_border_rounded),
-                    label: Text(isFavorite ? copy.pdpFavoriteRemoveLabel : copy.pdpFavoriteAddLabel),
+                    icon: Icon(
+                      isFavorite
+                          ? Icons.favorite_rounded
+                          : Icons.favorite_border_rounded,
+                    ),
+                    label: Text(
+                      isFavorite
+                          ? copy.pdpFavoriteRemoveLabel
+                          : copy.pdpFavoriteAddLabel,
+                    ),
                   )
                 else
                   Center(
                     child: IconButton.outlined(
                       key: ValueKey<String>('dynamic-favorite-${selected.id}'),
                       onPressed: () => favorites.toggle(selected.id),
-                      icon: Icon(isFavorite ? Icons.favorite_rounded : Icons.favorite_border_rounded),
+                      icon: Icon(
+                        isFavorite
+                            ? Icons.favorite_rounded
+                            : Icons.favorite_border_rounded,
+                      ),
                     ),
                   ),
               ],
@@ -673,7 +702,14 @@ class _WalkaDynamicProductDetailV140State
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 if (copy != null) ...<Widget>[
-                  Text(copy.pdpDetailsLabel, style: const TextStyle(color: WalkaColors.navy, fontSize: 18, fontWeight: FontWeight.w900)),
+                  Text(
+                    copy.pdpDetailsLabel,
+                    style: const TextStyle(
+                      color: WalkaColors.navy,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
                   const SizedBox(height: 8),
                 ],
                 ...product.facts.entries.map(
@@ -682,9 +718,26 @@ class _WalkaDynamicProductDetailV140State
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
-                        Expanded(child: Text(entry.key, style: const TextStyle(color: WalkaColors.muted, fontWeight: FontWeight.w700))),
+                        Expanded(
+                          child: Text(
+                            entry.key,
+                            style: const TextStyle(
+                              color: WalkaColors.muted,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
                         const SizedBox(width: 12),
-                        Expanded(child: Text('${entry.value}', textAlign: TextAlign.right, style: const TextStyle(color: WalkaColors.navy, fontWeight: FontWeight.w800))),
+                        Expanded(
+                          child: Text(
+                            '${entry.value}',
+                            textAlign: TextAlign.right,
+                            style: const TextStyle(
+                              color: WalkaColors.navy,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -694,7 +747,9 @@ class _WalkaDynamicProductDetailV140State
           ),
         ];
       case WalkaPdpSectionId.editorial:
-        if (product.shortDescription == null && product.features.isEmpty) return const <Widget>[];
+        if (product.shortDescription == null && product.features.isEmpty) {
+          return const <Widget>[];
+        }
         return <Widget>[
           const SizedBox(height: 24),
           KeyedSubtree(
@@ -708,7 +763,14 @@ class _WalkaDynamicProductDetailV140State
                 ],
                 if (product.features.isNotEmpty) ...<Widget>[
                   if (copy != null) ...<Widget>[
-                    Text(copy.pdpFeaturesLabel, style: const TextStyle(color: WalkaColors.navy, fontSize: 18, fontWeight: FontWeight.w900)),
+                    Text(
+                      copy.pdpFeaturesLabel,
+                      style: const TextStyle(
+                        color: WalkaColors.navy,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
                     const SizedBox(height: 8),
                   ],
                   ...product.features.map(
@@ -717,7 +779,14 @@ class _WalkaDynamicProductDetailV140State
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: <Widget>[
-                          const Padding(padding: EdgeInsets.only(top: 7), child: Icon(Icons.circle, size: 6, color: WalkaColors.gold)),
+                          const Padding(
+                            padding: EdgeInsets.only(top: 7),
+                            child: Icon(
+                              Icons.circle,
+                              size: 6,
+                              color: WalkaColors.gold,
+                            ),
+                          ),
                           const SizedBox(width: 9),
                           Expanded(child: Text(feature, style: WalkaType.body)),
                         ],
@@ -896,23 +965,21 @@ List<WalkaCatalogProduct> _featuredProducts(
   WalkaCatalogSnapshot catalog,
   WalkaHomeFeaturedContent? featured,
 ) {
-  if (featured == null) {
-    return catalog.products.take(3).toList(growable: false);
-  }
+  if (featured == null) return const <WalkaCatalogProduct>[];
   final List<WalkaCatalogProduct> products = <WalkaCatalogProduct>[];
   final Set<String> seen = <String>{};
   for (final String variantId in featured.collectionVariantIds) {
     for (final WalkaCatalogProduct product in catalog.products) {
-      if (product.variants.any((WalkaCatalogVariant variant) => variant.id == variantId) &&
+      if (product.variants.any(
+            (WalkaCatalogVariant variant) => variant.id == variantId,
+          ) &&
           seen.add(product.id)) {
         products.add(product);
         break;
       }
     }
   }
-  return products.isEmpty
-      ? catalog.products.take(3).toList(growable: false)
-      : List<WalkaCatalogProduct>.unmodifiable(products);
+  return List<WalkaCatalogProduct>.unmodifiable(products);
 }
 
 List<WalkaCatalogProduct> _searchOrderedProducts(
@@ -926,7 +993,9 @@ List<WalkaCatalogProduct> _searchOrderedProducts(
   final Set<String> seen = <String>{};
   for (final String variantId in presentation.featuredVariantIds) {
     for (final WalkaCatalogProduct product in catalog.products) {
-      if (product.variants.any((WalkaCatalogVariant variant) => variant.id == variantId) &&
+      if (product.variants.any(
+            (WalkaCatalogVariant variant) => variant.id == variantId,
+          ) &&
           seen.add(product.id)) {
         ordered.add(product);
         break;
