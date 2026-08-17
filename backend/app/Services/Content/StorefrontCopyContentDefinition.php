@@ -9,10 +9,14 @@ use JsonException;
 final class StorefrontCopyContentDefinition
 {
     public const KEY = 'storefront.copy';
+
     public const TYPE = 'storefront.copy';
+
     public const SCHEMA_VERSION = 1;
 
-    /** @return array<string, string> */
+    /**
+     * @return array<string, string>
+     */
     public static function defaultPayload(): array
     {
         return [
@@ -36,7 +40,9 @@ final class StorefrontCopyContentDefinition
         ];
     }
 
-    /** @return array<string, array<int, string>> */
+    /**
+     * @return array<string, array<int, string>>
+     */
     public static function rules(): array
     {
         return [
@@ -61,12 +67,13 @@ final class StorefrontCopyContentDefinition
     }
 
     /**
-     * @param array<string, mixed> $payload
+     * @param  array<string, mixed>  $payload
      * @return array<string, string>
      */
     public static function validateAndNormalize(array $payload): array
     {
         $normalized = [];
+
         foreach (array_keys(self::defaultPayload()) as $key) {
             $value = $payload[$key] ?? null;
             $normalized[$key] = is_string($value) ? trim($value) : $value;
@@ -80,18 +87,20 @@ final class StorefrontCopyContentDefinition
     }
 
     /**
-     * @param array<string, mixed>|null $payload
+     * @param  array<string, mixed>|null  $payload
      * @return array<string, string>
      */
     public static function editableFields(?array $payload): array
     {
         $fields = self::defaultPayload();
+
         foreach (array_keys($fields) as $key) {
             $value = $payload[$key] ?? null;
             if (is_string($value)) {
                 $fields[$key] = $value;
             }
         }
+
         return $fields;
     }
 
@@ -104,20 +113,27 @@ final class StorefrontCopyContentDefinition
                 'information_json' => ['Information JSON is invalid: '.$exception->getMessage()],
             ]);
         }
+
         if (! is_array($value)) {
-            throw ValidationException::withMessages(['information_json' => ['Information JSON must be an object.']]);
+            throw ValidationException::withMessages([
+                'information_json' => ['Information JSON must be an object.'],
+            ]);
         }
 
-        $validator = Validator::make($value, [
+        Validator::make($value, [
+            'account.eyebrow' => ['required', 'string', 'max:100'],
             'account.title' => ['required', 'string', 'max:100'],
             'account.body' => ['required', 'string', 'max:400'],
+            'story.eyebrow' => ['required', 'string', 'max:100'],
             'story.title' => ['required', 'string', 'max:100'],
             'story.body' => ['required', 'string', 'max:3000'],
+            'faq.eyebrow' => ['required', 'string', 'max:100'],
             'faq.title' => ['required', 'string', 'max:100'],
             'faq.intro' => ['required', 'string', 'max:500'],
             'faq.items' => ['required', 'array', 'min:1', 'max:30'],
             'faq.items.*.question' => ['required', 'string', 'max:240'],
             'faq.items.*.answer' => ['required', 'string', 'max:1200'],
+            'contact.eyebrow' => ['required', 'string', 'max:100'],
             'contact.title' => ['required', 'string', 'max:100'],
             'contact.intro' => ['required', 'string', 'max:500'],
             'contact.links' => ['required', 'array', 'min:1', 'max:10'],
@@ -125,30 +141,37 @@ final class StorefrontCopyContentDefinition
             'contact.links.*.body' => ['required', 'string', 'max:400'],
             'contact.links.*.label' => ['required', 'string', 'max:80'],
             'contact.links.*.url' => ['required', 'url:https', 'max:500'],
+            'amazon_store.eyebrow' => ['required', 'string', 'max:100'],
             'amazon_store.title' => ['required', 'string', 'max:100'],
             'amazon_store.body' => ['required', 'string', 'max:500'],
             'amazon_store.label' => ['required', 'string', 'max:80'],
             'amazon_store.url' => ['required', 'url:https', 'max:500'],
+            'social.eyebrow' => ['required', 'string', 'max:100'],
             'social.title' => ['required', 'string', 'max:100'],
+            'social.intro' => ['required', 'string', 'max:500'],
             'social.links' => ['required', 'array', 'min:1', 'max:10'],
             'social.links.*.title' => ['required', 'string', 'max:100'],
             'social.links.*.body' => ['required', 'string', 'max:400'],
             'social.links.*.label' => ['required', 'string', 'max:80'],
             'social.links.*.url' => ['required', 'url:https', 'max:500'],
+            'privacy.eyebrow' => ['required', 'string', 'max:100'],
             'privacy.title' => ['required', 'string', 'max:100'],
             'privacy.intro' => ['required', 'string', 'max:500'],
             'privacy.sections' => ['required', 'array', 'min:1', 'max:20'],
             'privacy.sections.*.title' => ['required', 'string', 'max:140'],
             'privacy.sections.*.body' => ['required', 'string', 'max:1600'],
+            'terms.eyebrow' => ['required', 'string', 'max:100'],
             'terms.title' => ['required', 'string', 'max:100'],
             'terms.intro' => ['required', 'string', 'max:500'],
             'terms.sections' => ['required', 'array', 'min:1', 'max:20'],
             'terms.sections.*.title' => ['required', 'string', 'max:140'],
             'terms.sections.*.body' => ['required', 'string', 'max:1600'],
-        ]);
-        $validator->validate();
+        ])->validate();
 
-        return json_encode($value, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
+        return json_encode(
+            $value,
+            JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR,
+        );
     }
 
     private static function defaultInformationJson(): string
