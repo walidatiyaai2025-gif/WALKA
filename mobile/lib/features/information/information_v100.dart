@@ -4,8 +4,8 @@ import 'information_v102.dart';
 
 /// Compatibility layer for intermediate UI-009 code.
 ///
-/// The public 1.0 app uses V102 directly. V100 symbols remain so earlier team
-/// screens compile without carrying a second set of support, legal or care copy.
+/// Current content is rendered by V102 from published remote/LKG CMS state.
+/// V100 symbols remain only so earlier team screens continue to compile.
 class WalkaAccountV100 extends StatelessWidget {
   const WalkaAccountV100({super.key});
 
@@ -62,5 +62,7 @@ class WalkaAppInfoV100 extends StatelessWidget {
   const WalkaAppInfoV100({super.key});
 
   @override
-  Widget build(BuildContext context) => const WalkaAppInfoV102();
+  Widget build(BuildContext context) => const Scaffold(
+        body: Center(child: Icon(Icons.info_outline_rounded)),
+      );
 }
