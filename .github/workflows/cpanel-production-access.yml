@@ -18,13 +18,10 @@ concurrency:
 jobs:
   probe:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 5
     environment: production
     steps:
-      - name: Setup Python browser client
-        run: python -m pip install --disable-pip-version-check --quiet selenium requests
-
-      - name: Pass WAF and verify cPanel UAPI
+      - name: Verify cPanel UAPI through service subdomains
         shell: bash
         env:
           CPANEL_API_TOKEN: ${{ secrets.CPANEL_API_TOKEN }}
@@ -32,61 +29,39 @@ jobs:
         run: |
           set -euo pipefail
           [[ -n "${CPANEL_API_TOKEN:-}" ]] || { echo 'Missing CPANEL_API_TOKEN' >&2; exit 1; }
-          cat > /tmp/cpanel_probe.py <<'PY'
-          import json
-          import os
-          import time
-          from selenium import webdriver
-          from selenium.webdriver.chrome.options import Options
 
-          user = os.environ['CPANEL_USER']
-          token = os.environ['CPANEL_API_TOKEN']
-          hosts = ['server11.hhost.host', '50sols.com']
+          success=0
+          for base in \
+            'https://cpanel.50sols.com' \
+            'https://cpanel.walkastore.com'
+          do
+            echo "Probing ${base}"
+            body="$(mktemp)"
+            headers="$(mktemp)"
+            status="$(curl --silent --show-error --location \
+              --connect-timeout 12 \
+              --max-time 25 \
+              --header "Authorization: cpanel ${CPANEL_USER}:${CPANEL_API_TOKEN}" \
+              --header 'Accept: application/json' \
+              --dump-header "$headers" \
+              --output "$body" \
+              --write-out '%{http_code}' \
+              "${base}/execute/Fileman/list_files?dir=public_html%2Fapi.walkastore.com&show_hidden=0" || true)"
+            echo "HTTP ${status}"
 
-          opts = Options()
-          opts.add_argument('--headless=new')
-          opts.add_argument('--no-sandbox')
-          opts.add_argument('--disable-dev-shm-usage')
-          opts.add_argument('--ignore-certificate-errors')
-          opts.add_argument('--window-size=1280,800')
-          opts.set_capability('acceptInsecureCerts', True)
+            if jq -e '.result.status == 1' "$body" >/dev/null 2>&1; then
+              echo "cPanel UAPI reachable via ${base}."
+              printf '%s' "$base" > /tmp/cpanel-base-url.txt
+              success=1
+              break
+            fi
 
-          last = None
-          for host in hosts:
-              driver = webdriver.Chrome(options=opts)
-              try:
-                  driver.execute_cdp_cmd('Network.enable', {})
-                  driver.execute_cdp_cmd('Network.setExtraHTTPHeaders', {
-                      'headers': {
-                          'Authorization': f'cpanel {user}:{token}',
-                          'User-Agent': 'Mozilla/5.0 WALKA-Production-Deployment/2.0'
-                      }
-                  })
-                  url = f'https://{host}:2083/execute/Fileman/list_files?dir=public_html/api.walkastore.com&show_hidden=0'
-                  driver.get(url)
-                  for _ in range(6):
-                      time.sleep(5)
-                      body = driver.find_element('tag name', 'body').text.strip()
-                      if body.startswith('{'):
-                          data = json.loads(body)
-                          status = data.get('result', {}).get('status')
-                          print(f'cPanel UAPI reachable via {host}: status={status}')
-                          if status == 1:
-                              with open('/tmp/cpanel-host.txt', 'w', encoding='utf-8') as f:
-                                  f.write(host)
-                              raise SystemExit(0)
-                          last = body[:500]
-                          break
-                      driver.refresh()
-                  else:
-                      last = driver.title
-              except SystemExit:
-                  raise
-              except Exception as exc:
-                  last = f'{type(exc).__name__}: {exc}'
-              finally:
-                  driver.quit()
-          print(f'No cPanel UAPI JSON response. Last diagnostic: {last}')
-          raise SystemExit(1)
-          PY
-          python /tmp/cpanel_probe.py
+            if jq -e . "$body" >/dev/null 2>&1; then
+              jq -c '{result:{status:.result.status,errors:.result.errors,messages:.result.messages}}' "$body"
+            else
+              title="$(grep -oEi '<title[^>]*>[^<]*</title>' "$body" | head -1 || true)"
+              echo "Non-JSON response: ${title:-no HTML title}"
+            fi
+          done
+
+          test "$success" = 1
