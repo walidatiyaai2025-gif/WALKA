@@ -12,8 +12,8 @@ permissions:
   contents: read
 
 env:
-  BACKEND_SOURCE_SHA: 3022bbe48beedd07cd8d51850b29d54b39d0e9d7
-  PREVIOUS_SOURCE_SHA: 38b6f6d9623a0c0816734989e706795a829844f7
+  BACKEND_SOURCE_SHA: f338da37f927c33ccdcfa9f48cc8656fd79ad9b3
+  PREVIOUS_SOURCE_SHA: 3022bbe48beedd07cd8d51850b29d54b39d0e9d7
   RELEASE_ID: 38b6f6d9623a
   API_URL: https://api.walkastore.com
 
@@ -28,30 +28,31 @@ jobs:
     environment:
       name: production
       url: https://api.walkastore.com
+
     steps:
-      - name: Checkout exact corrected backend source
+      - name: Checkout exact audited backend source
         uses: actions/checkout@v5
         with:
           ref: ${{ env.BACKEND_SOURCE_SHA }}
           fetch-depth: 1
 
-      - name: Prepare migration patch checksum
+      - name: Prepare final migration patch
         id: patch
         shell: bash
         run: |
           set -euo pipefail
-          file='backend/database/migrations/2026_08_13_000003_create_media_gallery_assignment_tables.php'
+          file='backend/database/migrations/2026_08_13_000005_create_media_replacement_events_table.php'
           sha="$(sha256sum "$file" | awk '{print $1}')"
-          echo "sha256=$sha" >> "$GITHUB_OUTPUT"
           cp "$file" /tmp/walka-migration-patch.php
-          echo "Migration patch SHA256: $sha"
+          echo "sha256=$sha" >> "$GITHUB_OUTPUT"
+          echo "Final migration patch SHA256: $sha"
 
       - name: Install FTPS client
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y --no-install-recommends lftp >/dev/null
 
-      - name: Create protected production bridge
+      - name: Create protected one-shot production bridge
         shell: bash
         env:
           PATCH_SHA256: ${{ steps.patch.outputs.sha256 }}
@@ -65,6 +66,7 @@ jobs:
           cat > /tmp/walka-deploy.php <<'PHP'
           <?php
           declare(strict_types=1);
+
           set_time_limit(240);
           ignore_user_abort(true);
           header('Content-Type: application/json; charset=utf-8');
@@ -78,8 +80,8 @@ jobs:
               exit;
           }
 
-          $expectedSha = '__SOURCE_SHA__';
-          $previousSha = '__PREVIOUS_SHA__';
+          $expectedSourceSha = '__SOURCE_SHA__';
+          $previousSourceSha = '__PREVIOUS_SHA__';
           $release = '__RELEASE__';
           $expectedPatchSha = '__PATCH_SHA__';
           $home = '/home/solscool';
@@ -92,8 +94,9 @@ jobs:
           $publicBuildStage = $public . '/build_stage_' . $release;
           $publicBuildBackup = $public . '/build_backup_' . $release;
           $patchSource = __DIR__ . '/.walka-migration-patch.php';
-          $patchTarget = $stage . '/database/migrations/2026_08_13_000003_create_media_gallery_assignment_tables.php';
+          $patchTarget = $stage . '/database/migrations/2026_08_13_000005_create_media_replacement_events_table.php';
           $php = '/opt/cpanel/ea-php84/root/usr/bin/php';
+          $mode = (string) ($_GET['mode'] ?? 'deploy');
 
           $lock = fopen(__DIR__ . '/.walka-deploy.lock', 'c');
           if ($lock === false || !flock($lock, LOCK_EX | LOCK_NB)) {
@@ -102,10 +105,102 @@ jobs:
               exit;
           }
 
-          function runCommand(array $command, string $cwd, int $timeoutSeconds = 150): array {
-              $descriptors = [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']];
+          function removeTree(string $path): void
+          {
+              if (!file_exists($path) && !is_link($path)) {
+                  return;
+              }
+              if (is_file($path) || is_link($path)) {
+                  if (!@unlink($path)) {
+                      throw new RuntimeException('Unable to remove file: ' . $path);
+                  }
+                  return;
+              }
+              $items = scandir($path);
+              if ($items === false) {
+                  throw new RuntimeException('Unable to list directory: ' . $path);
+              }
+              foreach ($items as $item) {
+                  if ($item === '.' || $item === '..') {
+                      continue;
+                  }
+                  removeTree($path . '/' . $item);
+              }
+              if (!@rmdir($path)) {
+                  throw new RuntimeException('Unable to remove directory: ' . $path);
+              }
+          }
+
+          function copyTree(string $source, string $destination): void
+          {
+              if (is_link($source)) {
+                  $linkTarget = readlink($source);
+                  if ($linkTarget === false || !@symlink($linkTarget, $destination)) {
+                      throw new RuntimeException('Unable to copy symlink: ' . $source);
+                  }
+                  return;
+              }
+              if (is_file($source)) {
+                  $parent = dirname($destination);
+                  if (!is_dir($parent) && !@mkdir($parent, 0755, true) && !is_dir($parent)) {
+                      throw new RuntimeException('Unable to create parent directory: ' . $parent);
+                  }
+                  if (!@copy($source, $destination)) {
+                      throw new RuntimeException('Unable to copy file: ' . $source);
+                  }
+                  return;
+              }
+              if (!is_dir($source)) {
+                  throw new RuntimeException('Source directory missing: ' . $source);
+              }
+              if (!is_dir($destination) && !@mkdir($destination, 0755, true) && !is_dir($destination)) {
+                  throw new RuntimeException('Unable to create directory: ' . $destination);
+              }
+              $items = scandir($source);
+              if ($items === false) {
+                  throw new RuntimeException('Unable to list source directory: ' . $source);
+              }
+              foreach ($items as $item) {
+                  if ($item === '.' || $item === '..') {
+                      continue;
+                  }
+                  copyTree($source . '/' . $item, $destination . '/' . $item);
+              }
+          }
+
+          function makeWritable(string $path): void
+          {
+              if (!file_exists($path)) {
+                  return;
+              }
+              if (is_file($path)) {
+                  @chmod($path, 0664);
+                  return;
+              }
+              @chmod($path, 0775);
+              $items = scandir($path);
+              if ($items === false) {
+                  return;
+              }
+              foreach ($items as $item) {
+                  if ($item === '.' || $item === '..') {
+                      continue;
+                  }
+                  makeWritable($path . '/' . $item);
+              }
+          }
+
+          function runCommand(array $command, string $cwd, int $timeoutSeconds = 150): array
+          {
+              $descriptors = [
+                  0 => ['pipe', 'r'],
+                  1 => ['pipe', 'w'],
+                  2 => ['pipe', 'w'],
+              ];
               $process = proc_open($command, $descriptors, $pipes, $cwd, null, ['bypass_shell' => true]);
-              if (!is_resource($process)) throw new RuntimeException('Unable to start command');
+              if (!is_resource($process)) {
+                  throw new RuntimeException('Unable to start command.');
+              }
               fclose($pipes[0]);
               stream_set_blocking($pipes[1], false);
               stream_set_blocking($pipes[2], false);
@@ -117,101 +212,210 @@ jobs:
                   $stdout .= (string) stream_get_contents($pipes[1]);
                   $stderr .= (string) stream_get_contents($pipes[2]);
                   $status = proc_get_status($process);
-                  if (!$status['running']) break;
+                  if (!$status['running']) {
+                      break;
+                  }
                   if ((microtime(true) - $started) > $timeoutSeconds) {
                       proc_terminate($process, 15);
-                      throw new RuntimeException('Command timed out');
+                      throw new RuntimeException('Command timed out.');
                   }
                   usleep(100000);
               }
               $stdout .= (string) stream_get_contents($pipes[1]);
               $stderr .= (string) stream_get_contents($pipes[2]);
-              fclose($pipes[1]); fclose($pipes[2]);
+              fclose($pipes[1]);
+              fclose($pipes[2]);
               $exitCode = proc_close($process);
-              if ($exitCode === -1) $exitCode = (int) ($status['exitcode'] ?? -1);
+              if ($exitCode === -1) {
+                  $exitCode = (int) ($status['exitcode'] ?? -1);
+              }
               $output = trim($stdout . ($stderr === '' ? '' : "\n" . $stderr));
-              if ($exitCode !== 0) throw new RuntimeException('Command failed (' . $exitCode . '): ' . substr($output, 0, 6000));
-              return ['exit' => $exitCode, 'output' => substr($output, 0, 6000)];
+              if ($exitCode !== 0) {
+                  throw new RuntimeException('Command failed (' . $exitCode . '): ' . substr($output, 0, 7000));
+              }
+              return ['exit' => $exitCode, 'output' => substr($output, 0, 7000)];
           }
 
-          $appSwapped = false;
-          $buildSwapped = false;
+          function rollbackCode(
+              string $target,
+              string $backup,
+              string $failed,
+              string $publicBuild,
+              string $publicBuildBackup,
+              string $php
+          ): array {
+              if (!is_dir($backup)) {
+                  throw new RuntimeException('Rollback backup is unavailable.');
+              }
+              if (is_dir($failed)) {
+                  removeTree($failed);
+              }
+              if (is_dir($target) && !rename($target, $failed)) {
+                  throw new RuntimeException('Unable to park failed release.');
+              }
+              if (!rename($backup, $target)) {
+                  @rename($failed, $target);
+                  throw new RuntimeException('Unable to restore backend backup.');
+              }
+              if (is_dir($publicBuildBackup)) {
+                  if (is_dir($publicBuild)) {
+                      removeTree($publicBuild);
+                  }
+                  if (!rename($publicBuildBackup, $publicBuild)) {
+                      throw new RuntimeException('Unable to restore public build backup.');
+                  }
+              }
+              if (function_exists('opcache_reset')) {
+                  @opcache_reset();
+              }
+              $check = runCommand([$php, $target . '/artisan', 'walka:production-check', '--no-ansi'], $target, 120);
+              return ['restored' => true, 'production_check' => $check['output']];
+          }
+
           try {
-              if (!is_file($php) || !is_executable($php)) throw new RuntimeException('cPanel PHP 8.4 CLI unavailable');
+              if (!is_file($php) || !is_executable($php)) {
+                  throw new RuntimeException('cPanel PHP 8.4 CLI is unavailable.');
+              }
               $phpVersion = runCommand([$php, '-r', 'echo PHP_VERSION;'], __DIR__, 15)['output'];
-              if (version_compare($phpVersion, '8.4.1', '<')) throw new RuntimeException('PHP CLI too old: ' . $phpVersion);
+              if (version_compare($phpVersion, '8.4.1', '<')) {
+                  throw new RuntimeException('PHP 8.4 CLI requirement is not met: ' . $phpVersion);
+              }
+
+              if ($mode === 'rollback') {
+                  $activeSha = trim((string) @file_get_contents($target . '/.walka-source-sha'));
+                  if (!hash_equals($expectedSourceSha, $activeSha)) {
+                      throw new RuntimeException('Refusing rollback because active source SHA is unexpected: ' . $activeSha);
+                  }
+                  $rollback = rollbackCode($target, $backup, $failed, $publicBuild, $publicBuildBackup, $php);
+                  echo json_encode([
+                      'ok' => true,
+                      'mode' => 'rollback',
+                      'active_source_sha' => trim((string) @file_get_contents($target . '/.walka-source-sha')),
+                      'result' => $rollback,
+                  ], JSON_UNESCAPED_SLASHES);
+                  exit;
+              }
+
+              if ($mode !== 'deploy') {
+                  throw new RuntimeException('Unsupported deployment mode.');
+              }
 
               foreach ([$target . '/artisan', $target . '/.env', $target . '/vendor/autoload.php', $public . '/index.php'] as $required) {
-                  if (!is_file($required)) throw new RuntimeException('Required live file missing: ' . $required);
+                  if (!is_file($required)) {
+                      throw new RuntimeException('Required live production file missing: ' . $required);
+                  }
               }
               foreach ([$stage . '/artisan', $stage . '/vendor/autoload.php', $stage . '/bootstrap/app.php', $stage . '/public/build/manifest.json', $stage . '/.walka-source-sha'] as $required) {
-                  if (!is_file($required)) throw new RuntimeException('Required staging file missing: ' . $required);
+                  if (!is_file($required)) {
+                      throw new RuntimeException('Required staging file missing: ' . $required);
+                  }
               }
+
               $stageSha = trim((string) file_get_contents($stage . '/.walka-source-sha'));
-              if (!hash_equals($previousSha, $stageSha)) throw new RuntimeException('Unexpected staging source SHA: ' . $stageSha);
-              if (!is_file($patchSource) || !hash_equals($expectedPatchSha, hash_file('sha256', $patchSource))) throw new RuntimeException('Migration patch checksum mismatch');
-              if (!copy($patchSource, $patchTarget)) throw new RuntimeException('Unable to install corrected migration into staging');
-              if (!hash_equals($expectedPatchSha, hash_file('sha256', $patchTarget))) throw new RuntimeException('Installed migration checksum mismatch');
-              file_put_contents($stage . '/.walka-source-sha', $expectedSha . "\n");
+              if (!hash_equals($previousSourceSha, $stageSha)) {
+                  throw new RuntimeException('Unexpected staging source SHA: ' . $stageSha);
+              }
+              if (!is_file($patchSource) || !hash_equals($expectedPatchSha, hash_file('sha256', $patchSource))) {
+                  throw new RuntimeException('Final migration patch checksum mismatch.');
+              }
+              if (!copy($patchSource, $patchTarget)) {
+                  throw new RuntimeException('Unable to install final migration patch.');
+              }
+              if (!hash_equals($expectedPatchSha, hash_file('sha256', $patchTarget))) {
+                  throw new RuntimeException('Installed migration checksum mismatch.');
+              }
+              file_put_contents($stage . '/.walka-source-sha', $expectedSourceSha . "\n");
 
-              if (!copy($target . '/.env', $stage . '/.env')) throw new RuntimeException('Unable to refresh production env in staging');
-              runCommand(['/bin/rm', '-rf', $stage . '/storage'], __DIR__, 60);
-              runCommand(['/bin/cp', '-a', $target . '/storage', $stage . '/storage'], __DIR__, 60);
-              runCommand(['/bin/chmod', '-R', 'u+rwX,g+rwX', $stage . '/storage'], __DIR__, 60);
-              runCommand(['/bin/chmod', '-R', 'u+rwX,g+rwX', $stage . '/bootstrap/cache'], __DIR__, 60);
-              runCommand(['/bin/rm', '-rf', $publicBuildStage], __DIR__, 30);
-              runCommand(['/bin/cp', '-a', $stage . '/public/build', $publicBuildStage], __DIR__, 60);
+              if (!copy($target . '/.env', $stage . '/.env')) {
+                  throw new RuntimeException('Unable to refresh production env in staging.');
+              }
+              if (is_dir($stage . '/storage')) {
+                  removeTree($stage . '/storage');
+              }
+              copyTree($target . '/storage', $stage . '/storage');
+              makeWritable($stage . '/storage');
+              makeWritable($stage . '/bootstrap/cache');
 
-              // Recover only the known failed CREATE TABLE if MySQL left it behind.
-              // If it contains data, stop instead of dropping anything.
+              if (is_dir($publicBuildStage)) {
+                  removeTree($publicBuildStage);
+              }
+              copyTree($stage . '/public/build', $publicBuildStage);
+
               $repairScript = <<<'PHPREPAIR'
           require $argv[1] . '/vendor/autoload.php';
           $app = require $argv[1] . '/bootstrap/app.php';
           $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
           $db = $app->make('db')->connection();
           $schema = $db->getSchemaBuilder();
-          $migration = '2026_08_13_000003_create_media_gallery_assignment_tables';
+          $migration = '2026_08_13_000005_create_media_replacement_events_table';
           $recorded = (int) $db->table('migrations')->where('migration', $migration)->count() > 0;
-          $product = $schema->hasTable('product_media_gallery_items');
-          $variant = $schema->hasTable('variant_media_gallery_items');
-          $variantRows = $variant ? (int) $db->table('variant_media_gallery_items')->count() : 0;
-          if (!$recorded && $variant && $variantRows === 0) {
-              $schema->drop('variant_media_gallery_items');
-              $variant = false;
+          $exists = $schema->hasTable('media_replacement_events');
+          $rows = $exists ? (int) $db->table('media_replacement_events')->count() : 0;
+          $dropped = false;
+          if (!$recorded && $exists) {
+              if ($rows !== 0) {
+                  throw new RuntimeException('Incomplete media_replacement_events contains data; refusing destructive recovery.');
+              }
+              $schema->drop('media_replacement_events');
+              $dropped = true;
+              $exists = false;
           }
-          echo json_encode(['recorded'=>$recorded,'product_table'=>$product,'variant_table_after_recovery'=>$variant,'variant_rows'=>$variantRows], JSON_UNESCAPED_SLASHES);
+          echo json_encode([
+              'recorded' => $recorded,
+              'existed_before' => $exists || $dropped,
+              'rows_before' => $rows,
+              'dropped_empty_incomplete_table' => $dropped,
+          ], JSON_UNESCAPED_SLASHES);
           PHPREPAIR;
               $repair = runCommand([$php, '-r', $repairScript, $stage], $stage, 60);
 
-              $migrate = runCommand([$php, $stage . '/artisan', 'migrate', '--force', '--no-interaction', '--no-ansi'], $stage, 150);
+              $migrate = runCommand([$php, $stage . '/artisan', 'migrate', '--force', '--no-interaction', '--no-ansi'], $stage, 180);
               runCommand([$php, $stage . '/artisan', 'optimize:clear', '--no-ansi'], $stage, 90);
               runCommand([$php, $stage . '/artisan', 'config:cache', '--no-ansi'], $stage, 90);
               runCommand([$php, $stage . '/artisan', 'route:cache', '--no-ansi'], $stage, 90);
               runCommand([$php, $stage . '/artisan', 'view:cache', '--no-ansi'], $stage, 90);
               $precheck = runCommand([$php, $stage . '/artisan', 'walka:production-check', '--no-ansi'], $stage, 120);
 
-              if (file_exists($backup)) runCommand(['/bin/rm', '-rf', $backup], __DIR__, 90);
-              if (!rename($target, $backup)) throw new RuntimeException('Unable to backup current backend');
+              if (is_dir($backup)) {
+                  removeTree($backup);
+              }
+              if (!rename($target, $backup)) {
+                  throw new RuntimeException('Unable to backup current backend.');
+              }
               if (!rename($stage, $target)) {
                   @rename($backup, $target);
-                  throw new RuntimeException('Unable to activate staged backend; live backend restored');
+                  throw new RuntimeException('Unable to activate staged backend; live backend restored.');
               }
-              $appSwapped = true;
 
-              if (file_exists($publicBuildBackup)) runCommand(['/bin/rm', '-rf', $publicBuildBackup], __DIR__, 60);
-              if (file_exists($publicBuild) && !rename($publicBuild, $publicBuildBackup)) throw new RuntimeException('Unable to backup public build assets');
-              if (!rename($publicBuildStage, $publicBuild)) {
-                  if (file_exists($publicBuildBackup)) @rename($publicBuildBackup, $publicBuild);
-                  throw new RuntimeException('Unable to activate public build assets');
+              if (is_dir($publicBuildBackup)) {
+                  removeTree($publicBuildBackup);
               }
-              $buildSwapped = true;
-              if (is_file($target . '/public/favicon.ico')) @copy($target . '/public/favicon.ico', $public . '/favicon.ico');
-              if (is_file($target . '/public/robots.txt')) @copy($target . '/public/robots.txt', $public . '/robots.txt');
-              if (function_exists('opcache_reset')) @opcache_reset();
+              if (is_dir($publicBuild) && !rename($publicBuild, $publicBuildBackup)) {
+                  rollbackCode($target, $backup, $failed, $publicBuild, $publicBuildBackup, $php);
+                  throw new RuntimeException('Unable to backup current public build assets.');
+              }
+              if (!rename($publicBuildStage, $publicBuild)) {
+                  if (is_dir($publicBuildBackup)) {
+                      @rename($publicBuildBackup, $publicBuild);
+                  }
+                  rollbackCode($target, $backup, $failed, $publicBuild, $publicBuildBackup, $php);
+                  throw new RuntimeException('Unable to activate public build assets.');
+              }
+
+              if (is_file($target . '/public/favicon.ico')) {
+                  @copy($target . '/public/favicon.ico', $public . '/favicon.ico');
+              }
+              if (is_file($target . '/public/robots.txt')) {
+                  @copy($target . '/public/robots.txt', $public . '/robots.txt');
+              }
+              if (function_exists('opcache_reset')) {
+                  @opcache_reset();
+              }
               $postcheck = runCommand([$php, $target . '/artisan', 'walka:production-check', '--no-ansi'], $target, 120);
 
               echo json_encode([
                   'ok' => true,
+                  'mode' => 'deploy',
                   'source_sha' => trim((string) file_get_contents($target . '/.walka-source-sha')),
                   'php_cli' => $phpVersion,
                   'schema_recovery' => json_decode($repair['output'], true),
@@ -221,21 +425,17 @@ jobs:
                   'backup' => basename($backup),
               ], JSON_UNESCAPED_SLASHES);
           } catch (Throwable $e) {
-              if ($appSwapped) {
-                  try {
-                      if ($buildSwapped && file_exists($publicBuildBackup)) {
-                          if (file_exists($publicBuild)) runCommand(['/bin/rm', '-rf', $publicBuild], __DIR__, 60);
-                          @rename($publicBuildBackup, $publicBuild);
-                      }
-                      if (file_exists($target)) @rename($target, $failed);
-                      if (file_exists($backup)) @rename($backup, $target);
-                      if (function_exists('opcache_reset')) @opcache_reset();
-                  } catch (Throwable) {}
-              }
               http_response_code(500);
-              echo json_encode(['ok'=>false,'error'=>substr($e->getMessage(),0,7000),'rolled_back_code'=>$appSwapped], JSON_UNESCAPED_SLASHES);
+              echo json_encode([
+                  'ok' => false,
+                  'mode' => $mode,
+                  'error' => substr($e->getMessage(), 0, 8000),
+              ], JSON_UNESCAPED_SLASHES);
           } finally {
-              if (is_resource($lock)) { @flock($lock, LOCK_UN); @fclose($lock); }
+              if (is_resource($lock)) {
+                  @flock($lock, LOCK_UN);
+                  @fclose($lock);
+              }
           }
           PHP
           sed -i \
@@ -245,7 +445,7 @@ jobs:
             -e "s/__PATCH_SHA__/$PATCH_SHA256/g" \
             /tmp/walka-deploy.php
 
-      - name: Upload corrected migration and bridge over FTPS
+      - name: Upload final migration and bridge over FTPS
         shell: bash
         env:
           FTP_HOST: ftp.50sols.com
@@ -269,7 +469,8 @@ jobs:
             bye;
           "
 
-      - name: Execute corrected production deployment
+      - name: Execute final staged production deployment
+        id: deploy_server
         shell: bash
         run: |
           set -euo pipefail
@@ -281,13 +482,15 @@ jobs:
             -H "X-WALKA-Deploy-Token: $token" \
             -o /tmp/walka-deploy-response.json \
             -w '%{http_code}' \
-            "https://mobile.walkastore.com/$bridge")"
+            "https://mobile.walkastore.com/$bridge?mode=deploy")"
           echo "Deployment bridge HTTP: $http_code"
           jq . /tmp/walka-deploy-response.json
           test "$http_code" = "200"
           jq -e --arg sha "$BACKEND_SOURCE_SHA" '.ok == true and .source_sha == $sha and (.php_cli | startswith("8.4."))' /tmp/walka-deploy-response.json >/dev/null
 
       - name: Production smoke tests
+        id: smoke
+        continue-on-error: true
         shell: bash
         run: |
           set -euo pipefail
@@ -315,6 +518,31 @@ jobs:
             exit 1
           fi
 
+      - name: Roll back code if public smoke tests fail
+        if: steps.deploy_server.outcome == 'success' && steps.smoke.outcome == 'failure'
+        shell: bash
+        run: |
+          set -euo pipefail
+          bridge="$(cat /tmp/walka-deploy-name)"
+          token="$(cat /tmp/walka-deploy-token)"
+          http_code="$(curl --silent --show-error \
+            --resolve mobile.walkastore.com:443:65.21.208.232 \
+            --max-time 180 \
+            -H "X-WALKA-Deploy-Token: $token" \
+            -o /tmp/walka-rollback-response.json \
+            -w '%{http_code}' \
+            "https://mobile.walkastore.com/$bridge?mode=rollback")"
+          echo "Rollback bridge HTTP: $http_code"
+          jq . /tmp/walka-rollback-response.json
+          test "$http_code" = "200"
+          jq -e '.ok == true and .mode == "rollback"' /tmp/walka-rollback-response.json >/dev/null
+
+      - name: Fail after smoke rollback
+        if: steps.smoke.outcome == 'failure'
+        run: |
+          echo 'Production smoke test failed. Previous backend code was restored.' >&2
+          exit 1
+
       - name: Write deployment receipt
         if: success()
         shell: bash
@@ -326,7 +554,7 @@ jobs:
           cat > deployment-receipt/BACKEND_PRODUCTION_DEPLOYMENT.txt <<EOF
           WALKA Backend Production Deployment
           source_sha=$BACKEND_SOURCE_SHA
-          previous_source_sha=$PREVIOUS_SOURCE_SHA
+          previous_stage_sha=$PREVIOUS_SOURCE_SHA
           workflow_sha=$GITHUB_SHA
           migration_patch_sha256=$PATCH_SHA256
           php_cli=/opt/cpanel/ea-php84/root/usr/bin/php
@@ -337,6 +565,9 @@ jobs:
           EOF
           cp /tmp/walka-deploy-response.json deployment-receipt/server-response.json
           cp /tmp/health.json deployment-receipt/health.json
+          cp /tmp/catalog.json deployment-receipt/catalog-smoke.json
+          cp /tmp/storefront.json deployment-receipt/storefront-smoke.json
+          cp /tmp/related.json deployment-receipt/related-products-smoke.json
 
       - name: Upload deployment receipt
         if: success()
