@@ -16,7 +16,7 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  ftps-root-inspect:
+  backend-layout-inspect:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     environment: production
@@ -26,7 +26,7 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y --no-install-recommends lftp >/dev/null
 
-      - name: Inspect restricted FTPS root without mutation
+      - name: Inspect backend layout without reading secrets
         shell: bash
         env:
           FTP_HOST: ftp.50sols.com
@@ -35,8 +35,8 @@ jobs:
         run: |
           set -euo pipefail
           [[ -n "${FTP_PASSWORD:-}" ]] || { echo 'Missing CPANEL_FTP_PASSWORD' >&2; exit 1; }
-          rm -rf /tmp/walka-ftps-inspect
-          mkdir -p /tmp/walka-ftps-inspect
+          rm -rf /tmp/walka-backend-inspect
+          mkdir -p /tmp/walka-backend-inspect
           lftp -u "$FTP_USER","$FTP_PASSWORD" -p 21 "$FTP_HOST" -e "
             set cmd:fail-exit yes;
             set ftp:ssl-force true;
@@ -46,13 +46,41 @@ jobs:
             set ftp:passive-mode true;
             set net:max-retries 1;
             set net:timeout 15;
-            pwd;
-            cls -la;
-            get .git/config -o /tmp/walka-ftps-inspect/git-config;
-            get .htaccess -o /tmp/walka-ftps-inspect/htaccess;
+            echo '--- backend root ---';
+            cls -la backend;
+            echo '--- backend public ---';
+            cls -la backend/public;
+            echo '--- backend database migrations tail ---';
+            cls -1 backend/database/migrations | tail -20;
+            get backend/composer.json -o /tmp/walka-backend-inspect/composer.json;
+            get backend/public/index.php -o /tmp/walka-backend-inspect/index.php;
             bye;
           "
-          echo '--- .git/config (sanitized known-safe fields) ---'
-          grep -E '^\s*(url|branch|merge)\s*=' /tmp/walka-ftps-inspect/git-config || true
-          echo '--- .htaccess ---'
-          sed -n '1,160p' /tmp/walka-ftps-inspect/htaccess
+          echo '--- backend identity ---'
+          jq -r '{name,description,type,require}' /tmp/walka-backend-inspect/composer.json
+          echo '--- public index require paths ---'
+          grep -E "require|autoload|bootstrap" /tmp/walka-backend-inspect/index.php || true
+          echo '--- production env presence only ---'
+          set +e
+          timeout 20 lftp -u "$FTP_USER","$FTP_PASSWORD" -p 21 "$FTP_HOST" -e "
+            set ftp:ssl-force true;
+            set ftp:ssl-protect-data true;
+            set ssl:verify-certificate yes;
+            set ssl:check-hostname no;
+            set ftp:passive-mode true;
+            set net:max-retries 1;
+            set net:timeout 10;
+            cls -la backend/.env;
+            bye;
+          " >/tmp/env-presence.txt 2>&1
+          env_status=$?
+          set -e
+          if [[ "$env_status" = 0 ]]; then echo 'backend/.env exists'; else echo 'backend/.env absent or inaccessible'; fi
+
+      - name: Probe public API identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --location --max-time 20 \
+            https://api.walkastore.com/api/v1/health | tee /tmp/health.json
+          jq -e '.status == "ok" and .service == "walka-api"' /tmp/health.json >/dev/null
