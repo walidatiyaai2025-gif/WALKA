@@ -16,12 +16,12 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  api-ip-probe:
-    runs-on: ubuntu-latest
+  macos-api-probe:
+    runs-on: macos-latest
     timeout-minutes: 5
     environment: production
     steps:
-      - name: Verify cPanel UAPI by server IP
+      - name: Verify cPanel UAPI from macOS runner
         shell: bash
         env:
           CPANEL_API_TOKEN: ${{ secrets.CPANEL_API_TOKEN }}
@@ -30,21 +30,21 @@ jobs:
           set -euo pipefail
           [[ -n "${CPANEL_API_TOKEN:-}" ]] || { echo 'Missing CPANEL_API_TOKEN' >&2; exit 1; }
           body="$(mktemp)"
-          status="$(curl --insecure --silent --show-error \
+          status="$(curl --silent --show-error \
             --connect-timeout 12 \
             --max-time 25 \
             --header "Authorization: cpanel ${CPANEL_USER}:${CPANEL_API_TOKEN}" \
             --header 'Accept: application/json' \
             --output "$body" \
             --write-out '%{http_code}' \
-            'https://65.21.208.232:2083/execute/Fileman/list_files?dir=public_html%2Fapi.walkastore.com&show_hidden=0' || true)"
+            'https://server11.hhost.host:2083/execute/Fileman/list_files?dir=public_html%2Fapi.walkastore.com&show_hidden=0' || true)"
           echo "HTTP ${status}"
           if jq -e '.result.status == 1' "$body" >/dev/null 2>&1; then
-            echo 'cPanel UAPI reachable by direct server IP.'
+            echo 'cPanel UAPI reachable from macOS runner.'
             exit 0
           fi
           if jq -e . "$body" >/dev/null 2>&1; then
-            jq -c '{result:{status:.result.status,errors:.result.errors,messages:.result.messages}}' "$body"
+            jq -c '{result:{status:.result.status,errors:.result.errors,messages:.result.messages},status:.status,message:.message}' "$body"
           else
             title="$(grep -oEi '<title[^>]*>[^<]*</title>' "$body" | head -1 || true)"
             echo "Non-JSON response: ${title:-no HTML title}"
