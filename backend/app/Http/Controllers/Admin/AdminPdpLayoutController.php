@@ -18,7 +18,10 @@ final class AdminPdpLayoutController extends Controller
 
     public function edit(Request $request): View
     {
-        $entry = ContentEntry::query()->where('content_key', PdpLayoutContentDefinition::KEY)->first();
+        $entry = ContentEntry::query()
+            ->where('content_key', PdpLayoutContentDefinition::KEY)
+            ->first();
+
         if ($entry === null) {
             $entry = $this->content->saveDraft(
                 contentKey: PdpLayoutContentDefinition::KEY,
@@ -29,13 +32,18 @@ final class AdminPdpLayoutController extends Controller
             );
         }
 
-        abort_unless($entry->content_type === PdpLayoutContentDefinition::TYPE, 409, 'The reserved pdp.layout content key has an incompatible content type.');
+        if ($entry->content_type !== PdpLayoutContentDefinition::TYPE) {
+            abort(409, 'The reserved pdp.layout content key has an incompatible content type.');
+        }
+
         $entry->load(['revisions' => fn ($query) => $query->orderByDesc('revision')]);
 
         return view('admin.content.pdp-layout', [
             'entry' => $entry,
             'draft' => PdpLayoutContentDefinition::editablePayload($entry->draft_payload),
-            'published' => $entry->published_payload === null ? null : PdpLayoutContentDefinition::editablePayload($entry->published_payload),
+            'published' => $entry->published_payload === null
+                ? null
+                : PdpLayoutContentDefinition::editablePayload($entry->published_payload),
             'requiredVisible' => PdpLayoutContentDefinition::requiredVisibleSectionIds(),
         ]);
     }
@@ -58,12 +66,16 @@ final class AdminPdpLayoutController extends Controller
                 actorFingerprint: $this->actorFingerprint($request),
             );
         } catch (ContentRevisionConflictException) {
-            return redirect()->route('admin.content.pdp.layout.edit')->withErrors([
-                'revision' => 'PDP layout changed in another session. Review the latest draft before saving.',
-            ]);
+            return redirect()
+                ->route('admin.content.pdp.layout.edit')
+                ->withErrors([
+                    'revision' => 'PDP layout changed in another session. Review the latest draft before saving.',
+                ]);
         }
 
-        return redirect()->route('admin.content.pdp.layout.edit')->with('status', 'PDP layout draft saved. Live Product Detail pages remain unchanged until Publish is used.');
+        return redirect()
+            ->route('admin.content.pdp.layout.edit')
+            ->with('status', 'PDP layout draft saved. Live Product Detail pages remain unchanged until Publish is used.');
     }
 
     public function publish(Request $request): RedirectResponse
@@ -79,12 +91,16 @@ final class AdminPdpLayoutController extends Controller
                 actorFingerprint: $this->actorFingerprint($request),
             );
         } catch (ContentRevisionConflictException) {
-            return redirect()->route('admin.content.pdp.layout.edit')->withErrors([
-                'revision' => 'Publish blocked because PDP layout changed in another session. Review the latest draft first.',
-            ]);
+            return redirect()
+                ->route('admin.content.pdp.layout.edit')
+                ->withErrors([
+                    'revision' => 'Publish blocked because PDP layout changed in another session. Review the latest draft first.',
+                ]);
         }
 
-        return redirect()->route('admin.content.pdp.layout.edit')->with('status', 'PDP layout published for compatible clients.');
+        return redirect()
+            ->route('admin.content.pdp.layout.edit')
+            ->with('status', 'PDP layout published for compatible clients.');
     }
 
     public function restore(Request $request): RedirectResponse
@@ -102,27 +118,38 @@ final class AdminPdpLayoutController extends Controller
                 actorFingerprint: $this->actorFingerprint($request),
             );
         } catch (ContentRevisionConflictException) {
-            return redirect()->route('admin.content.pdp.layout.edit')->withErrors([
-                'revision' => 'Restore blocked because PDP layout changed in another session.',
-            ]);
+            return redirect()
+                ->route('admin.content.pdp.layout.edit')
+                ->withErrors([
+                    'revision' => 'Restore blocked because PDP layout changed in another session.',
+                ]);
         }
 
-        return redirect()->route('admin.content.pdp.layout.edit')->with('status', 'Historical PDP layout restored into a new private draft.');
+        return redirect()
+            ->route('admin.content.pdp.layout.edit')
+            ->with('status', 'Historical PDP layout restored into a new private draft.');
     }
 
-    /** @param array<string, mixed> $validated @return array<string, mixed> */
+    /**
+     * @param  array<string, mixed>  $validated
+     * @return array<string, mixed>
+     */
     private function payloadFromRequest(Request $request, array $validated): array
     {
         $orders = $validated['order'];
         $expectedIds = PdpLayoutContentDefinition::sectionIds();
         if (array_diff($expectedIds, array_keys($orders)) !== [] || array_diff(array_keys($orders), $expectedIds) !== []) {
-            throw ValidationException::withMessages(['order' => ['Every supported PDP section must have exactly one order value.']]);
+            throw ValidationException::withMessages([
+                'order' => ['Every supported PDP section must have exactly one order value.'],
+            ]);
         }
 
         $positions = array_map('intval', array_values($orders));
         sort($positions);
         if ($positions !== range(1, count($expectedIds))) {
-            throw ValidationException::withMessages(['order' => ['Section order values must uniquely cover positions 1 through 8.']]);
+            throw ValidationException::withMessages([
+                'order' => ['Section order values must uniquely cover positions 1 through 8.'],
+            ]);
         }
 
         $requiredVisible = PdpLayoutContentDefinition::requiredVisibleSectionIds();
@@ -130,26 +157,41 @@ final class AdminPdpLayoutController extends Controller
         foreach ($expectedIds as $id) {
             $sections[$id] = [
                 'id' => $id,
-                'visible' => in_array($id, $requiredVisible, true) ? true : $request->boolean("visible.$id"),
+                'visible' => in_array($id, $requiredVisible, true) || $request->boolean("visible.$id"),
             ];
         }
-        uasort($sections, fn (array $left, array $right): int => ((int) $orders[$left['id']]) <=> ((int) $orders[$right['id']]));
 
-        return PdpLayoutContentDefinition::validateAndNormalize(['sections' => array_values($sections)]);
+        uasort(
+            $sections,
+            fn (array $left, array $right): int => ((int) $orders[$left['id']]) <=> ((int) $orders[$right['id']]),
+        );
+
+        return PdpLayoutContentDefinition::validateAndNormalize([
+            'sections' => array_values($sections),
+        ]);
     }
 
     private function entry(): ContentEntry
     {
-        $entry = ContentEntry::query()->where('content_key', PdpLayoutContentDefinition::KEY)->firstOrFail();
+        $entry = ContentEntry::query()
+            ->where('content_key', PdpLayoutContentDefinition::KEY)
+            ->firstOrFail();
+
         if ($entry->content_type !== PdpLayoutContentDefinition::TYPE) {
-            throw ValidationException::withMessages(['content_type' => ['The reserved pdp.layout key has an incompatible content type.']]);
+            throw ValidationException::withMessages([
+                'content_type' => ['The reserved pdp.layout key has an incompatible content type.'],
+            ]);
         }
+
         return $entry;
     }
 
     private function actorFingerprint(Request $request): string
     {
         $fingerprint = (string) $request->session()->get('walka_admin_dashboard_actor', '');
-        return $fingerprint !== '' ? $fingerprint : hash('sha256', 'dashboard|'.$request->session()->getId());
+
+        return $fingerprint !== ''
+            ? $fingerprint
+            : hash('sha256', 'dashboard|'.$request->session()->getId());
     }
 }
