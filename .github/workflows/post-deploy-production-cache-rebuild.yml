@@ -1,0 +1,218 @@
+name: Post-Deploy Production Cache Rebuild
+
+on:
+  workflow_run:
+    workflows:
+      - Deploy Corrected Backend Production
+    types:
+      - completed
+
+permissions:
+  contents: read
+
+env:
+  API_URL: https://api.walkastore.com
+
+concurrency:
+  group: walka-backend-production
+  cancel-in-progress: false
+
+jobs:
+  rebuild-live-caches:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: production
+      url: https://api.walkastore.com
+
+    steps:
+      - name: Install FTPS client
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends lftp >/dev/null
+
+      - name: Create protected live-cache bridge
+        shell: bash
+        run: |
+          set -euo pipefail
+          token="$(openssl rand -hex 32)"
+          bridge=".walka-post-deploy-$(openssl rand -hex 12).php"
+          echo "::add-mask::$token"
+          printf '%s' "$token" > /tmp/walka-post-token
+          printf '%s' "$bridge" > /tmp/walka-post-name
+          cat > /tmp/walka-post.php <<'PHP'
+          <?php
+          declare(strict_types=1);
+
+          set_time_limit(180);
+          ignore_user_abort(true);
+          header('Content-Type: application/json; charset=utf-8');
+          header('Cache-Control: no-store');
+
+          $expectedToken = trim((string) @file_get_contents(__DIR__ . '/.walka-post-token'));
+          $providedToken = (string) ($_SERVER['HTTP_X_WALKA_POST_TOKEN'] ?? '');
+          if ($expectedToken === '' || !hash_equals($expectedToken, $providedToken)) {
+              http_response_code(404);
+              echo json_encode(['ok' => false]);
+              exit;
+          }
+
+          $target = '/home/solscool/walka_backend';
+          $php = '/opt/cpanel/ea-php84/root/usr/bin/php';
+
+          function runCommand(array $command, string $cwd, int $timeoutSeconds = 120): string
+          {
+              $descriptors = [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']];
+              $process = proc_open($command, $descriptors, $pipes, $cwd, null, ['bypass_shell' => true]);
+              if (!is_resource($process)) throw new RuntimeException('Unable to start command.');
+              fclose($pipes[0]);
+              stream_set_blocking($pipes[1], false);
+              stream_set_blocking($pipes[2], false);
+              $stdout = '';
+              $stderr = '';
+              $started = microtime(true);
+              $status = ['exitcode' => -1];
+              while (true) {
+                  $stdout .= (string) stream_get_contents($pipes[1]);
+                  $stderr .= (string) stream_get_contents($pipes[2]);
+                  $status = proc_get_status($process);
+                  if (!$status['running']) break;
+                  if ((microtime(true) - $started) > $timeoutSeconds) {
+                      proc_terminate($process, 15);
+                      throw new RuntimeException('Command timed out.');
+                  }
+                  usleep(100000);
+              }
+              $stdout .= (string) stream_get_contents($pipes[1]);
+              $stderr .= (string) stream_get_contents($pipes[2]);
+              fclose($pipes[1]); fclose($pipes[2]);
+              $exit = proc_close($process);
+              if ($exit === -1) $exit = (int) ($status['exitcode'] ?? -1);
+              $output = trim($stdout . ($stderr === '' ? '' : "\n" . $stderr));
+              if ($exit !== 0) throw new RuntimeException('Command failed (' . $exit . '): ' . substr($output, 0, 3000));
+              return substr($output, 0, 3000);
+          }
+
+          function compiledPath(string $php, string $target): string
+          {
+              $code = <<<'PHPBOOT'
+          require $argv[1] . '/vendor/autoload.php';
+          $app = require $argv[1] . '/bootstrap/app.php';
+          $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
+          echo (string) config('view.compiled');
+          PHPBOOT;
+              return runCommand([$php, '-r', $code, $target], $target, 30);
+          }
+
+          try {
+              foreach ([$php, $target . '/artisan', $target . '/vendor/autoload.php', $target . '/.walka-source-sha'] as $required) {
+                  if (!is_file($required)) throw new RuntimeException('Required production file missing: ' . $required);
+              }
+
+              $sourceSha = trim((string) file_get_contents($target . '/.walka-source-sha'));
+              $before = compiledPath($php, $target);
+              runCommand([$php, $target . '/artisan', 'optimize:clear', '--no-ansi'], $target, 90);
+              runCommand([$php, $target . '/artisan', 'config:cache', '--no-ansi'], $target, 90);
+              runCommand([$php, $target . '/artisan', 'route:cache', '--no-ansi'], $target, 90);
+              runCommand([$php, $target . '/artisan', 'view:cache', '--no-ansi'], $target, 90);
+              $check = runCommand([$php, $target . '/artisan', 'walka:production-check', '--no-ansi'], $target, 120);
+              $after = compiledPath($php, $target);
+
+              if (!str_starts_with($after, $target . '/storage/')) {
+                  throw new RuntimeException('Compiled view path is outside live target: ' . $after);
+              }
+              if (function_exists('opcache_reset')) @opcache_reset();
+
+              echo json_encode([
+                  'ok' => true,
+                  'source_sha' => $sourceSha,
+                  'view_compiled_before' => $before,
+                  'view_compiled_after' => $after,
+                  'production_check_passed' => str_contains($check, 'WALKA production readiness: PASS'),
+              ], JSON_UNESCAPED_SLASHES);
+          } catch (Throwable $e) {
+              http_response_code(500);
+              echo json_encode(['ok' => false, 'error' => substr($e->getMessage(), 0, 4000)], JSON_UNESCAPED_SLASHES);
+          }
+          PHP
+
+      - name: Upload protected bridge
+        shell: bash
+        env:
+          FTP_HOST: ftp.50sols.com
+          FTP_USER: mobile@walkastore.com
+          FTP_PASSWORD: ${{ secrets.CPANEL_FTP_PASSWORD }}
+        run: |
+          set -euo pipefail
+          bridge="$(cat /tmp/walka-post-name)"
+          lftp -u "$FTP_USER","$FTP_PASSWORD" -p 21 "$FTP_HOST" -e "
+            set cmd:fail-exit yes;
+            set ftp:ssl-force true;
+            set ftp:ssl-protect-data true;
+            set ssl:verify-certificate yes;
+            set ssl:check-hostname no;
+            set ftp:passive-mode true;
+            set net:max-retries 2;
+            set net:timeout 20;
+            put /tmp/walka-post.php -o $bridge;
+            put /tmp/walka-post-token -o .walka-post-token;
+            bye;
+          "
+
+      - name: Rebuild caches in active production path
+        shell: bash
+        run: |
+          set -euo pipefail
+          bridge="$(cat /tmp/walka-post-name)"
+          token="$(cat /tmp/walka-post-token)"
+          code="$(curl --silent --show-error \
+            --resolve mobile.walkastore.com:443:65.21.208.232 \
+            --max-time 180 \
+            -H "X-WALKA-Post-Token: $token" \
+            -o /tmp/walka-post-response.json \
+            -w '%{http_code}' \
+            "https://mobile.walkastore.com/$bridge")"
+          echo "Post-deploy cache rebuild HTTP: $code"
+          jq . /tmp/walka-post-response.json
+          test "$code" = "200"
+          jq -e '.ok == true and .production_check_passed == true and (.view_compiled_after | startswith("/home/solscool/walka_backend/storage/"))' /tmp/walka-post-response.json >/dev/null
+
+      - name: Verify rendered web routes and API health
+        shell: bash
+        run: |
+          set -euo pipefail
+          root_code="$(curl --silent --show-error --location --max-time 25 -o /tmp/root.html -w '%{http_code}' "$API_URL/")"
+          login_code="$(curl --silent --show-error --location --max-time 25 -o /tmp/login.html -w '%{http_code}' "$API_URL/admin/login")"
+          health_code="$(curl --silent --show-error --location --max-time 25 -o /tmp/health.json -w '%{http_code}' "$API_URL/api/v1/health")"
+          echo "Root HTTP: $root_code"
+          echo "Admin login HTTP: $login_code"
+          echo "Health HTTP: $health_code"
+          test "$root_code" = "200"
+          test "$login_code" = "200"
+          test "$health_code" = "200"
+          jq -e '.data.status == "ok" and .data.service == "walka-api"' /tmp/health.json >/dev/null
+
+      - name: Cleanup protected bridge
+        if: always()
+        shell: bash
+        env:
+          FTP_HOST: ftp.50sols.com
+          FTP_USER: mobile@walkastore.com
+          FTP_PASSWORD: ${{ secrets.CPANEL_FTP_PASSWORD }}
+        run: |
+          set +e
+          bridge="$(cat /tmp/walka-post-name 2>/dev/null)"
+          timeout 60 lftp -u "$FTP_USER","$FTP_PASSWORD" -p 21 "$FTP_HOST" -e "
+            set ftp:ssl-force true;
+            set ftp:ssl-protect-data true;
+            set ssl:verify-certificate yes;
+            set ssl:check-hostname no;
+            set ftp:passive-mode true;
+            set net:max-retries 1;
+            set net:timeout 15;
+            rm -f $bridge;
+            rm -f .walka-post-token;
+            bye;
+          "
+          exit 0
