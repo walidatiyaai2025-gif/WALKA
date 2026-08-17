@@ -1,0 +1,110 @@
+name: CMS Validation
+
+on:
+  push:
+    branches:
+      - 'agent/cms-*'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cms-validation-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, dom, curl, libxml, sqlite3
+          coverage: none
+          tools: composer:v2
+      - name: Validate and test backend
+        working-directory: backend
+        shell: bash
+        run: |
+          set -euo pipefail
+          composer validate --strict
+          composer install --no-interaction --prefer-dist --no-progress
+          cp .env.example .env
+          php artisan key:generate --force
+          touch database/database.sqlite
+          php artisan migrate:fresh --seed --force
+          vendor/bin/pint --test
+          php artisan test
+          php artisan route:list --path=api/v1
+
+  flutter:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - name: Guard protected reference masters
+        working-directory: mobile
+        shell: bash
+        run: bash tool/guard_protected_reference_masters.sh "$(git merge-base origin/main HEAD)"
+      - name: Setup Java 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Setup Flutter 3.47.0
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: '3.47.0'
+          cache: true
+      - name: Analyze and test
+        working-directory: mobile
+        shell: bash
+        run: |
+          set -euo pipefail
+          flutter pub get --enforce-lockfile
+          flutter analyze
+          timeout --signal=TERM 180s flutter test --reporter expanded
+      - name: Generate Android runner
+        working-directory: mobile
+        run: flutter create --platforms=android --project-name walka .
+      - name: Reconcile dependencies
+        working-directory: mobile
+        shell: bash
+        run: |
+          set -euo pipefail
+          git restore --source=HEAD -- pubspec.yaml pubspec.lock analysis_options.yaml
+          flutter pub get --enforce-lockfile
+      - name: Apply Android branding
+        working-directory: mobile
+        run: bash tool/apply_android_branding.sh
+      - name: Build release APK
+        working-directory: mobile
+        run: flutter build apk --release
+      - name: Verify no bundled product media
+        shell: bash
+        run: |
+          set -euo pipefail
+          apk='mobile/build/app/outputs/flutter-apk/app-release.apk'
+          if unzip -Z1 "$apk" | grep -E 'flutter_assets/assets/products/(drawer|lunch)/.*\.(png|jpe?g|webp)$'; then
+            echo 'Bundled product media found in APK.' >&2
+            exit 1
+          fi
+          mkdir -p cms-apk
+          cp "$apk" cms-apk/WALKA-latest.apk
+          sha256sum cms-apk/WALKA-latest.apk > cms-apk/WALKA-latest.apk.sha256
+          printf 'version=%s\nsource=%s\n' "$(awk '/^version:/ {print $2; exit}' mobile/pubspec.yaml)" "$GITHUB_SHA" > cms-apk/BUILD.txt
+      - name: Upload installable APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: walka-cms-installable-${{ github.sha }}
+          path: cms-apk/
+          if-no-files-found: error
+          retention-days: 14
