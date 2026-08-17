@@ -53,6 +53,7 @@ final class EloquentCatalogRepository implements CatalogRepository
                         swatchHex: $variant->swatch_hex,
                     ),
                 )->values()->all(),
+                shortDescription: $product->short_description,
             ),
         )->values()->all();
     }
