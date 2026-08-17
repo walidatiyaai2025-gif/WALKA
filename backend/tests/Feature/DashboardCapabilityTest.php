@@ -40,6 +40,36 @@ final class DashboardCapabilityTest extends TestCase
             ->assertOk();
     }
 
+    public function test_owner_navigation_exposes_all_current_admin_destinations(): void
+    {
+        config()->set('walka_dashboard.role', 'owner');
+
+        $this->withSession($this->authenticatedSession())
+            ->get('/admin')
+            ->assertOk()
+            ->assertSee(route('admin.dashboard'), false)
+            ->assertSee(route('admin.catalog'), false)
+            ->assertSee(route('admin.content.index'), false)
+            ->assertSee(route('admin.media.index'), false)
+            ->assertSee(route('admin.audits'), false)
+            ->assertSee('owner');
+    }
+
+    public function test_media_editor_navigation_hides_content_destination_but_keeps_allowed_reads(): void
+    {
+        config()->set('walka_dashboard.role', 'media_editor');
+
+        $this->withSession($this->authenticatedSession())
+            ->get('/admin')
+            ->assertOk()
+            ->assertSee(route('admin.dashboard'), false)
+            ->assertSee(route('admin.catalog'), false)
+            ->assertDontSee(route('admin.content.index'), false)
+            ->assertSee(route('admin.media.index'), false)
+            ->assertSee(route('admin.audits'), false)
+            ->assertSee('media editor');
+    }
+
     public function test_viewer_can_read_but_cannot_mutate_catalog_content_or_media(): void
     {
         config()->set('walka_dashboard.role', 'viewer');
