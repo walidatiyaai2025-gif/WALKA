@@ -127,11 +127,13 @@ class WalkaCatalogProduct {
     required this.features,
     required this.facts,
     required this.variants,
+    this.shortDescription,
   });
 
   final String id;
   final String name;
   final String category;
+  final String? shortDescription;
   final List<String> features;
   final Map<String, dynamic> facts;
   final List<WalkaCatalogVariant> variants;
@@ -140,11 +142,19 @@ class WalkaCatalogProduct {
     final List<dynamic> rawFeatures = _requiredList(json, 'features');
     final List<dynamic> rawVariants = _requiredList(json, 'variants');
     final Map<String, dynamic> facts = _requiredMap(json, 'facts');
+    final Object? rawShortDescription = json['short_description'];
+    if (rawShortDescription != null && rawShortDescription is! String) {
+      throw const FormatException('Product short_description must be a string or null.');
+    }
+    final String? shortDescription = rawShortDescription is String && rawShortDescription.trim().isNotEmpty
+        ? rawShortDescription.trim()
+        : null;
 
     return WalkaCatalogProduct(
       id: _requiredString(json, 'id'),
       name: _requiredString(json, 'name'),
       category: _requiredString(json, 'category'),
+      shortDescription: shortDescription,
       features: rawFeatures.map((dynamic value) {
         if (value is! String || value.trim().isEmpty) {
           throw const FormatException('Product features must be strings.');
@@ -165,6 +175,7 @@ class WalkaCatalogProduct {
         'id': id,
         'name': name,
         'category': category,
+        'short_description': shortDescription,
         'features': features,
         'facts': facts,
         'variants': variants
@@ -365,6 +376,9 @@ abstract final class WalkaCatalogContract {
       }
       if (categoryIds.isNotEmpty && !categoryIds.contains(product.category)) {
         throw FormatException('Product ${product.id} references an unknown category.');
+      }
+      if (product.shortDescription != null && product.shortDescription!.length > 500) {
+        throw FormatException('Product ${product.id} short description is too long.');
       }
       if (product.variants.isEmpty) {
         throw FormatException('Product ${product.id} has no visible variants.');
