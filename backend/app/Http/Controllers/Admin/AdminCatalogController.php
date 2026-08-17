@@ -246,6 +246,7 @@ final class AdminCatalogController extends Controller
                 'id' => ['required', 'string', 'max:100', 'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/', Rule::unique('products', 'id')],
             ] : []),
             'name' => ['required', 'filled', 'string', 'max:160'],
+            'short_description' => ['nullable', 'string', 'max:500'],
             'category_id' => ['required', 'string', Rule::exists('catalog_categories', 'id')],
             'features_text' => ['nullable', 'string', 'max:5000'],
             'facts_json' => ['nullable', 'string', 'max:20000'],
@@ -264,6 +265,7 @@ final class AdminCatalogController extends Controller
 
         return [
             'name' => (string) $validated['name'],
+            'short_description' => $this->nullableTrimmed($validated['short_description'] ?? null),
             'category_id' => (string) $validated['category_id'],
             'features' => $features->all(),
             'facts' => $this->factsFromJson((string) ($validated['facts_json'] ?? '{}')),

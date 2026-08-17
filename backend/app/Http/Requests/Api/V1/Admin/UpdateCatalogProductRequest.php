@@ -17,6 +17,7 @@ final class UpdateCatalogProductRequest extends FormRequest
         return [
             'revision' => ['required', 'integer', 'min:1'],
             'name' => ['sometimes', 'filled', 'string', 'max:160'],
+            'short_description' => ['sometimes', 'nullable', 'string', 'max:500'],
             'category_id' => ['sometimes', 'string', Rule::exists('catalog_categories', 'id')],
             'features' => ['sometimes', 'array', 'max:20'],
             'features.*' => ['filled', 'string', 'max:180'],

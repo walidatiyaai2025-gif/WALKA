@@ -80,7 +80,8 @@
                 <div class="field"><label>Category</label><select name="category_id" required>@foreach ($categories as $category)<option value="{{ $category->id }}">{{ $category->name }}</option>@endforeach</select></div>
                 <div class="field"><label>Sort order</label><input type="number" name="sort_order" min="0" max="65535" value="{{ $products->count() }}" required></div>
             </div>
-            <div class="field"><label>Features · one per line</label><textarea name="features_text" maxlength="5000"></textarea></div>
+            <div class="field"><label>Short description · customer-facing</label><textarea name="short_description" maxlength="500" placeholder="A concise product description shown on supported storefront surfaces."></textarea></div>
+            <div class="field"><label>Features / highlights · one per line</label><textarea name="features_text" maxlength="5000"></textarea></div>
             <div class="field"><label>Facts · JSON object</label><textarea name="facts_json" maxlength="20000">{}</textarea></div>
             <label style="display:flex;gap:8px;align-items:center"><input type="checkbox" name="is_visible" value="1" checked> Visible in app</label>
             <div><button class="btn navy" type="submit">Add product</button></div>
@@ -112,7 +113,8 @@
                 <div class="field"><label>Sort order</label><input type="number" name="sort_order" min="0" max="65535" value="{{ $product->sort_order }}" required></div>
                 <label style="display:flex;gap:8px;align-items:center"><input type="checkbox" name="is_visible" value="1" {{ $product->is_visible ? 'checked' : '' }}> Visible in app</label>
             </div>
-            <div class="field"><label>Features · one per line</label><textarea name="features_text" maxlength="5000">{{ implode("\n", $product->features ?? []) }}</textarea></div>
+            <div class="field"><label>Short description · customer-facing</label><textarea name="short_description" maxlength="500">{{ $product->short_description }}</textarea></div>
+            <div class="field"><label>Features / highlights · one per line</label><textarea name="features_text" maxlength="5000">{{ implode("\n", $product->features ?? []) }}</textarea></div>
             <div class="field"><label>Facts · JSON object</label><textarea name="facts_json" maxlength="20000">{{ json_encode($product->facts ?? [], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) }}</textarea></div>
             <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn navy" type="submit">Save product</button></div>
         </form>
@@ -173,6 +175,6 @@
 <section class="card section-space">
     <p class="eyebrow">Runtime rule</p>
     <h2>No compiled catalog fallback</h2>
-    <p class="lead">Seed data may initialize a new database once. Runtime products, categories and colors are controlled by this database and public API; the mobile app must use the remote catalog or its last-known-good cache only.</p>
+    <p class="lead">Seed data may initialize a new database once. Runtime products, categories and colors are controlled by this database and public API; the mobile app must use the remote catalog or its last-known-good cache only. Product featured placement remains governed separately by Mobile Content → Home Featured, avoiding a second competing featured flag in Catalog.</p>
 </section>
 @endsection

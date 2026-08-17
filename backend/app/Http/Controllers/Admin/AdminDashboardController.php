@@ -230,6 +230,7 @@ final class AdminDashboardController extends Controller
         $validated = $request->validate([
             'variant_key' => ['required', 'string', 'max:60', 'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/'],
             'color' => ['required', 'filled', 'string', 'max:80'],
+            'swatch_hex' => ['nullable', 'regex:/^#[0-9A-Fa-f]{6}$/'],
             'pantone' => ['nullable', 'string', 'max:80'],
             'asin' => ['required', 'string', 'size:10', 'regex:/^[A-Z0-9]{10}$/', Rule::unique('product_variants', 'asin')],
             'sort_order' => ['required', 'integer', 'min:0', 'max:65535'],
@@ -244,6 +245,7 @@ final class AdminDashboardController extends Controller
             'id' => $variantId,
             'product_id' => $product,
             'color' => (string) $validated['color'],
+            'swatch_hex' => $this->nullableUpperHex($validated['swatch_hex'] ?? null),
             'pantone' => $this->nullableTrimmed($validated['pantone'] ?? null),
             'asin' => strtoupper((string) $validated['asin']),
             'sort_order' => (int) $validated['sort_order'],
@@ -259,6 +261,7 @@ final class AdminDashboardController extends Controller
         $validated = $request->validate([
             'revision' => ['required', 'integer', 'min:1'],
             'color' => ['required', 'filled', 'string', 'max:80'],
+            'swatch_hex' => ['nullable', 'regex:/^#[0-9A-Fa-f]{6}$/'],
             'pantone' => ['nullable', 'string', 'max:80'],
             'asin' => ['required', 'string', 'size:10', 'regex:/^[A-Z0-9]{10}$/', Rule::unique('product_variants', 'asin')->ignore($current->id, 'id')],
             'sort_order' => ['required', 'integer', 'min:0', 'max:65535'],
@@ -269,6 +272,7 @@ final class AdminDashboardController extends Controller
                 variantId: $variant,
                 attributes: [
                     'color' => (string) $validated['color'],
+                    'swatch_hex' => $this->nullableUpperHex($validated['swatch_hex'] ?? null),
                     'pantone' => $this->nullableTrimmed($validated['pantone'] ?? null),
                     'asin' => strtoupper((string) $validated['asin']),
                     'sort_order' => (int) $validated['sort_order'],
@@ -315,6 +319,7 @@ final class AdminDashboardController extends Controller
                 'id' => ['required', 'string', 'max:100', 'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/', Rule::unique('products', 'id')],
             ] : []),
             'name' => ['required', 'filled', 'string', 'max:160'],
+            'short_description' => ['nullable', 'string', 'max:500'],
             'category_id' => ['required', 'string', Rule::exists('catalog_categories', 'id')],
             'features_text' => ['nullable', 'string', 'max:5000'],
             'facts_json' => ['nullable', 'string', 'max:20000'],
@@ -331,6 +336,7 @@ final class AdminDashboardController extends Controller
 
         return [
             'name' => (string) $validated['name'],
+            'short_description' => $this->nullableTrimmed($validated['short_description'] ?? null),
             'category_id' => (string) $validated['category_id'],
             'features' => $features->all(),
             'facts' => $this->factsFromJson((string) ($validated['facts_json'] ?? '{}')),
@@ -391,6 +397,13 @@ final class AdminDashboardController extends Controller
         $trimmed = trim((string) ($value ?? ''));
 
         return $trimmed === '' ? null : $trimmed;
+    }
+
+    private function nullableUpperHex(mixed $value): ?string
+    {
+        $trimmed = $this->nullableTrimmed($value);
+
+        return $trimmed === null ? null : strtoupper($trimmed);
     }
 
     private function catalogRedirect(string $status): RedirectResponse

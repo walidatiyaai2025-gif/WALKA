@@ -48,6 +48,10 @@ final class CatalogAdminController extends Controller
         $revision = (int) $validated['revision'];
         unset($validated['revision']);
 
+        if (array_key_exists('short_description', $validated)) {
+            $validated['short_description'] = $this->nullableTrimmed($validated['short_description']);
+        }
+
         $updated = $this->authoring->updateProduct(
             productId: $product,
             attributes: $validated,
@@ -90,6 +94,7 @@ final class CatalogAdminController extends Controller
         return [
             'id' => $product->id,
             'name' => $product->name,
+            'short_description' => $product->short_description,
             'category_id' => $product->category_id ?? $product->category,
             'category_name' => $product->categoryEntity?->name,
             'features' => $product->features ?? [],
@@ -125,11 +130,19 @@ final class CatalogAdminController extends Controller
             'api_version' => config('walka.api_version'),
             'authoring' => [
                 'category_fields' => ['name', 'sort_order', 'is_visible'],
-                'product_fields' => ['name', 'category_id', 'features', 'facts', 'sort_order', 'is_visible'],
+                'product_fields' => ['name', 'short_description', 'category_id', 'features', 'facts', 'sort_order', 'is_visible'],
                 'variant_fields' => ['color', 'swatch_hex', 'pantone', 'asin', 'sort_order', 'is_visible'],
                 'immutable_after_create' => ['id', 'product_id'],
                 'source_of_truth' => 'database',
+                'featured_source' => 'home.featured',
             ],
         ];
+    }
+
+    private function nullableTrimmed(mixed $value): ?string
+    {
+        $trimmed = trim((string) ($value ?? ''));
+
+        return $trimmed === '' ? null : $trimmed;
     }
 }
