@@ -16,7 +16,7 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  server-side-probe:
+  document-root-probe:
     runs-on: ubuntu-latest
     timeout-minutes: 6
     environment: production
@@ -26,8 +26,7 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y --no-install-recommends lftp >/dev/null
 
-      - name: Create protected one-shot probe locally
-        id: probe
+      - name: Create protected document-root probe
         shell: bash
         run: |
           set -euo pipefail
@@ -50,22 +49,36 @@ jobs:
           }
           $target = '/home/solscool/walka_backend';
           $public = '/home/solscool/public_html/api.walkastore.com';
+          $apiIndex = is_file($public . '/index.php') ? (string) file_get_contents($public . '/index.php') : '';
+          $backendIndex = is_file($target . '/public/index.php') ? (string) file_get_contents($target . '/public/index.php') : '';
+          $safeLines = [];
+          foreach (preg_split('/\R/', $apiIndex) ?: [] as $line) {
+              if (preg_match('/walka_backend|vendor\/autoload|bootstrap\/app|maintenance/i', $line)) {
+                  $safeLines[] = trim($line);
+              }
+          }
+          $publicEntries = [];
+          foreach (scandir($public) ?: [] as $entry) {
+              if ($entry === '.' || $entry === '..') continue;
+              $publicEntries[] = [
+                  'name' => $entry,
+                  'type' => is_link($public . '/' . $entry) ? 'link' : (is_dir($public . '/' . $entry) ? 'dir' : 'file'),
+              ];
+          }
           echo json_encode([
               'ok' => true,
-              'php' => PHP_VERSION,
-              'bridge_dir' => __DIR__,
-              'backend_dir' => is_dir($target),
-              'backend_artisan' => is_file($target . '/artisan'),
-              'backend_env' => is_file($target . '/.env'),
-              'backend_vendor' => is_file($target . '/vendor/autoload.php'),
-              'backend_writable' => is_writable($target),
-              'api_public_dir' => is_dir($public),
-              'api_public_index' => is_file($public . '/index.php'),
-              'api_public_writable' => is_writable($public),
+              'api_index_sha256' => hash('sha256', $apiIndex),
+              'backend_index_sha256' => hash('sha256', $backendIndex),
+              'same_index' => hash('sha256', $apiIndex) === hash('sha256', $backendIndex),
+              'api_index_bindings' => $safeLines,
+              'public_entries' => $publicEntries,
+              'ziparchive' => class_exists('ZipArchive'),
+              'proc_open' => function_exists('proc_open'),
+              'disk_free_mb' => (int) floor(disk_free_space('/home/solscool') / 1024 / 1024),
           ], JSON_UNESCAPED_SLASHES);
           PHP
 
-      - name: Upload probe and token over FTPS
+      - name: Upload probe over FTPS
         shell: bash
         env:
           FTP_HOST: ftp.50sols.com
@@ -101,7 +114,7 @@ jobs:
             "https://mobile.walkastore.com/$name")"
           printf '%s\n' "$response" | jq .
           printf '%s' "$response" > /tmp/walka-probe-response.json
-          jq -e '.ok == true and .backend_dir == true and .backend_artisan == true and .backend_env == true and .api_public_dir == true and .api_public_index == true' /tmp/walka-probe-response.json >/dev/null
+          jq -e '.ok == true and .disk_free_mb > 256' /tmp/walka-probe-response.json >/dev/null
 
       - name: Remove one-shot probe
         if: always()
