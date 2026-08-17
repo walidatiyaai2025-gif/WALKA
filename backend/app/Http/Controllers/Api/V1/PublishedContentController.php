@@ -50,8 +50,10 @@ final class PublishedContentController extends Controller
         );
     }
 
-    public function homeFeatured(Request $request, HomeFeaturedCatalogValidator $catalogValidator): JsonResponse|Response
-    {
+    public function homeFeatured(
+        Request $request,
+        HomeFeaturedCatalogValidator $catalogValidator,
+    ): JsonResponse|Response {
         return $this->publishedResponse(
             request: $request,
             key: HomeFeaturedContentDefinition::KEY,
@@ -60,7 +62,9 @@ final class PublishedContentController extends Controller
             etagFamily: 'home-featured',
             notPublishedMessage: 'Published Home featured merchandising is not available.',
             invalidMessage: 'Published Home featured merchandising failed its delivery contract.',
-            normalize: fn (array $payload): array => $catalogValidator->validate(HomeFeaturedContentDefinition::validateAndNormalize($payload)),
+            normalize: fn (array $payload): array => $catalogValidator->validate(
+                HomeFeaturedContentDefinition::validateAndNormalize($payload),
+            ),
         );
     }
 
@@ -82,8 +86,10 @@ final class PublishedContentController extends Controller
         );
     }
 
-    public function categories(Request $request, CategoryPresentationCatalogValidator $catalogValidator): JsonResponse|Response
-    {
+    public function categories(
+        Request $request,
+        CategoryPresentationCatalogValidator $catalogValidator,
+    ): JsonResponse|Response {
         return $this->publishedResponse(
             request: $request,
             key: CategoryPresentationContentDefinition::KEY,
@@ -92,12 +98,16 @@ final class PublishedContentController extends Controller
             etagFamily: 'categories',
             notPublishedMessage: 'Published category presentation is not available.',
             invalidMessage: 'Published category presentation failed its delivery contract.',
-            normalize: fn (array $payload): array => $catalogValidator->validate(CategoryPresentationContentDefinition::validateAndNormalize($payload)),
+            normalize: fn (array $payload): array => $catalogValidator->validate(
+                CategoryPresentationContentDefinition::validateAndNormalize($payload),
+            ),
         );
     }
 
-    public function search(Request $request, SearchPresentationCatalogValidator $catalogValidator): JsonResponse|Response
-    {
+    public function search(
+        Request $request,
+        SearchPresentationCatalogValidator $catalogValidator,
+    ): JsonResponse|Response {
         return $this->publishedResponse(
             request: $request,
             key: SearchPresentationContentDefinition::KEY,
@@ -106,7 +116,9 @@ final class PublishedContentController extends Controller
             etagFamily: 'search',
             notPublishedMessage: 'Published Search presentation is not available.',
             invalidMessage: 'Published Search presentation failed its delivery contract.',
-            normalize: fn (array $payload): array => $catalogValidator->validate(SearchPresentationContentDefinition::validateAndNormalize($payload)),
+            normalize: fn (array $payload): array => $catalogValidator->validate(
+                SearchPresentationContentDefinition::validateAndNormalize($payload),
+            ),
         );
     }
 
@@ -139,7 +151,7 @@ final class PublishedContentController extends Controller
     }
 
     /**
-     * @param  callable(array<string, mixed>): array<string, mixed>       $normalize
+     * @param  callable(array<string, mixed>): array<string, mixed>  $normalize
      * @param  callable(array<string, mixed>): array<string, mixed>|null  $extraMeta
      */
     private function publishedResponse(
@@ -152,8 +164,7 @@ final class PublishedContentController extends Controller
         string $invalidMessage,
         callable $normalize,
         ?callable $extraMeta = null,
-    ): JsonResponse|Response
-    {
+    ): JsonResponse|Response {
         $entry = ContentEntry::query()
             ->where('content_key', $key)
             ->where('content_type', $type)
@@ -162,7 +173,10 @@ final class PublishedContentController extends Controller
 
         if ($entry === null || $entry->published_payload === null) {
             return response()->json([
-                'error' => ['code' => 'content_not_published', 'message' => $notPublishedMessage],
+                'error' => [
+                    'code' => 'content_not_published',
+                    'message' => $notPublishedMessage,
+                ],
             ], 404);
         }
 
@@ -171,15 +185,21 @@ final class PublishedContentController extends Controller
             $additionalMeta = $extraMeta === null ? [] : $extraMeta($publicPayload);
         } catch (ValidationException) {
             return response()->json([
-                'error' => ['code' => 'content_invalid', 'message' => $invalidMessage],
+                'error' => [
+                    'code' => 'content_invalid',
+                    'message' => $invalidMessage,
+                ],
             ], 503);
         }
 
         $revision = (int) $entry->published_revision;
         $etag = sprintf('"walka-%s-r%d"', $etagFamily, $revision);
         $cacheControl = 'public, max-age=60, stale-while-revalidate=300';
+
         if ($request->header('If-None-Match') === $etag) {
-            return response('', 304)->header('ETag', $etag)->header('Cache-Control', $cacheControl);
+            return response('', 304)
+                ->header('ETag', $etag)
+                ->header('Cache-Control', $cacheControl);
         }
 
         return response()->json([
@@ -191,7 +211,10 @@ final class PublishedContentController extends Controller
                 'published_at' => $entry->published_at?->toIso8601String(),
                 'payload' => $publicPayload,
             ],
-            'meta' => array_merge(['api_version' => 'v1'], $additionalMeta),
-        ])->header('ETag', $etag)->header('Cache-Control', $cacheControl);
+            'meta' => array_merge([
+                'api_version' => 'v1',
+            ], $additionalMeta),
+        ])->header('ETag', $etag)
+            ->header('Cache-Control', $cacheControl);
     }
 }
