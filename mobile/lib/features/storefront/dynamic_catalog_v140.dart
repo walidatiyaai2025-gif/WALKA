@@ -11,6 +11,7 @@ import '../content/domain/walka_home_banner_content.dart';
 import '../content/domain/walka_home_featured_content.dart';
 import '../content/domain/walka_home_layout_content.dart';
 import '../content/domain/walka_mobile_content.dart';
+import '../content/domain/walka_pdp_layout_content.dart';
 import '../content/domain/walka_search_presentation_content.dart';
 import '../content/domain/walka_storefront_copy_content.dart';
 import '../favorites/favorites_state.dart';
@@ -481,6 +482,10 @@ class _WalkaDynamicProductDetailV140State
             _isPublishedContent(content.storefrontCopy.source)
         ? content.storefrontCopy.content
         : null;
+    final WalkaPdpLayoutContent layout = content != null &&
+            _isPublishedContent(content.pdpLayout.source)
+        ? content.pdpLayout.content
+        : WalkaPdpLayoutContent.bundled;
     final WalkaCatalogProduct? product = catalog.productById(widget.productId);
     if (product == null || product.variants.isEmpty) {
       return Scaffold(
@@ -497,13 +502,64 @@ class _WalkaDynamicProductDetailV140State
     final bool isFavorite = favorites.isFavorite(selected.id);
     final Color tone = _swatchColor(selected.swatchHex);
 
+    final List<Widget> sections = <Widget>[];
+    for (final WalkaPdpSectionConfig section in layout.visibleSections) {
+      sections.addAll(
+        _pdpSection(
+          section.id,
+          context: context,
+          catalog: catalog,
+          product: product,
+          selected: selected,
+          isFavorite: isFavorite,
+          favorites: favorites,
+          copy: copy,
+          tone: tone,
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: WalkaColors.ivory,
       appBar: AppBar(title: Text(product.name)),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 20, 20, 42),
         children: <Widget>[
+          ...sections,
+          const SizedBox(height: 28),
+          FilledButton.icon(
+            key: ValueKey<String>('dynamic-amazon-${selected.id}'),
+            onPressed: () => openAmazonPurchaseUri(selected.purchaseUri),
+            icon: const Icon(Icons.open_in_new_rounded),
+            label: Text(copy?.pdpBuyLabel ?? selected.purchaseUri.host),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            copy == null ? selected.asin : '${copy.pdpAsinLabel} ${selected.asin}',
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: WalkaColors.muted, fontSize: 11),
+          ),
+        ],
+      ),
+    );
+  }
+
+  List<Widget> _pdpSection(
+    WalkaPdpSectionId id, {
+    required BuildContext context,
+    required WalkaCatalogSnapshot catalog,
+    required WalkaCatalogProduct product,
+    required WalkaCatalogVariant selected,
+    required bool isFavorite,
+    required WalkaFavoritesController favorites,
+    required WalkaStorefrontCopyContent? copy,
+    required Color tone,
+  }) {
+    switch (id) {
+      case WalkaPdpSectionId.gallery:
+        return <Widget>[
           SizedBox(
+            key: const ValueKey<String>('dynamic-pdp-section-gallery'),
             height: 220,
             child: WalkaResolvedProductRemoteMedia(
               variantId: selected.id,
@@ -528,165 +584,155 @@ class _WalkaDynamicProductDetailV140State
             ),
           ),
           const SizedBox(height: 20),
-          Text(_categoryName(catalog, product.category), style: WalkaType.eyebrow),
-          const SizedBox(height: 7),
-          Text(product.name, style: WalkaType.sectionTitle),
+        ];
+      case WalkaPdpSectionId.identity:
+        return <Widget>[
+          KeyedSubtree(
+            key: const ValueKey<String>('dynamic-pdp-section-identity'),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(_categoryName(catalog, product.category), style: WalkaType.eyebrow),
+                const SizedBox(height: 7),
+                Text(product.name, style: WalkaType.sectionTitle),
+              ],
+            ),
+          ),
           const SizedBox(height: 18),
-          if (copy != null) ...<Widget>[
-            Text(
-              copy.pdpColorsLabel,
-              style: const TextStyle(
-                color: WalkaColors.navy,
-                fontWeight: FontWeight.w900,
-              ),
+        ];
+      case WalkaPdpSectionId.variants:
+        return <Widget>[
+          KeyedSubtree(
+            key: const ValueKey<String>('dynamic-pdp-section-variants'),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                if (copy != null) ...<Widget>[
+                  Text(copy.pdpColorsLabel, style: const TextStyle(color: WalkaColors.navy, fontWeight: FontWeight.w900)),
+                  const SizedBox(height: 9),
+                ],
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: product.variants.map((WalkaCatalogVariant variant) {
+                    return ChoiceChip(
+                      selected: variant.id == selected.id,
+                      label: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: <Widget>[
+                          Container(
+                            width: 14,
+                            height: 14,
+                            decoration: BoxDecoration(
+                              color: _swatchColor(variant.swatchHex),
+                              shape: BoxShape.circle,
+                              border: Border.all(color: WalkaColors.line),
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Text(variant.color),
+                        ],
+                      ),
+                      onSelected: (_) => setState(() => _selectedVariantId = variant.id),
+                    );
+                  }).toList(growable: false),
+                ),
+                if (selected.pantone != null) ...<Widget>[
+                  const SizedBox(height: 10),
+                  Text(selected.pantone!, style: WalkaType.body),
+                ],
+                const SizedBox(height: 14),
+                if (copy != null)
+                  OutlinedButton.icon(
+                    key: ValueKey<String>('dynamic-favorite-${selected.id}'),
+                    onPressed: () => favorites.toggle(selected.id),
+                    icon: Icon(isFavorite ? Icons.favorite_rounded : Icons.favorite_border_rounded),
+                    label: Text(isFavorite ? copy.pdpFavoriteRemoveLabel : copy.pdpFavoriteAddLabel),
+                  )
+                else
+                  Center(
+                    child: IconButton.outlined(
+                      key: ValueKey<String>('dynamic-favorite-${selected.id}'),
+                      onPressed: () => favorites.toggle(selected.id),
+                      icon: Icon(isFavorite ? Icons.favorite_rounded : Icons.favorite_border_rounded),
+                    ),
+                  ),
+              ],
             ),
-            const SizedBox(height: 9),
-          ],
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: product.variants.map((WalkaCatalogVariant variant) {
-              return ChoiceChip(
-                selected: variant.id == selected.id,
-                label: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: <Widget>[
-                    Container(
-                      width: 14,
-                      height: 14,
-                      decoration: BoxDecoration(
-                        color: _swatchColor(variant.swatchHex),
-                        shape: BoxShape.circle,
-                        border: Border.all(color: WalkaColors.line),
+          ),
+        ];
+      case WalkaPdpSectionId.usage:
+        return const <Widget>[];
+      case WalkaPdpSectionId.facts:
+        if (product.facts.isEmpty) return const <Widget>[];
+        return <Widget>[
+          const SizedBox(height: 22),
+          KeyedSubtree(
+            key: const ValueKey<String>('dynamic-pdp-section-facts'),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                if (copy != null) ...<Widget>[
+                  Text(copy.pdpDetailsLabel, style: const TextStyle(color: WalkaColors.navy, fontSize: 18, fontWeight: FontWeight.w900)),
+                  const SizedBox(height: 8),
+                ],
+                ...product.facts.entries.map(
+                  (MapEntry<String, dynamic> entry) => Padding(
+                    padding: const EdgeInsets.only(bottom: 7),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Expanded(child: Text(entry.key, style: const TextStyle(color: WalkaColors.muted, fontWeight: FontWeight.w700))),
+                        const SizedBox(width: 12),
+                        Expanded(child: Text('${entry.value}', textAlign: TextAlign.right, style: const TextStyle(color: WalkaColors.navy, fontWeight: FontWeight.w800))),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ];
+      case WalkaPdpSectionId.editorial:
+        if (product.shortDescription == null && product.features.isEmpty) return const <Widget>[];
+        return <Widget>[
+          const SizedBox(height: 24),
+          KeyedSubtree(
+            key: const ValueKey<String>('dynamic-pdp-section-editorial'),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                if (product.shortDescription != null) ...<Widget>[
+                  Text(product.shortDescription!, style: WalkaType.body),
+                  if (product.features.isNotEmpty) const SizedBox(height: 12),
+                ],
+                if (product.features.isNotEmpty) ...<Widget>[
+                  if (copy != null) ...<Widget>[
+                    Text(copy.pdpFeaturesLabel, style: const TextStyle(color: WalkaColors.navy, fontSize: 18, fontWeight: FontWeight.w900)),
+                    const SizedBox(height: 8),
+                  ],
+                  ...product.features.map(
+                    (String feature) => Padding(
+                      padding: const EdgeInsets.only(bottom: 7),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          const Padding(padding: EdgeInsets.only(top: 7), child: Icon(Icons.circle, size: 6, color: WalkaColors.gold)),
+                          const SizedBox(width: 9),
+                          Expanded(child: Text(feature, style: WalkaType.body)),
+                        ],
                       ),
                     ),
-                    const SizedBox(width: 6),
-                    Text(variant.color),
-                  ],
-                ),
-                onSelected: (_) => setState(() => _selectedVariantId = variant.id),
-              );
-            }).toList(growable: false),
-          ),
-          if (selected.pantone != null) ...<Widget>[
-            const SizedBox(height: 10),
-            Text(selected.pantone!, style: WalkaType.body),
-          ],
-          const SizedBox(height: 14),
-          if (copy != null)
-            OutlinedButton.icon(
-              key: ValueKey<String>('dynamic-favorite-${selected.id}'),
-              onPressed: () => favorites.toggle(selected.id),
-              icon: Icon(
-                isFavorite ? Icons.favorite_rounded : Icons.favorite_border_rounded,
-              ),
-              label: Text(
-                isFavorite
-                    ? copy.pdpFavoriteRemoveLabel
-                    : copy.pdpFavoriteAddLabel,
-              ),
-            )
-          else
-            Center(
-              child: IconButton.outlined(
-                key: ValueKey<String>('dynamic-favorite-${selected.id}'),
-                onPressed: () => favorites.toggle(selected.id),
-                icon: Icon(
-                  isFavorite
-                      ? Icons.favorite_rounded
-                      : Icons.favorite_border_rounded,
-                ),
-              ),
+                  ),
+                ],
+              ],
             ),
-          if (product.features.isNotEmpty) ...<Widget>[
-            const SizedBox(height: 24),
-            if (copy != null) ...<Widget>[
-              Text(
-                copy.pdpFeaturesLabel,
-                style: const TextStyle(
-                  color: WalkaColors.navy,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-              const SizedBox(height: 8),
-            ],
-            ...product.features.map(
-              (String feature) => Padding(
-                padding: const EdgeInsets.only(bottom: 7),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    const Padding(
-                      padding: EdgeInsets.only(top: 7),
-                      child: Icon(Icons.circle, size: 6, color: WalkaColors.gold),
-                    ),
-                    const SizedBox(width: 9),
-                    Expanded(child: Text(feature, style: WalkaType.body)),
-                  ],
-                ),
-              ),
-            ),
-          ],
-          if (product.facts.isNotEmpty) ...<Widget>[
-            const SizedBox(height: 22),
-            if (copy != null) ...<Widget>[
-              Text(
-                copy.pdpDetailsLabel,
-                style: const TextStyle(
-                  color: WalkaColors.navy,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-              const SizedBox(height: 8),
-            ],
-            ...product.facts.entries.map(
-              (MapEntry<String, dynamic> entry) => Padding(
-                padding: const EdgeInsets.only(bottom: 7),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Expanded(
-                      child: Text(
-                        entry.key,
-                        style: const TextStyle(
-                          color: WalkaColors.muted,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        '${entry.value}',
-                        textAlign: TextAlign.right,
-                        style: const TextStyle(
-                          color: WalkaColors.navy,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-          const SizedBox(height: 28),
-          FilledButton.icon(
-            onPressed: () => openAmazonPurchaseUri(selected.purchaseUri),
-            icon: const Icon(Icons.open_in_new_rounded),
-            label: Text(copy?.pdpBuyLabel ?? selected.purchaseUri.host),
           ),
-          const SizedBox(height: 8),
-          Text(
-            copy == null ? selected.asin : '${copy.pdpAsinLabel} ${selected.asin}',
-            textAlign: TextAlign.center,
-            style: const TextStyle(color: WalkaColors.muted, fontSize: 11),
-          ),
-        ],
-      ),
-    );
+        ];
+      case WalkaPdpSectionId.specifications:
+      case WalkaPdpSectionId.amazonTrust:
+        return const <Widget>[];
+    }
   }
 }
 
