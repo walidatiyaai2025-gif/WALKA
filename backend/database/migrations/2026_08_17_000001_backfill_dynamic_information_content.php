@@ -17,20 +17,26 @@ return new class extends Migration
         }
 
         $default = StorefrontCopyContentDefinition::defaultPayload()['information_json'];
-        $draft = $this->decode($row->draft_payload);
+        $draft = $this->decode((string) $row->draft_payload);
         $published = $row->published_payload === null
             ? null
-            : $this->decode($row->published_payload);
+            : $this->decode((string) $row->published_payload);
 
         $changed = false;
-        if (! isset($draft['information_json']) || ! is_string($draft['information_json'])) {
+        $draftHasInformation = isset($draft['information_json']) && is_string($draft['information_json']);
+
+        if (! $draftHasInformation) {
             $draft['information_json'] = $default;
             $changed = true;
         }
-        if ($published !== null &&
-            (! isset($published['information_json']) || ! is_string($published['information_json']))) {
-            $published['information_json'] = $default;
-            $changed = true;
+
+        if ($published !== null) {
+            $publishedHasInformation = isset($published['information_json']) && is_string($published['information_json']);
+
+            if (! $publishedHasInformation) {
+                $published['information_json'] = $default;
+                $changed = true;
+            }
         }
 
         if (! $changed) {
@@ -50,13 +56,16 @@ return new class extends Migration
 
     public function down(): void
     {
-        // Information remains valid published content on rollback; do not discard owner edits.
+        // Preserve owner-authored information on rollback.
     }
 
-    /** @return array<string, mixed> */
+    /**
+     * @return array<string, mixed>
+     */
     private function decode(string $json): array
     {
         $value = json_decode($json, true, 64, JSON_THROW_ON_ERROR);
+
         return is_array($value) ? $value : [];
     }
 };
