@@ -38,6 +38,7 @@
         .nav-icon { width: 28px; height: 28px; border-radius: 9px; display: grid; place-items: center; background: rgba(255,255,255,.08); font-size: 13px; }
         .sidebar-foot { margin-top: auto; border-top: 1px solid rgba(255,255,255,.12); padding-top: 18px; }
         .sidebar-foot p { margin: 0 0 12px; color: #a8bdcf; font-size: 12px; line-height: 1.55; }
+        .role-pill { display: inline-flex; align-items: center; margin-bottom: 12px; padding: 6px 9px; border: 1px solid rgba(212,175,55,.28); border-radius: 999px; color: #f4dda0; background: rgba(212,175,55,.08); font-size: 10px; font-weight: 850; letter-spacing: .06em; text-transform: uppercase; }
         .logout { width: 100%; border: 1px solid rgba(255,255,255,.16); color: white; background: rgba(255,255,255,.05); padding: 10px 12px; border-radius: 10px; cursor: pointer; font-weight: 700; }
         .content { min-width: 0; }
         .topbar { height: 78px; padding: 0 32px; border-bottom: 1px solid var(--line); background: rgba(255,255,255,.86); backdrop-filter: blur(16px); display: flex; align-items: center; justify-content: space-between; gap: 20px; position: sticky; top: 0; z-index: 10; }
@@ -131,6 +132,10 @@
     </style>
 </head>
 <body>
+@php
+    $dashboardRole = \App\Enums\DashboardRole::tryFrom(trim((string) config('walka_dashboard.role', '')));
+    $can = static fn (\App\Enums\DashboardCapability $capability): bool => $dashboardRole?->allows($capability) ?? false;
+@endphp
 <div class="shell">
     <aside class="sidebar">
         <div class="brand">
@@ -138,13 +143,27 @@
             <div class="brand-copy"><strong>WALKA</strong><span>Control Center</span></div>
         </div>
         <nav class="nav" aria-label="Admin navigation">
-            <a href="{{ route('admin.dashboard') }}" class="{{ request()->routeIs('admin.dashboard') ? 'active' : '' }}"><span class="nav-icon">01</span>Overview</a>
-            <a href="{{ route('admin.catalog') }}" class="{{ request()->routeIs('admin.catalog*') ? 'active' : '' }}"><span class="nav-icon">02</span>Catalog</a>
-            <a href="{{ route('admin.content.index') }}" class="{{ request()->routeIs('admin.content*') ? 'active' : '' }}"><span class="nav-icon">03</span>Content</a>
-            <a href="{{ route('admin.audits') }}" class="{{ request()->routeIs('admin.audits') ? 'active' : '' }}"><span class="nav-icon">04</span>Audit log</a>
+            @if ($can(\App\Enums\DashboardCapability::DashboardView))
+                <a href="{{ route('admin.dashboard') }}" class="{{ request()->routeIs('admin.dashboard') ? 'active' : '' }}"><span class="nav-icon">01</span>Overview</a>
+            @endif
+            @if ($can(\App\Enums\DashboardCapability::CatalogView))
+                <a href="{{ route('admin.catalog') }}" class="{{ request()->routeIs('admin.catalog*') ? 'active' : '' }}"><span class="nav-icon">02</span>Catalog</a>
+            @endif
+            @if ($can(\App\Enums\DashboardCapability::ContentView))
+                <a href="{{ route('admin.content.index') }}" class="{{ request()->routeIs('admin.content*') ? 'active' : '' }}"><span class="nav-icon">03</span>Content</a>
+            @endif
+            @if ($can(\App\Enums\DashboardCapability::MediaView))
+                <a href="{{ route('admin.media.index') }}" class="{{ request()->routeIs('admin.media*') ? 'active' : '' }}"><span class="nav-icon">04</span>Media</a>
+            @endif
+            @if ($can(\App\Enums\DashboardCapability::AuditsView))
+                <a href="{{ route('admin.audits') }}" class="{{ request()->routeIs('admin.audits') ? 'active' : '' }}"><span class="nav-icon">05</span>Audit log</a>
+            @endif
         </nav>
         <div class="sidebar-foot">
-            <p>Protected server-side dashboard. Mobile clients never receive these credentials.</p>
+            @if ($dashboardRole !== null)
+                <div class="role-pill">{{ str_replace('_', ' ', $dashboardRole->value) }}</div>
+            @endif
+            <p>Protected server-side dashboard. Navigation reflects the current compiled capability policy.</p>
             <form method="post" action="{{ route('admin.logout') }}">
                 @csrf
                 <button class="logout" type="submit">Sign out</button>
