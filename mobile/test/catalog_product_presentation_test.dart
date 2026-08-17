@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:walka_mobile/features/catalog/domain/walka_catalog.dart';
+import 'package:walka/features/catalog/domain/walka_catalog.dart';
 
 void main() {
   test('catalog product parses optional short description and dynamic swatch', () {
